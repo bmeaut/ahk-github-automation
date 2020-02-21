@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Ahk.GitHub.Monitor
 {
-    internal static class Extensions
+    internal static class HeaderDictionaryExtensions
     {
         public static string GetValueOrDefault(this IHeaderDictionary headers, string name)
         {
