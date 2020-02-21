@@ -7,9 +7,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class IssueEventHandler : RepositoryEventBase<IssueEventPayload>
     {
         public const string GitHubWebhookEventName = "issue_comment";
+        public const string FeatureFlagName = "AHK_COMMENTEDITWARN_ENABLED";
 
         public IssueEventHandler(GitHubClient gitHubClient)
-            : base(gitHubClient)
+            : base(gitHubClient, FeatureFlagName)
         {
         }
 
@@ -32,9 +33,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private static string getCommentTextToAdd()
         {
-            var commentMsg = Environment.GetEnvironmentVariable("AHK_COMMENT_WARN_MESSAGE", EnvironmentVariableTarget.Process);
+            var commentMsg = Environment.GetEnvironmentVariable("AHK_COMMENTEDITWARN_MESSAGE", EnvironmentVariableTarget.Process);
             if (string.IsNullOrEmpty(commentMsg) || string.IsNullOrWhiteSpace(commentMsg))
-                return @":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.** \n\n_This is an automated message. Ez egy automata uzenet._";
+                return @":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.** \n\n _This is an automated message. Ez egy automata uzenet._";
             else
                 return commentMsg;
         }

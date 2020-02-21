@@ -7,9 +7,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class BranchCreatedEventHandler : RepositoryEventBase<CreateEventPayload>
     {
         public const string GitHubWebhookEventName = "create";
+        public const string FeatureFlagName = "AHK_BRANCHPROTECTION_ENABLED";
 
         public BranchCreatedEventHandler(GitHubClient gitHubClient)
-            : base(gitHubClient)
+            : base(gitHubClient, FeatureFlagName)
         {
         }
 

@@ -9,12 +9,22 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             where TPayload : ActivityPayload
     {
         protected readonly GitHubClient gitHubClient;
+        private readonly string featureFlagName;
 
-        protected RepositoryEventBase(GitHubClient gitHubClient)
-            => this.gitHubClient = gitHubClient ?? throw new ArgumentNullException(nameof(gitHubClient));
+        protected RepositoryEventBase(GitHubClient gitHubClient, string featureFlagName)
+        {
+            this.gitHubClient = gitHubClient ?? throw new ArgumentNullException(nameof(gitHubClient));
+            this.featureFlagName = featureFlagName;
+        }
 
         public async Task Execute(string requestBody, WebhookResult webhookResult)
         {
+            if (!IsFunction.Enabled(featureFlagName))
+            {
+                webhookResult.LogInfo("monitoring feature disabled");
+                return;
+            }
+
             if (!tryParsePayload(requestBody, webhookResult, out var webhookPayload))
                 return;
 
