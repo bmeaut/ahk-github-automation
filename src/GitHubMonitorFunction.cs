@@ -4,7 +4,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor
@@ -16,22 +15,36 @@ namespace Ahk.GitHub.Monitor
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest request,
             ILogger logger)
         {
-            var webhookResult = new WebhookResult();
-            if (!GitHubClientHelper.TryCreateGitHubClient(out var gitHubClient))
+            var githubToken = Environment.GetEnvironmentVariable("AHK_GITHUB_TOKEN", EnvironmentVariableTarget.Process);
+            if (string.IsNullOrEmpty(githubToken))
             {
-                webhookResult.LogError("AHK_GITHUB_TOKEN settings not provided");
+                return new ObjectResult(new { error = "GitHub access token not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
+            }
+
+            var githubSecret = Environment.GetEnvironmentVariable("AHK_GITHUB_SECRET", EnvironmentVariableTarget.Process);
+            if (string.IsNullOrEmpty(githubSecret))
+            {
+                return new ObjectResult(new { error = "GitHub secret not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
+            }
+
+            string eventName = request.Headers.GetValueOrDefault("X-GitHub-Event");
+            string deliveryId = request.Headers.GetValueOrDefault("X-GitHub-Delivery");
+            string receivedSignature = request.Headers.GetValueOrDefault("X-Hub-Signature");
+
+            logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
+
+            var payload = new PayloadReader(request);
+            if (!PayloadValidator.IsSignatureValid(payload.ReadAsByteArray(), receivedSignature, githubSecret))
+            {
+                return new BadRequestObjectResult(new { error = "Payload signature not valid" });
             }
             else
             {
-                string eventName = request.Headers.GetValueOrDefault("X-GitHub-Event");
-                string deliveryId = request.Headers.GetValueOrDefault("X-GitHub-Delivery");
-                // string signature = request.Headers.GetValueOrDefault("X-Hub-Signature");
-
-                logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
-
-                string requestBody = await new StreamReader(request.Body).ReadToEndAsync();
+                var webhookResult = new WebhookResult();
                 try
                 {
+                    var gitHubClient = GitHubClientHelper.CreateGitHubClient(githubToken);
+                    string requestBody = payload.ReadAsString();
                     switch (eventName)
                     {
                         case EventHandlers.BranchCreatedEventHandler.GitHubWebhookEventName:
@@ -41,7 +54,7 @@ namespace Ahk.GitHub.Monitor
                             await new EventHandlers.IssueEventHandler(gitHubClient).Execute(requestBody, webhookResult);
                             break;
                         default:
-                            webhookResult.LogInfo($"Event {eventName} is none of interrest");
+                            webhookResult.LogInfo($"Event {eventName} is not of interrest");
                             break;
                     }
                 }
@@ -49,9 +62,9 @@ namespace Ahk.GitHub.Monitor
                 {
                     webhookResult.LogError(ex, "Failed to handle webhook");
                 }
-            }
 
-            return new OkObjectResult(webhookResult);
+                return new OkObjectResult(webhookResult);
+            }
         }
     }
 }
