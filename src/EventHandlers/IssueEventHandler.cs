@@ -23,9 +23,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
             else if (webhookPayload.Action.Equals("edited", StringComparison.OrdinalIgnoreCase) || webhookPayload.Action.Equals("deleted", StringComparison.OrdinalIgnoreCase))
             {
-                if (webhookPayload.Comment?.User != null && isUserAllowedToEdit(webhookPayload.Comment.User.Login))
+                if (webhookPayload.Sender != null && isUserAllowedToEdit(webhookPayload.Sender.Login))
                 {
-                    webhookResult.LogInfo($"comment action {webhookPayload.Action} is allowed for user {webhookPayload.Comment.User.Login}");
+                    webhookResult.LogInfo($"comment action {webhookPayload.Action} is allowed for user {webhookPayload.Sender.Login}");
                 }
                 else
                 {
