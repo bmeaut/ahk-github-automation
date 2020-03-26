@@ -50,8 +50,8 @@ namespace Ahk.GitHub.Monitor
                         case EventHandlers.BranchCreatedEventHandler.GitHubWebhookEventName:
                             await new EventHandlers.BranchCreatedEventHandler(gitHubClient).Execute(requestBody, webhookResult);
                             break;
-                        case EventHandlers.IssueEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.IssueEventHandler(gitHubClient).Execute(requestBody, webhookResult);
+                        case EventHandlers.IssueCommentEventHandler.GitHubWebhookEventName:
+                            await new EventHandlers.IssueCommentEventHandler(gitHubClient).Execute(requestBody, webhookResult);
                             break;
                         default:
                             webhookResult.LogInfo($"Event {eventName} is not of interrest");

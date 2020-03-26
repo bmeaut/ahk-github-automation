@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class IssueEventHandler : RepositoryEventBase<IssueCommentPayload>
+    public class IssueCommentEventHandler : RepositoryEventBase<IssueCommentPayload>
     {
         public const string GitHubWebhookEventName = "issue_comment";
         public const string FeatureFlagName = "AHK_COMMENTEDITWARN_ENABLED";
 
-        public IssueEventHandler(GitHubClient gitHubClient)
+        public IssueCommentEventHandler(GitHubClient gitHubClient)
             : base(gitHubClient, FeatureFlagName)
         {
         }
