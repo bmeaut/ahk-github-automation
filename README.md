@@ -37,12 +37,23 @@ These rules are enforced by marking all branches as protected, and requiring rev
 
 ### Issue comment editing
 
-#### Rule
-
-1. No issue comment is edited or deleted.
+1. No issue comment is edited or deleted by student.
 
 This rule is ensured by registering such an attempt and adding a comment into the issue thread where the edit/delete took place.
 
 **Setup**: In order to enable this rule, the _Issue comments_ GitHub webhook trigger must be enabled and the `AHK_COMMENTEDITWARN_ENABLED` environment variable must be set to `1`.
 
 **Configuration** The message added to the affected issue can be specified as markdown text in environment variable `AHK_COMMENTEDITWARN_MESSAGE`. A list of exception usernames (GitHub login names) can be specified in environment variable `AHK_COMMENTEDITWARN_ALLOWEDUSERS`; these users can edit and delete comments and no warning message will be added upon their actions. The usernames must be separated by semicolon, e.g. `login1;mylogin`.
+
+### Single pull request for submitting work
+
+1. There is no more than one pull request opened at any time.
+1. No pull request can be opened once a PR has been closed by the teacher.
+
+Explanation: An open pull requests is a submission of the work. There can only be one submission. A submission can be revoked by closing the pull requests. If a submission has already been evaluated (the PR has been closed by the teacher), no more submission (new PRs) are allowed.
+
+These rules are ensured by registering such an event and adding a comment into the affected PR issue threads.
+
+**Setup**: In order to enable this rule, the _Pull requests_ GitHub webhook trigger must be enabled and the `AHK_ONEPULLREQUEST_ENABLED` environment variable must be set to `1`.
+
+**Configuration** The message added to the affected issue can be specified as markdown text in environment variable `AHK_ONEPULLREQUEST_MESSAGE`. (Affected PR numbers are added to this text.)
