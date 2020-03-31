@@ -1,6 +1,5 @@
 ﻿using Octokit;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
@@ -23,9 +22,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
             else if (webhookPayload.Action.Equals("edited", StringComparison.OrdinalIgnoreCase) || webhookPayload.Action.Equals("deleted", StringComparison.OrdinalIgnoreCase))
             {
-                if (webhookPayload.Sender != null && isUserAllowedToEdit(webhookPayload.Sender.Login))
+                if (webhookPayload.Sender != null && webhookPayload.Comment?.User != null && webhookPayload.Sender.Login == webhookPayload.Comment.User.Login)
                 {
-                    webhookResult.LogInfo($"comment action {webhookPayload.Action} is allowed for user {webhookPayload.Sender.Login}");
+                    webhookResult.LogInfo($"comment action {webhookPayload.Action} by {webhookPayload.Sender.Login} allowed, referencing own comment");
                 }
                 else
                 {
@@ -46,14 +45,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 return @":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.** \n\n _This is an automated message. Ez egy automata uzenet._";
             else
                 return commentMsg;
-        }
-
-        private static bool isUserAllowedToEdit(string username)
-        {
-            var allowedUsernames = Environment.GetEnvironmentVariable("AHK_COMMENTEDITWARN_ALLOWEDUSERS", EnvironmentVariableTarget.Process);
-            if (string.IsNullOrEmpty(allowedUsernames))
-                return false;
-            return allowedUsernames.Split(';').Any(allowedName => username.Equals(allowedName, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

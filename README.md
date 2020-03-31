@@ -37,13 +37,13 @@ These rules are enforced by marking all branches as protected, and requiring rev
 
 ### Issue comment editing
 
-1. No issue comment is edited or deleted by student.
+1. No user edits or deletes an issue comment made by someone else.
 
 This rule is ensured by registering such an attempt and adding a comment into the issue thread where the edit/delete took place.
 
 **Setup**: In order to enable this rule, the _Issue comments_ GitHub webhook trigger must be enabled and the `AHK_COMMENTEDITWARN_ENABLED` environment variable must be set to `1`.
 
-**Configuration** The message added to the affected issue can be specified as markdown text in environment variable `AHK_COMMENTEDITWARN_MESSAGE`. A list of exception usernames (GitHub login names) can be specified in environment variable `AHK_COMMENTEDITWARN_ALLOWEDUSERS`; these users can edit and delete comments and no warning message will be added upon their actions. The usernames must be separated by semicolon, e.g. `login1;mylogin`.
+**Configuration**: The message added to the affected issue can be specified as markdown text in environment variable `AHK_COMMENTEDITWARN_MESSAGE`.
 
 ### Single pull request for submitting work
 
@@ -56,4 +56,4 @@ These rules are ensured by registering such an event and adding a comment into t
 
 **Setup**: In order to enable this rule, the _Pull requests_ GitHub webhook trigger must be enabled and the `AHK_ONEPULLREQUEST_ENABLED` environment variable must be set to `1`.
 
-**Configuration** The message added to the affected issue can be specified as markdown text in environment variable `AHK_ONEPULLREQUEST_MESSAGE`. (Affected PR numbers are added to this text.)
+**Configuration**: The message added to the affected issue can be specified as markdown text in environment variable `AHK_ONEPULLREQUEST_MESSAGE`. (Affected PR numbers are added to this text.)
