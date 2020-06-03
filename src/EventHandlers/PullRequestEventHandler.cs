@@ -11,12 +11,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "pull_request";
         public const string FeatureFlagName = "AHK_ONEPULLREQUEST_ENABLED";
 
-        public PullRequestEventHandler(GitHubClient gitHubClient)
-            : base(gitHubClient, FeatureFlagName)
+        public PullRequestEventHandler()
+            : base(FeatureFlagName)
         {
         }
 
-        protected override async Task execute(PullRequestEventPayload webhookPayload, WebhookResult webhookResult)
+        protected override async Task execute(GitHubClient gitHubClient, PullRequestEventPayload webhookPayload, WebhookResult webhookResult)
         {
             if (webhookPayload.PullRequest == null)
             {

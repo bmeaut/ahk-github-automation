@@ -8,12 +8,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public abstract class RepositoryEventBase<TPayload>
             where TPayload : ActivityPayload
     {
-        protected readonly GitHubClient gitHubClient;
         private readonly string featureFlagName;
 
-        protected RepositoryEventBase(GitHubClient gitHubClient, string featureFlagName)
+        protected RepositoryEventBase(string featureFlagName)
         {
-            this.gitHubClient = gitHubClient ?? throw new ArgumentNullException(nameof(gitHubClient));
             this.featureFlagName = featureFlagName;
         }
 
@@ -34,10 +32,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 return;
             }
 
-            await execute(webhookPayload, webhookResult);
+            var gitHubClient = await GitHubClientHelper.CreateGitHubClient(webhookPayload.Installation.Id);
+            await execute(gitHubClient, webhookPayload, webhookResult);
         }
 
-        protected abstract Task execute(TPayload webhookPayload1, WebhookResult webhookResult);
+        protected abstract Task execute(GitHubClient gitHubClient, TPayload webhookPayload, WebhookResult webhookResult);
 
         protected bool tryParsePayload(string requestBody, WebhookResult webhookResult, out TPayload payload)
         {

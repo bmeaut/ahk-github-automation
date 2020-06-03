@@ -9,12 +9,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "create";
         public const string FeatureFlagName = "AHK_BRANCHPROTECTION_ENABLED";
 
-        public BranchCreatedEventHandler(GitHubClient gitHubClient)
-            : base(gitHubClient, FeatureFlagName)
+        public BranchCreatedEventHandler()
+            : base(FeatureFlagName)
         {
         }
 
-        protected override async Task execute(CreateEventPayload webhookPayload, WebhookResult webhookResult)
+        protected override async Task execute(GitHubClient gitHubClient, CreateEventPayload webhookPayload, WebhookResult webhookResult)
         {
             if (webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
             {

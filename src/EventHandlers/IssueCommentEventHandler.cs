@@ -9,12 +9,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "issue_comment";
         public const string FeatureFlagName = "AHK_COMMENTEDITWARN_ENABLED";
 
-        public IssueCommentEventHandler(GitHubClient gitHubClient)
-            : base(gitHubClient, FeatureFlagName)
+        public IssueCommentEventHandler()
+            : base(FeatureFlagName)
         {
         }
 
-        protected override async Task execute(IssueCommentPayload webhookPayload, WebhookResult webhookResult)
+        protected override async Task execute(GitHubClient gitHubClient, IssueCommentPayload webhookPayload, WebhookResult webhookResult)
         {
             if (webhookPayload.Issue == null)
             {
