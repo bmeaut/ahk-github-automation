@@ -5,6 +5,12 @@ VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ahk-github-monitor", "ahk-github-monitor.csproj", "{DB40B191-BB8D-4214-86B3-7A000E012A0E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{43C4E2A6-8723-4E33-B420-89947060BD0E}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\azure-publish.yaml = ..\.github\workflows\azure-publish.yaml
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

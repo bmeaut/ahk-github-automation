@@ -1,31 +1,36 @@
+using Ahk.GitHub.Monitor.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor
 {
-    public static partial class GitHubMonitorFunction
+    public class GitHubMonitorFunction
     {
+        private readonly IOptions<GitHubMonitorConfig> config;
+        private readonly IGitHubClientFactory gitHubClientFactory;
+
+        public GitHubMonitorFunction(IOptions<GitHubMonitorConfig> config, IGitHubClientFactory gitHubClientFactory)
+        {
+            this.config = config;
+            this.gitHubClientFactory = gitHubClientFactory;
+        }
+
         [FunctionName("github-webhook")]
-        public static async Task<IActionResult> Run(
+        public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest request,
             ILogger logger)
         {
-            var githubSecret = Environment.GetEnvironmentVariable("AHK_GITHUB_SECRET", EnvironmentVariableTarget.Process);
-            if (string.IsNullOrEmpty(githubSecret))
-            {
+            if (string.IsNullOrEmpty(config.Value.GitHubWebhookSecret))
                 return new ObjectResult(new { error = "GitHub secret not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
 
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AHK_GITHUB_APP_PRIVATE_KEY", EnvironmentVariableTarget.Process))
-                || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AHK_GITHUB_APP_ID", EnvironmentVariableTarget.Process)))
-            {
+            if (string.IsNullOrEmpty(config.Value.GitHubAppId) || string.IsNullOrEmpty(config.Value.GitHubAppPrivateKey))
                 return new ObjectResult(new { error = "GitHub App ID/Token not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
 
             string eventName = request.Headers.GetValueOrDefault("X-GitHub-Event");
             string deliveryId = request.Headers.GetValueOrDefault("X-GitHub-Delivery");
@@ -34,7 +39,7 @@ namespace Ahk.GitHub.Monitor
             logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
 
             var payload = new PayloadReader(request);
-            if (!PayloadValidator.IsSignatureValid(payload.ReadAsByteArray(), receivedSignature, githubSecret))
+            if (!PayloadValidator.IsSignatureValid(await payload.ReadAsByteArray(), receivedSignature, config.Value.GitHubWebhookSecret))
             {
                 return new BadRequestObjectResult(new { error = "Payload signature not valid" });
             }
@@ -43,17 +48,17 @@ namespace Ahk.GitHub.Monitor
                 var webhookResult = new WebhookResult();
                 try
                 {
-                    string requestBody = payload.ReadAsString();
+                    string requestBody = await payload.ReadAsString();
                     switch (eventName)
                     {
                         case EventHandlers.BranchCreatedEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.BranchCreatedEventHandler().Execute(requestBody, webhookResult);
+                            await new EventHandlers.BranchCreatedEventHandler(config, gitHubClientFactory).Execute(requestBody, webhookResult);
                             break;
                         case EventHandlers.IssueCommentEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.IssueCommentEventHandler().Execute(requestBody, webhookResult);
+                            await new EventHandlers.IssueCommentEventHandler(config, gitHubClientFactory).Execute(requestBody, webhookResult);
                             break;
                         case EventHandlers.PullRequestEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.PullRequestEventHandler().Execute(requestBody, webhookResult);
+                            await new EventHandlers.PullRequestEventHandler(config, gitHubClientFactory).Execute(requestBody, webhookResult);
                             break;
                         default:
                             webhookResult.LogInfo($"Event {eventName} is not of interrest");

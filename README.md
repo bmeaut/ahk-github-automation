@@ -12,13 +12,13 @@ The basis of operation is
 
 The application requires the following configurations specified as **environment variables**.
 
-`AHK_GITHUB_APP_ID` and `AHK_GITHUB_APP_PRIVATE_KEY`: (**mandatory**) the ID and the private key of the GitHub App (both available in GitHub App management page).
+`AHK_GitHubAppId` and `AHK_GitHubAppPrivateKey`: (**mandatory**) the ID and the private key of the GitHub App (both available in GitHub App management page).
 
 > All GitHub interactions from the application will be performed in the name of this GitHub App.
 
-`AHK_GITHUB_SECRET`: (**mandatory**) the secret that is configured in the GitHub App. The secret is mandatory; unsecured webhook calls are rejected by the application.
+`AHK_GitHubWebhookSecret`: (**mandatory**) the secret that is configured in the GitHub App. The secret is mandatory; unsecured webhook calls are rejected by the application.
 
-`AHK_GITHUB_REPOSITORY_PREFIXES`: (optional) a semicolon separated list of repository prefixes that are to be monitored. When a GitHub Classroom assignment is set up, a repository naming prefix is specified. Each student assignment repository name will start with the specified prefix. Since an organization may hold a wide variety of repositories, this configuration enables filtering for repositories of interest. An example value is `hw1-2020;labwork-aspnetcore-3`. If not specified, all repositories are monitored by the application.
+`AHK_Repositories`: (optional) a semicolon separated list of repository prefixes that are to be monitored. When a GitHub Classroom assignment is set up, a repository naming prefix is specified. Each student assignment repository name will start with the specified prefix. Since an organization may hold a wide variety of repositories, this configuration enables filtering for repositories of interest. The prefix may also contain the name of the organization as `organization/reponame`. An example value is `myorg/hw1-2020;otherorg/labwork-aspnetcore`. If not specified, all repositories are monitored by the application.
 
 ## Rules enforced by the application
 
@@ -31,17 +31,11 @@ The application enforces the following rules.
 
 These rules are enforced by marking all branches as protected, and requiring review of pull requests targeting the master branch.
 
-**Setup**: In order to enable this rule, the _Branch or tag creation_ GitHub webhook trigger must be enabled, and the `AHK_BRANCHPROTECTION_ENABLED` environment variable must be set to `1`.
-
 ### Issue comment editing
 
 1. No user edits or deletes an issue comment made by someone else.
 
 This rule is ensured by registering such an attempt and adding a comment into the issue thread where the edit/delete took place.
-
-**Setup**: In order to enable this rule, the _Issue comments_ GitHub webhook trigger must be enabled and the `AHK_COMMENTEDITWARN_ENABLED` environment variable must be set to `1`.
-
-**Configuration**: The message added to the affected issue can be specified as markdown text in environment variable `AHK_COMMENTEDITWARN_MESSAGE`.
 
 ### Single pull request for submitting work
 
@@ -51,7 +45,3 @@ This rule is ensured by registering such an attempt and adding a comment into th
 Explanation: An open pull requests is a submission of the work. There can only be one submission. A submission can be revoked by closing the pull requests. If a submission has already been evaluated (the PR has been closed by the teacher), no more submission (new PRs) are allowed.
 
 These rules are ensured by registering such an event and adding a comment into the affected PR issue threads.
-
-**Setup**: In order to enable this rule, the _Pull requests_ GitHub webhook trigger must be enabled and the `AHK_ONEPULLREQUEST_ENABLED` environment variable must be set to `1`.
-
-**Configuration**: The message added to the affected issue can be specified as markdown text in environment variable `AHK_ONEPULLREQUEST_MESSAGE`. (Affected PR numbers are added to this text.)

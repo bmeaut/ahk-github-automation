@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor
 {
@@ -12,16 +13,30 @@ namespace Ahk.GitHub.Monitor
     /// </remarks>
     public class PayloadReader
     {
-        private readonly MemoryStream content = new MemoryStream();
+        private MemoryStream content;
+        private HttpRequest request;
 
         public PayloadReader(HttpRequest request)
-            => request.Body.CopyTo(content);
+            => this.request = request;
 
-        public byte[] ReadAsByteArray()
-            => content.ToArray();
-
-        public string ReadAsString()
+        private async Task assureInitialized()
         {
+            if (content == null)
+            {
+                content = new MemoryStream();
+                await request.Body.CopyToAsync(content);
+            }
+        }
+
+        public async Task<byte[]> ReadAsByteArray()
+        {
+            await assureInitialized();
+            return content.ToArray();
+        }
+
+        public async Task<string> ReadAsString()
+        {
+            await assureInitialized();
             content.Seek(0, SeekOrigin.Begin);
             return new StreamReader(content).ReadToEnd();
         }

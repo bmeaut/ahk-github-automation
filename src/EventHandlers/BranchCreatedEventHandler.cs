@@ -1,4 +1,5 @@
-﻿using Octokit;
+﻿using Microsoft.Extensions.Options;
+using Octokit;
 using System;
 using System.Threading.Tasks;
 
@@ -7,10 +8,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class BranchCreatedEventHandler : RepositoryEventBase<CreateEventPayload>
     {
         public const string GitHubWebhookEventName = "create";
-        public const string FeatureFlagName = "AHK_BRANCHPROTECTION_ENABLED";
 
-        public BranchCreatedEventHandler()
-            : base(FeatureFlagName)
+        public BranchCreatedEventHandler(IOptions<GitHubMonitorConfig> config, Services.IGitHubClientFactory gitHubClientFactory)
+            : base(config, gitHubClientFactory)
         {
         }
 

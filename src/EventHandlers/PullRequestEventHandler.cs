@@ -1,4 +1,5 @@
-﻿using Octokit;
+﻿using Microsoft.Extensions.Options;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class PullRequestEventHandler : RepositoryEventBase<PullRequestEventPayload>
     {
         public const string GitHubWebhookEventName = "pull_request";
-        public const string FeatureFlagName = "AHK_ONEPULLREQUEST_ENABLED";
+        private const string WarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n _This is an automated message. Ez egy automata uzenet._";
 
-        public PullRequestEventHandler()
-            : base(FeatureFlagName)
+        public PullRequestEventHandler(IOptions<GitHubMonitorConfig> config, Services.IGitHubClientFactory gitHubClientFactory)
+            : base(config, gitHubClientFactory)
         {
         }
 
@@ -64,15 +65,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private static string getWarningText(IEnumerable<int> referencedPullRequestNumbers)
         {
-            string prReferencesText = getPRReferencesTextForComment(referencedPullRequestNumbers);
-            var commentMsg = Environment.GetEnvironmentVariable("AHK_ONEPULLREQUEST_MESSAGE", EnvironmentVariableTarget.Process);
-            if (string.IsNullOrEmpty(commentMsg) || string.IsNullOrWhiteSpace(commentMsg))
-                return prReferencesText + @" :exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** \n\n _This is an automated message. Ez egy automata uzenet._";
-            else
-                return prReferencesText + " " + commentMsg;
+            var prReferencesText = string.Join(" ", referencedPullRequestNumbers.Select(n => $"#{n}").ToArray());
+            return WarningText.Replace("{}", prReferencesText);
         }
-
-        private static string getPRReferencesTextForComment(IEnumerable<int> referencedPullRequestNumbers)
-            => string.Join(" ", referencedPullRequestNumbers.Select(n => $"#{n}").ToArray());
     }
 }

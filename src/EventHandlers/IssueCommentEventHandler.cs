@@ -1,4 +1,5 @@
-﻿using Octokit;
+﻿using Microsoft.Extensions.Options;
+using Octokit;
 using System;
 using System.Threading.Tasks;
 
@@ -7,10 +8,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class IssueCommentEventHandler : RepositoryEventBase<IssueCommentPayload>
     {
         public const string GitHubWebhookEventName = "issue_comment";
-        public const string FeatureFlagName = "AHK_COMMENTEDITWARN_ENABLED";
+        private const string WarningText = ":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.** \n\n _This is an automated message. Ez egy automata uzenet._";
 
-        public IssueCommentEventHandler()
-            : base(FeatureFlagName)
+        public IssueCommentEventHandler(IOptions<GitHubMonitorConfig> config, Services.IGitHubClientFactory gitHubClientFactory)
+            : base(config, gitHubClientFactory)
         {
         }
 
@@ -28,7 +29,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 }
                 else
                 {
-                    await gitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, getWarningTextToAdd());
+                    await gitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, WarningText);
                     webhookResult.LogInfo("comment action handled");
                 }
             }
@@ -38,13 +39,5 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
         }
 
-        private static string getWarningTextToAdd()
-        {
-            var commentMsg = Environment.GetEnvironmentVariable("AHK_COMMENTEDITWARN_MESSAGE", EnvironmentVariableTarget.Process);
-            if (string.IsNullOrEmpty(commentMsg) || string.IsNullOrWhiteSpace(commentMsg))
-                return @":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.** \n\n _This is an automated message. Ez egy automata uzenet._";
-            else
-                return commentMsg;
-        }
     }
 }
