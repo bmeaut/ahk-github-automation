@@ -6,19 +6,17 @@ The basis of operation is
 
 1. a GitHub organization where the student assignments are stored, managed by GitHub Classroom;
 1. a running instance of this application hosted as an Azure Function with a public URL;
-1. and an organization-wide webhook in GitHub pointing to the URL of this application (handling events in _all_ repository of the GitHub organization).
+1. and a GitHub App pointing to the Azure function, added to the GitHub organization (handling events in _all_ repository of the GitHub organization).
 
 ## Application configuration
 
 The application requires the following configurations specified as **environment variables**.
 
-`AHK_GITHUB_TOKEN`: (**mandatory**) a personal access token from GitHub that allows interaction with _all_ organization repositories.
+`AHK_GITHUB_APP_ID` and `AHK_GITHUB_APP_PRIVATE_KEY`: (**mandatory**) the ID and the private key of the GitHub App (both available in GitHub App management page).
 
-> All GitHub interactions from the application will be performed in the name of this user.
+> All GitHub interactions from the application will be performed in the name of this GitHub App.
 
-`AHK_GITHUB_SECRET`: (**mandatory**) the secret that is configured in the GitHub webhook. The secret is mandatory; unsecured webhook calls are rejected by the application.
-
-> Note, that it is possible to re-use the same application instance in multiple GitHub organization webhooks, but the secret used by these webhooks must be the same.
+`AHK_GITHUB_SECRET`: (**mandatory**) the secret that is configured in the GitHub App. The secret is mandatory; unsecured webhook calls are rejected by the application.
 
 `AHK_GITHUB_REPOSITORY_PREFIXES`: (optional) a semicolon separated list of repository prefixes that are to be monitored. When a GitHub Classroom assignment is set up, a repository naming prefix is specified. Each student assignment repository name will start with the specified prefix. Since an organization may hold a wide variety of repositories, this configuration enables filtering for repositories of interest. An example value is `hw1-2020;labwork-aspnetcore-3`. If not specified, all repositories are monitored by the application.
 
