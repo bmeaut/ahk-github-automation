@@ -65,7 +65,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private static string getWarningText(IEnumerable<int> referencedPullRequestNumbers)
         {
-            var prReferencesText = string.Join(" ", referencedPullRequestNumbers.Select(n => $"#{n}").ToArray());
+            var prReferencesText = string.Join(" ", referencedPullRequestNumbers.OrderBy(num => num).Select(n => $"#{n}").ToArray());
             return WarningText.Replace("{}", prReferencesText);
         }
     }
