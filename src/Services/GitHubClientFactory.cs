@@ -49,7 +49,7 @@ namespace Ahk.GitHub.Monitor.Services
             var applicationToken = getApplicationToken();
             using (var client = new HttpClient())
             {
-                var request = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/installations/{installationId}/access_tokens")
+                var request = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/app/installations/{installationId}/access_tokens")
                 {
                     Headers =
                     {
