@@ -1,34 +1,37 @@
-﻿using Microsoft.Extensions.Options;
-using Octokit;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
     public class PullRequestEventHandler : RepositoryEventBase<PullRequestEventPayload>
     {
         public const string GitHubWebhookEventName = "pull_request";
-        private const string WarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n _This is an automated message. Ez egy automata uzenet._";
+        private const string DefaultWarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n _This is an automated message. Ez egy automata uzenet._";
 
-        public PullRequestEventHandler(IOptions<GitHubMonitorConfig> config, Services.IGitHubClientFactory gitHubClientFactory)
-            : base(config, gitHubClientFactory)
+        public PullRequestEventHandler(Services.IGitHubClientFactory gitHubClientFactory)
+            : base(gitHubClientFactory)
         {
         }
 
-        protected override async Task execute(GitHubClient gitHubClient, PullRequestEventPayload webhookPayload, WebhookResult webhookResult)
+        protected override async Task execute(GitHubClient gitHubClient, PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
         {
             if (webhookPayload.PullRequest == null)
             {
                 webhookResult.LogError("no pull request information in webhook payload");
+            }
+            else if (repoSettings.MultiplePRProtection == null || !repoSettings.MultiplePRProtection.Enabled)
+            {
+                webhookResult.LogError("multiple PR protection not enabled for repository");
             }
             else if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
             {
                 var openPullRequests = await gitHubClient.PullRequest.GetAllForRepository(webhookPayload.Repository.Id, new PullRequestRequest() { State = ItemStateFilter.Open });
                 if (openPullRequests.Count > 1)
                 {
-                    var warningText = getWarningText(openPullRequests.Select(pr => pr.Number));
+                    var warningText = getWarningText(repoSettings.MultiplePRProtection, openPullRequests.Select(pr => pr.Number));
                     foreach (var openPullRequest in openPullRequests)
                         await gitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, openPullRequest.Number, warningText);
 
@@ -47,7 +50,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                     .ToList();
                 if (prsClosedByNotStudent.Count > 0)
                 {
-                    var warningText = getWarningText(prsClosedByNotStudent.Select(e => e.Issue.Number));
+                    var warningText = getWarningText(repoSettings.MultiplePRProtection, prsClosedByNotStudent.Select(e => e.Issue.Number));
                     await gitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Number, warningText);
 
                     webhookResult.LogInfo("pull request open handled with alrady closed PRs");
@@ -63,10 +66,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
         }
 
-        private static string getWarningText(IEnumerable<int> referencedPullRequestNumbers)
+        private static string getWarningText(MultiplePRProtectionSettings multiplePRProtection, IEnumerable<int> referencedPullRequestNumbers)
         {
             var prReferencesText = string.Join(" ", referencedPullRequestNumbers.OrderBy(num => num).Select(n => $"#{n}").ToArray());
-            return WarningText.Replace("{}", prReferencesText);
+            var effectiveWarningText = string.IsNullOrEmpty(multiplePRProtection.WarningText) ? DefaultWarningText : multiplePRProtection.WarningText;
+            return effectiveWarningText.Replace("{}", prReferencesText);
         }
     }
 }

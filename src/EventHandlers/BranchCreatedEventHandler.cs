@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.Options;
-using Octokit;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -9,22 +8,26 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     {
         public const string GitHubWebhookEventName = "create";
 
-        public BranchCreatedEventHandler(IOptions<GitHubMonitorConfig> config, Services.IGitHubClientFactory gitHubClientFactory)
-            : base(config, gitHubClientFactory)
+        public BranchCreatedEventHandler(Services.IGitHubClientFactory gitHubClientFactory)
+            : base(gitHubClientFactory)
         {
         }
 
-        protected override async Task execute(GitHubClient gitHubClient, CreateEventPayload webhookPayload, WebhookResult webhookResult)
+        protected override async Task execute(GitHubClient gitHubClient, CreateEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
         {
-            if (webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
+            if (!webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
+            {
+                webhookResult.LogInfo($"create event for ref {webhookPayload.RefType} is not of interrest");
+            }
+            else if (repoSettings.BranchProtection == null || !repoSettings.BranchProtection.Enabled)
+            {
+                webhookResult.LogInfo($"branch protection not enabled for repository");
+            }
+            else
             {
                 await gitHubClient.Repository.Branch.UpdateBranchProtection(
                             webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref));
                 webhookResult.LogInfo("Branch protection rule applied.");
-            }
-            else
-            {
-                webhookResult.LogInfo($"create event for ref {webhookPayload.RefType} is not of interrest");
             }
         }
 
@@ -42,7 +45,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private static BranchProtectionRequiredReviewsUpdate getBranchProtectionRequiredReviewsUpdate(string branchName)
         {
             if (branchName.Equals("master", StringComparison.OrdinalIgnoreCase))
-                return new BranchProtectionRequiredReviewsUpdate(false, false, 1); // Disables the student to merge the pull request.
+                return new BranchProtectionRequiredReviewsUpdate(false, false, 1); // Prohibits the student from merging the pull request.
             else
                 return null;
         }

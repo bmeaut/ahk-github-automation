@@ -1,22 +1,21 @@
-﻿using Ahk.GitHub.Monitor.Services;
-using Microsoft.Extensions.Options;
-using Octokit;
-using Octokit.Internal;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services;
+using Octokit;
+using Octokit.Internal;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
     public abstract class RepositoryEventBase<TPayload>
             where TPayload : ActivityPayload
     {
-        private readonly IOptions<GitHubMonitorConfig> config;
+        private static readonly YamlDotNet.Serialization.IDeserializer YamlDeserializer = CreateYamlDeserializer();
+
         private readonly IGitHubClientFactory gitHubClientFactory;
 
-        protected RepositoryEventBase(IOptions<GitHubMonitorConfig> config, IGitHubClientFactory gitHubClientFactory)
+        protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory)
         {
-            this.config = config;
             this.gitHubClientFactory = gitHubClientFactory;
         }
 
@@ -25,17 +24,22 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             if (!tryParsePayload(requestBody, webhookResult, out var webhookPayload))
                 return;
 
-            if (!isRepositoryOfInterrest(webhookPayload.Repository))
+            var gitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
+            var repoSettings = await tryGetRepositorySettings(webhookPayload, gitHubClient, webhookResult);
+
+            if (repoSettings == null)
+                return;
+
+            if (!repoSettings.Enabled)
             {
-                webhookResult.LogInfo($"repository {webhookPayload.Repository.FullName} is not of interrest");
+                webhookResult.LogInfo($"ahk-monitor.yml disabled app for repository {webhookPayload.Repository.FullName}");
                 return;
             }
 
-            var gitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
-            await execute(gitHubClient, webhookPayload, webhookResult);
+            await execute(gitHubClient, webhookPayload, repoSettings, webhookResult);
         }
 
-        protected abstract Task execute(GitHubClient gitHubClient, TPayload webhookPayload, WebhookResult webhookResult);
+        protected abstract Task execute(GitHubClient gitHubClient, TPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult);
 
         protected bool tryParsePayload(string requestBody, WebhookResult webhookResult, out TPayload payload)
         {
@@ -71,20 +75,32 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return true;
         }
 
-        private bool isRepositoryOfInterrest(Repository repository)
-        {
-            if (string.IsNullOrEmpty(config.Value.Repositories))
-                return true;
+        private static YamlDotNet.Serialization.IDeserializer CreateYamlDeserializer()
+            => new YamlDotNet.Serialization.DeserializerBuilder()
+                    .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention.Instance)
+                    .IgnoreUnmatchedProperties()
+                    .Build();
 
-            return config.Value.Repositories.Split(';').Any(prefix => doesRepositoryMatchPrefix(repository, prefix));
-        }
-
-        private static bool doesRepositoryMatchPrefix(Repository repository, string prefix)
+        private static async Task<RepositorySettings> tryGetRepositorySettings(TPayload webhookPayload, GitHubClient gitHubClient, WebhookResult webhookResult)
         {
-            if (prefix.Contains('/'))
-                return repository.FullName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
-            else
-                return repository.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                var contents = await gitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, ".github/ahk-monitor.yml", "master");
+                var settingsString = contents.FirstOrDefault()?.Content;
+
+                if (settingsString == null)
+                {
+                    webhookResult.LogInfo($"repository {webhookPayload.Repository.FullName} has no ahk-monitor.yml");
+                    return null;
+                }
+
+                return YamlDeserializer.Deserialize<RepositorySettings>(settingsString);
+            }
+            catch (NotFoundException)
+            {
+                webhookResult.LogInfo($"repository {webhookPayload.Repository.FullName} has no ahk-monitor.yml");
+                return null;
+            }
         }
     }
 }

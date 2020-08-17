@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -5,8 +7,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor
 {
@@ -52,13 +52,13 @@ namespace Ahk.GitHub.Monitor
                     switch (eventName)
                     {
                         case EventHandlers.BranchCreatedEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.BranchCreatedEventHandler(config, gitHubClientFactory).Execute(requestBody, webhookResult);
+                            await new EventHandlers.BranchCreatedEventHandler(gitHubClientFactory).Execute(requestBody, webhookResult);
                             break;
                         case EventHandlers.IssueCommentEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.IssueCommentEventHandler(config, gitHubClientFactory).Execute(requestBody, webhookResult);
+                            await new EventHandlers.IssueCommentEventHandler(gitHubClientFactory).Execute(requestBody, webhookResult);
                             break;
                         case EventHandlers.PullRequestEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.PullRequestEventHandler(config, gitHubClientFactory).Execute(requestBody, webhookResult);
+                            await new EventHandlers.PullRequestEventHandler(gitHubClientFactory).Execute(requestBody, webhookResult);
                             break;
                         default:
                             webhookResult.LogInfo($"Event {eventName} is not of interrest");
