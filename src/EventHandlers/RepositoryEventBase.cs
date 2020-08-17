@@ -94,7 +94,15 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                     return null;
                 }
 
-                return YamlDeserializer.Deserialize<RepositorySettings>(settingsString);
+                try
+                {
+                    return YamlDeserializer.Deserialize<RepositorySettings>(settingsString);
+                }
+                catch (Exception ex)
+                {
+                    webhookResult.LogError("Config yaml parse error: " + ex.Message);
+                    return null;
+                }
             }
             catch (NotFoundException)
             {
