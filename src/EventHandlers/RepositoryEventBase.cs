@@ -14,6 +14,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private readonly IGitHubClientFactory gitHubClientFactory;
 
+        protected GitHubClient GitHubClient { get; private set; }
+
         protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory)
         {
             this.gitHubClientFactory = gitHubClientFactory;
@@ -24,8 +26,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             if (!tryParsePayload(requestBody, webhookResult, out var webhookPayload))
                 return;
 
-            var gitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
-            var repoSettings = await tryGetRepositorySettings(webhookPayload, gitHubClient, webhookResult);
+            GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
+            var repoSettings = await tryGetRepositorySettings(webhookPayload, webhookResult);
 
             if (repoSettings == null)
                 return;
@@ -36,10 +38,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 return;
             }
 
-            await execute(gitHubClient, webhookPayload, repoSettings, webhookResult);
+            await execute(webhookPayload, repoSettings, webhookResult);
         }
 
-        protected abstract Task execute(GitHubClient gitHubClient, TPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult);
+        protected abstract Task execute(TPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult);
 
         protected bool tryParsePayload(string requestBody, WebhookResult webhookResult, out TPayload payload)
         {
@@ -81,11 +83,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                     .IgnoreUnmatchedProperties()
                     .Build();
 
-        private static async Task<RepositorySettings> tryGetRepositorySettings(TPayload webhookPayload, GitHubClient gitHubClient, WebhookResult webhookResult)
+        private async Task<RepositorySettings> tryGetRepositorySettings(TPayload webhookPayload, WebhookResult webhookResult)
         {
             try
             {
-                var contents = await gitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, ".github/ahk-monitor.yml", "master");
+                var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, ".github/ahk-monitor.yml", "master");
                 var settingsString = contents.FirstOrDefault()?.Content;
 
                 if (settingsString == null)

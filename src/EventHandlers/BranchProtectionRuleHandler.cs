@@ -13,7 +13,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task execute(GitHubClient gitHubClient, CreateEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
+        protected override async Task execute(CreateEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
         {
             if (!webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
             {
@@ -25,7 +25,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
             else
             {
-                await gitHubClient.Repository.Branch.UpdateBranchProtection(
+                await GitHubClient.Repository.Branch.UpdateBranchProtection(
                             webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref));
                 webhookResult.LogInfo("Branch protection rule applied.");
             }

@@ -14,7 +14,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task execute(GitHubClient gitHubClient, IssueCommentPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
+        protected override async Task execute(IssueCommentPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
         {
             if (webhookPayload.Issue == null)
             {
@@ -32,7 +32,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 }
                 else
                 {
-                    await gitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, getWarningText(repoSettings.CommentProtection));
+                    await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, getWarningText(repoSettings.CommentProtection));
                     webhookResult.LogInfo("comment action handled");
                 }
             }
