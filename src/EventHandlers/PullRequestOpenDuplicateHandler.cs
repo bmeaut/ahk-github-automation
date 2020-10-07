@@ -76,7 +76,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 var prsClosedByNotStudent = new List<int>();
                 foreach (var otherClosedPr in closedPrs)
                 {
-                    if (await isPrClosedByNotStudent(webhookPayload, otherClosedPr.Number))
+                    if (await isPrClosedByNotStudent(webhookPayload, otherClosedPr))
                         prsClosedByNotStudent.Add(otherClosedPr.Number);
                 }
 
@@ -98,13 +98,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
         }
 
-        private async Task<bool> isPrClosedByNotStudent(PullRequestEventPayload webhookPayload, int prNumber)
+        private async Task<bool> isPrClosedByNotStudent(PullRequestEventPayload webhookPayload, PullRequest pr)
         {
-            var issueEvents = await GitHubClient.Issue.Events.GetAllForIssue(webhookPayload.Repository.Id, prNumber);
+            var issueEvents = await GitHubClient.Issue.Events.GetAllForIssue(webhookPayload.Repository.Id, pr.Number);
             return issueEvents.Any(
-                e => e.Event == EventInfoState.Closed // closed event
-                && e.Issue?.PullRequest != null // related to a PR
-                && e.Actor?.Id != e.Issue.User.Id); // PR closed by someone other than the person who opened it -> student opened and teached closed PR
+                e => e.Event.Value == EventInfoState.Closed // closed event
+                     && e.Actor?.Id != pr.User.Id); // PR closed by someone other than the person who opened it -> student opened and teached closed PR
         }
 
         private static string getWarningText(MultiplePRProtectionSettings multiplePRProtection, int currentPrNumber, IEnumerable<int> foundPrNumbers)
