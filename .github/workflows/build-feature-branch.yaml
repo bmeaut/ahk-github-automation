@@ -1,0 +1,28 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "3.1.401"
+
+      - name: "Run dotnet build"
+        shell: bash
+        run: |
+          pushd src
+          dotnet build --configuration Release --output ./output
+          popd
