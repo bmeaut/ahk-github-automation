@@ -4,12 +4,12 @@ using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class IssueCommentEventHandler : RepositoryEventBase<IssueCommentPayload>
+    public class IssueCommentEditDeleteHandler : RepositoryEventBase<IssueCommentPayload>
     {
         public const string GitHubWebhookEventName = "issue_comment";
         private const string DefaultWarningText = ":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.** \n\n _This is an automated message. Ez egy automata uzenet._";
 
-        public IssueCommentEventHandler(Services.IGitHubClientFactory gitHubClientFactory)
+        public IssueCommentEditDeleteHandler(Services.IGitHubClientFactory gitHubClientFactory)
             : base(gitHubClientFactory)
         {
         }

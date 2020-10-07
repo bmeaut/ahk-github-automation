@@ -4,11 +4,11 @@ using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class BranchCreatedEventHandler : RepositoryEventBase<CreateEventPayload>
+    public class BranchProtectionRuleHandler : RepositoryEventBase<CreateEventPayload>
     {
         public const string GitHubWebhookEventName = "create";
 
-        public BranchCreatedEventHandler(Services.IGitHubClientFactory gitHubClientFactory)
+        public BranchProtectionRuleHandler(Services.IGitHubClientFactory gitHubClientFactory)
             : base(gitHubClientFactory)
         {
         }
