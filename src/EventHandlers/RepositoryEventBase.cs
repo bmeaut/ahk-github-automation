@@ -7,8 +7,8 @@ using Octokit.Internal;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public abstract class RepositoryEventBase<TPayload>
-            where TPayload : ActivityPayload
+    public abstract class RepositoryEventBase<TPayload> : IGitHubEventHandler
+        where TPayload : ActivityPayload
     {
         private static readonly YamlDotNet.Serialization.IDeserializer YamlDeserializer = CreateYamlDeserializer();
 

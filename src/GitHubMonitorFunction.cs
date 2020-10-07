@@ -12,13 +12,13 @@ namespace Ahk.GitHub.Monitor
 {
     public class GitHubMonitorFunction
     {
+        private readonly IEventDispatchService eventDispatchService;
         private readonly IOptions<GitHubMonitorConfig> config;
-        private readonly IGitHubClientFactory gitHubClientFactory;
 
-        public GitHubMonitorFunction(IOptions<GitHubMonitorConfig> config, IGitHubClientFactory gitHubClientFactory)
+        public GitHubMonitorFunction(IEventDispatchService eventDispatchService, IOptions<GitHubMonitorConfig> config)
         {
+            this.eventDispatchService = eventDispatchService;
             this.config = config;
-            this.gitHubClientFactory = gitHubClientFactory;
         }
 
         [FunctionName("github-webhook")]
@@ -38,6 +38,9 @@ namespace Ahk.GitHub.Monitor
 
             logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
 
+            if (string.IsNullOrEmpty(eventName))
+                return new ObjectResult(new { error = "X-GitHub-Event header missing" }) { StatusCode = StatusCodes.Status400BadRequest };
+
             var payload = new PayloadReader(request);
             if (!PayloadValidator.IsSignatureValid(await payload.ReadAsByteArray(), receivedSignature, config.Value.GitHubWebhookSecret))
             {
@@ -49,21 +52,7 @@ namespace Ahk.GitHub.Monitor
                 try
                 {
                     string requestBody = await payload.ReadAsString();
-                    switch (eventName)
-                    {
-                        case EventHandlers.BranchCreatedEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.BranchCreatedEventHandler(gitHubClientFactory).Execute(requestBody, webhookResult);
-                            break;
-                        case EventHandlers.IssueCommentEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.IssueCommentEventHandler(gitHubClientFactory).Execute(requestBody, webhookResult);
-                            break;
-                        case EventHandlers.PullRequestEventHandler.GitHubWebhookEventName:
-                            await new EventHandlers.PullRequestEventHandler(gitHubClientFactory).Execute(requestBody, webhookResult);
-                            break;
-                        default:
-                            webhookResult.LogInfo($"Event {eventName} is not of interrest");
-                            break;
-                    }
+                    await eventDispatchService.Process(eventName, requestBody, webhookResult);
                 }
                 catch (Exception ex)
                 {

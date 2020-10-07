@@ -1,7 +1,7 @@
-﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 [assembly: FunctionsStartup(typeof(Ahk.GitHub.Monitor.Startup))]
 
@@ -17,8 +17,19 @@ namespace Ahk.GitHub.Monitor
             });
             builder.Services.AddSingleton<Services.IGitHubClientFactory, Services.GitHubClientFactory>();
 
+            var eventHandlers = registerEventHandlers(builder.Services);
+            builder.Services.AddSingleton<Services.IEventDispatchService, Services.EventDispatchService>(sp => new Services.EventDispatchService(sp, eventHandlers));
+
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables("AHK_").Build();
             builder.Services.Configure<GitHubMonitorConfig>(configuration);
+        }
+
+        private static Services.EventDispatchConfigBuilder registerEventHandlers(IServiceCollection services)
+        {
+            return new Services.EventDispatchConfigBuilder(services)
+                .Add<EventHandlers.BranchProtectionRuleHandler>(EventHandlers.BranchProtectionRuleHandler.GitHubWebhookEventName)
+                .Add<EventHandlers.IssueCommentEditDeleteHandler>(EventHandlers.IssueCommentEditDeleteHandler.GitHubWebhookEventName)
+                .Add<EventHandlers.PullRequestOpenDuplicateHandler>(EventHandlers.PullRequestOpenDuplicateHandler.GitHubWebhookEventName);
         }
     }
 }

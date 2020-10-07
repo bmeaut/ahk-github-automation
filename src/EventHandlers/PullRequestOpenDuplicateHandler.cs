@@ -6,12 +6,12 @@ using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class PullRequestEventHandler : RepositoryEventBase<PullRequestEventPayload>
+    public class PullRequestOpenDuplicateHandler : RepositoryEventBase<PullRequestEventPayload>
     {
         public const string GitHubWebhookEventName = "pull_request";
         private const string DefaultWarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n _This is an automated message. Ez egy automata uzenet._";
 
-        public PullRequestEventHandler(Services.IGitHubClientFactory gitHubClientFactory)
+        public PullRequestOpenDuplicateHandler(Services.IGitHubClientFactory gitHubClientFactory)
             : base(gitHubClientFactory)
         {
         }
