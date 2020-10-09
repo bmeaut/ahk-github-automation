@@ -26,7 +26,7 @@ The application requires the following configurations specified as **environment
 
 The application reads a yaml configuration file stored in the GitHub repository triggering the events. The configuration file is used to enable the functionalities of this application as follows.
 
-The configuration file must be stored on the `master` branch in file `.github/ahk-monitor.yml`.
+The configuration file must be stored on the default branch in file `.github/ahk-monitor.yml`.
 
 The configuration file:
 
@@ -42,10 +42,10 @@ The application enforces the following rules.
 
 ### Branch usage
 
-1. The master branch is not touched by the student. The solution is submitted on a new branch via a pull request.
+1. The default branch is not touched by the student. The solution is submitted on a new branch via a pull request.
 1. There are no force pushes.
 
-These rules are enforced by marking all branches as protected, and requiring review of pull requests targeting the master branch.
+These rules are enforced by marking all branches as protected, and requiring review of pull requests targeting the default branch.
 
 This rule is enabled by default. The rule can be configured in the repository settings file:
 
