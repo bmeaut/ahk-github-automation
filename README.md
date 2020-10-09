@@ -42,10 +42,10 @@ The application enforces the following rules.
 
 ### Branch usage
 
-1. The master branch is not touched by the student. The solution is submitted on a new branch via a pull request.
+1. The default branch is not touched by the student. The solution is submitted on a new branch via a pull request.
 1. There are no force pushes.
 
-These rules are enforced by marking all branches as protected, and requiring review of pull requests targeting the master branch.
+These rules are enforced by marking all branches as protected, and requiring review of pull requests targeting the default branch.
 
 This rule is enabled by default. The rule can be configured in the repository settings file:
 

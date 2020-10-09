@@ -26,25 +26,25 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             else
             {
                 await GitHubClient.Repository.Branch.UpdateBranchProtection(
-                            webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref));
+                            webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref, webhookPayload.Repository.DefaultBranch));
                 webhookResult.LogInfo("Branch protection rule applied.");
             }
         }
 
-        private static BranchProtectionSettingsUpdate getBranchProtectionSettingsUpdate(string branchName)
+        private static BranchProtectionSettingsUpdate getBranchProtectionSettingsUpdate(string branchName, string repositoryDefaultBranch)
         {
-            // For master: prohibits the merge request into master to be merged
+            // For default: prohibits the merge request into default to be merged
             // For other branches: disables force push
             return new BranchProtectionSettingsUpdate(
                                     requiredStatusChecks: null, // Required. Require status checks to pass before merging. Set to null to disable.
-                                    requiredPullRequestReviews: getBranchProtectionRequiredReviewsUpdate(branchName),
+                                    requiredPullRequestReviews: getBranchProtectionRequiredReviewsUpdate(branchName, repositoryDefaultBranch),
                                     restrictions: null, // Push access restrictions. Null to disable.
                                     enforceAdmins: false); // Required. Enforce all configured restrictions for administrators. Set to true to enforce required status checks for repository administrators. Set to null to disable.
         }
 
-        private static BranchProtectionRequiredReviewsUpdate getBranchProtectionRequiredReviewsUpdate(string branchName)
+        private static BranchProtectionRequiredReviewsUpdate getBranchProtectionRequiredReviewsUpdate(string branchName, string repositoryDefaultBranch)
         {
-            if (branchName.Equals("master", StringComparison.OrdinalIgnoreCase))
+            if (branchName.Equals(repositoryDefaultBranch, StringComparison.OrdinalIgnoreCase))
                 return new BranchProtectionRequiredReviewsUpdate(false, false, 1); // Prohibits the student from merging the pull request.
             else
                 return null;
