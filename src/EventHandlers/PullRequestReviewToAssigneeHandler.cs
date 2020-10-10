@@ -18,15 +18,17 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
             if (webhookPayload.PullRequest == null)
                 return EventHandlerResult.PayloadError("no pull request information in webhook payload");
-            if (webhookPayload.PullRequest.RequestedReviewers == null || webhookPayload.PullRequest.RequestedReviewers.Count == 0)
-                return EventHandlerResult.PayloadError("no requested reviewer in webhook payload");
 
             if (repoSettings.ReviewerToAssignee == null || !repoSettings.ReviewerToAssignee.Enabled)
                 return EventHandlerResult.Disabled();
 
             if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
             {
-                if (!isPrAssignedToReviewer(webhookPayload))
+                if (webhookPayload.PullRequest.RequestedReviewers == null || webhookPayload.PullRequest.RequestedReviewers.Count == 0)
+                {
+                    return EventHandlerResult.PayloadError("no requested reviewer in webhook payload");
+                }
+                else if (!isPrAssignedToReviewer(webhookPayload))
                 {
                     await GitHubClient.Issue.Assignee.AddAssignees(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.PullRequest.Number, getUsersToAssign(webhookPayload));
                     return EventHandlerResult.ActionPerformed("pull request review_requested handled, assignee set");
