@@ -14,36 +14,30 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task execute(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
+        protected override async Task<EventHandlerResult> execute(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings)
         {
             if (webhookPayload.PullRequest == null)
+                return EventHandlerResult.PayloadError("no pull request information in webhook payload");
+            if (webhookPayload.PullRequest.RequestedReviewers == null || webhookPayload.PullRequest.RequestedReviewers.Count == 0)
+                return EventHandlerResult.PayloadError("no requested reviewer in webhook payload");
+
+            if (repoSettings.ReviewerToAssignee == null || !repoSettings.ReviewerToAssignee.Enabled)
+                return EventHandlerResult.Disabled();
+
+            if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
             {
-                webhookResult.LogError("no pull request information in webhook payload");
-            }
-            else if (repoSettings.ReviewerToAssignee == null || !repoSettings.ReviewerToAssignee.Enabled)
-            {
-                webhookResult.LogError("reviewer to assignee not enabled for repository");
-            }
-            else if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
-            {
-                if (webhookPayload.PullRequest.RequestedReviewers == null || webhookPayload.PullRequest.RequestedReviewers.Count == 0)
-                {
-                    webhookResult.LogError("no requested reviewer in webhook payload");
-                }
-                else if (!isPrAssignedToReviewer(webhookPayload))
+                if (!isPrAssignedToReviewer(webhookPayload))
                 {
                     await GitHubClient.Issue.Assignee.AddAssignees(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.PullRequest.Number, getUsersToAssign(webhookPayload));
-                    webhookResult.LogInfo("pull request review_requested handled, assignee set");
+                    return EventHandlerResult.ActionPerformed("pull request review_requested handled, assignee set");
                 }
                 else
                 {
-                    webhookResult.LogInfo("pull request review_requested is ok, assignee is present");
+                    return EventHandlerResult.NoActionNeeded("pull request review_requested is ok, assignee is present");
                 }
             }
-            else
-            {
-                webhookResult.LogInfo($"pull request action {webhookPayload.Action} is not of interrest");
-            }
+
+            return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
         }
 
         private static AssigneesUpdate getUsersToAssign(PullRequestEventPayload webhookPayload)

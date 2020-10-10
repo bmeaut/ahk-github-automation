@@ -16,33 +16,34 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task execute(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
+        protected override async Task<EventHandlerResult> execute(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings)
         {
             if (webhookPayload.PullRequest == null)
-            {
-                webhookResult.LogError("no pull request information in webhook payload");
-            }
-            else if (repoSettings.MultiplePRProtection == null || !repoSettings.MultiplePRProtection.Enabled)
-            {
-                webhookResult.LogError("multiple PR protection not enabled for repository");
-            }
-            else if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
+                return EventHandlerResult.PayloadError("no pull request information in webhook payload");
+
+            if (repoSettings.MultiplePRProtection == null || !repoSettings.MultiplePRProtection.Enabled)
+                return EventHandlerResult.Disabled();
+
+            if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
             {
                 var repositoryPrs = await getPullRequestsExceptCurrent(webhookPayload);
                 if (repositoryPrs.Count == 0)
                 {
-                    webhookResult.LogInfo("pull request open is ok, there are no other PRs");
+                    return EventHandlerResult.NoActionNeeded("pull request open is ok, there are no other PRs");
                 }
                 else
                 {
-                    await handleAnyOpenPrs(webhookPayload, repoSettings, webhookResult, repositoryPrs);
-                    await handleAnyClosedPrs(webhookPayload, repoSettings, webhookResult, repositoryPrs);
+                    var (handledOpen, resultOpen) = await handleAnyOpenPrs(webhookPayload, repoSettings, repositoryPrs);
+                    var (handledClosed, resultClosed) = await handleAnyClosedPrs(webhookPayload, repoSettings, repositoryPrs);
+
+                    if (!handledOpen && !handledClosed)
+                        return EventHandlerResult.NoActionNeeded($"{resultOpen}; {resultClosed}");
+                    else
+                        return EventHandlerResult.ActionPerformed($"{resultOpen}; {resultClosed}");
                 }
             }
-            else
-            {
-                webhookResult.LogInfo($"pull request action {webhookPayload.Action} is not of interrest");
-            }
+
+            return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
         }
 
         private async Task<IReadOnlyCollection<PullRequest>> getPullRequestsExceptCurrent(PullRequestEventPayload webhookPayload)
@@ -51,7 +52,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return allPullRequests.Where(otherPr => otherPr.Number != webhookPayload.PullRequest.Number).ToList();
         }
 
-        private async Task handleAnyOpenPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult, IReadOnlyCollection<PullRequest> repositoryPrs)
+        private async Task<(bool, string)> handleAnyOpenPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, IReadOnlyCollection<PullRequest> repositoryPrs)
         {
             var openPrs = repositoryPrs.Where(otherPr => otherPr.State == ItemState.Open).ToList();
             if (openPrs.Any())
@@ -60,15 +61,15 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 foreach (var openPullRequest in openPrs)
                     await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, openPullRequest.Number, warningText);
 
-                webhookResult.LogInfo("pull request open handled with multiple open PRs");
+                return (true, "pull request open handled with multiple open PRs");
             }
             else
             {
-                webhookResult.LogInfo("pull request open is ok, there are no other open PRs");
+                return (false, "pull request open is ok, there are no other open PRs");
             }
         }
 
-        private async Task handleAnyClosedPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult, IReadOnlyCollection<PullRequest> repositoryPrs)
+        private async Task<(bool, string)> handleAnyClosedPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, IReadOnlyCollection<PullRequest> repositoryPrs)
         {
             var closedPrs = repositoryPrs.Where(otherPr => otherPr.State == ItemState.Closed).ToList();
             if (closedPrs.Any())
@@ -85,16 +86,16 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                     var warningText = getWarningText(repoSettings.MultiplePRProtection, webhookPayload.PullRequest.Number, prsClosedByNotStudent);
                     await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Number, warningText);
 
-                    webhookResult.LogInfo("pull request open handled with already closed PRs");
+                    return (true, "pull request open handled with already closed PRs");
                 }
                 else
                 {
-                    webhookResult.LogInfo("pull request open is ok, there are no other evaluated PRs");
+                    return (false, "pull request open is ok, there are no other evaluated PRs");
                 }
             }
             else
             {
-                webhookResult.LogInfo("pull request open is ok, there are no other closed PRs");
+                return (false, "pull request open is ok, there are no other closed PRs");
             }
         }
 

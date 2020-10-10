@@ -13,22 +13,17 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task execute(CreateEventPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
+        protected override async Task<EventHandlerResult> execute(CreateEventPayload webhookPayload, RepositorySettings repoSettings)
         {
             if (!webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
-            {
-                webhookResult.LogInfo($"create event for ref {webhookPayload.RefType} is not of interrest");
-            }
-            else if (repoSettings.BranchProtection == null || !repoSettings.BranchProtection.Enabled)
-            {
-                webhookResult.LogInfo($"branch protection not enabled for repository");
-            }
-            else
-            {
-                await GitHubClient.Repository.Branch.UpdateBranchProtection(
-                            webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref, webhookPayload.Repository.DefaultBranch));
-                webhookResult.LogInfo("Branch protection rule applied.");
-            }
+                return EventHandlerResult.NoActionNeeded($"create event for ref {webhookPayload.RefType} is not of interrest");
+
+            if (repoSettings.BranchProtection == null || !repoSettings.BranchProtection.Enabled)
+                return EventHandlerResult.Disabled();
+
+            await GitHubClient.Repository.Branch.UpdateBranchProtection(
+                        webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref, webhookPayload.Repository.DefaultBranch));
+            return EventHandlerResult.ActionPerformed("branch protection rule applied");
         }
 
         private static BranchProtectionSettingsUpdate getBranchProtectionSettingsUpdate(string branchName, string repositoryDefaultBranch)
