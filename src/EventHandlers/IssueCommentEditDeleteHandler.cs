@@ -14,32 +14,28 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task execute(IssueCommentPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult)
+        protected override async Task<EventHandlerResult> execute(IssueCommentPayload webhookPayload, RepositorySettings repoSettings)
         {
             if (webhookPayload.Issue == null)
-            {
-                webhookResult.LogError("no issue information in webhook payload");
-            }
-            else if (repoSettings.CommentProtection == null || !repoSettings.CommentProtection.Enabled)
-            {
-                webhookResult.LogError("comment protection not enabled for repository");
-            }
-            else if (webhookPayload.Action.Equals("edited", StringComparison.OrdinalIgnoreCase) || webhookPayload.Action.Equals("deleted", StringComparison.OrdinalIgnoreCase))
+                return EventHandlerResult.PayloadError("no issue information in webhook payload");
+
+            if (repoSettings.CommentProtection == null || !repoSettings.CommentProtection.Enabled)
+                return EventHandlerResult.Disabled();
+
+            if (webhookPayload.Action.Equals("edited", StringComparison.OrdinalIgnoreCase) || webhookPayload.Action.Equals("deleted", StringComparison.OrdinalIgnoreCase))
             {
                 if (webhookPayload.Sender != null && webhookPayload.Comment?.User != null && webhookPayload.Sender.Login == webhookPayload.Comment.User.Login)
                 {
-                    webhookResult.LogInfo($"comment action {webhookPayload.Action} by {webhookPayload.Sender.Login} allowed, referencing own comment");
+                    return EventHandlerResult.NoActionNeeded($"comment action {webhookPayload.Action} by {webhookPayload.Sender.Login} allowed, referencing own comment");
                 }
                 else
                 {
                     await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, getWarningText(repoSettings.CommentProtection));
-                    webhookResult.LogInfo("comment action handled");
+                    return EventHandlerResult.ActionPerformed("comment action resulting in warning");
                 }
             }
-            else
-            {
-                webhookResult.LogInfo($"comment action {webhookPayload.Action} is not of interrest");
-            }
+
+            return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
         }
 
         private static string getWarningText(CommentProtectionSettings commentProtection)

@@ -21,34 +21,31 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             this.gitHubClientFactory = gitHubClientFactory;
         }
 
-        public async Task Execute(string requestBody, WebhookResult webhookResult)
+        public async Task<EventHandlerResult> Execute(string requestBody)
         {
-            if (!tryParsePayload(requestBody, webhookResult, out var webhookPayload))
-                return;
+            if (!tryParsePayload(requestBody, out var webhookPayload, out var errorResult))
+                return errorResult;
 
             GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
-            var repoSettings = await tryGetRepositorySettings(webhookPayload, webhookResult);
+            var (repoSettings, repoSettingsErrorResult) = await tryGetRepositorySettings(webhookPayload);
 
             if (repoSettings == null)
-                return;
+                return repoSettingsErrorResult;
 
             if (!repoSettings.Enabled)
-            {
-                webhookResult.LogInfo($"ahk-monitor.yml disabled app for repository {webhookPayload.Repository.FullName}");
-                return;
-            }
+                return EventHandlerResult.Disabled($"ahk-monitor.yml disabled app for repository {webhookPayload.Repository.FullName}");
 
-            await execute(webhookPayload, repoSettings, webhookResult);
+            return await execute(webhookPayload, repoSettings);
         }
 
-        protected abstract Task execute(TPayload webhookPayload, RepositorySettings repoSettings, WebhookResult webhookResult);
+        protected abstract Task<EventHandlerResult> execute(TPayload webhookPayload, RepositorySettings repoSettings);
 
-        protected bool tryParsePayload(string requestBody, WebhookResult webhookResult, out TPayload payload)
+        protected bool tryParsePayload(string requestBody, out TPayload payload, out EventHandlerResult errorResult)
         {
             payload = null;
             if (string.IsNullOrEmpty(requestBody))
             {
-                webhookResult.LogError("request body was empty");
+                errorResult = EventHandlerResult.PayloadError("request body was empty");
                 return false;
             }
 
@@ -58,22 +55,23 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
             catch (Exception ex)
             {
-                webhookResult.LogError(ex, "request body deserialization failed");
+                errorResult = EventHandlerResult.PayloadError($"request body deserialization failed: {ex.Message}");
                 return false;
             }
 
             if (payload == null)
             {
-                webhookResult.LogError("parsed payload was null or empty");
+                errorResult = EventHandlerResult.PayloadError("parsed payload was null or empty");
                 return false;
             }
 
             if (payload.Repository == null)
             {
-                webhookResult.LogError("no repository information in webhook payload");
+                errorResult = EventHandlerResult.PayloadError("no repository information in webhook payload");
                 return false;
             }
 
+            errorResult = null;
             return true;
         }
 
@@ -83,7 +81,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                     .IgnoreUnmatchedProperties()
                     .Build();
 
-        private async Task<RepositorySettings> tryGetRepositorySettings(TPayload webhookPayload, WebhookResult webhookResult)
+        private async Task<(RepositorySettings, EventHandlerResult)> tryGetRepositorySettings(TPayload webhookPayload)
         {
             try
             {
@@ -91,25 +89,20 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 var settingsString = contents.FirstOrDefault()?.Content;
 
                 if (settingsString == null)
-                {
-                    webhookResult.LogInfo($"repository {webhookPayload.Repository.FullName} has no ahk-monitor.yml");
-                    return null;
-                }
+                    return (null, EventHandlerResult.Disabled("repository has no ahk-monitor.yml"));
 
                 try
                 {
-                    return YamlDeserializer.Deserialize<RepositorySettings>(settingsString);
+                    return (YamlDeserializer.Deserialize<RepositorySettings>(settingsString), null);
                 }
                 catch (Exception ex)
                 {
-                    webhookResult.LogError("Config yaml parse error: " + ex.Message);
-                    return null;
+                    return (null, EventHandlerResult.PayloadError("Config yaml parse error: " + ex.Message));
                 }
             }
             catch (NotFoundException)
             {
-                webhookResult.LogInfo($"repository {webhookPayload.Repository.FullName} has no ahk-monitor.yml");
-                return null;
+                return (null, EventHandlerResult.Disabled("repository has no ahk-monitor.yml"));
             }
         }
     }

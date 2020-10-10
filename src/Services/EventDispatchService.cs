@@ -29,15 +29,26 @@ namespace Ahk.GitHub.Monitor.Services
         {
             if (!this.handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
             {
-                webhookResult.LogInfo($"Event {gitHubEventName} is not of interrest");
+                webhookResult.LogInfo($"Event {gitHubEventName} is not of interest");
             }
             else
             {
                 foreach (var handlerType in handlersForEvent)
-                {
-                    var handler = serviceProvider.GetRequiredService(handlerType) as EventHandlers.IGitHubEventHandler;
-                    await handler.Execute(requestBody, webhookResult);
-                }
+                    await executeHandler(requestBody, webhookResult, handlerType);
+            }
+        }
+
+        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType)
+        {
+            try
+            {
+                var handler = serviceProvider.GetRequiredService(handlerType) as EventHandlers.IGitHubEventHandler;
+                var handlerResult = await handler.Execute(requestBody);
+                webhookResult.LogInfo($"{handlerType.Name} -> {handlerResult.Result}");
+            }
+            catch (Exception ex)
+            {
+                webhookResult.LogError(ex, $"{handlerType.Name} -> exception");
             }
         }
     }

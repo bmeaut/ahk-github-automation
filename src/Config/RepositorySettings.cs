@@ -6,5 +6,6 @@
         public BranchProtectionSettings BranchProtection { get; set; } = new BranchProtectionSettings();
         public CommentProtectionSettings CommentProtection { get; set; } = new CommentProtectionSettings();
         public MultiplePRProtectionSettings MultiplePRProtection { get; set; } = new MultiplePRProtectionSettings();
+        public ReviewerToAssigneeSettings ReviewerToAssignee { get; set; } = new ReviewerToAssigneeSettings();
     }
 }

@@ -87,3 +87,17 @@ multiplePRProtection:
   enabled: true
   warningText: "This text is added as a comment into the PR and references to related PRs are added {} here."
 ```
+
+### Reviewer must be assigned to the pull request
+
+1. Pull requests should be assigned to the instructor for evaluation. When a review is requested instead, assign the instructor.
+
+Explanation: To track submitted work the pull requests should be assigned to the instructor. This allows the instructor to use GitHub web interface to go through all submissions. Requesting a review of a pull request is frequently mixed up with assignment. Although GitHub has a list of requested reviews, if the instructor choses to request a change in the submission, the pull request is removed from this list. If the student makes changes to the pull request as the result of the change request, the pull request does not show up in the pending reviews list. To ensure tracking these pull requests too, any reviewer is automatically set as assignee too.
+
+This rule is enabled by default. The rule can be configured in the repository settings file:
+
+```yaml
+...
+reviewerToAssignee:
+  enabled: true
+```
