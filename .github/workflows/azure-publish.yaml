@@ -15,14 +15,11 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "3.1.402"
+          dotnet-version: "3.1.407"
 
       - name: "Run dotnet build"
-        shell: bash
-        run: |
-          pushd src
-          dotnet build --configuration Release --output ./output
-          popd
+        working-directory: src
+        run: dotnet build --configuration Release --output ./output
 
       - name: "Run Azure Functions Action"
         uses: Azure/functions-action@v1
