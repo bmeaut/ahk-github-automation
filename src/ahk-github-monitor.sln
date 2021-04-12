@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GitHub.Monitor.Tests", "Ahk.GitHub.Monitor.Tests\Ahk.GitHub.Monitor.Tests.csproj", "{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +24,10 @@ Global
 		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
