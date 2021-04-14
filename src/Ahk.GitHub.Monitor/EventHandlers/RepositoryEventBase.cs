@@ -14,7 +14,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private readonly IGitHubClientFactory gitHubClientFactory;
 
-        protected GitHubClient GitHubClient { get; private set; }
+        protected IGitHubClient GitHubClient { get; private set; }
 
         protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory)
         {
