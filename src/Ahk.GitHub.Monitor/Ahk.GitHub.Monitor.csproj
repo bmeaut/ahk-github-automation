@@ -8,6 +8,12 @@
   <PropertyGroup>
     <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Ahk.GitHub.Monitor.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />

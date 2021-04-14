@@ -40,6 +40,8 @@ namespace Ahk.GitHub.Monitor
 
             if (string.IsNullOrEmpty(eventName))
                 return new ObjectResult(new { error = "X-GitHub-Event header missing" }) { StatusCode = StatusCodes.Status400BadRequest };
+            if (string.IsNullOrEmpty(receivedSignature))
+                return new ObjectResult(new { error = "X-Hub-Signature header missing" }) { StatusCode = StatusCodes.Status400BadRequest };
 
             var payload = new PayloadReader(request);
             if (!PayloadValidator.IsSignatureValid(await payload.ReadAsByteArray(), receivedSignature, config.Value.GitHubWebhookSecret))

@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         protected override async Task<EventHandlerResult> execute(CreateEventPayload webhookPayload, RepositorySettings repoSettings)
         {
             if (!webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
-                return EventHandlerResult.NoActionNeeded($"create event for ref {webhookPayload.RefType} is not of interrest");
+                return EventHandlerResult.NoActionNeeded($"create event for ref {webhookPayload.RefType} is not of interest");
 
             if (repoSettings.BranchProtection == null || !repoSettings.BranchProtection.Enabled)
                 return EventHandlerResult.Disabled();
