@@ -21,3 +21,4 @@ jobs:
         working-directory: src
         run: |
           dotnet build
+          dotnet test

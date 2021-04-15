@@ -1,15 +1,15 @@
-﻿using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using Octokit;
-using System;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Helpers;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.Services
 {
@@ -27,10 +27,10 @@ namespace Ahk.GitHub.Monitor.Services
             this.config = config;
         }
 
-        public Task<GitHubClient> CreateGitHubClient(long installationId)
+        public Task<IGitHubClient> CreateGitHubClient(long installationId)
             => connectionCache.GetOrCreateAsync($"githubconn_{installationId}", cacheEntry => createNewGitHubClient(cacheEntry, installationId));
 
-        private async Task<GitHubClient> createNewGitHubClient(ICacheEntry cacheEntry, long installationId)
+        private async Task<IGitHubClient> createNewGitHubClient(ICacheEntry cacheEntry, long installationId)
         {
             var gitHubClient = new GitHubClient(new Octokit.ProductHeaderValue("Ahk"))
             {
@@ -54,14 +54,8 @@ namespace Ahk.GitHub.Monitor.Services
                     Headers =
                     {
                         Authorization = new AuthenticationHeaderValue("Bearer", applicationToken),
-                        UserAgent =
-                        {
-                            ProductInfoHeaderValue.Parse("Ahk"),
-                        },
-                        Accept =
-                        {
-                            MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json")
-                        }
+                        UserAgent = { ProductInfoHeaderValue.Parse("Ahk") },
+                        Accept = { MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json") },
                     }
                 };
 

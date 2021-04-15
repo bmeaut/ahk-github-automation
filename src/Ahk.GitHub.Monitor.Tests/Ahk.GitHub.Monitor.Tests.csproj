@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="SampleCallbacks\branch_create.json" />
+    <None Remove="SampleCallbacks\comment_delete.json" />
+    <None Remove="SampleCallbacks\comment_edit.json" />
+    <None Remove="SampleCallbacks\pr_open.json" />
+    <None Remove="SampleCallbacks\pr_reviewrequested.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SampleCallbacks\branch_create.json" />
+    <EmbeddedResource Include="SampleCallbacks\comment_delete.json" />
+    <EmbeddedResource Include="SampleCallbacks\comment_edit.json" />
+    <EmbeddedResource Include="SampleCallbacks\pr_reviewrequested.json" />
+    <EmbeddedResource Include="SampleCallbacks\pr_open.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
+    <PackageReference Include="Moq" Version="4.16.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.2.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.2.3" />
+    <PackageReference Include="coverlet.collector" Version="3.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor.csproj" />
+  </ItemGroup>
+
+</Project>

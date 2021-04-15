@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace Ahk.GitHub.Monitor
 {
@@ -13,8 +13,8 @@ namespace Ahk.GitHub.Monitor
     /// </remarks>
     public class PayloadReader
     {
+        private readonly HttpRequest request;
         private MemoryStream content;
-        private HttpRequest request;
 
         public PayloadReader(HttpRequest request)
             => this.request = request;
