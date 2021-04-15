@@ -26,8 +26,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
             if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
             {
-                var repositoryPrs = await getPullRequestsExceptCurrent(webhookPayload);
-                if (repositoryPrs.Count == 0)
+                var repositoryPrs = await getAllRepoPullRequests(webhookPayload);
+                if (repositoryPrs.Count <= 1)
                 {
                     return EventHandlerResult.NoActionNeeded("pull request open is ok, there are no other PRs");
                 }
@@ -46,16 +46,13 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
         }
 
-        private async Task<IReadOnlyCollection<PullRequest>> getPullRequestsExceptCurrent(PullRequestEventPayload webhookPayload)
-        {
-            var allPullRequests = await GitHubClient.PullRequest.GetAllForRepository(webhookPayload.Repository.Id, new PullRequestRequest() { State = ItemStateFilter.All });
-            return allPullRequests.Where(otherPr => otherPr.Number != webhookPayload.PullRequest.Number).ToList();
-        }
+        private Task<IReadOnlyList<PullRequest>> getAllRepoPullRequests(PullRequestEventPayload webhookPayload)
+            => GitHubClient.PullRequest.GetAllForRepository(webhookPayload.Repository.Id, new PullRequestRequest() { State = ItemStateFilter.All });
 
         private async Task<(bool, string)> handleAnyOpenPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, IReadOnlyCollection<PullRequest> repositoryPrs)
         {
             var openPrs = repositoryPrs.Where(otherPr => otherPr.State == ItemState.Open).ToList();
-            if (openPrs.Any())
+            if (openPrs.Count > 1)
             {
                 var warningText = getWarningText(repoSettings.MultiplePRProtection, webhookPayload.PullRequest.Number, openPrs.Select(pr => pr.Number));
                 foreach (var openPullRequest in openPrs)
