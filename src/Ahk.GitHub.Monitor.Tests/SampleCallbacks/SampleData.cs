@@ -8,6 +8,7 @@ namespace Ahk.GitHub.Monitor.Tests
         public static readonly SampleCallbackData BranchCreate = new SampleCallbackData(getTextFromResource("branch_create.json"), "sha1=ba11ce00817aa44ec7f817561a6ab28e472a1415", "create");
         public static string CommentDelete = getTextFromResource("comment_delete.json");
         public static string CommentEdit = getTextFromResource("comment_edit.json");
+        public static string CommentCommand = getTextFromResource("comment_command.json");
         public static string PrOpen = getTextFromResource("pr_open.json");
         public static string PrReviewRequested = getTextFromResource("pr_reviewrequested.json");
 

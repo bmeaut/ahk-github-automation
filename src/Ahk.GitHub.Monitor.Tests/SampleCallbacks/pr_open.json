@@ -453,7 +453,7 @@
     "members_url": "https://api.github.com/orgs/aabbcc/members{/member}",
     "public_members_url": "https://api.github.com/orgs/aabbcc/public_members{/member}",
     "avatar_url": "https://avatars.githubusercontent.com/u/22446688?v=4",
-    "description": "BME Adatvezérelt rendszerek"
+    "description": "Org Name"
   },
   "sender": {
     "login": "AABBCC",

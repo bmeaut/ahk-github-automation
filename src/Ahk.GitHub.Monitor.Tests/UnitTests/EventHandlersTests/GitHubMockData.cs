@@ -8,7 +8,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
     {
         private const string AhkMonitorYamlContent = @"enabled: true";
 
-        public static PullRequest CreatePullRequest(int number, ItemState state, int userId)
+        public static PullRequest CreatePullRequest(int number, ItemState state, int userId = 111, bool? mergeable = null)
             => new PullRequest(
                         id: number,
                         nodeId: string.Empty, url: string.Empty, htmlUrl: string.Empty, diffUrl: string.Empty, patchUrl: string.Empty, issueUrl: string.Empty, statusesUrl: string.Empty,
@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                         title: string.Empty, body: string.Empty,
                         createdAt: DateTimeOffset.UtcNow, updatedAt: DateTimeOffset.UtcNow, closedAt: null, mergedAt: null,
                         head: null, @base: null, user: CreateUser(userId), assignee: null, assignees: null,
-                        draft: false, mergeable: null, mergeableState: null, mergedBy: null, mergeCommitSha: string.Empty,
+                        draft: false, mergeable: mergeable, mergeableState: null, mergedBy: null, mergeCommitSha: string.Empty,
                         comments: 0, commits: 0, additions: 0, deletions: 0, changedFiles: 0, milestone: null,
                         locked: false, maintainerCanModify: null, requestedReviewers: null, requestedTeams: null, labels: null);
 
