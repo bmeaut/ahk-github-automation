@@ -9,7 +9,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class PullRequestOpenDuplicateHandler : RepositoryEventBase<PullRequestEventPayload>
     {
         public const string GitHubWebhookEventName = "pull_request";
-        private const string DefaultWarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n _This is an automated message. Ez egy automata uzenet._";
+        private const string WarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n";
 
         public PullRequestOpenDuplicateHandler(Services.IGitHubClientFactory gitHubClientFactory)
             : base(gitHubClientFactory)
@@ -104,7 +104,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private static string getWarningText(int currentPrNumber, IEnumerable<int> foundPrNumbers)
         {
             var prReferencesText = string.Join(" ", foundPrNumbers.Union(new[] { currentPrNumber }).Distinct().OrderBy(num => num).Select(n => $"#{n}").ToArray());
-            return DefaultWarningText.Replace("{}", prReferencesText);
+            return WarningText.Replace("{}", prReferencesText);
         }
     }
 }
