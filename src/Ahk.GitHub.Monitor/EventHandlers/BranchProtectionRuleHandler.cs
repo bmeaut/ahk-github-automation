@@ -13,13 +13,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> execute(CreateEventPayload webhookPayload, RepositorySettings repoSettings)
+        protected override async Task<EventHandlerResult> execute(CreateEventPayload webhookPayload)
         {
             if (!webhookPayload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
                 return EventHandlerResult.NoActionNeeded($"create event for ref {webhookPayload.RefType} is not of interest");
-
-            if (repoSettings.BranchProtection == null || !repoSettings.BranchProtection.Enabled)
-                return EventHandlerResult.Disabled();
 
             await GitHubClient.Repository.Branch.UpdateBranchProtection(
                         webhookPayload.Repository.Id, webhookPayload.Ref, getBranchProtectionSettingsUpdate(webhookPayload.Ref, webhookPayload.Repository.DefaultBranch));

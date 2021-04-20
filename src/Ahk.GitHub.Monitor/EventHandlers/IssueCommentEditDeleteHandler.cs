@@ -14,13 +14,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> execute(IssueCommentPayload webhookPayload, RepositorySettings repoSettings)
+        protected override async Task<EventHandlerResult> execute(IssueCommentPayload webhookPayload)
         {
             if (webhookPayload.Issue == null)
                 return EventHandlerResult.PayloadError("no issue information in webhook payload");
-
-            if (repoSettings.CommentProtection == null || !repoSettings.CommentProtection.Enabled)
-                return EventHandlerResult.Disabled();
 
             if (webhookPayload.Action.Equals("edited", StringComparison.OrdinalIgnoreCase) || webhookPayload.Action.Equals("deleted", StringComparison.OrdinalIgnoreCase))
             {
@@ -30,15 +27,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 }
                 else
                 {
-                    await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, getWarningText(repoSettings.CommentProtection));
+                    await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, DefaultWarningText);
                     return EventHandlerResult.ActionPerformed("comment action resulting in warning");
                 }
             }
 
             return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
         }
-
-        private static string getWarningText(CommentProtectionSettings commentProtection)
-            => string.IsNullOrEmpty(commentProtection.WarningText) ? DefaultWarningText : commentProtection.WarningText;
     }
 }
