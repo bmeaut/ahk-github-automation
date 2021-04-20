@@ -10,8 +10,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public abstract class RepositoryEventBase<TPayload> : IGitHubEventHandler
         where TPayload : ActivityPayload
     {
-        private static readonly YamlDotNet.Serialization.IDeserializer YamlDeserializer = CreateYamlDeserializer();
-
         private readonly IGitHubClientFactory gitHubClientFactory;
 
         protected IGitHubClient GitHubClient { get; private set; }
@@ -27,18 +25,14 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 return errorResult;
 
             GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
-            var (repoSettings, repoSettingsErrorResult) = await tryGetRepositorySettings(webhookPayload);
 
-            if (repoSettings == null)
-                return repoSettingsErrorResult;
+            if (!await isEnabledForRepository(webhookPayload))
+                return EventHandlerResult.Disabled("no ahk-monitor.yml or disabled");
 
-            if (!repoSettings.Enabled)
-                return EventHandlerResult.Disabled($"ahk-monitor.yml disabled app for repository {webhookPayload.Repository.FullName}");
-
-            return await execute(webhookPayload, repoSettings);
+            return await execute(webhookPayload);
         }
 
-        protected abstract Task<EventHandlerResult> execute(TPayload webhookPayload, RepositorySettings repoSettings);
+        protected abstract Task<EventHandlerResult> execute(TPayload webhookPayload);
 
         protected bool tryParsePayload(string requestBody, out TPayload payload, out EventHandlerResult errorResult)
         {
@@ -75,34 +69,17 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return true;
         }
 
-        private static YamlDotNet.Serialization.IDeserializer CreateYamlDeserializer()
-            => new YamlDotNet.Serialization.DeserializerBuilder()
-                    .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention.Instance)
-                    .IgnoreUnmatchedProperties()
-                    .Build();
-
-        private async Task<(RepositorySettings, EventHandlerResult)> tryGetRepositorySettings(TPayload webhookPayload)
+        private async Task<bool> isEnabledForRepository(TPayload webhookPayload)
         {
             try
             {
                 var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, ".github/ahk-monitor.yml", webhookPayload.Repository.DefaultBranch);
-                var settingsString = contents.FirstOrDefault()?.Content;
-
-                if (settingsString == null)
-                    return (null, EventHandlerResult.Disabled("repository has no ahk-monitor.yml"));
-
-                try
-                {
-                    return (YamlDeserializer.Deserialize<RepositorySettings>(settingsString), null);
-                }
-                catch (Exception ex)
-                {
-                    return (null, EventHandlerResult.PayloadError("Config yaml parse error: " + ex.Message));
-                }
+                var contentAsString = contents.FirstOrDefault()?.Content;
+                return ConfigYamlParser.IsEnabled(contentAsString);
             }
             catch (NotFoundException)
             {
-                return (null, EventHandlerResult.Disabled("repository has no ahk-monitor.yml"));
+                return false;
             }
         }
     }

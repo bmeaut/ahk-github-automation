@@ -44,7 +44,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new TestHandler(gitHubMock.CreateFactory());
             var result = await eh.Execute(SampleData.BranchCreate.Body);
 
-            Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml"));
+            Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml or disabled"));
         }
 
         [TestMethod]
@@ -56,19 +56,19 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new TestHandler(gitHubMock.CreateFactory());
             var result = await eh.Execute(SampleData.BranchCreate.Body);
 
-            Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml"));
+            Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml or disabled"));
         }
 
         [TestMethod]
         public async Task AhkMonitorConfigYamlInvalid()
         {
             var gitHubMock = GitHubClientMockFactory.CreateCustom()
-                    .WithAhkMonitorConfigYamlContent(c => c.ReturnsAsync(new[] { GitHubMockData.CreateAhkMonitorEnabledYamlFileContent("not yaml") }));
+                    .WithAhkMonitorConfigYamlContent(c => c.ReturnsAsync(new[] { GitHubMockData.CreateAhkMonitorYamlFileContent("not valid content") }));
 
             var eh = new TestHandler(gitHubMock.CreateFactory());
             var result = await eh.Execute(SampleData.BranchCreate.Body);
 
-            Assert.IsTrue(result.Result.Contains("parse error"));
+            Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml or disabled"));
         }
 
         [TestMethod]
@@ -87,7 +87,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             {
             }
 
-            protected override Task<EventHandlerResult> execute(Octokit.ActivityPayload webhookPayload, RepositorySettings repoSettings)
+            protected override Task<EventHandlerResult> execute(Octokit.ActivityPayload webhookPayload)
             {
                 return Task.FromResult(EventHandlerResult.ActionPerformed("TestHandler ok"));
             }

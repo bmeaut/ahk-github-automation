@@ -14,13 +14,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> execute(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings)
+        protected override async Task<EventHandlerResult> execute(PullRequestEventPayload webhookPayload)
         {
             if (webhookPayload.PullRequest == null)
                 return EventHandlerResult.PayloadError("no pull request information in webhook payload");
-
-            if (repoSettings.ReviewerToAssignee == null || !repoSettings.ReviewerToAssignee.Enabled)
-                return EventHandlerResult.Disabled();
 
             if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
             {

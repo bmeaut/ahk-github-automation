@@ -40,7 +40,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         }
 
         public GitHubClientMockFactory WithDefaultAhkMonitorConfigYamlContent()
-            => WithAhkMonitorConfigYamlContent(c => c.ReturnsAsync(new[] { GitHubMockData.CreateAhkMonitorEnabledYamlFileContent() }));
+            => WithAhkMonitorConfigYamlContent(c => c.ReturnsAsync(new[] { GitHubMockData.CreateAhkMonitorYamlFileContent() }));
 
         public GitHubClientMockFactory WithAhkMonitorConfigYamlContent(
             Action<Moq.Language.Flow.ISetup<IRepositoryContentsClient, Task<IReadOnlyList<RepositoryContent>>>> configure)

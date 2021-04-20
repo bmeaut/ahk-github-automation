@@ -6,7 +6,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
     internal static class GitHubMockData
     {
-        private const string AhkMonitorYamlEnabledContent = @"enabled: true";
+        private const string AhkMonitorYamlContent = @"enabled: true";
 
         public static PullRequest CreatePullRequest(int number, ItemState state, int userId)
             => new PullRequest(
@@ -29,8 +29,8 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                         encodedContent: Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
                         target: string.Empty, submoduleGitUrl: string.Empty);
 
-        public static RepositoryContent CreateAhkMonitorEnabledYamlFileContent(string content = null)
-            => CreateRepositoryFileContent(".github/ahk-monitor.yml", content ?? AhkMonitorYamlEnabledContent);
+        public static RepositoryContent CreateAhkMonitorYamlFileContent(string content = null)
+            => CreateRepositoryFileContent(".github/ahk-monitor.yml", content ?? AhkMonitorYamlContent);
 
         public static IssueEvent CreateIssueEvent(EventInfoState @event, int actorId)
             => new IssueEvent(

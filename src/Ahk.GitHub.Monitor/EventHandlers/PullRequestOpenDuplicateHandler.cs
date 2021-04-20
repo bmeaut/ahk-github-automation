@@ -16,13 +16,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> execute(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings)
+        protected override async Task<EventHandlerResult> execute(PullRequestEventPayload webhookPayload)
         {
             if (webhookPayload.PullRequest == null)
                 return EventHandlerResult.PayloadError("no pull request information in webhook payload");
-
-            if (repoSettings.MultiplePRProtection == null || !repoSettings.MultiplePRProtection.Enabled)
-                return EventHandlerResult.Disabled();
 
             if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
             {
@@ -33,8 +30,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 }
                 else
                 {
-                    var (handledOpen, resultOpen) = await handleAnyOpenPrs(webhookPayload, repoSettings, repositoryPrs);
-                    var (handledClosed, resultClosed) = await handleAnyClosedPrs(webhookPayload, repoSettings, repositoryPrs);
+                    var (handledOpen, resultOpen) = await handleAnyOpenPrs(webhookPayload, repositoryPrs);
+                    var (handledClosed, resultClosed) = await handleAnyClosedPrs(webhookPayload, repositoryPrs);
 
                     if (!handledOpen && !handledClosed)
                         return EventHandlerResult.NoActionNeeded($"{resultOpen}; {resultClosed}");
@@ -49,12 +46,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private Task<IReadOnlyList<PullRequest>> getAllRepoPullRequests(PullRequestEventPayload webhookPayload)
             => GitHubClient.PullRequest.GetAllForRepository(webhookPayload.Repository.Id, new PullRequestRequest() { State = ItemStateFilter.All });
 
-        private async Task<(bool, string)> handleAnyOpenPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, IReadOnlyCollection<PullRequest> repositoryPrs)
+        private async Task<(bool, string)> handleAnyOpenPrs(PullRequestEventPayload webhookPayload, IReadOnlyCollection<PullRequest> repositoryPrs)
         {
             var openPrs = repositoryPrs.Where(otherPr => otherPr.State == ItemState.Open).ToList();
             if (openPrs.Count > 1)
             {
-                var warningText = getWarningText(repoSettings.MultiplePRProtection, webhookPayload.PullRequest.Number, openPrs.Select(pr => pr.Number));
+                var warningText = getWarningText(webhookPayload.PullRequest.Number, openPrs.Select(pr => pr.Number));
                 foreach (var openPullRequest in openPrs)
                     await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, openPullRequest.Number, warningText);
 
@@ -66,7 +63,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
         }
 
-        private async Task<(bool, string)> handleAnyClosedPrs(PullRequestEventPayload webhookPayload, RepositorySettings repoSettings, IReadOnlyCollection<PullRequest> repositoryPrs)
+        private async Task<(bool, string)> handleAnyClosedPrs(PullRequestEventPayload webhookPayload, IReadOnlyCollection<PullRequest> repositoryPrs)
         {
             var closedPrs = repositoryPrs.Where(otherPr => otherPr.State == ItemState.Closed).ToList();
             if (closedPrs.Any())
@@ -80,7 +77,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
                 if (prsClosedByNotStudent.Any())
                 {
-                    var warningText = getWarningText(repoSettings.MultiplePRProtection, webhookPayload.PullRequest.Number, prsClosedByNotStudent);
+                    var warningText = getWarningText(webhookPayload.PullRequest.Number, prsClosedByNotStudent);
                     await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Number, warningText);
 
                     return (true, "pull request open handled with already closed PRs");
@@ -104,11 +101,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                      && e.Actor?.Id != pr.User.Id); // PR closed by someone other than the person who opened it -> student opened and teached closed PR
         }
 
-        private static string getWarningText(MultiplePRProtectionSettings multiplePRProtection, int currentPrNumber, IEnumerable<int> foundPrNumbers)
+        private static string getWarningText(int currentPrNumber, IEnumerable<int> foundPrNumbers)
         {
             var prReferencesText = string.Join(" ", foundPrNumbers.Union(new[] { currentPrNumber }).Distinct().OrderBy(num => num).Select(n => $"#{n}").ToArray());
-            var effectiveWarningText = string.IsNullOrEmpty(multiplePRProtection.WarningText) ? DefaultWarningText : multiplePRProtection.WarningText;
-            return effectiveWarningText.Replace("{}", prReferencesText);
+            return DefaultWarningText.Replace("{}", prReferencesText);
         }
     }
 }
