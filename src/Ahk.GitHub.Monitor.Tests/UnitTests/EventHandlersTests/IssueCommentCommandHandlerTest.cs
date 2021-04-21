@@ -74,7 +74,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         }
 
         [TestMethod]
-        public async Task PRNotValidStateUserAllowedCommandNotAllowed()
+        public async Task PRAlreadyClosedGradesAccepted()
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithOrganizationMemberGet("abcabc", true)
@@ -83,10 +83,10 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
             var result = await eh.Execute(getPayloadWithComment(@"@ahk ok"));
 
-            Assert.IsTrue(result.Result.Contains("not valid due to PR state"));
+            Assert.IsTrue(result.Result.Contains("grade done"));
             gitHubMock.GitHubClientMock.Verify(c =>
-                c.Issue.Comment.Create(336882879, 24, It.Is<string>(tx => tx.Contains("cannot be merged"))),
-                Times.Once());
+                c.PullRequest.Merge(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<Octokit.MergePullRequest>()),
+                Times.Never());
         }
 
         [DataTestMethod]
@@ -94,7 +94,15 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         [DataRow("@ahk ok\rsomething")]
         [DataRow("@ahk ok\r\nsomething")]
         [DataRow("something\r\n\r\n@ahk ok")]
-        public async Task PRValidStateUserAllowedCommandPerformed(string commentText)
+        [DataRow("@ahk ok 1")]
+        [DataRow("@ahk ok 2\rsomething")]
+        [DataRow("@ahk ok 3\r\nsomething")]
+        [DataRow("something\r\n\r\n@ahk ok 4")]
+        [DataRow("@ahk ok 1 2")]
+        [DataRow("@ahk ok 2 3.5\rsomething")]
+        [DataRow("@ahk ok 3.4 5\r\nsomething")]
+        [DataRow("something\r\n\r\n@ahk ok 4 5.6")]
+        public async Task PRNeedsMergeGradesAccepted(string commentText)
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithOrganizationMemberGet("abcabc", true)
@@ -103,7 +111,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
             var result = await eh.Execute(getPayloadWithComment(commentText));
 
-            Assert.IsTrue(result.Result.Contains("accept done"));
+            Assert.IsTrue(result.Result.Contains("grade done"));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Review.Create(336882879, 24, It.IsAny<Octokit.PullRequestReviewCreate>()),
                 Times.Once());
