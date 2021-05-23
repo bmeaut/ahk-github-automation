@@ -8,8 +8,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     {
         public const string GitHubWebhookEventName = "create";
 
-        public BranchProtectionRuleHandler(Services.IGitHubClientFactory gitHubClientFactory)
-            : base(gitHubClientFactory)
+        public BranchProtectionRuleHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
+            : base(gitHubClientFactory, cache)
         {
         }
 

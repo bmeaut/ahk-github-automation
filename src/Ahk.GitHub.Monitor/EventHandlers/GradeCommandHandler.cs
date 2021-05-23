@@ -11,10 +11,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "issue_comment";
         private readonly IMemoryCache isOrgMemberCache;
 
-        public GradeCommandHandler(Services.IGitHubClientFactory gitHubClientFactory, IMemoryCache isOrgMemberCache)
-            : base(gitHubClientFactory)
+        public GradeCommandHandler(Services.IGitHubClientFactory gitHubClientFactory, IMemoryCache cache)
+            : base(gitHubClientFactory, cache)
         {
-            this.isOrgMemberCache = isOrgMemberCache;
+            this.isOrgMemberCache = cache;
         }
 
         protected override async Task<EventHandlerResult> execute(IssueCommentPayload webhookPayload)

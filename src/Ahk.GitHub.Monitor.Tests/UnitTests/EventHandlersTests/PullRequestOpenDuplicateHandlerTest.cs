@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.PrOpen
                 .Replace("\"pull_request\": {", "\"non_pull_request\": {");
 
-            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no pull request"));
@@ -33,7 +33,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.PrOpen
                 .Replace("\"action\": \"opened\"", "\"action\": \"aaaa\"");
 
-            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -48,7 +48,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithPullRequestGetAll(c => c.ReturnsAsync(new Octokit.PullRequest[0]));
 
-            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
             Assert.IsTrue(result.Result.Contains("no other PRs"));
@@ -67,7 +67,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                                             GitHubMockData.CreatePullRequest(324, Octokit.ItemState.Open, 111),
                                         }));
 
-            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
             Assert.IsTrue(result.Result.Contains("multiple open PRs"));
@@ -90,7 +90,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                                         }))
                                 .WithIssueEventGetAll(c => c.ReturnsAsync(new[] { GitHubMockData.CreateIssueEvent(Octokit.EventInfoState.Closed, 444444) }));
 
-            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
             Assert.IsTrue(result.Result.Contains("already closed PRs"));
@@ -110,7 +110,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                                         }))
                                 .WithIssueEventGetAll(c => c.ReturnsAsync(new[] { GitHubMockData.CreateIssueEvent(Octokit.EventInfoState.Closed, 556677) }));
 
-            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
             Assert.IsTrue(result.Result.Contains("no other evaluated PRs"));
