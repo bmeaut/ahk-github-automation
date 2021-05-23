@@ -6,7 +6,7 @@ using Moq;
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
     [TestClass]
-    public class IssueCommentCommandHandlerTest
+    public class GradeCommandHandlerTest
     {
         [TestMethod]
         public async Task CommentNoIssueInPayloadIgnored()
@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.CommentEdit
                 .Replace("\"issue\": {", "\"aaaaa\": {");
 
-            var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
+            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no issue information"));
@@ -30,7 +30,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
+            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.CommentDelete);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -49,7 +49,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
+            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(getPayloadWithComment(commentText));
 
             Assert.IsTrue(result.Result.Contains("not recognized as command"));
@@ -64,12 +64,15 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithOrganizationMemberGet("abcabc", false);
 
-            var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
+            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(getPayloadWithComment(@"@ahk ok"));
 
             Assert.IsTrue(result.Result.Contains("not allowed for user"));
             gitHubMock.GitHubClientMock.Verify(c =>
-                c.Issue.Comment.Create(336882879, 24, It.Is<string>(tx => tx.Contains("not allowed for abcabc"))),
+                c.PullRequest.Merge(336882879, 24, It.IsAny<Octokit.MergePullRequest>()),
+                Times.Never());
+            gitHubMock.GitHubClientMock.Verify(c =>
+                c.Organization.Member.CheckMember("org1", "abcabc"),
                 Times.Once());
         }
 
@@ -80,7 +83,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                                 .WithOrganizationMemberGet("abcabc", true)
                                 .WithPullRequestGet(336882879, 24, GitHubMockData.CreatePullRequest(24, Octokit.ItemState.Closed, mergeable: false));
 
-            var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
+            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(getPayloadWithComment(@"@ahk ok"));
 
             Assert.IsTrue(result.Result.Contains("grade done"));
@@ -108,7 +111,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                                 .WithOrganizationMemberGet("abcabc", true)
                                 .WithPullRequestGet(336882879, 24, GitHubMockData.CreatePullRequest(24, Octokit.ItemState.Open, mergeable: true));
 
-            var eh = new IssueCommentCommandHandler(gitHubMock.CreateFactory());
+            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(getPayloadWithComment(commentText));
 
             Assert.IsTrue(result.Result.Contains("grade done"));

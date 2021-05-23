@@ -31,7 +31,7 @@ namespace Ahk.GitHub.Monitor
                 .Add<EventHandlers.IssueCommentEditDeleteHandler>(EventHandlers.IssueCommentEditDeleteHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.PullRequestOpenDuplicateHandler>(EventHandlers.PullRequestOpenDuplicateHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.PullRequestReviewToAssigneeHandler>(EventHandlers.PullRequestReviewToAssigneeHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.IssueCommentCommandHandler>(EventHandlers.IssueCommentCommandHandler.GitHubWebhookEventName);
+                .Add<EventHandlers.GradeCommandHandler>(EventHandlers.GradeCommandHandler.GitHubWebhookEventName);
         }
     }
 }

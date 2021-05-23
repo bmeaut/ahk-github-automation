@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Helpers;
+using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class IssueCommentCommandHandler : RepositoryEventBase<IssueCommentPayload>
+    public class GradeCommandHandler : RepositoryEventBase<IssueCommentPayload>
     {
         public const string GitHubWebhookEventName = "issue_comment";
-        private const string WarningTextUserNotAllowed = ":confused: **Grading not allowed for {}.**";
+        private readonly IMemoryCache isOrgMemberCache;
 
-
-        public IssueCommentCommandHandler(Services.IGitHubClientFactory gitHubClientFactory)
+        public GradeCommandHandler(Services.IGitHubClientFactory gitHubClientFactory, IMemoryCache isOrgMemberCache)
             : base(gitHubClientFactory)
         {
+            this.isOrgMemberCache = isOrgMemberCache;
         }
 
         protected override async Task<EventHandlerResult> execute(IssueCommentPayload webhookPayload)
@@ -58,13 +59,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task<EventHandlerResult> handleApprove(IssueCommentPayload webhookPayload, PullRequest pr, GradeCommentParser grades)
         {
-            await GitHubClient.Reaction.IssueComment.Create(webhookPayload.Repository.Id, webhookPayload.Comment.Id, new NewReaction(ReactionType.Plus1));
-
             bool shouldMergePr = pr.State.Value == ItemState.Open && pr.Mergeable == true;
             if (shouldMergePr)
             {
                 await GitHubClient.PullRequest.Review.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, new PullRequestReviewCreate() { Event = PullRequestReviewEvent.Approve });
                 await GitHubClient.PullRequest.Merge(webhookPayload.Repository.Id, webhookPayload.Issue.Number, new MergePullRequest());
+                await GitHubClient.Reaction.IssueComment.Create(webhookPayload.Repository.Id, webhookPayload.Comment.Id, new NewReaction(ReactionType.Plus1));
             }
 
             return EventHandlerResult.ActionPerformed($"comment operation to grade done; grades: {string.Join(" ", grades.Grades)}");
@@ -79,18 +79,30 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task<EventHandlerResult> handleUserNotAllowed(IssueCommentPayload webhookPayload)
         {
             await GitHubClient.Reaction.IssueComment.Create(webhookPayload.Repository.Id, webhookPayload.Comment.Id, new NewReaction(ReactionType.Confused));
-            await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, WarningTextUserNotAllowed.Replace("{}", webhookPayload.Comment.User.Login));
             return EventHandlerResult.ActionPerformed("comment operation to grade not allowed for user");
         }
 
-        private async Task<bool> isAllowed(IssueCommentPayload webhookPayload)
+        private Task<bool> isAllowed(IssueCommentPayload webhookPayload)
         {
             if (webhookPayload.Repository.Owner.Type != AccountType.Organization)
-                return false;
+                return Task.FromResult(false);
 
+            return isOrgMemberCache.GetOrCreateAsync(
+                key: $"githubisorgmember{webhookPayload.Repository.Owner.Login}{webhookPayload.Comment.User.Login}",
+                factory: async cacheEntry =>
+                {
+                    var isMember = await getIsUserOrgMember(webhookPayload.Repository.Owner.Login, webhookPayload.Comment.User.Login);
+                    cacheEntry.SetValue(isMember);
+                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                    return isMember;
+                });
+        }
+
+        private async Task<bool> getIsUserOrgMember(string org, string user)
+        {
             try
             {
-                return await GitHubClient.Organization.Member.CheckMember(webhookPayload.Repository.Owner.Login, webhookPayload.Comment.User.Login);
+                return await GitHubClient.Organization.Member.CheckMember(org, user);
             }
             catch (NotFoundException)
             {
