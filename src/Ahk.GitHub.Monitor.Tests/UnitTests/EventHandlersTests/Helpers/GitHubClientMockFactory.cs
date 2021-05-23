@@ -13,6 +13,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         private readonly Mock<IRepositoriesClient> repositoriesClient = new Mock<IRepositoriesClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
         private readonly Mock<IPullRequestsClient> pullRequestsClient = new Mock<IPullRequestsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
         private readonly Mock<IIssuesEventsClient> issueEventsClient = new Mock<IIssuesEventsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
+        private readonly Mock<IOrganizationMembersClient> organizationMembersClient = new Mock<IOrganizationMembersClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
 
         private GitHubClientMockFactory()
         {
@@ -22,6 +23,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             GitHubClientMock.SetupGet(c => c.Repository).Returns(repositoriesClient.Object);
             GitHubClientMock.SetupGet(c => c.PullRequest).Returns(pullRequestsClient.Object);
             GitHubClientMock.SetupGet(c => c.Issue.Events).Returns(issueEventsClient.Object);
+            GitHubClientMock.SetupGet(c => c.Organization.Member).Returns(organizationMembersClient.Object);
         }
 
         public Mock<IGitHubClient> GitHubClientMock { get; }
@@ -56,10 +58,22 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             return this;
         }
 
+        public GitHubClientMockFactory WithPullRequestGet(long repositoryId, int number, PullRequest value)
+        {
+            pullRequestsClient.Setup(c => c.Get(repositoryId, number)).ReturnsAsync(value);
+            return this;
+        }
+
         public GitHubClientMockFactory WithIssueEventGetAll(
             Action<Moq.Language.Flow.ISetup<IIssuesEventsClient, Task<IReadOnlyList<IssueEvent>>>> configure)
         {
             configure(issueEventsClient.Setup(c => c.GetAllForIssue(It.IsAny<long>(), It.IsAny<int>())));
+            return this;
+        }
+
+        public GitHubClientMockFactory WithOrganizationMemberGet(string userName, bool result)
+        {
+            organizationMembersClient.Setup(c => c.CheckMember(It.IsAny<string>(), userName)).ReturnsAsync(result);
             return this;
         }
     }
