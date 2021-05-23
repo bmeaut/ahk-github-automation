@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -27,4 +27,4 @@ jobs:
         with:
           app-name: ahk-github-monitor
           package: "./src/output"
-          publish-profile: ${{ secrets.SCM_CREDENTIALS }}
+          publish-profile: ${{ secrets.AZFUNCTION_PUBLISHPROFILE }}
