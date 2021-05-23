@@ -9,8 +9,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     {
         public const string GitHubWebhookEventName = "pull_request";
 
-        public PullRequestReviewToAssigneeHandler(Services.IGitHubClientFactory gitHubClientFactory)
-            : base(gitHubClientFactory)
+        public PullRequestReviewToAssigneeHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
+            : base(gitHubClientFactory, cache)
         {
         }
 

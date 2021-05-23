@@ -20,7 +20,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 .Replace("\"master_branch\": \"master\"", $"\"master_branch\": \"{defaultBranchName}\"")
                 .Replace("\"default_branch\": \"master\"", $"\"default_branch\": \"{defaultBranchName}\"");
 
-            var eh = new BranchProtectionRuleHandler(gitHubMock.CreateFactory());
+            var eh = new BranchProtectionRuleHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("branch protection rule applied"));
@@ -38,7 +38,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.BranchCreate.Body
                 .Replace("\"ref\": \"master\"", "\"ref\": \"feature\"");
 
-            var eh = new BranchProtectionRuleHandler(gitHubMock.CreateFactory());
+            var eh = new BranchProtectionRuleHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("branch protection rule applied"));
@@ -55,7 +55,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.BranchCreate.Body
                 .Replace("\"ref_type\": \"branch\"", "\"ref_type\": \"aaaaa\"");
 
-            var eh = new BranchProtectionRuleHandler(gitHubMock.CreateFactory());
+            var eh = new BranchProtectionRuleHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));

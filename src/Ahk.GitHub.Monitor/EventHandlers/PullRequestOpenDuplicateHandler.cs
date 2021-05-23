@@ -11,8 +11,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "pull_request";
         private const string WarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n";
 
-        public PullRequestOpenDuplicateHandler(Services.IGitHubClientFactory gitHubClientFactory)
-            : base(gitHubClientFactory)
+        public PullRequestOpenDuplicateHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
+            : base(gitHubClientFactory, cache)
         {
         }
 

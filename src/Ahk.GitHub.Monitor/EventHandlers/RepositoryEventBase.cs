@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 using Octokit.Internal;
 
@@ -11,12 +12,14 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         where TPayload : ActivityPayload
     {
         private readonly IGitHubClientFactory gitHubClientFactory;
+        private readonly IMemoryCache isEnabledForRepoCache;
 
         protected IGitHubClient GitHubClient { get; private set; }
 
-        protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory)
+        protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory, IMemoryCache isEnabledForRepoCache)
         {
             this.gitHubClientFactory = gitHubClientFactory;
+            this.isEnabledForRepoCache = isEnabledForRepoCache;
         }
 
         public async Task<EventHandlerResult> Execute(string requestBody)
@@ -69,7 +72,18 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return true;
         }
 
-        private async Task<bool> isEnabledForRepository(TPayload webhookPayload)
+        private Task<bool> isEnabledForRepository(TPayload webhookPayload)
+            => isEnabledForRepoCache.GetOrCreateAsync(
+                key: $"ahkmonitorisenabledinrepo{webhookPayload.Repository.Id}",
+                factory: async cacheEntry =>
+                {
+                    var isEnabled = await getConfigIsEnabledInRepository(webhookPayload);
+                    cacheEntry.SetValue(isEnabled);
+                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(12));
+                    return isEnabled;
+                });
+
+        private async Task<bool> getConfigIsEnabledInRepository(TPayload webhookPayload)
         {
             try
             {

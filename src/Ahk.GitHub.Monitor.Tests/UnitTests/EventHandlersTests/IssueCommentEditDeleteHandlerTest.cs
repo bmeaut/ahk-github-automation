@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.CommentEdit
                 .Replace("\"issue\": {", "\"aaaaa\": {");
 
-            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory());
+            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no issue information"));
@@ -33,7 +33,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.CommentDelete
                 .Replace("\"action\": \"deleted\"", "\"action\": \"aaaaaa\"");
 
-            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory());
+            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -51,7 +51,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 .Replace("\"login\": \"github-actions[bot]\"", "\"login\": \"aaaaaa\"")
                 .Replace("\"login\": \"senderlogin\"", "\"login\": \"aaaaaa\"");
 
-            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory());
+            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("referencing own comment"));
@@ -69,7 +69,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 .Replace("\"login\": \"github-actions[bot]\"", "\"login\": \"aaaaaa\"")
                 .Replace("\"login\": \"senderlogin\"", "\"login\": \"aaaaaa\"");
 
-            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory());
+            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("referencing own comment"));
@@ -83,7 +83,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory());
+            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.CommentDelete);
 
             Assert.IsTrue(result.Result.Contains("comment action resulting in warning"));
@@ -97,7 +97,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory());
+            var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.CommentEdit);
 
             Assert.IsTrue(result.Result.Contains("comment action resulting in warning"));

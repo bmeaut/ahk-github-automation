@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.PrReviewRequested
                 .Replace("\"pull_request\": {", "\"non_pull_request\": {");
 
-            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no pull request"));
@@ -30,7 +30,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -47,7 +47,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.PrReviewRequested
                 .Replace("requested_reviewers", "non_requested_reviewers");
 
-            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no requested reviewer"));
@@ -61,7 +61,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory());
+            var eh = new PullRequestReviewToAssigneeHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.PrReviewRequested);
 
             Assert.IsTrue(result.Result.Contains("assignee set"));
