@@ -15,7 +15,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "3.1.409"
+          dotnet-version: "3.1.412"
 
       - name: "Run dotnet build"
         working-directory: src
