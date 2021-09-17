@@ -13,7 +13,7 @@ jobs:
       - name: Build and push to GHCR
         working-directory: publish-results-pr
         run: |
-          echo "${{ secrets.GHCR_TOKEN }}" | docker login https://ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
           docker build -t ghcr.io/akosdudas/ahk-publish-results-pr:v1 .
           docker push ghcr.io/akosdudas/ahk-publish-results-pr:v1
           docker logout https://ghcr.io
