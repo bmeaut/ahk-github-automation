@@ -25,8 +25,6 @@ namespace Ahk.GradeManagement.ResultProcessing.Dto
         public string NeptunCode { get; set; }
 
         [JsonPropertyName("result")]
-        [Required]
-        [MinLength(1)]
         public AhkTaskResult[] Result { get; set; }
 
         [JsonPropertyName("origin")]

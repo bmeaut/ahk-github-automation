@@ -36,6 +36,9 @@ namespace Ahk.GradeManagement.ResultProcessing
 
         internal static System.Collections.Generic.List<ExerciseWithPoint> GetTotalPoints(AhkTaskResult[] value)
         {
+            if (value is null)
+                return null;
+
             return value.GroupBy(r => string.IsNullOrEmpty(r.ExerciseName) ? string.Empty : r.ExerciseName)
                         .Select(g => new ExerciseWithPoint() { Name = g.Key, Point = g.Sum(r => r.Points) })
                         .OrderBy(x => x.Name)
