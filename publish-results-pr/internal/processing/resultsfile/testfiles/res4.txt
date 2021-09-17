@@ -1,0 +1,10 @@
+something
+###ahk#ex1@t1#2#line1\
+line2 abc \
+line3 end
+###ahk#ex1@t2#3#comment
+aaa aaa
+###ahk#ex3#0#line1\
+line2 abc \
+line3 end
+aaa aaa
