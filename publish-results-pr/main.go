@@ -48,19 +48,23 @@ func main() {
 	}
 	log.Println("Publishing results to PR... done.")
 
-	log.Println("Sending result to Ahk Api...")
-	apipub := publishtoapi.NewApiPublisher()
-	apipubConfig := publishtoapi.Config{
-		Url:    appArgs.AhkAppUrl,
-		Token:  appArgs.AhkAppToken,
-		Secret: appArgs.AhkAppSecret,
-		Date:   time.Now(),
+	if appArgs.AhkAppUrl != "" && appArgs.AhkAppToken != "" && appArgs.AhkAppSecret != "" {
+		log.Println("Sending result to Ahk Api...")
+		apipub := publishtoapi.NewApiPublisher()
+		apipubConfig := publishtoapi.Config{
+			Url:    appArgs.AhkAppUrl,
+			Token:  appArgs.AhkAppToken,
+			Secret: appArgs.AhkAppSecret,
+			Date:   time.Now(),
+		}
+		err = apipub.Publish(result, apipubConfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Sending result to Ahk Api... done.")
+	} else {
+		log.Println("Sending result to Ahk Api disabled.")
 	}
-	err = apipub.Publish(result, apipubConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Sending result to Ahk Api... done.")
 
 	log.Println("Finished. Bye.")
 }

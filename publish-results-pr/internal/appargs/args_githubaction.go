@@ -55,16 +55,8 @@ func (r argsFromGitHubAction) GetArgs() (args *AppArgs, err error) {
 	imageExt := getEnvOrDefault("INPUT_AHK_IMAGEEXT", "")
 
 	ahkAppUrl := getEnvOrDefault("INPUT_AHK_APPURL", "https://ahk-grade-management.azurewebsites.net/api/evaluation-result")
-
-	ahkAppToken, err := getRequiredEnv("INPUT_AHK_APPTOKEN")
-	if err != nil {
-		return nil, err
-	}
-
-	ahkAppSecret, err := getRequiredEnv("INPUT_AHK_APPSECRET")
-	if err != nil {
-		return nil, err
-	}
+	ahkAppToken := getEnvOrDefault("INPUT_AHK_APPTOKEN", "")
+	ahkAppSecret := getEnvOrDefault("INPUT_AHK_APPSECRET", "")
 
 	// The following is the token to communicate with GitHub. Passed using the "with" directive too.
 	ghToken, err := getRequiredEnv("INPUT_GITHUB_TOKEN")
