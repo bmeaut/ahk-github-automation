@@ -12,6 +12,10 @@ The action reads various environment variables automatically set by GitHub Actio
 
 ### Arguments
 
+#### `GITHUB_TOKEN`
+
+**Required** A GitHub access token to work with. Generally the token provided by GitHub Actions is fine.
+
 #### `AHK_RESULTFILE`
 
 The path of the input file containing the evaluation result. When specified, the parsed results will be included in the result comment. Defaults to `"result.txt"`.
@@ -22,19 +26,15 @@ The extension of image files (with leading dot). When specified, the images are 
 
 #### `AHK_APPURL`
 
-The URL of the _grade management_ application's webhook accepting the results for storing in a database.
+The URL of the _grade management_ application's webhook accepting the results for storing in a database. If not specified, publishing the data to the webhook is disabled.
 
 #### `AHK_APPTOKEN`
 
-The token used by the _grade management_ application's webhook to authenticate requests. The token is a simple string known to the _grade management_ application. the value is sensitive data and must be protected from being published or included in files. It is recommended to store it either as a repository- or organization secret in GitHub.
+The token used by the _grade management_ application's webhook to authenticate requests. The token is a simple string known to the _grade management_ application. the value is sensitive data and must be protected from being published or included in files. It is recommended to store it either as a repository- or organization secret in GitHub. If not specified, publishing the data to the webhook is disabled.
 
 #### `AHK_APPSECRET`
 
-The secret used to sign http requests sent to the _grade management_ application's webhook. The signature is a HMAC-SHA256 signature of the request. The secret is paired with the `AHK_APPTOKEN`. It's value must be protected from being published or included in files. It is recommended to store it either as a repository- or organization secret in GitHub.
-
-#### `GITHUB_TOKEN`
-
-**Required** A GitHub access token to work with. Generally the token provided by GitHub Actions is fine.
+The secret used to sign http requests sent to the _grade management_ application's webhook. The signature is a HMAC-SHA256 signature of the request. The secret is paired with the `AHK_APPTOKEN`. It's value must be protected from being published or included in files. It is recommended to store it either as a repository- or organization secret in GitHub. If not specified, publishing the data to the webhook is disabled.
 
 ### Sample action
 

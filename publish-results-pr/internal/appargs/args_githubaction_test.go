@@ -15,14 +15,12 @@ func TestGitHubActionArgs_ErrorWhenMissingEnv(t *testing.T) {
 	}
 
 	envs := map[string]string{
-		"GITHUB_ACTIONS":      "true",
-		"GITHUB_REPOSITORY":   "org/repo",
-		"GITHUB_REF":          "main",
-		"GITHUB_SHA":          "aa11bbcc33",
-		"GITHUB_EVENT_PATH":   "path/to.json",
-		"INPUT_GITHUB_TOKEN":  "ghtokghtok",
-		"INPUT_AHK_APPTOKEN":  "tokentoken",
-		"INPUT_AHK_APPSECRET": "secretsecret",
+		"GITHUB_ACTIONS":     "true",
+		"GITHUB_REPOSITORY":  "org/repo",
+		"GITHUB_REF":         "main",
+		"GITHUB_SHA":         "aa11bbcc33",
+		"GITHUB_EVENT_PATH":  "path/to.json",
+		"INPUT_GITHUB_TOKEN": "ghtokghtok",
 	}
 
 	for envToIgnore, _ := range envs {
