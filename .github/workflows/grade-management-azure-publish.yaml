@@ -1,0 +1,28 @@
+name: Grade Management - Azure publish
+
+on: [workflow_dispatch]
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "3.1.412"
+
+      - name: "Run dotnet build"
+        working-directory: grade-management
+        run: dotnet build --configuration Release --output ./output
+
+      - name: "Run Azure Functions Action"
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: ahk-grade-management
+          package: "./grade-management/output"
+          publish-profile: ${{ secrets.GRADEMANAGEMENT_AZUREPUBLISHPROFILE }}
