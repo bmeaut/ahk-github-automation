@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31612.314
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement", "Ahk.GradeManagement\Ahk.GradeManagement.csproj", "{DB40B191-BB8D-4214-86B3-7A000E012A0E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{43C4E2A6-8723-4E33-B420-89947060BD0E}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\grade-management-azure-publish.yaml = ..\.github\workflows\grade-management-azure-publish.yaml
+		..\.github\workflows\grade-management-build.yaml = ..\.github\workflows\grade-management-build.yaml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Tests", "Ahk.GradeManagement.Tests\Ahk.GradeManagement.Tests.csproj", "{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Data", "Ahk.GradeManagement.Data\Ahk.GradeManagement.Data.csproj", "{3E2B2BE1-FCEC-410E-B871-BCB717A846D6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB40B191-BB8D-4214-86B3-7A000E012A0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{830DD0E6-88D5-47B3-86B4-EDDD227C2A0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E2B2BE1-FCEC-410E-B871-BCB717A846D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E2B2BE1-FCEC-410E-B871-BCB717A846D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E2B2BE1-FCEC-410E-B871-BCB717A846D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E2B2BE1-FCEC-410E-B871-BCB717A846D6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FA4F2069-A65F-447C-A23E-8B8C004FD81D}
+	EndGlobalSection
+EndGlobal

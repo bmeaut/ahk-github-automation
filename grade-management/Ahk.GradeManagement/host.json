@@ -1,0 +1,13 @@
+{
+  "version": "2.0",
+  "extensions": {
+    "queues": {
+      "maxPollingInterval": "00:05:00",
+      "visibilityTimeout": "00:05:00",
+      "batchSize": 1,
+      "maxDequeueCount": 5,
+      "newBatchThreshold": 1,
+      "messageEncoding": "base64"
+    }
+  }
+}
