@@ -1,5 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 
 namespace Ahk.GradeManagement.Data.Internal
 {
@@ -50,6 +53,18 @@ namespace Ahk.GradeManagement.Data.Internal
             {
                 return null;
             }
+        }
+
+        public async Task<IReadOnlyCollection<T>> List(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)
+        {
+            await this.ensureCreated();
+
+            var results = new List<T>();
+            using var iter = container.GetItemLinqQueryable<T>().Where(predicate).ToFeedIterator();
+            while (iter.HasMoreResults)
+                results.AddRange(await iter.ReadNextAsync());
+
+            return results;
         }
 
         private async ValueTask ensureCreated()

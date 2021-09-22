@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Ahk.GradeManagement.Data.Entities;
 using Microsoft.Azure.Cosmos;
 
@@ -14,5 +15,6 @@ namespace Ahk.GradeManagement.Data.Internal
         }
 
         public Task AddResult(StudentResult value) => base.Insert(value, value.Id);
+        public Task<IReadOnlyCollection<StudentResult>> ListWithRepositoryPrefix(string repoPrefix) => base.List(s => s.GitHubRepoName.StartsWith(repoPrefix));
     }
 }
