@@ -2,8 +2,15 @@
 {
     public class WebhookToken
     {
-        public string Id { get; set; }
-        public string Secret { get; set; }
-        public string Description { get; set; }
+        public WebhookToken(string id, string secret, string description)
+        {
+            this.Id = id;
+            this.Secret = secret;
+            this.Description = description;
+        }
+
+        public string Id { get; }
+        public string Secret { get; }
+        public string Description { get; }
     }
 }

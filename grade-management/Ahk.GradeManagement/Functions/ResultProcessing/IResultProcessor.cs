@@ -6,6 +6,6 @@ namespace Ahk.GradeManagement.ResultProcessing
     public interface IResultProcessor
     {
         Task<string> GetSecretForToken(string token);
-        Task ProcessResult(AhkProcessResult value);
+        Task ProcessResult(AhkProcessResult value, System.DateTime dateTime);
     }
 }

@@ -9,30 +9,28 @@ namespace Ahk.GradeManagement.ResultProcessing
 {
     public class ResultProcessor : IResultProcessor
     {
-        private readonly AhkDb db;
+        private readonly IResultsRepository repo;
         private readonly ITokenManagementService tokensService;
 
-        public ResultProcessor(AhkDb db, ITokenManagementService tokensService)
+        public ResultProcessor(IResultsRepository repo, ITokenManagementService tokensService)
         {
-            this.db = db;
+            this.repo = repo;
             this.tokensService = tokensService;
         }
 
         public Task<string> GetSecretForToken(string token) => tokensService.GetSecretForToken(token);
 
-        public async Task ProcessResult(AhkProcessResult value)
-        {
-            await this.db.EnsureCreated();
-            this.db.Results.Add(StudentResult.Create(
-                neptun: value.NeptunCode,
-                repository: value.GitHubRepoName,
-                prNum: value.GitHubPullRequestNum,
-                prUrl: value.GitHubPullRequestNum.HasValue ? $"https://github.com/{value.GitHubRepoName}/pull/{value.GitHubPullRequestNum}" : null,
-                actor: "grade-management-api",
-                origin: formatOrigin(value),
-                points: GetTotalPoints(value.Result)));
-            await this.db.SaveChangesAsync();
-        }
+        public Task ProcessResult(AhkProcessResult value, System.DateTime dateTime)
+            => this.repo.AddResult(new StudentResult(
+                    id: null,
+                    neptun: value.NeptunCode,
+                    gitHubRepoName: value.GitHubRepoName,
+                    gitHubPrNumber: value.GitHubPullRequestNum,
+                    gitHubPrUrl: value.GitHubPullRequestNum.HasValue ? $"https://github.com/{value.GitHubRepoName}/pull/{value.GitHubPullRequestNum}" : null,
+                    date: dateTime,
+                    actor: "grade-management-api",
+                    origin: formatOrigin(value),
+                    points: GetTotalPoints(value.Result)));
 
         internal static System.Collections.Generic.List<ExerciseWithPoint> GetTotalPoints(AhkTaskResult[] value)
         {

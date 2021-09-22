@@ -5,16 +5,29 @@ namespace Ahk.GradeManagement.Data.Entities
 {
     public partial class StudentResult
     {
-        public string Id { get; set; }
+        public StudentResult(string id, string neptun, string gitHubRepoName, int? gitHubPrNumber, string gitHubPrUrl, DateTime date, string actor, string origin, ICollection<ExerciseWithPoint> points)
+        {
+            this.Id = id ?? Guid.NewGuid().ToString();
+            this.Date = date;
+            this.Neptun = neptun.ToUpperInvariant();
+            this.GitHubRepoName = gitHubRepoName.ToLowerInvariant();
+            this.GitHubPrNumber = gitHubPrNumber;
+            this.GitHubPrUrl = gitHubPrUrl;
+            this.Actor = actor;
+            this.Origin = origin;
+            this.Points = points;
+        }
 
-        public string Neptun { get; set; }
-        public string GitHubRepoName { get; set; }
-        public int? GitHubPrNumber { get; set; }
-        public string GitHubPrUrl { get; set; }
+        public string Id { get; }
 
-        public DateTime Date { get; set; }
-        public string Actor { get; set; }
-        public string Origin { get; set; }
-        public ICollection<ExerciseWithPoint> Points { get; set; }
+        public string Neptun { get; }
+        public string GitHubRepoName { get; }
+        public int? GitHubPrNumber { get; }
+        public string GitHubPrUrl { get; }
+
+        public DateTime Date { get; }
+        public string Actor { get; }
+        public string Origin { get; }
+        public ICollection<ExerciseWithPoint> Points { get; }
     }
 }

@@ -36,7 +36,7 @@ namespace Ahk.GradeManagement.ResultProcessing
 
             if (string.IsNullOrEmpty(dateStr))
                 return new BadRequestObjectResult(new { error = "Date header missing" });
-            if (!DateTime.TryParseExact(dateStr, "R", provider: System.Globalization.CultureInfo.InvariantCulture, style: System.Globalization.DateTimeStyles.AdjustToUniversal, out var date))
+            if (!DateTime.TryParseExact(dateStr, "R", provider: System.Globalization.CultureInfo.InvariantCulture, style: System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var date))
                 return new BadRequestObjectResult(new { error = "Date header value not valid RFC1123 string" });
             var now = dateTimeProvider.GetUtcNow();
             if (date < now.AddMinutes(-10) || date > now.AddMinutes(10))
@@ -58,16 +58,16 @@ namespace Ahk.GradeManagement.ResultProcessing
             if (!PayloadReader.TryGetPayload<AhkProcessResult>(requestBody, out var requestDeserialized, out var deserializationError))
                 return new BadRequestObjectResult(new { error = deserializationError });
 
-            return await runCore(logger, deliveryId, requestDeserialized);
+            return await runCore(logger, deliveryId, requestDeserialized, date);
         }
 
-        private async Task<IActionResult> runCore(ILogger logger, string deliveryId, AhkProcessResult requestDeserialized)
+        private async Task<IActionResult> runCore(ILogger logger, string deliveryId, AhkProcessResult requestDeserialized, DateTime date)
         {
             logger.LogInformation("evaluation-result request with X-Ahk-Delivery='{DeliveryId}' accepted, starting processing", deliveryId);
 
             try
             {
-                await service.ProcessResult(requestDeserialized);
+                await service.ProcessResult(requestDeserialized, date);
                 logger.LogInformation("evaluation-result request handled with success for X-Ahk-Delivery='{DeliveryId}'", deliveryId);
                 return new OkResult();
             }
