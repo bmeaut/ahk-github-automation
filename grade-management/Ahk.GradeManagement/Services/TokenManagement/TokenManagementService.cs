@@ -7,31 +7,18 @@ namespace Ahk.GradeManagement.Services
 {
     internal class TokenManagementService : ITokenManagementService
     {
-        private readonly AhkDb db;
+        private readonly IWebhookTokenRepository repo;
         private readonly IMemoryCache cache;
 
-        public TokenManagementService(AhkDb db, IMemoryCache cache)
+        public TokenManagementService(IWebhookTokenRepository repo, IMemoryCache cache)
         {
-            this.db = db;
+            this.repo = repo;
             this.cache = cache;
         }
 
         public async Task SetSecret(string token, string secret, string description)
         {
-            await this.db.EnsureCreated();
-
-            var existing = await this.db.WebhookTokens.FindAsync(token);
-            if (existing != null)
-            {
-                existing.Secret = secret;
-                existing.Description = description;
-            }
-            else
-            {
-                this.db.WebhookTokens.Add(new Data.Entities.WebhookToken() { Id = token, Secret = secret, Description = description });
-            }
-
-            await this.db.SaveChangesAsync();
+            await this.repo.UpsertToken(new Data.Entities.WebhookToken(token, secret, description));
             cache.Remove(getCacheKeyForToken(token));
         }
 
@@ -50,8 +37,7 @@ namespace Ahk.GradeManagement.Services
 
         private async Task<string> getSecretForTokenFromDb(string token)
         {
-            await this.db.EnsureCreated();
-            var val = await this.db.WebhookTokens.FindAsync(token);
+            var val = await this.repo.FindToken(token);
             return val?.Secret;
         }
     }

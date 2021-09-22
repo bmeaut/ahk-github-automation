@@ -7,17 +7,22 @@ namespace Ahk.GradeManagement.SetGrade
 {
     public class SetGradeService : ISetGradeService
     {
-        private readonly AhkDb db;
+        private readonly IResultsRepository repo;
 
-        public SetGradeService(AhkDb db)
-            => this.db = db;
+        public SetGradeService(IResultsRepository repo)
+            => this.repo = repo;
 
-        public async Task SetGrade(SetGradeEvent data)
-        {
-            await this.db.EnsureCreated();
-            this.db.Results.Add(StudentResult.Create(data.Neptun, data.Repository, data.PrNumber, data.PrUrl, data.Actor, data.Origin, getPoints(data.Results)));
-            await this.db.SaveChangesAsync();
-        }
+        public Task SetGrade(SetGradeEvent data)
+            => this.repo.AddResult(new StudentResult(
+                id: null,
+                neptun: data.Neptun,
+                gitHubRepoName: data.Repository,
+                gitHubPrNumber: data.PrNumber,
+                gitHubPrUrl: data.PrUrl,
+                date: System.DateTime.UtcNow,
+                actor: data.Actor,
+                origin: data.Origin,
+                points: getPoints(data.Results)));
 
         private static List<ExerciseWithPoint> getPoints(double[] values)
         {

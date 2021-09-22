@@ -1,5 +1,5 @@
-﻿using Ahk.GradeManagement.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Azure.Cosmos;
+using Ahk.GradeManagement.Data;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -7,11 +7,18 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddAhkData(this IServiceCollection services, string cosmosAccountEndpoint, string cosmosAccountKey)
         {
-            services.AddEntityFrameworkCosmos();
-            services.AddDbContext<AhkDb>(dbconf =>
-            {
-                dbconf.UseCosmos(accountEndpoint: cosmosAccountEndpoint, cosmosAccountKey, databaseName: AhkDb.DatabaseName);
-            });
+            services.AddSingleton(s =>
+                new CosmosClient(
+                    accountEndpoint: cosmosAccountEndpoint,
+                    authKeyOrResourceToken: cosmosAccountKey,
+                    clientOptions: new CosmosClientOptions()
+                    {
+                        // ConnectionMode = ConnectionMode.Gateway,
+                        MaxRetryAttemptsOnRateLimitedRequests = 9,
+                        SerializerOptions = new CosmosSerializationOptions() { IgnoreNullValues = true, PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase }
+                    }));
+            services.AddSingleton<IWebhookTokenRepository, Ahk.GradeManagement.Data.Internal.WebhookTokenRepository>();
+            services.AddSingleton<IResultsRepository, Ahk.GradeManagement.Data.Internal.ResultsRepository>();
 
             return services;
         }

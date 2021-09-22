@@ -98,7 +98,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
             procService.Verify(s => s.GetSecretForToken(data.Token), Times.Once());
-            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>()), Times.Never());
+            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Never());
         }
 
         [TestMethod]
@@ -118,7 +118,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
 
             Assert.AreEqual(StatusCodes.Status200OK, resp.StatusCode);
             procService.Verify(s => s.GetSecretForToken(data.Token), Times.Once());
-            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>()), Times.Once());
+            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Once());
         }
 
         private async Task callWebhookAssertIsRejected(Action<HttpRequest> configureRequest, Action<Mock<IResultProcessor>> configureProcessorMock = null)
@@ -131,7 +131,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(configureRequest);
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
-            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>()), Times.Never());
+            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Never());
 
 
             if (configureProcessorMock == null)
