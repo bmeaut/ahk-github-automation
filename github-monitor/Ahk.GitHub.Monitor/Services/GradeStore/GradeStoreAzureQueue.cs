@@ -9,27 +9,29 @@ namespace Ahk.GitHub.Monitor.Services
     internal class GradeStoreAzureQueue : IGradeStore
     {
         public const string QueueClientName = "ahkevents";
-        public const string QueueName = "ahksetgrade";
+        public const string QueueNameSetGrade = "ahksetgrade";
+        public const string QueueNameConfirmAutoGrade = "ahkconfirmautograde";
 
-        private readonly QueueClient queue;
-
-        private volatile bool queueCreated = false;
+        private readonly QueueWithCreateIfNotExists queueSetGrade;
+        private readonly QueueWithCreateIfNotExists queueConfirmAutoGrade;
 
         public GradeStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
         {
-            this.queue = clientFactory.CreateClient(QueueClientName).GetQueueClient(QueueName);
+            var queueService = clientFactory.CreateClient(QueueClientName);
+            this.queueSetGrade = new QueueWithCreateIfNotExists(queueService, QueueNameSetGrade);
+            this.queueConfirmAutoGrade = new QueueWithCreateIfNotExists(queueService, QueueNameConfirmAutoGrade);
         }
 
-        public async Task StoreGrade(string neptun, string repository, int prNumber, string prUrl, string actor, string origin, IReadOnlyCollection<double> results)
+        public Task StoreGrade(string neptun, string repository, int prNumber, string prUrl, string actor, string origin, IReadOnlyCollection<double> results)
         {
-            if (!queueCreated)
-            {
-                await queue.CreateIfNotExistsAsync();
-                queueCreated = true;
-            }
-
             var e = new SetGradeEvent(neptun, repository, prNumber, prUrl, actor, origin, results.ToArray());
-            await queue.SendMessageAsync(new System.BinaryData(e));
+            return queueSetGrade.Send(e);
+        }
+
+        public Task ConfirmAutoGrade(string neptun, string repository, int prNumber, string prUrl, string actor, string origin)
+        {
+            var e = new ConfirmAutoGradeEvent(neptun, repository, prNumber, prUrl, actor, origin);
+            return queueConfirmAutoGrade.Send(e);
         }
     }
 }

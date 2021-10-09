@@ -61,6 +61,9 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             gradeStoreMock.Verify(c =>
                 c.StoreGrade(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyCollection<double>>()),
                 Times.Never());
+            gradeStoreMock.Verify(c =>
+                c.ConfirmAutoGrade(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+                Times.Never());
         }
 
         [TestMethod]
@@ -83,6 +86,9 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             gradeStoreMock.Verify(c =>
                 c.StoreGrade(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyCollection<double>>()),
                 Times.Never());
+            gradeStoreMock.Verify(c =>
+                c.ConfirmAutoGrade(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+                Times.Never());
         }
 
         [TestMethod]
@@ -103,6 +109,9 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             gradeStoreMock.Verify(c =>
                 c.StoreGrade(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyCollection<double>>()),
                 Times.Never());
+            gradeStoreMock.Verify(c =>
+                c.ConfirmAutoGrade("ABC123", "org1/repo1", 24, "https://www.github.com/org1/repo1/pull/24", It.IsAny<string>(), @"https://github.com/org1/repo1/pull/1#issuecomment-821112111"),
+                Times.Once());
         }
 
         [DataTestMethod]
@@ -136,9 +145,13 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Merge(336882879, 24, It.IsAny<Octokit.MergePullRequest>()),
                 Times.Once());
+
             gradeStoreMock.Verify(c =>
                 c.StoreGrade("NEPT12", "org1/repo1", 24, "https://www.github.com/org1/repo1/pull/24", It.IsAny<string>(), @"https://github.com/org1/repo1/pull/1#issuecomment-821112111", It.IsAny<IReadOnlyCollection<double>>()),
                 gradesExpected ? Times.Once() : Times.Never());
+            gradeStoreMock.Verify(c =>
+                c.ConfirmAutoGrade("NEPT12", "org1/repo1", 24, "https://www.github.com/org1/repo1/pull/24", It.IsAny<string>(), @"https://github.com/org1/repo1/pull/1#issuecomment-821112111"),
+                gradesExpected ? Times.Never() : Times.Once());
         }
 
         private static string getPayloadWithComment(string value, string user = "abcabc")
