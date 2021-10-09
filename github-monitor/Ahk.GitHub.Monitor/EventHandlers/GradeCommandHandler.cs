@@ -13,13 +13,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private const string WarningText = ":exclamation: **@{} is not allowed to do that. @{} Ez nem engedelyezett szamodra.**";
 
         private readonly Services.IGradeStore gradeStore;
-        private readonly IMemoryCache isOrgMemberCache;
 
         public GradeCommandHandler(Services.IGitHubClientFactory gitHubClientFactory, Services.IGradeStore gradeStore, IMemoryCache cache)
             : base(gitHubClientFactory, cache)
         {
             this.gradeStore = gradeStore;
-            this.isOrgMemberCache = cache;
         }
 
         protected override async Task<EventHandlerResult> executeCore(IssueCommentPayload webhookPayload)
@@ -32,7 +30,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 var gradeCommand = new GradeCommentParser(webhookPayload.Comment.Body);
                 if (gradeCommand.IsMatch)
                 {
-                    if (!await isAllowed(webhookPayload))
+                    if (!await isUserOrganizationMember(webhookPayload, webhookPayload.Comment.User.Login))
                         return await handleUserNotAllowed(webhookPayload);
 
                     var pr = await tryGetPullRequest(webhookPayload.Repository.Id, webhookPayload.Issue.Number);
@@ -116,34 +114,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, comment);
 
             return EventHandlerResult.ActionPerformed("comment operation to grade not allowed for user");
-        }
-
-        private Task<bool> isAllowed(IssueCommentPayload webhookPayload)
-        {
-            if (webhookPayload.Repository.Owner.Type != AccountType.Organization)
-                return Task.FromResult(false);
-
-            return isOrgMemberCache.GetOrCreateAsync(
-                key: $"githubisorgmember{webhookPayload.Repository.Owner.Login}{webhookPayload.Comment.User.Login}",
-                factory: async cacheEntry =>
-                {
-                    var isMember = await getIsUserOrgMember(webhookPayload.Repository.Owner.Login, webhookPayload.Comment.User.Login);
-                    cacheEntry.SetValue(isMember);
-                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                    return isMember;
-                });
-        }
-
-        private async Task<bool> getIsUserOrgMember(string org, string user)
-        {
-            try
-            {
-                return await GitHubClient.Organization.Member.CheckMember(org, user);
-            }
-            catch (NotFoundException)
-            {
-                return false;
-            }
         }
     }
 }
