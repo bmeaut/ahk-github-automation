@@ -1,10 +1,10 @@
-﻿using System.Threading.Tasks;
-using Octokit;
+﻿using Octokit;
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Services
 {
     public interface IGitHubClientFactory
     {
-        Task<IGitHubClient> CreateGitHubClient(long installationId);
+        Task<IGitHubClientEx> CreateGitHubClient(long installationId);
     }
 }

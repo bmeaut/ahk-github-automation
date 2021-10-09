@@ -17,7 +17,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 
         private GitHubClientMockFactory()
         {
-            this.GitHubClientMock = new Mock<IGitHubClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
+            this.GitHubClientMock = new Mock<IGitHubClientEx>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
 
             repositoriesClient.SetupGet(c => c.Content).Returns(repoContentClient.Object);
             GitHubClientMock.SetupGet(c => c.Repository).Returns(repositoriesClient.Object);
@@ -26,7 +26,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             GitHubClientMock.SetupGet(c => c.Organization.Member).Returns(organizationMembersClient.Object);
         }
 
-        public Mock<IGitHubClient> GitHubClientMock { get; }
+        public Mock<IGitHubClientEx> GitHubClientMock { get; }
 
         public static GitHubClientMockFactory CreateDefault()
             => new GitHubClientMockFactory().WithDefaultAhkMonitorConfigYamlContent().WithDefaultNeptunTxtContent();

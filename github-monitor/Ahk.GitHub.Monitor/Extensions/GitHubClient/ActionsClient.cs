@@ -4,9 +4,14 @@ using System.Threading.Tasks;
 
 namespace Octokit
 {
-    internal static class GitHubClientWorkflowRunsExtensions
+    internal class ActionsClient : IActionsClient
     {
-        public static async Task<int> CountWorkflowRunsInRepository(this IGitHubClient client, string owner, string repo, string actor)
+        private readonly IGitHubClientEx client;
+
+        public ActionsClient(IGitHubClientEx client)
+            => this.client = client;
+
+        public async Task<int> CountWorkflowRunsInRepository(string owner, string repo, string actor)
         {
             var r = await client.Connection.Get<ListWorkflowRunsResponse>(
                 uri: new Uri($"repos/{owner}/{repo}/actions/runs", UriKind.Relative),
@@ -19,7 +24,7 @@ namespace Octokit
             return r.Body.TotalCount;
         }
 
-        public static Task DisableActionsForRepository(this IGitHubClient client, string owner, string repo)
+        public Task DisableActionsForRepository(string owner, string repo)
             => client.Connection.Put<object>(
                 uri: new Uri($"/repos/{owner}/{repo}/actions/permissions", UriKind.Relative),
                 body: new SetActionsPermissionsRequest() { Enabled = false });

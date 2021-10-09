@@ -23,7 +23,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 if (await isUserOrganizationMember(webhookPayload, webhookPayload.Sender.Login))
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, not triggered by student");
 
-                var workflowRuns = await GitHubClient.CountWorkflowRunsInRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
+                var workflowRuns = await GitHubClient.Actions.CountWorkflowRunsInRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
                 if (workflowRuns <= 5)
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, has less then threshold");
 
@@ -38,7 +38,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 {
                     if (prNum.HasValue)
                         await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, prNum.Value, DisabledText);
-                    await GitHubClient.DisableActionsForRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name);
+                    await GitHubClient.Actions.DisableActionsForRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name);
                     return EventHandlerResult.ActionPerformed("workflow_run limit exceeded, actions disabled");
                 }
             }
