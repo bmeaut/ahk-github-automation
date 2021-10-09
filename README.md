@@ -6,8 +6,8 @@ Please refer to <https://akosdudas.github.io/automated-homework-evaluation/> for
 
 ## Applications
 
-**[GitHub Monitor](./github-monitor)**: An Azure function written in .NET Core with a http webhook registered as a GitHub Application that manages the workflow of homework submissions. Performs automatic actions on repositories acting as submissions and monitors proper usage of pull reqeusts.
+**[GitHub Monitor](./github-monitor)**: An Azure function written in .NET Core with an http webhook registered as a GitHub Application that manages the workflow of homework submissions. Performs automatic actions on repositories acting as submissions and monitors proper usage of pull requests.
 
-**[Publish Results to PR](./publish-results-pr)**: A [containerized](https://github.com/users/akosdudas/packages/container/package/ahk-publish-results-pr) Go application that processes the output of evaluator applications and publishes the results to the student into a pull request, as well as forwarding it to the _grade management_ application.
+**[Publish Results to PR](./publish-results-pr)**: A [containerized](https://github.com/users/akosdudas/packages/container/package/ahk-publish-results-pr) Go application that processes the output of evaluator applications and publishes the results into a pull request for the student to see, as well as forwarding it to the _grade management_ application.
 
 **[Grade Management](./grade-management)**: An Azure function written in .NET Core that accepts grades from the other applications and stores them in Azure CosmosDB database. Helps teachers by reducing the administration of submissions and grades.
