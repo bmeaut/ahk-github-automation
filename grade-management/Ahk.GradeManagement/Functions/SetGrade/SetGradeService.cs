@@ -22,7 +22,24 @@ namespace Ahk.GradeManagement.SetGrade
                 date: System.DateTime.UtcNow,
                 actor: data.Actor,
                 origin: data.Origin,
-                points: getPoints(data.Results)));
+                points: getPoints(data.Results),
+                confirmed: true));
+
+        public async Task ConfirmAutoGrade(ConfirmAutoGradeEvent data)
+        {
+            var previousResults = await this.repo.GetLastResultOf(neptun: data.Neptun, gitHubRepoName: data.Repository, gitHubPrNumber: data.PrNumber);
+            await this.repo.AddResult(new StudentResult(
+                id: null,
+                neptun: data.Neptun,
+                gitHubRepoName: data.Repository,
+                gitHubPrNumber: data.PrNumber,
+                gitHubPrUrl: data.PrUrl,
+                date: System.DateTime.UtcNow,
+                actor: data.Actor,
+                origin: data.Origin,
+                points: previousResults?.Points,
+                confirmed: true));
+        }
 
         private static List<ExerciseWithPoint> getPoints(double[] values)
         {
