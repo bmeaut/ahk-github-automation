@@ -30,7 +30,8 @@ namespace Ahk.GradeManagement.ResultProcessing
                     date: dateTime,
                     actor: "grade-management-api",
                     origin: formatOrigin(value),
-                    points: GetTotalPoints(value.Result)));
+                    points: GetTotalPoints(value.Result),
+                    confirmed: false));
 
         internal static System.Collections.Generic.List<ExerciseWithPoint> GetTotalPoints(AhkTaskResult[] value)
         {

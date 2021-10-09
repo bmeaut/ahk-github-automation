@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Ahk.GradeManagement.Data;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Ahk.GradeManagement.Data;
 
 namespace Ahk.GradeManagement.ListGrades
 {
@@ -15,7 +15,7 @@ namespace Ahk.GradeManagement.ListGrades
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Repo name is normalized to lowercase.")]
         public async Task<IReadOnlyCollection<FinalStudentGrade>> List(string repoPrefix)
         {
-            var items = await this.repo.ListWithRepositoryPrefix(repoPrefix.ToLowerInvariant());
+            var items = await this.repo.ListConfirmedWithRepositoryPrefix(repoPrefix.ToLowerInvariant());
             var finalResults = new List<FinalStudentGrade>();
             foreach (var student in items.GroupBy(r => r.Neptun.ToUpperInvariant()))
             {

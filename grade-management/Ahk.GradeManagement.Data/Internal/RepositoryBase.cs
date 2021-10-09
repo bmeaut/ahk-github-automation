@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
 
 namespace Ahk.GradeManagement.Data.Internal
 {
@@ -53,6 +53,20 @@ namespace Ahk.GradeManagement.Data.Internal
             {
                 return null;
             }
+        }
+
+        public async Task<T> GetOneWithOrderByDescending<TKey>(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, System.Linq.Expressions.Expression<System.Func<T, TKey>> orderBy)
+        {
+            await this.ensureCreated();
+
+            using var iter = container.GetItemLinqQueryable<T>().Where(predicate).OrderByDescending(orderBy).ToFeedIterator();
+            if (iter.HasMoreResults)
+            {
+                var batch = await iter.ReadNextAsync();
+                return batch.FirstOrDefault();
+            }
+
+            return null;
         }
 
         public async Task<IReadOnlyCollection<T>> List(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)

@@ -56,9 +56,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task handleStoreGrade(IssueCommentPayload webhookPayload, GradeCommentParser gradeCommand, PullRequest pr)
         {
+            var neptun = await getNeptun(webhookPayload, pr.Head.Ref);
             if (gradeCommand.HasGrades)
             {
-                var neptun = await getNeptun(webhookPayload, pr.Head.Ref);
                 await gradeStore.StoreGrade(
                     neptun: neptun,
                     repository: webhookPayload.Repository.FullName,
@@ -67,6 +67,16 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                     actor: webhookPayload.Comment.User?.Login,
                     origin: webhookPayload.Comment.HtmlUrl,
                     results: gradeCommand.Grades);
+            }
+            else
+            {
+                await gradeStore.ConfirmAutoGrade(
+                    neptun: neptun,
+                    repository: webhookPayload.Repository.FullName,
+                    prNumber: pr.Number,
+                    prUrl: pr.HtmlUrl,
+                    actor: webhookPayload.Comment.User?.Login,
+                    origin: webhookPayload.Comment.HtmlUrl);
             }
         }
 
