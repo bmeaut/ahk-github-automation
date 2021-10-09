@@ -34,7 +34,8 @@ namespace Ahk.GitHub.Monitor
                 .Add<EventHandlers.IssueCommentEditDeleteHandler>(EventHandlers.IssueCommentEditDeleteHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.PullRequestOpenDuplicateHandler>(EventHandlers.PullRequestOpenDuplicateHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.PullRequestReviewToAssigneeHandler>(EventHandlers.PullRequestReviewToAssigneeHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.GradeCommandHandler>(EventHandlers.GradeCommandHandler.GitHubWebhookEventName);
+                .Add<EventHandlers.GradeCommandHandler>(EventHandlers.GradeCommandHandler.GitHubWebhookEventName)
+                .Add<EventHandlers.ActionWorkflowRunHandler>(EventHandlers.ActionWorkflowRunHandler.GitHubWebhookEventName);
         }
 
         private static void addGradeStoreIntegration(IFunctionsHostBuilder builder, IConfigurationRoot configuration)

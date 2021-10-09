@@ -67,6 +67,12 @@ These rules are ensured by registering such an event and adding a comment into t
 
 Explanation: To track submitted work the pull requests should be assigned to the instructor. This allows the instructor to use GitHub web interface to go through all submissions. Requesting a review of a pull request is frequently mixed up with assignment. Although GitHub has a list of requested reviews, if the instructor choses to request a change in the submission, the pull request is removed from this list. If the student makes changes to the pull request as the result of the change request, the pull request does not show up in the pending reviews list. To ensure tracking these pull requests any reviewer is automatically set as assignee too.
 
+### No more than 5 Actions workflow run
+
+> GitHub Actions workflows run automated evaluation on submissions. Each student has 5 evaluations after which the process is disabled.
+
+Explanation: GitHub Actions CI is used to execute the automated evaluation. Since running these workflows count against the CI minutes a GitHub Organization has, each student is limited to 5 evaluations. When this limit is reached, first the student is warned. After another evaluation GitHub Actions is disabled for the repository.
+
 ## Approval and grading with pull request comment
 
 Students submit their work in pull requests. Teachers check the contents and approve it (or might request changes). This application offers "chatops"-like approval using the following command entered by the teacher in the pull request as comment: `/ahk ok`. This command will trigger approval of the pull request and its content is merged into the default (`master`/`main`) branch. By merging the pull request in such a way serves two purposes:
