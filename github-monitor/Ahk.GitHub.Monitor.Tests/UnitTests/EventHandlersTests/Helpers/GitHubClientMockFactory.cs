@@ -14,6 +14,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         private readonly Mock<IPullRequestsClient> pullRequestsClient = new Mock<IPullRequestsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
         private readonly Mock<IIssuesEventsClient> issueEventsClient = new Mock<IIssuesEventsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
         private readonly Mock<IOrganizationMembersClient> organizationMembersClient = new Mock<IOrganizationMembersClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
+        private readonly Mock<IActionsClient> actionsClient = new Mock<IActionsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
 
         private GitHubClientMockFactory()
         {
@@ -24,6 +25,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             GitHubClientMock.SetupGet(c => c.PullRequest).Returns(pullRequestsClient.Object);
             GitHubClientMock.SetupGet(c => c.Issue.Events).Returns(issueEventsClient.Object);
             GitHubClientMock.SetupGet(c => c.Organization.Member).Returns(organizationMembersClient.Object);
+            GitHubClientMock.SetupGet(c => c.Actions).Returns(actionsClient.Object);
         }
 
         public Mock<IGitHubClientEx> GitHubClientMock { get; }
@@ -83,6 +85,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         public GitHubClientMockFactory WithOrganizationMemberGet(string userName, bool result)
         {
             organizationMembersClient.Setup(c => c.CheckMember(It.IsAny<string>(), userName)).ReturnsAsync(result);
+            return this;
+        }
+
+        public GitHubClientMockFactory WithWorkflowRunsCount(string owner, string repo, string actor, int count)
+        {
+            actionsClient.Setup(c => c.CountWorkflowRunsInRepository(owner, repo, actor)).ReturnsAsync(count);
             return this;
         }
     }
