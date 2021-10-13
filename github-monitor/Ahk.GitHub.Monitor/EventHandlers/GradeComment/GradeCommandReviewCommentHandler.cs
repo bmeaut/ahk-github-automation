@@ -31,7 +31,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             if (webhookPayload.Payload.Review.Id > int.MaxValue)
                 return Task.CompletedTask;
 
-            return GitHubClient.Reaction.PullRequestReviewComment.Create(webhookPayload.Repository.Id, (int)webhookPayload.Payload.Review.Id, new NewReaction(reactionType));
+            return GitHubClient.Reaction.IssueComment.Create(webhookPayload.Repository.Id, (int)webhookPayload.Payload.Review.Id, new NewReaction(reactionType));
         }
     }
 }
