@@ -1,7 +1,4 @@
 ﻿using Octokit;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -11,7 +8,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             => this.Payload = payload;
 
         public PullRequestReviewEventPayload Payload { get; }
-        
+
         public Repository Repository => Payload.Repository;
         public int PullRequestNumber => Payload.PullRequest.Number;
         public string CommentingUser => Payload.Review.User.Login;

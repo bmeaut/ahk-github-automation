@@ -1,11 +1,9 @@
 ﻿using Octokit;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public interface ICommentPayload<T> where T : ActivityPayload
+    public interface ICommentPayload<T>
+        where T : ActivityPayload
     {
         public T Payload { get; }
 

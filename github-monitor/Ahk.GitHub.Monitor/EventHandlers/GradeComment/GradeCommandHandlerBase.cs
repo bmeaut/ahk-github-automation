@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public abstract class GradeCommandHandlerBase<T> : RepositoryEventBase<T> where T : ActivityPayload
+    public abstract class GradeCommandHandlerBase<T> : RepositoryEventBase<T>
+        where T : ActivityPayload
     {
         private const string WarningText = ":exclamation: **@{} is not allowed to do that. @{} Ez nem engedelyezett szamodra.**";
 

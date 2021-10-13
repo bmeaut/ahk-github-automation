@@ -1,5 +1,4 @@
-﻿using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 using System;
 using System.Threading.Tasks;

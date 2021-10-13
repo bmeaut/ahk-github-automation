@@ -1,5 +1,4 @@
-﻿using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 using System;
 using System.Threading.Tasks;
@@ -31,7 +30,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             // discrepancy in the Octokit library regarding long-int ids
             if (webhookPayload.Payload.Review.Id > int.MaxValue)
                 return Task.CompletedTask;
-            
+
             return GitHubClient.Reaction.PullRequestReviewComment.Create(webhookPayload.Repository.Id, (int)webhookPayload.Payload.Review.Id, new NewReaction(reactionType));
         }
     }
