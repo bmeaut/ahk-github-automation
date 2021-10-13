@@ -27,11 +27,17 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         protected override Task handleReaction(ICommentPayload<PullRequestReviewEventPayload> webhookPayload, ReactionType reactionType)
         {
+            // The implementation below does not work, GitHub API returns an error indicating that the resource is not available for the GitHub App
+            // According to documentation "pull request" read/write permission should be enough to add the reaction, but it seems insufficient.
+            return Task.CompletedTask;
+
+            /*
             // discrepancy in the Octokit library regarding long-int ids
             if (webhookPayload.Payload.Review.Id > int.MaxValue)
                 return Task.CompletedTask;
 
-            return GitHubClient.Reaction.IssueComment.Create(webhookPayload.Repository.Id, (int)webhookPayload.Payload.Review.Id, new NewReaction(reactionType));
+            return GitHubClient.Reaction.PullRequestReviewComment.Create(webhookPayload.Repository.Id, (int)webhookPayload.Payload.Review.Id, new NewReaction(reactionType));
+            */
         }
     }
 }
