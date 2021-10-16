@@ -1,7 +1,7 @@
-﻿using System.Threading.Tasks;
-using Ahk.GitHub.Monitor.EventHandlers;
+﻿using Ahk.GitHub.Monitor.EventHandlers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
@@ -81,6 +81,47 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         }
 
         [TestMethod]
+        public async Task NeptunFileNotFound()
+        {
+            var gitHubMock = GitHubClientMockFactory.CreateCustom()
+                    .WithNeptunTxtContent(c => c.ThrowsAsync(new Octokit.NotFoundException(string.Empty, System.Net.HttpStatusCode.NotFound)));
+
+            var eh = new TestHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
+            await eh.Execute(SampleData.BranchCreate.Body);
+
+            var result = await eh.GetNeptunForTest();
+
+            Assert.IsNull(result);
+            gitHubMock.GitHubClientMock.Verify(c =>
+                c.Repository.Content.GetAllContentsByRef(It.IsAny<long>(), "neptun.txt", It.IsAny<string>()),
+                Times.Once());
+        }
+
+        [DataTestMethod]
+        [DataRow("AB123N", "AB123N")]
+        [DataRow("AB123N ", "AB123N")]
+        [DataRow("AB123N  ", "AB123N")]
+        [DataRow(" AB123N  ", "AB123N")]
+        [DataRow("AB123N\n", "AB123N")]
+        [DataRow("AB123N\r", "AB123N")]
+        [DataRow("AB123N\r\n", "AB123N")]
+        public async Task NeptunFileReadCorrectly(string textFileValue, string expected)
+        {
+            var gitHubMock = GitHubClientMockFactory.CreateCustom()
+                    .WithNeptunTxtContent(textFileValue);
+
+            var eh = new TestHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
+            await eh.Execute(SampleData.BranchCreate.Body);
+
+            var result = await eh.GetNeptunForTest();
+
+            Assert.AreEqual(expected, result);
+            gitHubMock.GitHubClientMock.Verify(c =>
+                c.Repository.Content.GetAllContentsByRef(It.IsAny<long>(), "neptun.txt", It.IsAny<string>()),
+                Times.Once());
+        }
+
+        [TestMethod]
         public async Task EnabledAndHandlerCalled()
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
@@ -104,6 +145,8 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             {
                 return Task.FromResult(EventHandlerResult.ActionPerformed("TestHandler ok"));
             }
+
+            public Task<string> GetNeptunForTest() => base.getNeptun(0, "m");
         }
     }
 }
