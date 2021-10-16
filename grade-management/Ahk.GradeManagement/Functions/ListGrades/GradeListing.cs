@@ -23,7 +23,7 @@ namespace Ahk.GradeManagement.ListGrades
                     neptun: student.Key,
                     repo: lastResult.GitHubRepoName,
                     prUrl: lastResult.GitHubPrUrl,
-                    points: lastResult.Points.ToDictionary(keySelector: p => p.Name, elementSelector: p => p.Point)));
+                    points: lastResult.Points == null ? new Dictionary<string, double>() : lastResult.Points.ToDictionary(keySelector: p => p.Name, elementSelector: p => p.Point)));
             }
 
             return finalResults;
