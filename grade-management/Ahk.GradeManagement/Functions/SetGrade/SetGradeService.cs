@@ -27,7 +27,7 @@ namespace Ahk.GradeManagement.SetGrade
 
         public async Task ConfirmAutoGrade(ConfirmAutoGradeEvent data)
         {
-            var previousResults = await this.repo.GetLastResultOf(neptun: data.Neptun, gitHubRepoName: data.Repository, gitHubPrNumber: data.PrNumber);
+            var previousResults = await this.repo.GetLastResultOf(neptun: Normalize.Neptun(data.Neptun), gitHubRepoName: Normalize.RepoName(data.Repository), gitHubPrNumber: data.PrNumber);
             await this.repo.AddResult(new StudentResult(
                 id: null,
                 neptun: data.Neptun,
