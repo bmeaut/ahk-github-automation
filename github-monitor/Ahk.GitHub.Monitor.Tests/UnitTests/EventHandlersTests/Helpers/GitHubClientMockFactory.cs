@@ -14,21 +14,21 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         private readonly Mock<IPullRequestsClient> pullRequestsClient = new Mock<IPullRequestsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
         private readonly Mock<IIssuesEventsClient> issueEventsClient = new Mock<IIssuesEventsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
         private readonly Mock<IOrganizationMembersClient> organizationMembersClient = new Mock<IOrganizationMembersClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
-        private readonly Mock<IActionsClient> actionsClient = new Mock<IActionsClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
+        private readonly Mock<IConnection> connection = new Mock<IConnection>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
 
         private GitHubClientMockFactory()
         {
-            this.GitHubClientMock = new Mock<IGitHubClientEx>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
+            this.GitHubClientMock = new Mock<IGitHubClient>(behavior: MockBehavior.Loose) { DefaultValue = DefaultValue.Mock };
 
             repositoriesClient.SetupGet(c => c.Content).Returns(repoContentClient.Object);
             GitHubClientMock.SetupGet(c => c.Repository).Returns(repositoriesClient.Object);
             GitHubClientMock.SetupGet(c => c.PullRequest).Returns(pullRequestsClient.Object);
             GitHubClientMock.SetupGet(c => c.Issue.Events).Returns(issueEventsClient.Object);
             GitHubClientMock.SetupGet(c => c.Organization.Member).Returns(organizationMembersClient.Object);
-            GitHubClientMock.SetupGet(c => c.Actions).Returns(actionsClient.Object);
+            GitHubClientMock.SetupGet(c => c.Connection).Returns(connection.Object);
         }
 
-        public Mock<IGitHubClientEx> GitHubClientMock { get; }
+        public Mock<IGitHubClient> GitHubClientMock { get; }
 
         public static GitHubClientMockFactory CreateDefault()
             => new GitHubClientMockFactory().WithDefaultAhkMonitorConfigYamlContent().WithDefaultNeptunTxtContent();
@@ -90,7 +90,15 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 
         public GitHubClientMockFactory WithWorkflowRunsCount(string owner, string repo, string actor, int count)
         {
-            actionsClient.Setup(c => c.CountWorkflowRunsInRepository(owner, repo, actor)).ReturnsAsync(count);
+            connection.Setup(c =>
+                c.Get<GitHubClientWorkflowRunsExtensions.ListWorkflowRunsResponse>(
+                    new Uri($"repos/{owner}/{repo}/actions/runs", UriKind.Relative),
+                    It.Is<IDictionary<string, string>>(d => d.ContainsKey("actor") && d["actor"] == actor),
+                    It.IsAny<string>()))
+                .ReturnsAsync(
+                    new Octokit.Internal.ApiResponse<GitHubClientWorkflowRunsExtensions.ListWorkflowRunsResponse>(
+                        new Mock<IResponse>().Object,
+                        new GitHubClientWorkflowRunsExtensions.ListWorkflowRunsResponse { TotalCount = count }));
             return this;
         }
     }

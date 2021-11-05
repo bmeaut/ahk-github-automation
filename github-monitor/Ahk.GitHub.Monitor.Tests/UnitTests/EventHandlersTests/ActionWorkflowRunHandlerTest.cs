@@ -26,9 +26,6 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
-            gitHubMock.GitHubClientMock.Verify(c =>
-                c.Actions.DisableActionsForRepository("aabbcc", "reporep"),
-                Times.Never());
         }
 
         [TestMethod]
@@ -48,9 +45,6 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             Assert.IsTrue(result.Result.Contains("workflow_run ok, not triggered by student"));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(283462325, 2, It.IsAny<string>()),
-                Times.Never());
-            gitHubMock.GitHubClientMock.Verify(c =>
-                c.Actions.DisableActionsForRepository("aabbcc", "reporep"),
                 Times.Never());
         }
 
@@ -75,35 +69,6 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             Assert.IsTrue(result.Result.Contains("workflow_run warning, threshold exceeded"));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(283462325, 2, It.IsAny<string>()),
-                Times.Once());
-            gitHubMock.GitHubClientMock.Verify(c =>
-                c.Actions.DisableActionsForRepository("aabbcc", "reporep"),
-                Times.Never());
-        }
-
-        [TestMethod]
-        public async Task WorkflowRunsExceededActionsDisabled()
-        {
-            var gitHubMock = GitHubClientMockFactory.CreateDefault();
-
-            var payload = getPayload();
-            var gh = gitHubMock
-                .WithWorkflowRunsCount("aabbcc", "reporep", "someone", 8)
-                .WithPullRequestGetAll(c => c.ReturnsAsync(new[]
-                {
-                    GitHubMockData.CreatePullRequest(1, Octokit.ItemState.Open, 111),
-                }))
-                .CreateFactory();
-
-            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance);
-            var result = await eh.Execute(payload);
-
-            Assert.IsTrue(result.Result.Contains("workflow_run limit exceeded, actions disabled"));
-            gitHubMock.GitHubClientMock.Verify(c =>
-                c.Issue.Comment.Create(283462325, 1, It.IsAny<string>()),
-                Times.Once());
-            gitHubMock.GitHubClientMock.Verify(c =>
-                c.Actions.DisableActionsForRepository("aabbcc", "reporep"),
                 Times.Once());
         }
 

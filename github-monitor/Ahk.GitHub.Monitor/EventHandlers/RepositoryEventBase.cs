@@ -20,7 +20,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             this.cache = cache;
         }
 
-        protected IGitHubClientEx GitHubClient { get; private set; }
+        protected IGitHubClient GitHubClient { get; private set; }
 
         public async Task<EventHandlerResult> Execute(string requestBody)
         {

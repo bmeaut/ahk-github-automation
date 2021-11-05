@@ -7,9 +7,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 {
     public class ActionWorkflowRunHandler : RepositoryEventBase<WorkflowRunEventPayload>
     {
+        public const int WorkflowRunThreshold = 5;
         public const string GitHubWebhookEventName = "workflow_run";
-        private const string WarningText = ":exclamation: **You triggered too many automated evaluations; you have one more, after which it will be disabled. Túl sok automata értékelést futtattál; még egyet lehetőséged van, utána kikapcsoljuk.** ";
-        private const string DisabledText = ":disappointed: **Automated evaluations have been disabled. Az automata értékelések ki lettek kapcsolva.** ";
+        private const string WarningText = ":exclamation: **You triggered too many automated evaluations; extra evaluations are penalized. Túl sok automata értékelést futtattál; az extra futtatások pontlevonással járnak.** ";
 
         public ActionWorkflowRunHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
             : base(gitHubClientFactory, cache)
@@ -23,24 +23,14 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 if (await isUserOrganizationMember(webhookPayload, webhookPayload.Sender.Login))
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, not triggered by student");
 
-                var workflowRuns = await GitHubClient.Actions.CountWorkflowRunsInRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
-                if (workflowRuns <= 5)
+                var workflowRuns = await GitHubClient.CountWorkflowRunsInRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
+                if (workflowRuns <= WorkflowRunThreshold)
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, has less then threshold");
 
                 var prNum = await getMostRecentPullRequest(webhookPayload);
-                if (workflowRuns <= 7)
-                {
-                    if (prNum.HasValue)
-                        await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, prNum.Value, WarningText);
-                    return EventHandlerResult.ActionPerformed("workflow_run warning, threshold exceeded");
-                }
-                else
-                {
-                    if (prNum.HasValue)
-                        await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, prNum.Value, DisabledText);
-                    await GitHubClient.Actions.DisableActionsForRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name);
-                    return EventHandlerResult.ActionPerformed("workflow_run limit exceeded, actions disabled");
-                }
+                if (prNum.HasValue)
+                    await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, prNum.Value, WarningText);
+                return EventHandlerResult.ActionPerformed("workflow_run warning, threshold exceeded");
             }
 
             return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);

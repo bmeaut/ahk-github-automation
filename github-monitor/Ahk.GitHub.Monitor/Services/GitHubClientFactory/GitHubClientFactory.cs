@@ -27,12 +27,12 @@ namespace Ahk.GitHub.Monitor.Services
             this.config = config;
         }
 
-        public Task<IGitHubClientEx> CreateGitHubClient(long installationId)
+        public Task<IGitHubClient> CreateGitHubClient(long installationId)
             => connectionCache.GetOrCreateAsync($"githubconn_{installationId}", cacheEntry => createNewGitHubClient(cacheEntry, installationId));
 
-        private async Task<IGitHubClientEx> createNewGitHubClient(ICacheEntry cacheEntry, long installationId)
+        private async Task<IGitHubClient> createNewGitHubClient(ICacheEntry cacheEntry, long installationId)
         {
-            var gitHubClient = new GitHubClientEx(new Octokit.ProductHeaderValue("Ahk"))
+            var gitHubClient = new GitHubClient(new Octokit.ProductHeaderValue("Ahk"))
             {
                 Credentials = new Credentials(await getInstallationToken(installationId)),
             };
