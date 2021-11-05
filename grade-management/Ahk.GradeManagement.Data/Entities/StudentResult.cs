@@ -9,8 +9,8 @@ namespace Ahk.GradeManagement.Data.Entities
         {
             this.Id = id ?? Guid.NewGuid().ToString();
             this.Date = date;
-            this.Neptun = neptun.ToUpperInvariant();
-            this.GitHubRepoName = gitHubRepoName.ToLowerInvariant();
+            this.Neptun = Normalize.Neptun(neptun);
+            this.GitHubRepoName = Normalize.RepoName(gitHubRepoName);
             this.GitHubPrNumber = gitHubPrNumber;
             this.GitHubPrUrl = gitHubPrUrl;
             this.Actor = actor;

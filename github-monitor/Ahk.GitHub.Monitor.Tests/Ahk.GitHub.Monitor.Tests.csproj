@@ -11,6 +11,7 @@
     <None Remove="SampleCallbacks\comment_delete.json" />
     <None Remove="SampleCallbacks\comment_edit.json" />
     <None Remove="SampleCallbacks\pr_open.json" />
+    <None Remove="SampleCallbacks\pr_reviewcomment.json" />
     <None Remove="SampleCallbacks\pr_reviewrequested.json" />
     <None Remove="SampleCallbacks\workflow_run.json" />
   </ItemGroup>
@@ -21,6 +22,7 @@
     <EmbeddedResource Include="SampleCallbacks\comment_delete.json" />
     <EmbeddedResource Include="SampleCallbacks\comment_command.json" />
     <EmbeddedResource Include="SampleCallbacks\comment_edit.json" />
+    <EmbeddedResource Include="SampleCallbacks\pr_reviewcomment.json" />
     <EmbeddedResource Include="SampleCallbacks\pr_reviewrequested.json" />
     <EmbeddedResource Include="SampleCallbacks\pr_open.json" />
   </ItemGroup>

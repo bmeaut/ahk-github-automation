@@ -61,6 +61,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             repoContentClient.Setup(c => c.GetAllContentsByRef(It.IsAny<long>(), "neptun.txt", It.IsAny<string>())).ReturnsAsync(new[] { GitHubMockData.CreateNeptunTxtFileContent(content) });
             return this;
         }
+        public GitHubClientMockFactory WithNeptunTxtContent(
+            Action<Moq.Language.Flow.ISetup<IRepositoryContentsClient, Task<IReadOnlyList<RepositoryContent>>>> configure)
+        {
+            configure(repoContentClient.Setup(c => c.GetAllContentsByRef(It.IsAny<long>(), "neptun.txt", It.IsAny<string>())));
+            return this;
+        }
 
         public GitHubClientMockFactory WithPullRequestGetAll(
             Action<Moq.Language.Flow.ISetup<IPullRequestsClient, Task<IReadOnlyList<PullRequest>>>> configure)

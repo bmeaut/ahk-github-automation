@@ -12,19 +12,18 @@ namespace Ahk.GradeManagement.ListGrades
         public GradeListing(IResultsRepository repo)
             => this.repo = repo;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Repo name is normalized to lowercase.")]
         public async Task<IReadOnlyCollection<FinalStudentGrade>> List(string repoPrefix)
         {
-            var items = await this.repo.ListConfirmedWithRepositoryPrefix(repoPrefix.ToLowerInvariant());
+            var items = await this.repo.ListConfirmedWithRepositoryPrefix(Normalize.RepoName(repoPrefix));
             var finalResults = new List<FinalStudentGrade>();
-            foreach (var student in items.GroupBy(r => r.Neptun.ToUpperInvariant()))
+            foreach (var student in items.GroupBy(r => Normalize.Neptun(r.Neptun)))
             {
                 var lastResult = student.OrderByDescending(s => s.Date).First();
                 finalResults.Add(new FinalStudentGrade(
                     neptun: student.Key,
                     repo: lastResult.GitHubRepoName,
                     prUrl: lastResult.GitHubPrUrl,
-                    points: lastResult.Points.ToDictionary(keySelector: p => p.Name, elementSelector: p => p.Point)));
+                    points: lastResult.Points == null ? new Dictionary<string, double>() : lastResult.Points.ToDictionary(keySelector: p => p.Name, elementSelector: p => p.Point)));
             }
 
             return finalResults;

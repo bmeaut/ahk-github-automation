@@ -72,23 +72,23 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return true;
         }
 
-        protected Task<string> getNeptun(TPayload webhookPayload, string branchName)
+        protected Task<string> getNeptun(long repositoryId, string branchName)
             => cache.GetOrCreateAsync(
-                key: $"neptuntxtfile{webhookPayload.Repository.Id}{branchName}",
+                key: $"neptuntxtfile{repositoryId}{branchName}",
                 factory: async cacheEntry =>
                 {
-                    var value = await getNeptunTxtFileContent(webhookPayload, branchName);
+                    var value = await getNeptunTxtFileContent(repositoryId, branchName);
                     cacheEntry.SetValue(value);
                     cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(12));
                     return value;
                 });
 
-        protected async Task<string> getNeptunTxtFileContent(TPayload webhookPayload, string branchName)
+        protected async Task<string> getNeptunTxtFileContent(long repositoryId, string branchName)
         {
             try
             {
-                var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, "neptun.txt", branchName);
-                return contents.FirstOrDefault()?.Content;
+                var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(repositoryId, "neptun.txt", branchName);
+                return contents.FirstOrDefault()?.Content?.Trim();
             }
             catch (NotFoundException)
             {

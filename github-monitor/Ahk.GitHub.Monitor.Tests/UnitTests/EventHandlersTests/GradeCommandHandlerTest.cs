@@ -1,4 +1,5 @@
 ﻿using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Collections.Generic;
@@ -9,15 +10,17 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
     [TestClass]
     public class GradeCommandHandlerTest
     {
+        public enum CommentType { IssueComment, ReviewComment }
+
         [TestMethod]
-        public async Task CommentNoIssueInPayloadIgnored()
+        public async Task IssueCommentNoIssueInPayloadIgnored()
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.CommentEdit
                 .Replace("\"issue\": {", "\"aaaaa\": {");
 
-            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
+            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no issue information"));
@@ -27,11 +30,11 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         }
 
         [TestMethod]
-        public async Task CommentActionIsNotCreated()
+        public async Task IssueCommentActionIsNotCreated()
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
+            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
             var result = await eh.Execute(SampleData.CommentDelete);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -40,19 +43,36 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 Times.Never());
         }
 
+        [TestMethod]
+        public async Task ReviewCommentActionIsNotSubmitted()
+        {
+            var gitHubMock = GitHubClientMockFactory.CreateDefault();
+
+            var payload = SampleData.PrReviewComment.Replace("submitted", "edited");
+            var eh = new GradeCommandReviewCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
+            var result = await eh.Execute(payload);
+
+            Assert.IsTrue(result.Result.Contains("not of interest"));
+        }
+
         [DataTestMethod]
-        [DataRow("aaaa")]
-        [DataRow("/ahk hello")]
-        [DataRow("/ahk okkkkkkk")]
-        [DataRow("/ahkkkkk ok")]
-        [DataRow("a/ahk ok")]
-        public async Task CommandNotRecognized(string commentText)
+        [DataRow("aaaa", CommentType.IssueComment)]
+        [DataRow("/ahk hello", CommentType.IssueComment)]
+        [DataRow("/ahk okkkkkkk", CommentType.IssueComment)]
+        [DataRow("/ahkkkkk ok", CommentType.IssueComment)]
+        [DataRow("a/ahk ok", CommentType.IssueComment)]
+        [DataRow("aaaa", CommentType.ReviewComment)]
+        [DataRow("/ahk hello", CommentType.ReviewComment)]
+        [DataRow("/ahk okkkkkkk", CommentType.ReviewComment)]
+        [DataRow("/ahkkkkk ok", CommentType.ReviewComment)]
+        [DataRow("a/ahk ok", CommentType.ReviewComment)]
+        public async Task CommandNotRecognized(string commentText, CommentType commentType)
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
             var gradeStoreMock = GradeStoreMockFactory.Create();
 
-            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), gradeStoreMock.Object, MemoryCacheMockFactory.Instance);
-            var result = await eh.Execute(getPayloadWithComment(commentText));
+            var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
+            var result = await eh.Execute(getPayloadWithComment(commentType, commentText));
 
             Assert.IsTrue(result.Result.Contains("not recognized as command"));
             gitHubMock.GitHubClientMock.Verify(c =>
@@ -66,15 +86,17 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 Times.Never());
         }
 
-        [TestMethod]
-        public async Task ActorIsNotOrgMemberCommandNotAllowed()
+        [DataTestMethod]
+        [DataRow(CommentType.IssueComment)]
+        [DataRow(CommentType.ReviewComment)]
+        public async Task ActorIsNotOrgMemberCommandNotAllowed(CommentType commentType)
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithOrganizationMemberGet("abcabc", false);
             var gradeStoreMock = GradeStoreMockFactory.Create();
 
-            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), gradeStoreMock.Object, MemoryCacheMockFactory.Instance);
-            var result = await eh.Execute(getPayloadWithComment(@"/ahk ok"));
+            var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
+            var result = await eh.Execute(getPayloadWithComment(commentType, @"/ahk ok"));
 
             Assert.IsTrue(result.Result.Contains("not allowed for user"));
             gitHubMock.GitHubClientMock.Verify(c =>
@@ -91,16 +113,18 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 Times.Never());
         }
 
-        [TestMethod]
-        public async Task PRAlreadyClosedGradesAccepted()
+        [DataTestMethod]
+        [DataRow(CommentType.IssueComment)]
+        [DataRow(CommentType.ReviewComment)]
+        public async Task PRAlreadyClosedGradesAccepted(CommentType commentType)
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithOrganizationMemberGet("abcabc", true)
                                 .WithPullRequestGet(336882879, 24, GitHubMockData.CreatePullRequest(24, Octokit.ItemState.Closed, mergeable: false));
             var gradeStoreMock = GradeStoreMockFactory.Create();
 
-            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), gradeStoreMock.Object, MemoryCacheMockFactory.Instance);
-            var result = await eh.Execute(getPayloadWithComment(@"/ahk ok"));
+            var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
+            var result = await eh.Execute(getPayloadWithComment(commentType, @"/ahk ok"));
 
             Assert.IsTrue(result.Result.Contains("grade done"));
             gitHubMock.GitHubClientMock.Verify(c =>
@@ -115,19 +139,31 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         }
 
         [DataTestMethod]
-        [DataRow("/ahk ok", false)]
-        [DataRow("/ahk ok\rsomething", false)]
-        [DataRow("/ahk ok\r\nsomething", false)]
-        [DataRow("something\r\n\r\n/ahk ok", false)]
-        [DataRow("/ahk ok 1", true)]
-        [DataRow("/ahk ok 2\rsomething", true)]
-        [DataRow("/ahk ok 3\r\nsomething", true)]
-        [DataRow("something\r\n\r\n/ahk ok 4", true)]
-        [DataRow("/ahk ok 1 2", true)]
-        [DataRow("/ahk ok 2 3.5\rsomething", true)]
-        [DataRow("/ahk ok 3.4 5\r\nsomething", true)]
-        [DataRow("something\r\n\r\n/ahk ok 4 5.6", true)]
-        public async Task PRNeedsMergeGradesAccepted(string commentText, bool gradesExpected)
+        [DataRow("/ahk ok", false, CommentType.IssueComment)]
+        [DataRow("/ahk ok\rsomething", false, CommentType.IssueComment)]
+        [DataRow("/ahk ok\r\nsomething", false, CommentType.IssueComment)]
+        [DataRow("something\r\n\r\n/ahk ok", false, CommentType.IssueComment)]
+        [DataRow("/ahk ok 1", true, CommentType.IssueComment)]
+        [DataRow("/ahk ok 2\rsomething", true, CommentType.IssueComment)]
+        [DataRow("/ahk ok 3\r\nsomething", true, CommentType.IssueComment)]
+        [DataRow("something\r\n\r\n/ahk ok 4", true, CommentType.IssueComment)]
+        [DataRow("/ahk ok 1 2", true, CommentType.IssueComment)]
+        [DataRow("/ahk ok 2 3.5\rsomething", true, CommentType.IssueComment)]
+        [DataRow("/ahk ok 3.4 5\r\nsomething", true, CommentType.IssueComment)]
+        [DataRow("something\r\n\r\n/ahk ok 4 5.6", true, CommentType.IssueComment)]
+        [DataRow("/ahk ok", false, CommentType.ReviewComment)]
+        [DataRow("/ahk ok\rsomething", false, CommentType.ReviewComment)]
+        [DataRow("/ahk ok\r\nsomething", false, CommentType.ReviewComment)]
+        [DataRow("something\r\n\r\n/ahk ok", false, CommentType.ReviewComment)]
+        [DataRow("/ahk ok 1", true, CommentType.ReviewComment)]
+        [DataRow("/ahk ok 2\rsomething", true, CommentType.ReviewComment)]
+        [DataRow("/ahk ok 3\r\nsomething", true, CommentType.ReviewComment)]
+        [DataRow("something\r\n\r\n/ahk ok 4", true, CommentType.ReviewComment)]
+        [DataRow("/ahk ok 1 2", true, CommentType.ReviewComment)]
+        [DataRow("/ahk ok 2 3.5\rsomething", true, CommentType.ReviewComment)]
+        [DataRow("/ahk ok 3.4 5\r\nsomething", true, CommentType.ReviewComment)]
+        [DataRow("something\r\n\r\n/ahk ok 4 5.6", true, CommentType.ReviewComment)]
+        public async Task PRNeedsMergeGradesAccepted(string commentText, bool gradesExpected, CommentType commentType)
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault()
                                 .WithOrganizationMemberGet("abcabc", true)
@@ -135,8 +171,8 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                                 .WithNeptunTxtContent("NEPT12");
             var gradeStoreMock = GradeStoreMockFactory.Create();
 
-            var eh = new GradeCommandHandler(gitHubMock.CreateFactory(), gradeStoreMock.Object, MemoryCacheMockFactory.Instance);
-            var result = await eh.Execute(getPayloadWithComment(commentText));
+            var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
+            var result = await eh.Execute(getPayloadWithComment(commentType, commentText));
 
             Assert.IsTrue(result.Result.Contains("grade done"));
             gitHubMock.GitHubClientMock.Verify(c =>
@@ -154,7 +190,23 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 gradesExpected ? Times.Never() : Times.Once());
         }
 
-        private static string getPayloadWithComment(string value, string user = "abcabc")
-            => SampleData.CommentCommand.Replace("xxx-body-placeholder-xxx", value).Replace("xxx-comment-creator-user-xxx", user);
+        private static string getPayloadWithComment(CommentType commentType, string value, string user = "abcabc")
+        {
+            var text = commentType switch
+            {
+                CommentType.IssueComment => SampleData.CommentCommand,
+                CommentType.ReviewComment => SampleData.PrReviewComment,
+                _ => throw new System.NotImplementedException(),
+            };
+            return text.Replace("xxx-body-placeholder-xxx", value).Replace("xxx-comment-creator-user-xxx", user);
+        }
+
+        private IGitHubEventHandler createHandler(CommentType commentType, IGitHubClientFactory gitHubClientFactory, IGradeStore gradeStore)
+            => commentType switch
+            {
+                CommentType.IssueComment => new GradeCommandIssueCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance),
+                CommentType.ReviewComment => new GradeCommandReviewCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance),
+                _ => throw new System.NotImplementedException(),
+            };
     }
 }
