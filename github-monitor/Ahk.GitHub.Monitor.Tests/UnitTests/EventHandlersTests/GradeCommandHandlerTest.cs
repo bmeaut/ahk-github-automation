@@ -1,5 +1,6 @@
 ﻿using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = SampleData.CommentEdit
                 .Replace("\"issue\": {", "\"aaaaa\": {");
 
-            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
+            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no issue information"));
@@ -34,7 +35,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
+            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.CommentDelete);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -49,7 +50,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.PrReviewComment.Replace("submitted", "edited");
-            var eh = new GradeCommandReviewCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance);
+            var eh = new GradeCommandReviewCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("not of interest"));
@@ -204,8 +205,8 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         private IGitHubEventHandler createHandler(CommentType commentType, IGitHubClientFactory gitHubClientFactory, IGradeStore gradeStore)
             => commentType switch
             {
-                CommentType.IssueComment => new GradeCommandIssueCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance),
-                CommentType.ReviewComment => new GradeCommandReviewCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance),
+                CommentType.IssueComment => new GradeCommandIssueCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance, NullLogger.Instance),
+                CommentType.ReviewComment => new GradeCommandReviewCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance, NullLogger.Instance),
                 _ => throw new System.NotImplementedException(),
             };
     }

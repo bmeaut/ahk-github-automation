@@ -14,8 +14,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private readonly Services.IGradeStore gradeStore;
         private readonly IMemoryCache isOrgMemberCache;
 
-        protected GradeCommandHandlerBase(Services.IGitHubClientFactory gitHubClientFactory, Services.IGradeStore gradeStore, IMemoryCache cache)
-            : base(gitHubClientFactory, cache)
+        protected GradeCommandHandlerBase(Services.IGitHubClientFactory gitHubClientFactory, Services.IGradeStore gradeStore, IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
+            : base(gitHubClientFactory, cache, logger)
         {
             this.gradeStore = gradeStore;
             this.isOrgMemberCache = cache;

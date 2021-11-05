@@ -1,4 +1,5 @@
 ﻿using Ahk.GitHub.Monitor.EventHandlers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Threading.Tasks;
@@ -137,7 +138,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         private class TestHandler : RepositoryEventBase<Octokit.ActivityPayload>
         {
             public TestHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
-                : base(gitHubClientFactory, cache)
+                : base(gitHubClientFactory, cache, NullLogger.Instance)
             {
             }
 

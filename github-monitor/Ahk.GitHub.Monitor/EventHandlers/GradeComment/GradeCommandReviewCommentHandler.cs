@@ -9,8 +9,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     {
         public const string GitHubWebhookEventName = "pull_request_review";
 
-        public GradeCommandReviewCommentHandler(Services.IGitHubClientFactory gitHubClientFactory, Services.IGradeStore gradeStore, IMemoryCache cache)
-            : base(gitHubClientFactory, gradeStore, cache)
+        public GradeCommandReviewCommentHandler(Services.IGitHubClientFactory gitHubClientFactory, Services.IGradeStore gradeStore, IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
+            : base(gitHubClientFactory, gradeStore, cache, logger)
         {
         }
 

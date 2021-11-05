@@ -1,7 +1,7 @@
-﻿using Octokit;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -11,8 +11,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "workflow_run";
         private const string WarningText = ":exclamation: **You triggered too many automated evaluations; extra evaluations are penalized. Túl sok automata értékelést futtattál; az extra futtatások pontlevonással járnak.** ";
 
-        public ActionWorkflowRunHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
-            : base(gitHubClientFactory, cache)
+        public ActionWorkflowRunHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
+            : base(gitHubClientFactory, cache, logger)
         {
         }
 

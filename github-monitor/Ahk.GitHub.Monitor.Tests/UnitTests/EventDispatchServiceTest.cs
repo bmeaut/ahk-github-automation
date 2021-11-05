@@ -1,8 +1,10 @@
-﻿using System.Threading.Tasks;
-using Ahk.GitHub.Monitor.EventHandlers;
+﻿using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests
 {
@@ -19,7 +21,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests
                 .Add<EventHandler2>("event2");
 
             var service = new EventDispatchService(services.BuildServiceProvider(), config);
-            await service.Process("event1", "dummy request", new WebhookResult());
+            await service.Process("event1", "dummy request", new WebhookResult(), NullLogger.Instance);
 
             Assert.IsTrue(EventHandler1A.Invoked);
             Assert.IsTrue(EventHandler1A.Invoked);
@@ -29,6 +31,11 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests
         private class EventHandler1A : IGitHubEventHandler
         {
             public static bool Invoked { get; private set; }
+
+            public EventHandler1A(ILogger logger)
+            {
+            }
+
             public Task<EventHandlerResult> Execute(string requestBody)
             {
                 Invoked = true;
@@ -39,6 +46,11 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests
         private class EventHandler1B : IGitHubEventHandler
         {
             public static bool Invoked { get; private set; }
+
+            public EventHandler1B(ILogger logger)
+            {
+            }
+
             public Task<EventHandlerResult> Execute(string requestBody)
             {
                 Invoked = true;
@@ -49,6 +61,11 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests
         private class EventHandler2 : IGitHubEventHandler
         {
             public static bool Invoked { get; private set; }
+
+            public EventHandler2(ILogger logger)
+            {
+            }
+
             public Task<EventHandlerResult> Execute(string requestBody)
             {
                 Invoked = true;

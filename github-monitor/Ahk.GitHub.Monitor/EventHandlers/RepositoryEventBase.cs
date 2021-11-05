@@ -1,23 +1,27 @@
-﻿using Ahk.GitHub.Monitor.Services;
-using Microsoft.Extensions.Caching.Memory;
-using Octokit;
-using Octokit.Internal;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Octokit;
+using Octokit.Internal;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
     public abstract class RepositoryEventBase<TPayload> : IGitHubEventHandler
         where TPayload : ActivityPayload
     {
+        protected readonly ILogger Logger;
+
         private readonly IGitHubClientFactory gitHubClientFactory;
         private readonly IMemoryCache cache;
 
-        protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory, IMemoryCache cache)
+        protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory, IMemoryCache cache, ILogger logger)
         {
             this.gitHubClientFactory = gitHubClientFactory;
             this.cache = cache;
+            this.Logger = logger;
         }
 
         protected IGitHubClient GitHubClient { get; private set; }
@@ -30,7 +34,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
 
             if (!await isEnabledForRepository(webhookPayload))
+            {
+                Logger.LogInformation("no ahk-monitor.yml or disabled");
                 return EventHandlerResult.Disabled("no ahk-monitor.yml or disabled");
+            }
 
             return await executeCore(webhookPayload);
         }
@@ -43,6 +50,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             if (string.IsNullOrEmpty(requestBody))
             {
                 errorResult = EventHandlerResult.PayloadError("request body was empty");
+                Logger.LogError("request body was empty");
                 return false;
             }
 
@@ -53,18 +61,21 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             catch (Exception ex)
             {
                 errorResult = EventHandlerResult.PayloadError($"request body deserialization failed: {ex.Message}");
+                Logger.LogError(ex, "request body deserialization failed");
                 return false;
             }
 
             if (payload == null)
             {
                 errorResult = EventHandlerResult.PayloadError("parsed payload was null or empty");
+                Logger.LogError("parsed payload was null or empty");
                 return false;
             }
 
             if (payload.Repository == null)
             {
                 errorResult = EventHandlerResult.PayloadError("no repository information in webhook payload");
+                Logger.LogError("no repository information in webhook payload");
                 return false;
             }
 

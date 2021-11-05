@@ -1,6 +1,6 @@
-﻿using Octokit;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -8,8 +8,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     {
         public const string GitHubWebhookEventName = "create";
 
-        public BranchProtectionRuleHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
-            : base(gitHubClientFactory, cache)
+        public BranchProtectionRuleHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
+            : base(gitHubClientFactory, cache, logger)
         {
         }
 

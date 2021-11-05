@@ -9,8 +9,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "issue_comment";
         private const string WarningText = ":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.**";
 
-        public IssueCommentEditDeleteHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
-            : base(gitHubClientFactory, cache)
+        public IssueCommentEditDeleteHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
+            : base(gitHubClientFactory, cache, logger)
         {
         }
 

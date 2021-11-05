@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Ahk.GitHub.Monitor.Services
 {
@@ -26,7 +27,7 @@ namespace Ahk.GitHub.Monitor.Services
             this.handlers = handlers;
         }
 
-        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult)
+        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult, ILogger logger)
         {
             if (!this.handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
             {
@@ -35,15 +36,15 @@ namespace Ahk.GitHub.Monitor.Services
             else
             {
                 foreach (var handlerType in handlersForEvent)
-                    await executeHandler(requestBody, webhookResult, handlerType);
+                    await executeHandler(requestBody, webhookResult, handlerType, logger);
             }
         }
 
-        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType)
+        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType, ILogger logger)
         {
             try
             {
-                var handler = serviceProvider.GetRequiredService(handlerType) as EventHandlers.IGitHubEventHandler;
+                var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType, logger) as EventHandlers.IGitHubEventHandler;
                 var handlerResult = await handler.Execute(requestBody);
                 webhookResult.LogInfo($"{handlerType.Name} -> {handlerResult.Result}");
             }
