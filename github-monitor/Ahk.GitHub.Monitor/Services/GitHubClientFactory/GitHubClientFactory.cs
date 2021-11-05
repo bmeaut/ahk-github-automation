@@ -34,7 +34,7 @@ namespace Ahk.GitHub.Monitor.Services
                 $"githubtokenforinstallation_{installationId}",
                 async cacheEntry =>
                 {
-                    var token = await getInstallationToken(installationId);
+                    var token = await getInstallationToken(installationId, logger);
                     cacheEntry.SetValue(token);
                     cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
                     return token;
@@ -58,7 +58,7 @@ namespace Ahk.GitHub.Monitor.Services
             return gitHubClient;
         }
 
-        private async Task<string> getInstallationToken(long installationId)
+        private async Task<string> getInstallationToken(long installationId, ILogger logger)
         {
             var applicationToken = getApplicationToken();
             using (var client = new HttpClient())
@@ -75,8 +75,13 @@ namespace Ahk.GitHub.Monitor.Services
 
                 using (var response = await client.SendAsync(request))
                 {
-                    response.EnsureSuccessStatusCode();
                     var json = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                        logger.LogError($"Failed to get access token for installation {installationId}, response payload is: {json}");
+
+                    response.EnsureSuccessStatusCode();
+
                     var obj = JObject.Parse(json);
                     return obj["token"]?.Value<string>();
                 }

@@ -32,11 +32,15 @@ namespace Ahk.GitHub.Monitor.Services
             if (!this.handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
             {
                 webhookResult.LogInfo($"Event {gitHubEventName} is not of interest");
+                logger.LogInformation($"Event {gitHubEventName} is not of interest");
             }
             else
             {
                 foreach (var handlerType in handlersForEvent)
+                {
+                    logger.LogInformation($"Event {gitHubEventName} being handled by {handlerType}");
                     await executeHandler(requestBody, webhookResult, handlerType, logger);
+                }
             }
         }
 
@@ -46,10 +50,13 @@ namespace Ahk.GitHub.Monitor.Services
             {
                 var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType, logger) as EventHandlers.IGitHubEventHandler;
                 var handlerResult = await handler.Execute(requestBody);
+
+                logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");
                 webhookResult.LogInfo($"{handlerType.Name} -> {handlerResult.Result}");
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, $"{handlerType.Name} execution failed");
                 webhookResult.LogError(ex, $"{handlerType.Name} -> exception");
             }
         }

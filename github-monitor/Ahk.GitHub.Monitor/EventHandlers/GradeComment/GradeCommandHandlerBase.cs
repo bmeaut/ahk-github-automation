@@ -1,8 +1,9 @@
-﻿using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.Extensions.Caching.Memory;
-using Octokit;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Helpers;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -62,6 +63,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task handleStoreGrade(ICommentPayload<T> webhookPayload, GradeCommentParser gradeCommand, PullRequest pr)
         {
             var neptun = await getNeptun(webhookPayload.Repository.Id, pr.Head.Ref);
+            Logger.LogInformation($"storing grades for {neptun}");
             if (gradeCommand.HasGrades)
             {
                 await gradeStore.StoreGrade(
@@ -90,8 +92,13 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             bool shouldMergePr = pr.State.Value == ItemState.Open && pr.Mergeable == true;
             if (shouldMergePr)
             {
+                Logger.LogInformation("PR is being merged");
                 await GitHubClient.PullRequest.Review.Create(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber, new PullRequestReviewCreate() { Event = PullRequestReviewEvent.Approve });
                 await GitHubClient.PullRequest.Merge(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber, new MergePullRequest());
+            }
+            else
+            {
+                Logger.LogInformation("PR is not mergable");
             }
         }
 
