@@ -96,6 +96,34 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
         }
 
+        protected Task<bool> isUserOrganizationMember(TPayload webhookPayload, string username)
+        {
+            if (webhookPayload.Repository.Owner.Type != AccountType.Organization)
+                return Task.FromResult(false);
+
+            return cache.GetOrCreateAsync(
+                key: $"githubisorgmember{webhookPayload.Repository.Owner.Login}{username}",
+                factory: async cacheEntry =>
+                {
+                    var isMember = await getIsUserOrganizationMember(webhookPayload.Repository.Owner.Login, username);
+                    cacheEntry.SetValue(isMember);
+                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                    return isMember;
+                });
+        }
+
+        private async Task<bool> getIsUserOrganizationMember(string org, string user)
+        {
+            try
+            {
+                return await GitHubClient.Organization.Member.CheckMember(org, user);
+            }
+            catch (NotFoundException)
+            {
+                return false;
+            }
+        }
+
         private Task<bool> isEnabledForRepository(TPayload webhookPayload)
             => cache.GetOrCreateAsync(
                 key: $"ahkmonitorisenabledinrepo{webhookPayload.Repository.Id}",
