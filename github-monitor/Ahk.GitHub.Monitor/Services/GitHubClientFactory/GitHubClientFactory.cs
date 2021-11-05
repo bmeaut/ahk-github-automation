@@ -1,15 +1,16 @@
-﻿using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using Octokit;
-using System;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Helpers;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.Services
 {
@@ -18,33 +19,46 @@ namespace Ahk.GitHub.Monitor.Services
     /// </summary>
     public class GitHubClientFactory : IGitHubClientFactory
     {
-        private readonly IMemoryCache connectionCache;
+        private readonly IMemoryCache cache;
         private readonly IOptions<GitHubMonitorConfig> config;
 
-        public GitHubClientFactory(IMemoryCache connectionCache, IOptions<GitHubMonitorConfig> config)
+        public GitHubClientFactory(IMemoryCache cache, IOptions<GitHubMonitorConfig> config)
         {
-            this.connectionCache = connectionCache;
+            this.cache = cache;
             this.config = config;
         }
 
-        public Task<IGitHubClient> CreateGitHubClient(long installationId)
-            => connectionCache.GetOrCreateAsync($"githubconn_{installationId}", cacheEntry => createNewGitHubClient(cacheEntry, installationId));
-
-        private async Task<IGitHubClient> createNewGitHubClient(ICacheEntry cacheEntry, long installationId)
+        public async Task<IGitHubClient> CreateGitHubClient(long installationId, ILogger logger)
         {
-            var gitHubClient = new GitHubClient(new Octokit.ProductHeaderValue("Ahk"))
-            {
-                Credentials = new Credentials(await getInstallationToken(installationId)),
-            };
-            gitHubClient.SetRequestTimeout(TimeSpan.FromSeconds(15));
+            var token = await cache.GetOrCreateAsync(
+                $"githubtokenforinstallation_{installationId}",
+                async cacheEntry =>
+                {
+                    var token = await getInstallationToken(installationId, logger);
+                    cacheEntry.SetValue(token);
+                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+                    return token;
+                });
 
-            cacheEntry.SetValue(gitHubClient);
-            cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            var httpHandler = new Octokit.Internal.HttpClientAdapter(() => new ResponseLoggerHandler(new RetryOnServerErrorHandler(Octokit.Internal.HttpMessageHandlerFactory.CreateDefault()), logger));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+            // Connection creation based on what the GitHubClient ctor does
+            var githubConnection = new Connection(
+                                        new Octokit.ProductHeaderValue("Ahk"),
+                                        GitHubClient.GitHubApiUrl,
+                                        new Octokit.Internal.InMemoryCredentialStore(new Credentials(token)),
+                                        httpHandler,
+                                        new Octokit.Internal.SimpleJsonSerializer());
+
+            var gitHubClient = new GitHubClient(githubConnection);
+            gitHubClient.SetRequestTimeout(TimeSpan.FromSeconds(15));
 
             return gitHubClient;
         }
 
-        private async Task<string> getInstallationToken(long installationId)
+        private async Task<string> getInstallationToken(long installationId, ILogger logger)
         {
             var applicationToken = getApplicationToken();
             using (var client = new HttpClient())
@@ -61,8 +75,13 @@ namespace Ahk.GitHub.Monitor.Services
 
                 using (var response = await client.SendAsync(request))
                 {
-                    response.EnsureSuccessStatusCode();
                     var json = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                        logger.LogError($"Failed to get access token for installation {installationId}, response payload is: {json}");
+
+                    response.EnsureSuccessStatusCode();
+
                     var obj = JObject.Parse(json);
                     return obj["token"]?.Value<string>();
                 }

@@ -56,7 +56,7 @@ namespace Ahk.GitHub.Monitor
             var webhookResult = new WebhookResult();
             try
             {
-                await eventDispatchService.Process(eventName, requestBody, webhookResult);
+                await eventDispatchService.Process(eventName, requestBody, webhookResult, logger);
                 logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'", deliveryId);
             }
             catch (Exception ex)

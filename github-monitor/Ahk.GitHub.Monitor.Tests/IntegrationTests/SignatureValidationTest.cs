@@ -1,8 +1,9 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
 {
@@ -19,20 +20,20 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             var resp = await func.InvokeWithContentAndGetResponseAs<ObjectResult>(wrongSignature);
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
-            eds.Verify(s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>()), Times.Never());
+            eds.Verify(s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance), Times.Never());
         }
 
         [TestMethod]
         public async Task ValidGitHubSignatureAcceptedAndDispatched()
         {
             var eds = new Mock<Services.IEventDispatchService>();
-            eds.Setup(s => s.Process(SampleData.BranchCreate.EventName, It.IsAny<string>(), It.IsAny<WebhookResult>())).Returns(Task.CompletedTask);
+            eds.Setup(s => s.Process(SampleData.BranchCreate.EventName, It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance)).Returns(Task.CompletedTask);
 
             var ctx = FunctionBuilder.Create(eds.Object);
             var resp = await ctx.InvokeWithContentAndGetResponseAs<OkObjectResult>(SampleData.BranchCreate);
 
             Assert.AreEqual(StatusCodes.Status200OK, resp.StatusCode);
-            eds.Verify(s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>()), Times.Once());
+            eds.Verify(s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance), Times.Once());
         }
     }
 }

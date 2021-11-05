@@ -1,8 +1,8 @@
-﻿using Octokit;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -11,8 +11,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         public const string GitHubWebhookEventName = "pull_request";
         private const string WarningText = ":exclamation: **You have multiple pull requests. Tobb pull request-et nyitottal.** {} \n\n";
 
-        public PullRequestOpenDuplicateHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
-            : base(gitHubClientFactory, cache)
+        public PullRequestOpenDuplicateHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
+            : base(gitHubClientFactory, cache, logger)
         {
         }
 

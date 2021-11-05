@@ -1,4 +1,5 @@
 ﻿using Ahk.GitHub.Monitor.EventHandlers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var payload = getPayload();
             var gh = gitHubMock.WithWorkflowRunsCount("aabbcc", "reporep", "someone", workflowRuns).CreateFactory();
 
-            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance);
+            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("workflow_run ok, has less then threshold"));
@@ -39,7 +40,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 .WithWorkflowRunsCount("aabbcc", "reporep", "orgmember", 999)
                 .CreateFactory();
 
-            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance);
+            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("workflow_run ok, not triggered by student"));
@@ -63,7 +64,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 }))
                 .CreateFactory();
 
-            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance);
+            var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("workflow_run warning, threshold exceeded"));

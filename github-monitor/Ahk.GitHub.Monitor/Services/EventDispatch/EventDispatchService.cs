@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Ahk.GitHub.Monitor.Services
 {
@@ -26,29 +27,36 @@ namespace Ahk.GitHub.Monitor.Services
             this.handlers = handlers;
         }
 
-        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult)
+        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult, ILogger logger)
         {
             if (!this.handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
             {
                 webhookResult.LogInfo($"Event {gitHubEventName} is not of interest");
+                logger.LogInformation($"Event {gitHubEventName} is not of interest");
             }
             else
             {
                 foreach (var handlerType in handlersForEvent)
-                    await executeHandler(requestBody, webhookResult, handlerType);
+                {
+                    logger.LogInformation($"Event {gitHubEventName} being handled by {handlerType}");
+                    await executeHandler(requestBody, webhookResult, handlerType, logger);
+                }
             }
         }
 
-        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType)
+        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType, ILogger logger)
         {
             try
             {
-                var handler = serviceProvider.GetRequiredService(handlerType) as EventHandlers.IGitHubEventHandler;
+                var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType, logger) as EventHandlers.IGitHubEventHandler;
                 var handlerResult = await handler.Execute(requestBody);
+
+                logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");
                 webhookResult.LogInfo($"{handlerType.Name} -> {handlerResult.Result}");
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, $"{handlerType.Name} execution failed");
                 webhookResult.LogError(ex, $"{handlerType.Name} -> exception");
             }
         }
