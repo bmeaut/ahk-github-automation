@@ -20,6 +20,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
             if (webhookPayload.Action.Equals("completed", StringComparison.OrdinalIgnoreCase))
             {
+                if (string.IsNullOrEmpty(webhookPayload.Sender?.Login))
+                    return EventHandlerResult.PayloadError("missing actor user");
+
                 if (await isUserOrganizationMember(webhookPayload, webhookPayload.Sender.Login))
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, not triggered by student");
 
