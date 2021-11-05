@@ -1,4 +1,5 @@
 ﻿using Ahk.GitHub.Monitor.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Octokit;
 using System;
@@ -39,7 +40,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         public IGitHubClientFactory CreateFactory()
         {
             var factoryMock = new Mock<IGitHubClientFactory>();
-            factoryMock.Setup(f => f.CreateGitHubClient(It.IsAny<long>())).ReturnsAsync(GitHubClientMock.Object);
+            factoryMock.Setup(f => f.CreateGitHubClient(It.IsAny<long>(), NullLogger.Instance)).ReturnsAsync(GitHubClientMock.Object);
             return factoryMock.Object;
         }
 

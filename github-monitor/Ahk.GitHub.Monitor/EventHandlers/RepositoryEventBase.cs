@@ -31,7 +31,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             if (!tryParsePayload(requestBody, out var webhookPayload, out var errorResult))
                 return errorResult;
 
-            GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id);
+            GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id, Logger);
 
             if (!await isEnabledForRepository(webhookPayload))
             {
