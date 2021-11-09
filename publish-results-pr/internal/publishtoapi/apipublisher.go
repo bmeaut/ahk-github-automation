@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -26,8 +27,16 @@ func NewApiPublisher() ApiPublisher {
 	return new(apiPublisher)
 }
 
-func (s *apiPublisher) Publish(result processing.AhkProcessResult, config Config) error {
+func SerializeResultAsJson(result processing.AhkProcessResult) ([]byte, error) {
+	// marshaler does not tolerate NaN
+	fixupData(&result)
 	jsonStr, err := json.Marshal(result)
+	return jsonStr, err
+}
+
+func (s *apiPublisher) Publish(result processing.AhkProcessResult, config Config) error {
+
+	jsonStr, err := SerializeResultAsJson(result)
 	if err != nil {
 		return err
 	}
@@ -76,4 +85,14 @@ func getHmacSignature(payload, httpverb, httpurl, secret string, date time.Time)
 	h.Write([]byte(date.Format(http.TimeFormat) + "\n"))
 	h.Write([]byte(payload))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+func fixupData(data *processing.AhkProcessResult) {
+	if data.Result != nil {
+		for i := 0; i < len(data.Result); i++ {
+			if math.IsNaN(data.Result[i].Points) {
+				data.Result[i].Points = 0
+			}
+		}
+	}
 }
