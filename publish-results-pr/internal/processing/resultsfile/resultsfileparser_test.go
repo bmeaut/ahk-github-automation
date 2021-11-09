@@ -1,7 +1,7 @@
 package resultsfileparser
 
 import (
-	"reflect"
+	"math"
 	"testing"
 )
 
@@ -82,6 +82,23 @@ func TestResultsFileParser_ParseResultsFile(t *testing.T) {
 				},
 			},
 		},
+		{
+			fileName: "testfiles/res5.txt",
+			wantErr:  false,
+			wantValue: []AhkTaskResult{
+				{
+					ExerciseName: "",
+					TaskName:     "ex1",
+					Points:       1,
+				},
+				{
+					ExerciseName: "",
+					TaskName:     "ex2",
+					Points:       math.NaN(),
+					Comment:      "comment",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fileName, func(t *testing.T) {
@@ -91,9 +108,41 @@ func TestResultsFileParser_ParseResultsFile(t *testing.T) {
 				t.Errorf("ResultsFileParser.ParseResultsFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotValue, tt.wantValue) {
+			if !isEqualArray(gotValue, tt.wantValue) {
 				t.Errorf("ResultsFileParser.ParseResultsFile() = %v, want %v", gotValue, tt.wantValue)
 			}
 		})
 	}
+}
+
+// need manual comparison as NaN does not equal NaN
+func isEqualArray(actual, expected []AhkTaskResult) bool {
+	if len(actual) != len(expected) {
+		return false
+	}
+	for i := 0; i < len(actual); i++ {
+		if !isEqualOne(actual[i], expected[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func isEqualOne(actual, expected AhkTaskResult) bool {
+	if actual.ExerciseName != expected.ExerciseName {
+		return false
+	}
+	if actual.TaskName != expected.TaskName {
+		return false
+	}
+	if actual.Comment != expected.Comment {
+		return false
+	}
+	if math.IsNaN(expected.Points) != math.IsNaN(actual.Points) {
+		return false
+	}
+	if !math.IsNaN(expected.Points) && expected.Points != actual.Points {
+		return false
+	}
+	return true
 }

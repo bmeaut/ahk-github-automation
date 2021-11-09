@@ -1,7 +1,7 @@
 package publishtoapi
 
 import (
-	"encoding/json"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,11 +59,30 @@ func TestApiPublisher_Json(t *testing.T) {
 			},
 			wantValue: `{"gitHubRepoName":"org/name","gitHubBranch":"branch","gitHubPullRequestNum":123,"gitHubCommitHash":"aa11cc33","neptunCode":"ABC123","imageFiles":[],"result":[{"exerciseName":"ex1","taskName":"t1","points":2,"comment":"line1 abc\nlin2 end"},{"taskName":"t1","points":5}],"origin":"orgstr"}`,
 		},
+		{
+			data: processing.AhkProcessResult{
+				GitHubRepoName:       "org/name",
+				GitHubBranch:         "branch",
+				GitHubPullRequestNum: 0,
+				GitHubCommitHash:     "aa11cc33",
+				NeptunCode:           "ABC123",
+				ImageFiles:           []string{"img1.png", "img2.png"},
+				Result: []resultsfileparser.AhkTaskResult{
+					{
+						ExerciseName: "ex1",
+						TaskName:     "t1",
+						Points:       math.NaN(),
+						Comment:      "ccc",
+					},
+				},
+			},
+			wantValue: `{"gitHubRepoName":"org/name","gitHubBranch":"branch","gitHubCommitHash":"aa11cc33","neptunCode":"ABC123","imageFiles":["img1.png","img2.png"],"result":[{"exerciseName":"ex1","taskName":"t1","points":0,"comment":"ccc"}]}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run("TestApiPublisher_Json", func(t *testing.T) {
 
-			bytes, err := json.Marshal(tt.data)
+			bytes, err := SerializeResultAsJson(tt.data)
 			if err != nil {
 				t.Error(err)
 				return
