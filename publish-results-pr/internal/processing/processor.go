@@ -29,22 +29,34 @@ func (p *processor) Process(appArgs appargs.AppArgs, workingDir string) (res Ahk
 	}
 	log.Printf("Neptun: %s\n", *neptun)
 
-	imageFilesFinder := new(imagefilesfinder.ImageFileFinder)
-	imageFiles, err := imageFilesFinder.GetImageFiles(workingDir, appArgs.ImageExtension)
-	if err != nil {
-		return AhkProcessResult{}, err
-	}
-	for _, imageFile := range imageFiles {
-		log.Printf("Found image file: %s\n", imageFile)
+	var imageFiles []string
+	if appArgs.ImageExtension == "" {
+		log.Println("Image files gathering not requested")
+		imageFiles = []string{}
+	} else {
+		imageFilesFinder := new(imagefilesfinder.ImageFileFinder)
+		imageFiles, err = imageFilesFinder.GetImageFiles(workingDir, appArgs.ImageExtension)
+		if err != nil {
+			return AhkProcessResult{}, err
+		}
+		for _, imageFile := range imageFiles {
+			log.Printf("Found image file: %s\n", imageFile)
+		}
 	}
 
-	resultsFileParser := new(resultsfileparser.ResultsFileParser)
-	results, err := resultsFileParser.ParseResultsFile(appArgs.ResultFile)
-	if err != nil {
-		return AhkProcessResult{}, err
-	}
-	for _, r := range results {
-		log.Printf("Result for %s %s %f\n", r.ExerciseName, r.TaskName, r.Points)
+	var results []resultsfileparser.AhkTaskResult
+	if appArgs.ResultFile == "" {
+		log.Println("Result file processing not requested")
+		results = []resultsfileparser.AhkTaskResult{}
+	} else {
+		resultsFileParser := new(resultsfileparser.ResultsFileParser)
+		results, err = resultsFileParser.ParseResultsFile(appArgs.ResultFile)
+		if err != nil {
+			return AhkProcessResult{}, err
+		}
+		for _, r := range results {
+			log.Printf("Result for %s %s %f\n", r.ExerciseName, r.TaskName, r.Points)
+		}
 	}
 
 	return AhkProcessResult{
