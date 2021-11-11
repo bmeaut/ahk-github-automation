@@ -23,7 +23,7 @@ func TestGitHubActionArgs_ErrorWhenMissingEnv(t *testing.T) {
 		"INPUT_GITHUB_TOKEN": "ghtokghtok",
 	}
 
-	for envToIgnore, _ := range envs {
+	for envToIgnore := range envs {
 		t.Run(envToIgnore, func(t *testing.T) {
 			for key, value := range envs {
 				if key != envToIgnore {
