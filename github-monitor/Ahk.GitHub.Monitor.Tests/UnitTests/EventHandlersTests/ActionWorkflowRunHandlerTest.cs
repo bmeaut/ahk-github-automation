@@ -1,8 +1,8 @@
-﻿using Ahk.GitHub.Monitor.EventHandlers;
+using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
@@ -23,7 +23,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("workflow_run ok, has less then threshold"));
+            Assert.IsTrue(result.Result.Contains("workflow_run ok, has less then threshold", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -43,7 +43,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("workflow_run ok, not triggered by student"));
+            Assert.IsTrue(result.Result.Contains("workflow_run ok, not triggered by student", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(283462325, 2, It.IsAny<string>()),
                 Times.Never());
@@ -67,12 +67,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new ActionWorkflowRunHandler(gh, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("workflow_run warning, threshold exceeded"));
+            Assert.IsTrue(result.Result.Contains("workflow_run warning, threshold exceeded", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(283462325, 2, It.IsAny<string>()),
                 Times.Once());
         }
 
-        private static string getPayload(string sender = @"someone") => SampleData.WorkflowRun.Replace(@"!!!SENDER", sender);
+        private static string getPayload(string sender = @"someone") => SampleData.WorkflowRun.Replace(@"!!!SENDER", sender, System.StringComparison.InvariantCultureIgnoreCase);
     }
 }

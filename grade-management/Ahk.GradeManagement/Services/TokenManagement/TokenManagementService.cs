@@ -1,7 +1,7 @@
-﻿using Ahk.GradeManagement.Data;
-using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Threading.Tasks;
+using Ahk.GradeManagement.Data;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Ahk.GradeManagement.Services
 {

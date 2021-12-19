@@ -1,10 +1,10 @@
-﻿using Ahk.GitHub.Monitor.Services;
-using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {

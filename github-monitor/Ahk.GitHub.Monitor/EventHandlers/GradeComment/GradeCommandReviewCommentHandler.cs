@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using Octokit;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {

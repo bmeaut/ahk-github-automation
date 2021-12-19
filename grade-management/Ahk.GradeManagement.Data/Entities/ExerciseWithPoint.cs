@@ -1,4 +1,4 @@
-﻿namespace Ahk.GradeManagement.Data.Entities
+namespace Ahk.GradeManagement.Data.Entities
 {
     public class ExerciseWithPoint
     {

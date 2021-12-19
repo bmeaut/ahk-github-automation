@@ -1,4 +1,4 @@
-﻿namespace Ahk.GradeManagement.SetGrade
+namespace Ahk.GradeManagement.SetGrade
 {
     public class ConfirmAutoGradeEvent
     {

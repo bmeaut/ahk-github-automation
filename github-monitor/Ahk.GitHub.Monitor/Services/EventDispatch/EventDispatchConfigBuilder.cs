@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Ahk.GitHub.Monitor.EventHandlers;
 using Microsoft.Extensions.DependencyInjection;

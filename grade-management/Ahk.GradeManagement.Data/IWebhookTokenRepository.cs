@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Ahk.GradeManagement.Data.Entities;
 
 namespace Ahk.GradeManagement.Data

@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Ahk.GradeManagement.ResultProcessing.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -6,8 +8,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
-using System;
-using System.Threading.Tasks;
 
 namespace Ahk.GradeManagement.ResultProcessing
 {

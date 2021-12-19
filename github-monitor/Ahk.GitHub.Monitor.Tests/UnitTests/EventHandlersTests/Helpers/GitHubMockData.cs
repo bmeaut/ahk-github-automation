@@ -1,6 +1,6 @@
-﻿using Octokit;
 using System;
 using System.Text;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {

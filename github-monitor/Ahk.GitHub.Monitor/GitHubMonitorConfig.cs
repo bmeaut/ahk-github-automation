@@ -1,4 +1,4 @@
-﻿namespace Ahk.GitHub.Monitor
+namespace Ahk.GitHub.Monitor
 {
     public class GitHubMonitorConfig
     {

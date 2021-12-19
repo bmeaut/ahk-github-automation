@@ -1,5 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
 using Ahk.GradeManagement.Data;
+using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

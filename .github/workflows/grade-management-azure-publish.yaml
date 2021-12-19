@@ -13,7 +13,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "3.1.412"
+          dotnet-version: "6.0.x"
 
       - name: "Run dotnet build"
         working-directory: grade-management

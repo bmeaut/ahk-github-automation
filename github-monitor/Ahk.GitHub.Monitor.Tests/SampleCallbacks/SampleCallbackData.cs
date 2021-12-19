@@ -1,4 +1,4 @@
-﻿namespace Ahk.GitHub.Monitor.Tests
+namespace Ahk.GitHub.Monitor.Tests
 {
     internal class SampleCallbackData
     {

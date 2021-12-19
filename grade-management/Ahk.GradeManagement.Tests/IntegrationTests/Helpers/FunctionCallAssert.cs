@@ -1,10 +1,10 @@
-﻿using Ahk.GradeManagement.ResultProcessing;
+using System;
+using System.Threading.Tasks;
+using Ahk.GradeManagement.ResultProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Threading.Tasks;
 
 namespace Ahk.GradeManagement.Tests.IntegrationTests
 {
@@ -45,7 +45,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             req.Headers.Add("Date", dateTimeProvider.GetUtcNow().ToString("R"));
 
             var memStream = new System.IO.MemoryStream();
-            var writer = new System.IO.StreamWriter(memStream);
+            using var writer = new System.IO.StreamWriter(memStream, leaveOpen: true);
             writer.Write(data.Body);
             writer.Flush();
 

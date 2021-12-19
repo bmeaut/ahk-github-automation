@@ -1,4 +1,4 @@
-﻿namespace Ahk.GradeManagement
+namespace Ahk.GradeManagement
 {
     public static class Normalize
     {
