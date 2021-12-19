@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 
 namespace Ahk.GitHub.Monitor
 {

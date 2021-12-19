@@ -1,10 +1,10 @@
+using System;
+using System.Threading.Tasks;
 using Ahk.GradeManagement.ResultProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using System;
-using System.Threading.Tasks;
 
 namespace Ahk.GradeManagement.Tests.IntegrationTests
 {

@@ -1,7 +1,7 @@
-﻿using Ahk.GitHub.Monitor.Services;
-using Moq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services;
+using Moq;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {

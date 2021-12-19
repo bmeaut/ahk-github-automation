@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests

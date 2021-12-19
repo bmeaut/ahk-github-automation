@@ -1,8 +1,8 @@
-﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using System;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 [assembly: FunctionsStartup(typeof(Ahk.GitHub.Monitor.Startup))]
 

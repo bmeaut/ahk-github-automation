@@ -1,7 +1,7 @@
-﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using System;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 [assembly: FunctionsStartup(typeof(Ahk.GradeManagement.Startup))]
 
@@ -23,9 +23,9 @@ namespace Ahk.GradeManagement
             builder.Services.AddScoped<ListGrades.IGradeListing, ListGrades.GradeListing>();
 
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables("AHK_").Build();
-            builder.Services.Configure<AppConfig>(configuration);
+            builder.Services.Configure<AhkAppConfig>(configuration);
 
-            var configValue = new AppConfig();
+            var configValue = new AhkAppConfig();
             configuration.Bind(configValue);
             builder.Services.AddAhkData(configValue.CosmosAccountEndpoint, configValue.CosmosAccountKey);
         }

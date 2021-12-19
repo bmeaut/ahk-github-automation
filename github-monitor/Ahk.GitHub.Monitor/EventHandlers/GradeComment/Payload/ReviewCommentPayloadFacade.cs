@@ -1,4 +1,4 @@
-﻿using Octokit;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {

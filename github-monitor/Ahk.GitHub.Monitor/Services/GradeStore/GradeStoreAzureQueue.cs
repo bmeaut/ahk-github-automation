@@ -1,8 +1,8 @@
-﻿using Azure.Storage.Queues;
-using Microsoft.Extensions.Azure;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Queues;
+using Microsoft.Extensions.Azure;
 
 namespace Ahk.GitHub.Monitor.Services
 {

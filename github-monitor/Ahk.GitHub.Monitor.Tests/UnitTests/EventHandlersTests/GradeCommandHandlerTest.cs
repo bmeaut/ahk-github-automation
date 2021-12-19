@@ -1,10 +1,10 @@
-﻿using Ahk.GitHub.Monitor.EventHandlers;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
@@ -19,12 +19,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.CommentEdit
-                .Replace("\"issue\": {", "\"aaaaa\": {");
+                .Replace("\"issue\": {", "\"aaaaa\": {", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("no issue information"));
+            Assert.IsTrue(result.Result.Contains("no issue information", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Get(It.IsAny<long>(), It.IsAny<int>()),
                 Times.Never());
@@ -38,7 +38,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.CommentDelete);
 
-            Assert.IsTrue(result.Result.Contains("not of interest"));
+            Assert.IsTrue(result.Result.Contains("not of interest", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Get(It.IsAny<long>(), It.IsAny<int>()),
                 Times.Never());
@@ -49,11 +49,11 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
-            var payload = SampleData.PrReviewComment.Replace("submitted", "edited");
+            var payload = SampleData.PrReviewComment.Replace("submitted", "edited", System.StringComparison.InvariantCultureIgnoreCase);
             var eh = new GradeCommandReviewCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("not of interest"));
+            Assert.IsTrue(result.Result.Contains("not of interest", System.StringComparison.InvariantCultureIgnoreCase));
         }
 
         [DataTestMethod]
@@ -75,7 +75,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
             var result = await eh.Execute(getPayloadWithComment(commentType, commentText));
 
-            Assert.IsTrue(result.Result.Contains("not recognized as command"));
+            Assert.IsTrue(result.Result.Contains("not recognized as command", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Get(It.IsAny<long>(), It.IsAny<int>()),
                 Times.Never());
@@ -99,7 +99,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
             var result = await eh.Execute(getPayloadWithComment(commentType, @"/ahk ok"));
 
-            Assert.IsTrue(result.Result.Contains("not allowed for user"));
+            Assert.IsTrue(result.Result.Contains("not allowed for user", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Merge(336882879, 24, It.IsAny<Octokit.MergePullRequest>()),
                 Times.Never());
@@ -127,7 +127,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
             var result = await eh.Execute(getPayloadWithComment(commentType, @"/ahk ok"));
 
-            Assert.IsTrue(result.Result.Contains("grade done"));
+            Assert.IsTrue(result.Result.Contains("grade done", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Merge(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<Octokit.MergePullRequest>()),
                 Times.Never());
@@ -175,7 +175,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = createHandler(commentType, gitHubMock.CreateFactory(), gradeStoreMock.Object);
             var result = await eh.Execute(getPayloadWithComment(commentType, commentText));
 
-            Assert.IsTrue(result.Result.Contains("grade done"));
+            Assert.IsTrue(result.Result.Contains("grade done", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.PullRequest.Review.Create(336882879, 24, It.IsAny<Octokit.PullRequestReviewCreate>()),
                 Times.Once());
@@ -199,10 +199,11 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 CommentType.ReviewComment => SampleData.PrReviewComment,
                 _ => throw new System.NotImplementedException(),
             };
-            return text.Replace("xxx-body-placeholder-xxx", value).Replace("xxx-comment-creator-user-xxx", user);
+            return text.Replace("xxx-body-placeholder-xxx", value, System.StringComparison.InvariantCultureIgnoreCase)
+                       .Replace("xxx-comment-creator-user-xxx", user, System.StringComparison.InvariantCultureIgnoreCase);
         }
 
-        private IGitHubEventHandler createHandler(CommentType commentType, IGitHubClientFactory gitHubClientFactory, IGradeStore gradeStore)
+        private static IGitHubEventHandler createHandler(CommentType commentType, IGitHubClientFactory gitHubClientFactory, IGradeStore gradeStore)
             => commentType switch
             {
                 CommentType.IssueComment => new GradeCommandIssueCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance, NullLogger.Instance),

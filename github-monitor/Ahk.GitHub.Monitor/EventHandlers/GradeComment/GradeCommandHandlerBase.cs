@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Helpers;
 using Microsoft.Extensions.Caching.Memory;

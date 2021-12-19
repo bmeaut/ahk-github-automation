@@ -1,10 +1,10 @@
-﻿using Ahk.GitHub.Monitor.EventHandlers;
+using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests
 {

@@ -1,6 +1,6 @@
-﻿using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using Ahk.GitHub.Monitor.Helpers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests
 {

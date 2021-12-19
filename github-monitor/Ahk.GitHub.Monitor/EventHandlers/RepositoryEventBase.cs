@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+using System;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Caching.Memory;
@@ -99,7 +98,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             try
             {
                 var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(repositoryId, "neptun.txt", branchName);
-                return contents.FirstOrDefault()?.Content?.Trim();
+                if (contents.Count == 0)
+                    return null;
+                return contents[0].Content?.Trim();
             }
             catch (NotFoundException)
             {
@@ -151,7 +152,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             try
             {
                 var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, ".github/ahk-monitor.yml", webhookPayload.Repository.DefaultBranch);
-                var contentAsString = contents.FirstOrDefault()?.Content;
+                if (contents.Count == 0)
+                    return false;
+                var contentAsString = contents[0].Content;
                 return ConfigYamlParser.IsEnabled(contentAsString);
             }
             catch (NotFoundException)

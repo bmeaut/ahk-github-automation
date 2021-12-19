@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
 {
@@ -39,7 +39,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             req.Headers.Add("X-Hub-Signature-256", data.Signature);
 
             var memStream = new System.IO.MemoryStream();
-            var writer = new System.IO.StreamWriter(memStream);
+            using var writer = new System.IO.StreamWriter(memStream, leaveOpen: true);
             writer.Write(data.Body);
             writer.Flush();
 

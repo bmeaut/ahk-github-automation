@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Ahk.GitHub.Monitor.Tests.IntegrationTests

@@ -1,7 +1,7 @@
-﻿using Ahk.GradeManagement.Data.Entities;
-using Microsoft.Azure.Cosmos;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ahk.GradeManagement.Data.Entities;
+using Microsoft.Azure.Cosmos;
 
 namespace Ahk.GradeManagement.Data.Internal
 {

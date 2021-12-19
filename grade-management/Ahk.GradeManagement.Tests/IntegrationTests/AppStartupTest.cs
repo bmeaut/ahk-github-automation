@@ -1,6 +1,6 @@
+using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
 
 namespace Ahk.GradeManagement.Tests.IntegrationTests
 {

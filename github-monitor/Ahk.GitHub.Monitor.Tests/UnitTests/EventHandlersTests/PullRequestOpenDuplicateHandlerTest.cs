@@ -1,8 +1,8 @@
-﻿using Ahk.GitHub.Monitor.EventHandlers;
+using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
@@ -15,12 +15,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.PrOpen
-                .Replace("\"pull_request\": {", "\"non_pull_request\": {");
+                .Replace("\"pull_request\": {", "\"non_pull_request\": {", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("no pull request"));
+            Assert.IsTrue(result.Result.Contains("no pull request", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -32,12 +32,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.PrOpen
-                .Replace("\"action\": \"opened\"", "\"action\": \"aaaa\"");
+                .Replace("\"action\": \"opened\"", "\"action\": \"aaaa\"", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("not of interest"));
+            Assert.IsTrue(result.Result.Contains("not of interest", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -52,7 +52,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
-            Assert.IsTrue(result.Result.Contains("no other PRs"));
+            Assert.IsTrue(result.Result.Contains("no other PRs", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -71,7 +71,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
-            Assert.IsTrue(result.Result.Contains("multiple open PRs"));
+            Assert.IsTrue(result.Result.Contains("multiple open PRs", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(339316008, 189, It.IsAny<string>()),
                 Times.Once());
@@ -94,7 +94,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
-            Assert.IsTrue(result.Result.Contains("already closed PRs"));
+            Assert.IsTrue(result.Result.Contains("already closed PRs", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(339316008, 189, It.IsAny<string>()),
                 Times.Once());
@@ -114,7 +114,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new PullRequestOpenDuplicateHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.PrOpen);
 
-            Assert.IsTrue(result.Result.Contains("no other evaluated PRs"));
+            Assert.IsTrue(result.Result.Contains("no other evaluated PRs", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());

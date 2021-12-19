@@ -1,4 +1,4 @@
-﻿namespace Ahk.GradeManagement.Tests.IntegrationTests
+namespace Ahk.GradeManagement.Tests.IntegrationTests
 {
     public class SampleCallbackData
     {

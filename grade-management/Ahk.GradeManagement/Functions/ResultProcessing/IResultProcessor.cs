@@ -1,5 +1,5 @@
-﻿using Ahk.GradeManagement.ResultProcessing.Dto;
 using System.Threading.Tasks;
+using Ahk.GradeManagement.ResultProcessing.Dto;
 
 namespace Ahk.GradeManagement.ResultProcessing
 {

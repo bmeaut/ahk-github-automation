@@ -1,7 +1,7 @@
-﻿using Ahk.GradeManagement.Data;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GradeManagement.Data;
 
 namespace Ahk.GradeManagement.ListGrades
 {

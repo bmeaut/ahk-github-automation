@@ -1,4 +1,4 @@
-﻿namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services
 {
     public class SetGradeEvent
     {

@@ -1,45 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="SampleCallbacks\branch_create.json" />
-    <None Remove="SampleCallbacks\comment_command.json" />
-    <None Remove="SampleCallbacks\comment_delete.json" />
-    <None Remove="SampleCallbacks\comment_edit.json" />
-    <None Remove="SampleCallbacks\pr_open.json" />
-    <None Remove="SampleCallbacks\pr_reviewcomment.json" />
-    <None Remove="SampleCallbacks\pr_reviewrequested.json" />
-    <None Remove="SampleCallbacks\workflow_run.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Remove="SampleCallbacks\branch_create.json" />
+        <None Remove="SampleCallbacks\comment_command.json" />
+        <None Remove="SampleCallbacks\comment_delete.json" />
+        <None Remove="SampleCallbacks\comment_edit.json" />
+        <None Remove="SampleCallbacks\pr_open.json" />
+        <None Remove="SampleCallbacks\pr_reviewcomment.json" />
+        <None Remove="SampleCallbacks\pr_reviewrequested.json" />
+        <None Remove="SampleCallbacks\workflow_run.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="SampleCallbacks\workflow_run.json" />
-    <EmbeddedResource Include="SampleCallbacks\branch_create.json" />
-    <EmbeddedResource Include="SampleCallbacks\comment_delete.json" />
-    <EmbeddedResource Include="SampleCallbacks\comment_command.json" />
-    <EmbeddedResource Include="SampleCallbacks\comment_edit.json" />
-    <EmbeddedResource Include="SampleCallbacks\pr_reviewcomment.json" />
-    <EmbeddedResource Include="SampleCallbacks\pr_reviewrequested.json" />
-    <EmbeddedResource Include="SampleCallbacks\pr_open.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="SampleCallbacks\workflow_run.json" />
+        <EmbeddedResource Include="SampleCallbacks\branch_create.json" />
+        <EmbeddedResource Include="SampleCallbacks\comment_delete.json" />
+        <EmbeddedResource Include="SampleCallbacks\comment_command.json" />
+        <EmbeddedResource Include="SampleCallbacks\comment_edit.json" />
+        <EmbeddedResource Include="SampleCallbacks\pr_reviewcomment.json" />
+        <EmbeddedResource Include="SampleCallbacks\pr_reviewrequested.json" />
+        <EmbeddedResource Include="SampleCallbacks\pr_open.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
-    <PackageReference Include="Moq" Version="4.16.1" />
-    <PackageReference Include="MSTest.TestAdapter" Version="2.2.7" />
-    <PackageReference Include="MSTest.TestFramework" Version="2.2.7" />
-    <PackageReference Include="coverlet.collector" Version="3.1.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+        <PackageReference Include="Moq" Version="4.16.1" />
+        <PackageReference Include="MSTest.TestAdapter" Version="2.2.8" />
+        <PackageReference Include="MSTest.TestFramework" Version="2.2.8" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor.csproj" />
+    </ItemGroup>
 
 </Project>

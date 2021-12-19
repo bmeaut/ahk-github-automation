@@ -1,8 +1,8 @@
-﻿using Ahk.GitHub.Monitor.EventHandlers;
+using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 {
@@ -15,12 +15,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.CommentEdit
-                .Replace("\"issue\": {", "\"aaaaa\": {");
+                .Replace("\"issue\": {", "\"aaaaa\": {", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("no issue information"));
+            Assert.IsTrue(result.Result.Contains("no issue information", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -32,12 +32,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.CommentDelete
-                .Replace("\"action\": \"deleted\"", "\"action\": \"aaaaaa\"");
+                .Replace("\"action\": \"deleted\"", "\"action\": \"aaaaaa\"", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("not of interest"));
+            Assert.IsTrue(result.Result.Contains("not of interest", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -49,13 +49,13 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.CommentDelete
-                .Replace("\"login\": \"github-actions[bot]\"", "\"login\": \"aaaaaa\"")
-                .Replace("\"login\": \"senderlogin\"", "\"login\": \"aaaaaa\"");
+                .Replace("\"login\": \"github-actions[bot]\"", "\"login\": \"aaaaaa\"", System.StringComparison.InvariantCultureIgnoreCase)
+                .Replace("\"login\": \"senderlogin\"", "\"login\": \"aaaaaa\"", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("referencing own comment"));
+            Assert.IsTrue(result.Result.Contains("referencing own comment", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -67,13 +67,13 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
 
             var payload = SampleData.CommentEdit
-                .Replace("\"login\": \"github-actions[bot]\"", "\"login\": \"aaaaaa\"")
-                .Replace("\"login\": \"senderlogin\"", "\"login\": \"aaaaaa\"");
+                .Replace("\"login\": \"github-actions[bot]\"", "\"login\": \"aaaaaa\"", System.StringComparison.InvariantCultureIgnoreCase)
+                .Replace("\"login\": \"senderlogin\"", "\"login\": \"aaaaaa\"", System.StringComparison.InvariantCultureIgnoreCase);
 
             var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("referencing own comment"));
+            Assert.IsTrue(result.Result.Contains("referencing own comment", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<string>()),
                 Times.Never());
@@ -87,7 +87,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.CommentDelete);
 
-            Assert.IsTrue(result.Result.Contains("comment action resulting in warning"));
+            Assert.IsTrue(result.Result.Contains("comment action resulting in warning", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(283683683, 78, It.IsAny<string>()),
                 Times.Once());
@@ -101,7 +101,7 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new IssueCommentEditDeleteHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(SampleData.CommentEdit);
 
-            Assert.IsTrue(result.Result.Contains("comment action resulting in warning"));
+            Assert.IsTrue(result.Result.Contains("comment action resulting in warning", System.StringComparison.InvariantCultureIgnoreCase));
             gitHubMock.GitHubClientMock.Verify(c =>
                 c.Issue.Comment.Create(283683683, 45, It.IsAny<string>()),
                 Times.Once());

@@ -1,4 +1,4 @@
-﻿namespace Octokit
+namespace Octokit
 {
     public class WorkflowRunEventPayload : ActivityPayload
     {

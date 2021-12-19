@@ -1,5 +1,5 @@
-﻿using Azure.Storage.Queues;
 using System.Threading.Tasks;
+using Azure.Storage.Queues;
 
 namespace Ahk.GitHub.Monitor.Services
 {

@@ -1,7 +1,7 @@
-﻿using Ahk.GradeManagement.ResultProcessing;
+using System.Linq;
+using Ahk.GradeManagement.ResultProcessing;
 using Ahk.GradeManagement.ResultProcessing.Dto;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
 
 namespace Ahk.GradeManagement.Tests.UnitTests
 {

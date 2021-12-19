@@ -1,9 +1,9 @@
-﻿using Ahk.GradeManagement.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using Ahk.GradeManagement.Data;
 using Ahk.GradeManagement.Data.Entities;
 using Ahk.GradeManagement.ResultProcessing.Dto;
 using Ahk.GradeManagement.Services;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Ahk.GradeManagement.ResultProcessing
 {
