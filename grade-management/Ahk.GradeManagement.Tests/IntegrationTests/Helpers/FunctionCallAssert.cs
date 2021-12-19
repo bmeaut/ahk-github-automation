@@ -45,7 +45,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             req.Headers.Add("Date", dateTimeProvider.GetUtcNow().ToString("R"));
 
             var memStream = new System.IO.MemoryStream();
-            var writer = new System.IO.StreamWriter(memStream);
+            using var writer = new System.IO.StreamWriter(memStream, leaveOpen: true);
             writer.Write(data.Body);
             writer.Flush();
 

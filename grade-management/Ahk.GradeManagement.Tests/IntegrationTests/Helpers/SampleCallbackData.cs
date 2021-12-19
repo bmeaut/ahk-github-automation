@@ -15,13 +15,13 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
         public string Signature { get; }
         public string Body { get; }
 
-        public static SampleCallbackData Sample1 = new SampleCallbackData(
+        public static readonly SampleCallbackData Sample1 = new SampleCallbackData(
             token: "Akjr3897sLJlkj23",
             secret: "ljf98ddksnf343c",
             signature: "lHsmlcoMpr8vclm8DEVj/Juek5ZIfZK4+ph22h2W8dQ=",
             body: "{\"gitHubRepoName\":\"org/name\",\"gitHubBranch\":\"branch\",\"gitHubCommitHash\":\"aa11cc33\",\"gitHubPullRequestNum\":789,\"neptunCode\":\"ABC123\",\"imageFiles\":[],\"result\":[{\"exerciseName\":\"ex1\",\"taskName\":\"t1\",\"points\":2,\"comment\":\"line1 abc\\nlin2 end\"},{\"taskName\":\"t1\",\"points\":5}]}");
 
-        public static SampleCallbackData InvalidPayload = new SampleCallbackData(
+        public static readonly SampleCallbackData InvalidPayload = new SampleCallbackData(
             token: "Akjr3897sLJlkj23",
             secret: "ljf98ddksnf343c",
             signature: "T7yowPR4Zxkr9Fzwc4jGD+CNxoGvfpRVrtaetvsq0L4=",

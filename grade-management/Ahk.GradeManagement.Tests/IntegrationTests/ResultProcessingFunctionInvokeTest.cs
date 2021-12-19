@@ -121,7 +121,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Once());
         }
 
-        private async Task callWebhookAssertIsRejected(Action<HttpRequest> configureRequest, Action<Mock<IResultProcessor>> configureProcessorMock = null)
+        private static async Task callWebhookAssertIsRejected(Action<HttpRequest> configureRequest, Action<Mock<IResultProcessor>> configureProcessorMock = null)
         {
             var procService = new Mock<IResultProcessor>();
             configureProcessorMock?.Invoke(procService);
