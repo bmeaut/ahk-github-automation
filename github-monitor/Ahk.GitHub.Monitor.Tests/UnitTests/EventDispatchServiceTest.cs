@@ -18,7 +18,8 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests
             var config = new EventDispatchConfigBuilder(services)
                 .Add<EventHandler1A>("event1")
                 .Add<EventHandler1B>("event1")
-                .Add<EventHandler2>("event2");
+                .Add<EventHandler2>("event2")
+                .Build();
 
             var service = new EventDispatchService(services.BuildServiceProvider(), config);
             await service.Process("event1", "dummy request", new WebhookResult(), NullLogger.Instance);

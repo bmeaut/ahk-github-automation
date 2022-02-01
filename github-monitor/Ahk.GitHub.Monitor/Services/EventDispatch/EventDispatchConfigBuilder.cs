@@ -23,6 +23,6 @@ namespace Ahk.GitHub.Monitor.Services
             return this;
         }
 
-        public IReadOnlyCollection<(string GitHubEventName, Type HandlerType)> GetAll() => handlers;
+        public EventDispatchConfig Build() => new EventDispatchConfig(this.handlers);
     }
 }

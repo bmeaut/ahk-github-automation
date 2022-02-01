@@ -11,12 +11,12 @@ namespace Ahk.GitHub.Monitor.Services
         private readonly IServiceProvider serviceProvider;
         private readonly IReadOnlyDictionary<string, List<Type>> handlers;
 
-        public EventDispatchService(IServiceProvider serviceProvider, EventDispatchConfigBuilder builder)
+        public EventDispatchService(IServiceProvider serviceProvider, EventDispatchConfig handlersConfig)
         {
             this.serviceProvider = serviceProvider;
 
             var handlers = new Dictionary<string, List<Type>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in builder.GetAll())
+            foreach (var item in handlersConfig.Handlers)
             {
                 if (handlers.TryGetValue(item.GitHubEventName, out var l))
                     l.Add(item.HandlerType);
