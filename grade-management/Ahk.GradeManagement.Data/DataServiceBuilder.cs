@@ -7,7 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddAhkData(this IServiceCollection services, string cosmosAccountEndpoint, string cosmosAccountKey)
         {
-            services.AddSingleton(s =>
+            services.AddScoped(s =>
                 new CosmosClient(
                     accountEndpoint: cosmosAccountEndpoint,
                     authKeyOrResourceToken: cosmosAccountKey,
@@ -17,8 +17,8 @@ namespace Microsoft.Extensions.DependencyInjection
                         MaxRetryAttemptsOnRateLimitedRequests = 9,
                         SerializerOptions = new CosmosSerializationOptions() { IgnoreNullValues = true, PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase }
                     }));
-            services.AddSingleton<IWebhookTokenRepository, Ahk.GradeManagement.Data.Internal.WebhookTokenRepository>();
-            services.AddSingleton<IResultsRepository, Ahk.GradeManagement.Data.Internal.ResultsRepository>();
+            services.AddScoped<IWebhookTokenRepository, Ahk.GradeManagement.Data.Internal.WebhookTokenRepository>();
+            services.AddScoped<IResultsRepository, Ahk.GradeManagement.Data.Internal.ResultsRepository>();
 
             return services;
         }
