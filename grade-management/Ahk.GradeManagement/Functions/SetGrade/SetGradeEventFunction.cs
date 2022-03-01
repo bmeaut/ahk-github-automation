@@ -20,7 +20,7 @@ namespace Ahk.GradeManagement.SetGrade
 
             if (string.IsNullOrEmpty(data.Neptun) || string.IsNullOrEmpty(data.Repository) || data.Results == null || data.Results.Length == 0)
             {
-                log.LogWarning("SetGradeEventFunction missing data for Neptun={Neptun} Repository={Repository} Pr={PullRequest}; event data is: " + getDataAsString(data), data.Neptun, data.Repository, data.PrNumber);
+                log.LogWarning("SetGradeEventFunction missing data for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
                 return;
             }
 
@@ -32,18 +32,6 @@ namespace Ahk.GradeManagement.SetGrade
             catch (Exception ex)
             {
                 log.LogError(ex, "SetGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
-            }
-        }
-
-        private static string getDataAsString(SetGradeEvent data)
-        {
-            try
-            {
-                return System.Text.Json.JsonSerializer.Serialize(data);
-            }
-            catch
-            {
-                return "N/A";
             }
         }
     }
