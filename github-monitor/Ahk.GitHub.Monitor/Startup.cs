@@ -18,8 +18,8 @@ namespace Ahk.GitHub.Monitor
             });
             builder.Services.AddSingleton<Services.IGitHubClientFactory, Services.GitHubClientFactory>();
 
-            var eventHandlers = registerEventHandlers(builder.Services);
-            builder.Services.AddSingleton<Services.IEventDispatchService, Services.EventDispatchService>(sp => new Services.EventDispatchService(sp, eventHandlers));
+            registerEventHandlers(builder.Services);
+            builder.Services.AddSingleton<Services.IEventDispatchService, Services.EventDispatchService>();
 
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables("AHK_").Build();
             builder.Services.Configure<GitHubMonitorConfig>(configuration);
@@ -27,9 +27,9 @@ namespace Ahk.GitHub.Monitor
             addGradeStoreIntegration(builder, configuration);
         }
 
-        private static Services.EventDispatchConfigBuilder registerEventHandlers(IServiceCollection services)
+        private static void registerEventHandlers(IServiceCollection services)
         {
-            return new Services.EventDispatchConfigBuilder(services)
+            var builder = new Services.EventDispatchConfigBuilder(services)
                 .Add<EventHandlers.BranchProtectionRuleHandler>(EventHandlers.BranchProtectionRuleHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.IssueCommentEditDeleteHandler>(EventHandlers.IssueCommentEditDeleteHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.PullRequestOpenDuplicateHandler>(EventHandlers.PullRequestOpenDuplicateHandler.GitHubWebhookEventName)
@@ -37,6 +37,9 @@ namespace Ahk.GitHub.Monitor
                 .Add<EventHandlers.GradeCommandIssueCommentHandler>(EventHandlers.GradeCommandIssueCommentHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.GradeCommandReviewCommentHandler>(EventHandlers.GradeCommandReviewCommentHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.ActionWorkflowRunHandler>(EventHandlers.ActionWorkflowRunHandler.GitHubWebhookEventName);
+
+            var config = builder.Build();
+            services.AddSingleton(config);
         }
 
         private static void addGradeStoreIntegration(IFunctionsHostBuilder builder, IConfigurationRoot configuration)
