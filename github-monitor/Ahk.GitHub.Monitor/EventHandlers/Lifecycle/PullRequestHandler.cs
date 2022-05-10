@@ -51,7 +51,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 timestamp: DateTime.UtcNow,
                 action: action,
                 assignees: assignees,
-                neptun: neptun));
+                neptun: neptun,
+                htmlUrl: webhookPayload.PullRequest.HtmlUrl,
+                number: webhookPayload.PullRequest.Number));
 
             return EventHandlerResult.ActionPerformed("pull request operation done");
         }

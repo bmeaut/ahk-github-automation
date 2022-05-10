@@ -4,7 +4,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Ahk.Lifecycle.Management.DAL;
 
 namespace Ahk.Lifecycle.Management
@@ -17,7 +16,7 @@ namespace Ahk.Lifecycle.Management
 
         [FunctionName("ListEventsHttpFunction")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ListEventsHttpFunction/{*prefix}")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "ListEventsHttpFunction/{*prefix}")] HttpRequest req,
             ILogger log, string prefix)
         {
             log.LogInformation("ListEventsHttpFunction triggered");

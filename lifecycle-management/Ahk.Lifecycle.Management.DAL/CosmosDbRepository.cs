@@ -51,7 +51,15 @@ namespace Ahk.Lifecycle.Management.DAL
                     .Select(o => new Statistics(
                         repository: o.Key,
                         count: o.Count(),
-                        events: o.ToList()))
+                        events: new List<LifecycleEvent> {
+                            o.LastOrDefault(e => e.Type == "RepositoryCreateEvent"),
+                            o.LastOrDefault(e => e.Type == "BranchCreateEvent"),
+                            o.LastOrDefault(e => e.Type == "WorkflowRunEvent"),
+                            o.LastOrDefault(e => e.Type == "PullRequestEvent"),
+                            o.LastOrDefault(e => e.Type == "SetGradeEvent"),
+                    }
+                    .Where(o => o != null)
+                    .OrderBy(e => e.Timestamp).ToList()))
                     .ToList();
 
             return results;

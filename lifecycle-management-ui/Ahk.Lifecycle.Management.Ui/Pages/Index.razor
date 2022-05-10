@@ -1,0 +1,83 @@
+@page "/"
+@inject IHttpClientFactory httpClientFactory
+
+<PageTitle>Lifecycle Management UI</PageTitle>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudTextField Class="mb-4" @bind-Value="apiKey" Label="Api key" Variant="Variant.Outlined"></MudTextField>
+    <MudTextField Class="mb-4" @bind-Value="prefix" Label="Prefix" Variant="Variant.Outlined"></MudTextField>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2" OnClick="@loadStats">Search</MudButton>
+</MudPaper>
+
+@if (statistics == null && message == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+@if (statistics != null)
+{
+    <MudTable Items="@statistics" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info" Filter="new Func<Statistics,bool>(filterFunc)" T="Statistics" Dense="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Repositories (@statistics.Count)</MudText>
+            <MudSpacer />
+            <MudSwitch @bind-Checked="@noBranchCreate" Color="Color.Primary">No new branch</MudSwitch>
+            <MudSwitch @bind-Checked="@noPullRequest" Color="Color.Primary">No PR</MudSwitch>
+            <MudSwitch @bind-Checked="@noSetGrade" Color="Color.Primary">Not graded</MudSwitch>
+        </ToolBarContent>
+        <HeaderContent>
+		    <MudTh>Repository</MudTh>
+		    <MudTh>Branch</MudTh>
+		    <MudTh>Pull Request</MudTh>
+		    <MudTh>Graded</MudTh>
+	    </HeaderContent>
+	    <RowTemplate>
+		    <MudTd DataLabel="Repository">@context.Repository</MudTd>
+		    <MudTd DataLabel="Branch">
+                @{
+                    var bcEvent = context.Events.FirstOrDefault(e => e.Type == "BranchCreateEvent");
+                }
+                @if(bcEvent == null)
+                {
+                    <MudText Color="Color.Error" Typo="Typo.body2" Class="mud-text-secondary">No new branch</MudText>
+                } else
+                {
+                    <MudText Color="Color.Success" Typo="Typo.body2" Class="mud-text-secondary">@bcEvent.Branch</MudText>
+                }
+            </MudTd>
+		    <MudTd DataLabel="PullRequest">
+                @{
+                    var prEvent = context.Events.FirstOrDefault(e => e.Type == "PullRequestEvent");
+                }
+                @if(prEvent == null)
+                {
+                    <MudText Color="Color.Error" Typo="Typo.body2" Class="mud-text-secondary">No Pull Request</MudText>
+                } else
+                {
+                    <MudLink Href="@prEvent.HtmlUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
+                        #@prEvent.Number (@prEvent.Action)
+                    </MudLink>
+                }
+            </MudTd>
+		    <MudTd DataLabel="Graded">
+                @{
+                    var sgEvent = context.Events.FirstOrDefault(e => e.Type == "SetGradeEvent");
+                }
+                @if(sgEvent == null)
+                {
+                    <MudText Color="Color.Error" Typo="Typo.body2" Class="mud-text-secondary">Not graded</MudText>
+                } else
+                {
+                    <MudText Color="Color.Success" Typo="Typo.body2" Class="mud-text-secondary">Graded</MudText>
+                }
+            </MudTd>
+	    </RowTemplate>
+        <PagerContent>
+            <MudTablePager Class="pa-4" HorizontalAlignment="HorizontalAlignment.End"/>
+        </PagerContent>
+    </MudTable>
+}
+@if(message != null)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.body1">@message</MudText>
+    </MudPaper>
+}
