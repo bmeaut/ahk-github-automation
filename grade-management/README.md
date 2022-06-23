@@ -11,7 +11,7 @@ This application is not stand-alone; it works with the other parts of the toolse
 
 The application requires the following **mandatory** configurations specified as **environment variables**.
 
-`CosmosAccountEndpoint` and `CosmosAccountKey`: The endpoint name (URL) and the access key of the CosmosDB database used as backing data storage.
+`AHK_CosmosAccountEndpoint` and `AHK_CosmosAccountKey`: The endpoint name (URL) and the access key of the CosmosDB database used as backing data storage.
 
 `AHK_EventsQueueConnectionString`: The connection string of the Azure Queue Storage used by _GitHub Monitor_ to send grade events; e.g., `DefaultEndpointsProtocol=https;AccountName=mystorageaccount;AccountKey=mykey;EndpointSuffix=core.windows.net`
 
