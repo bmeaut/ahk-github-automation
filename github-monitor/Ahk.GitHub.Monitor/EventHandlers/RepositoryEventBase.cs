@@ -124,6 +124,15 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 });
         }
 
+        protected string getGitHubUserNameFromRepositoryName(string repositoryName)
+        {
+            var repoNameParts = repositoryName.Split("-");
+            if (repoNameParts.Length > 1)
+                return repoNameParts[^1];
+            else
+                return "N/A";
+        }
+
         private async Task<bool> getIsUserOrganizationMember(string org, string user)
         {
             try

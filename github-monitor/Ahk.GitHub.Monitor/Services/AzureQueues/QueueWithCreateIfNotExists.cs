@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Azure.Storage.Queues;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.AzureQueues
 {
     internal class QueueWithCreateIfNotExists
     {
@@ -9,7 +9,7 @@ namespace Ahk.GitHub.Monitor.Services
         private volatile bool queueCreated = false;
 
         public QueueWithCreateIfNotExists(QueueServiceClient queueService, string queueName)
-            => this.queue = queueService.GetQueueClient(queueName);
+            => queue = queueService.GetQueueClient(queueName);
 
         public async Task Send<T>(T value)
         {

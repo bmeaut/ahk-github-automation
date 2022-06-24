@@ -14,10 +14,12 @@
         <None Remove="SampleCallbacks\pr_open.json" />
         <None Remove="SampleCallbacks\pr_reviewcomment.json" />
         <None Remove="SampleCallbacks\pr_reviewrequested.json" />
+        <None Remove="SampleCallbacks\repository_create.json" />
         <None Remove="SampleCallbacks\workflow_run.json" />
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="SampleCallbacks\repository_create.json" />
         <EmbeddedResource Include="SampleCallbacks\workflow_run.json" />
         <EmbeddedResource Include="SampleCallbacks\branch_create.json" />
         <EmbeddedResource Include="SampleCallbacks\comment_delete.json" />

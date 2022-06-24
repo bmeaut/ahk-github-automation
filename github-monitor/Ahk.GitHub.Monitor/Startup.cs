@@ -53,11 +53,12 @@ namespace Ahk.GitHub.Monitor
             {
                 builder.Services.AddSingleton<Services.IGradeStore, Services.GradeStoreAzureQueue>();
                 builder.Services.AddSingleton<Services.ILifecycleStore, Services.LifecycleStoreAzureQueue>();
+
                 builder.Services.AddAzureClients(az =>
                 {
                     az.ConfigureDefaults(opts => opts.Diagnostics.IsLoggingEnabled = false);
                     az.AddQueueServiceClient(connectionString: config.EventsQueueConnectionString)
-                        .WithName(Services.GradeStoreAzureQueue.QueueClientName)
+                        .WithName(Services.AzureQueues.QueueClientName.Name)
                         .ConfigureOptions(options =>
                         {
                             options.MessageEncoding = Azure.Storage.Queues.QueueMessageEncoding.Base64;

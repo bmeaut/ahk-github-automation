@@ -20,20 +20,17 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         protected override async Task<EventHandlerResult> executeCore(CreateEventPayload webhookPayload)
         {
-            if (webhookPayload.Repository == null)
-                return EventHandlerResult.PayloadError("no repository information in webhook payload");
-
             if (webhookPayload.RefType.Equals(RefType.Branch) && !webhookPayload.Ref.Equals(webhookPayload.Repository.DefaultBranch, StringComparison.OrdinalIgnoreCase))
                 return await processBranchCreateEvent(webhookPayload);
 
-            return EventHandlerResult.EventNotOfInterest($"RefType: {webhookPayload.RefType}, Ref: {webhookPayload.Ref}");
+            return EventHandlerResult.EventNotOfInterest($"branch create ignored for RefType: {webhookPayload.RefType}, Ref: {webhookPayload.Ref}");
         }
 
         private async Task<EventHandlerResult> processBranchCreateEvent(CreateEventPayload webhookPayload)
         {
-            string repository = webhookPayload.Repository.FullName;
-            string username = webhookPayload.Repository.FullName.Split("-")[^1];
-            string branch = webhookPayload.Ref;
+            var repository = webhookPayload.Repository.FullName;
+            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
+            var branch = webhookPayload.Ref;
 
             await lifecycleStore.StoreEvent(new BranchCreateEvent(
                 repository: repository,
@@ -41,7 +38,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 timestamp: DateTime.UtcNow,
                 branch: branch));
 
-            return EventHandlerResult.ActionPerformed("branch create operation done");
+            return EventHandlerResult.ActionPerformed("branch create lifecycle handled");
         }
     }
 }

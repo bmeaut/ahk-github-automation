@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
@@ -22,9 +21,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
         {
-            if (webhookPayload.Repository == null)
-                return EventHandlerResult.PayloadError("no repository information in webhook payload");
-
             if (webhookPayload.PullRequest == null)
                 return EventHandlerResult.PayloadError("no pull request information in webhook payload");
 
@@ -39,11 +35,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task<EventHandlerResult> processPullRequestEvent(PullRequestEventPayload webhookPayload)
         {
-            string repository = webhookPayload.Repository.FullName;
-            string username = webhookPayload.Repository.FullName.Split("-")[^1];
-            string action = webhookPayload.Action;
-            string[] assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
-            string neptun = await getNeptun(webhookPayload.Repository.Id, webhookPayload.PullRequest.Head.Ref);
+            var repository = webhookPayload.Repository.FullName;
+            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
+            var action = webhookPayload.Action;
+            var assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
+            var neptun = await getNeptun(webhookPayload.Repository.Id, webhookPayload.PullRequest.Head.Ref);
 
             await lifecycleStore.StoreEvent(new PullRequestEvent(
                 repository: repository,
@@ -55,7 +51,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 htmlUrl: webhookPayload.PullRequest.HtmlUrl,
                 number: webhookPayload.PullRequest.Number));
 
-            return EventHandlerResult.ActionPerformed("pull request operation done");
+            return EventHandlerResult.ActionPerformed("pull request lifecycle handled");
         }
     }
 }

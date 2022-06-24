@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.AzureQueues;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
@@ -6,7 +7,6 @@ namespace Ahk.GitHub.Monitor.Services
 {
     internal class LifecycleStoreAzureQueue : ILifecycleStore
     {
-        public const string QueueClientName = "ahkevents";
         public const string QueueNameRepositoryCreate = "ahk-repository-create";
         public const string QueueNameBranchCreate = "ahk-branch-create";
         public const string QueueNameWorkflowRun = "ahk-workflow-run";
@@ -19,7 +19,7 @@ namespace Ahk.GitHub.Monitor.Services
 
         public LifecycleStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
         {
-            var queueService = clientFactory.CreateClient(QueueClientName);
+            var queueService = clientFactory.CreateClient(QueueClientName.Name);
             queueRepositoryCreate = new QueueWithCreateIfNotExists(queueService, QueueNameRepositoryCreate);
             queueBranchCreate = new QueueWithCreateIfNotExists(queueService, QueueNameBranchCreate);
             queueWorkflowRun = new QueueWithCreateIfNotExists(queueService, QueueNameWorkflowRun);

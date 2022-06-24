@@ -20,9 +20,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         protected override async Task<EventHandlerResult> executeCore(RepositoryEventPayload webhookPayload)
         {
-            if (webhookPayload.Repository == null)
-                return EventHandlerResult.PayloadError("no repository information in webhook payload");
-
             if (webhookPayload.Action.Equals("created", StringComparison.OrdinalIgnoreCase))
                 return await processRepositoryCreateEvent(webhookPayload);
 
@@ -31,15 +28,15 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task<EventHandlerResult> processRepositoryCreateEvent(RepositoryEventPayload webhookPayload)
         {
-            string repository = webhookPayload.Repository.FullName;
-            string username = webhookPayload.Repository.FullName.Split("-")[^1];
+            var repository = webhookPayload.Repository.FullName;
+            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
 
             await lifecycleStore.StoreEvent(new RepositoryCreateEvent(
                 repository: repository,
                 username: username,
                 timestamp: DateTime.UtcNow));
 
-            return EventHandlerResult.ActionPerformed("repository create operation done");
+            return EventHandlerResult.ActionPerformed("repository create lifecycle handled");
         }
     }
 }

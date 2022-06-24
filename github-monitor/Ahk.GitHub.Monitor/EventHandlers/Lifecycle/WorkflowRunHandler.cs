@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using Octokit;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
@@ -20,9 +20,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         protected override async Task<EventHandlerResult> executeCore(WorkflowEventPayload webhookPayload)
         {
-            if (webhookPayload.Repository == null)
-                return EventHandlerResult.PayloadError("no repository information in webhook payload");
-
             if (webhookPayload.WorkflowRun == null)
                 return EventHandlerResult.PayloadError("no workflow run information in webhook payload");
 
@@ -34,9 +31,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task<EventHandlerResult> processWorkflowRunEvent(WorkflowEventPayload webhookPayload)
         {
-            string repository = webhookPayload.Repository.FullName;
-            string username = webhookPayload.Repository.FullName.Split("-")[^1];
-            string conclusion = webhookPayload.WorkflowRun.Conclusion;
+            var repository = webhookPayload.Repository.FullName;
+            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
+            var conclusion = webhookPayload.WorkflowRun.Conclusion;
 
             await lifecycleStore.StoreEvent(new WorkflowRunEvent(
                 repository: repository,
@@ -44,7 +41,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 timestamp: DateTime.UtcNow,
                 conclusion: conclusion));
 
-            return EventHandlerResult.ActionPerformed("workflow_run operation done");
+            return EventHandlerResult.ActionPerformed("workflow_run lifecycle handled");
         }
     }
 }
