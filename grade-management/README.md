@@ -1,6 +1,6 @@
 # Grade Management
 
-This application aims to aid teachers by removing the need to record grades of homework submissions manually. Automated evaluation yields points/grades, and teachers can override them in GitHub pull requests.
+This application aims to aid teachers by tracking the status and the results of homework submissions. The flow using GitHub yields milestones during the process of submission. These, possible points/grades from automated evaluations, and teachers grade overrides are tracked and recorded in this application.
 
 This application is not stand-alone; it works with the other parts of the toolset in this repository, namely
 
@@ -17,6 +17,10 @@ The application requires the following **mandatory** configurations specified as
 
 ## Use cases
 
+### Use case: Tracking status of submissions
+
+[GitHub Monitor](../github-monitor) application translates webhook notifications from GitHub into status milestones. These milestones are recorded for each GitHub repository tracked by the system. These status milestones can be queried via an API.
+
 ### Use case: Automated evaluation result
 
 When the automated evaluation is executed, the results are published using [Publish Results to PR](../publish-results-pr) containerized application sending the results to a webhook of this application. The results are saved in a CosmosDB database. The process is visualized below:
@@ -25,7 +29,7 @@ When the automated evaluation is executed, the results are published using [Publ
 
 #### Authentication of requests
 
-In order to authorize webhook requests the application requires a token, a HMAC-SHA256 signature, and the date in each request's header as follows:
+In order to authorize requests the application requires a token, a HMAC-SHA256 signature, and the date in each request's header as follows:
 
 - `X-Ahk-Token`: The token is a string value known to this application (available in its database).
 - `X-Ahk-Sha256`: The signature of the request (see below).
