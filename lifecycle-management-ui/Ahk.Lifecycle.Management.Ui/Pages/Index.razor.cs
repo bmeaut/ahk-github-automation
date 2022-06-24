@@ -31,7 +31,7 @@ namespace Ahk.Lifecycle.Management.Ui.Pages
 
             try
             {
-                var response = await httpClient.GetAsync($"ListEventsHttpFunction/{prefix}");
+                var response = await httpClient.GetAsync($"list-events/{prefix}");
                 response.EnsureSuccessStatusCode();
 
                 statistics = await response.Content.ReadFromJsonAsync<IReadOnlyCollection<Statistics>>();

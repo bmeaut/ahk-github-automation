@@ -32,6 +32,7 @@ namespace Ahk.GradeManagement.SetGrade
             catch (Exception ex)
             {
                 log.LogError(ex, "SetGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                throw;
             }
         }
     }

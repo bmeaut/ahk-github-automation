@@ -37,10 +37,10 @@ namespace Ahk.GitHub.Monitor
                 .Add<EventHandlers.GradeCommandIssueCommentHandler>(EventHandlers.GradeCommandIssueCommentHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.GradeCommandReviewCommentHandler>(EventHandlers.GradeCommandReviewCommentHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.ActionWorkflowRunHandler>(EventHandlers.ActionWorkflowRunHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.RepositoryCreateHandler>(EventHandlers.RepositoryCreateHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.BranchCreateHandler>(EventHandlers.BranchCreateHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.WorkflowRunHandler>(EventHandlers.WorkflowRunHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.PullRequestHandler>(EventHandlers.PullRequestHandler.GitHubWebhookEventName);
+                .Add<EventHandlers.RepositoryCreateStatusTrackingHandler>(EventHandlers.RepositoryCreateStatusTrackingHandler.GitHubWebhookEventName)
+                .Add<EventHandlers.BranchCreateStatusTrackingHandler>(EventHandlers.BranchCreateStatusTrackingHandler.GitHubWebhookEventName)
+                .Add<EventHandlers.WorkflowRunStatusTrackingHandler>(EventHandlers.WorkflowRunStatusTrackingHandler.GitHubWebhookEventName)
+                .Add<EventHandlers.PullRequestStatusTrackingHandler>(EventHandlers.PullRequestStatusTrackingHandler.GitHubWebhookEventName);
             var config = builder.Build();
             services.AddSingleton(config);
         }
@@ -52,7 +52,7 @@ namespace Ahk.GitHub.Monitor
             if (!string.IsNullOrEmpty(config?.EventsQueueConnectionString))
             {
                 builder.Services.AddSingleton<Services.IGradeStore, Services.GradeStoreAzureQueue>();
-                builder.Services.AddSingleton<Services.ILifecycleStore, Services.LifecycleStoreAzureQueue>();
+                builder.Services.AddSingleton<Services.IStatusTrackingStore, Services.StatusTrackingStoreAzureQueue>();
 
                 builder.Services.AddAzureClients(az =>
                 {
@@ -71,7 +71,7 @@ namespace Ahk.GitHub.Monitor
             else
             {
                 builder.Services.AddSingleton<Services.IGradeStore, Services.GradeStoreNoop>();
-                builder.Services.AddSingleton<Services.ILifecycleStore, Services.LifecycleStoreNoop>();
+                builder.Services.AddSingleton<Services.IStatusTrackingStore, Services.StatusTrackingStoreNoop>();
             }
         }
     }
