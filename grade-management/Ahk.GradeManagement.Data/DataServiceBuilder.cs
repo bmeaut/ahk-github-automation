@@ -7,19 +7,6 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddAhkData(this IServiceCollection services, string cosmosAccountEndpoint, string cosmosAccountKey)
         {
-            var serializerSettings = new Newtonsoft.Json.JsonSerializerSettings
-            {
-                Converters =
-                {
-                    new Ahk.GradeManagement.Data.Helper.StatusEventItemJsonConverter(),
-                },
-                NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
-                ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
-                {
-                    NamingStrategy = new Newtonsoft.Json.Serialization.CamelCaseNamingStrategy()
-                },
-            };
-
             services.AddScoped(s =>
                 new CosmosClient(
                     accountEndpoint: cosmosAccountEndpoint,
@@ -30,7 +17,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         ConnectionMode = ConnectionMode.Gateway,
 #endif
                         MaxRetryAttemptsOnRateLimitedRequests = 9,
-                        Serializer = new Ahk.GradeManagement.Data.Helper.NewtonsoftJsonCosmosSerializer(serializerSettings),
+                        SerializerOptions = new CosmosSerializationOptions() { IgnoreNullValues = true, PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase },
                     }));
 
             services.AddScoped<IWebhookTokenRepository, Ahk.GradeManagement.Data.Internal.WebhookTokenRepository>();

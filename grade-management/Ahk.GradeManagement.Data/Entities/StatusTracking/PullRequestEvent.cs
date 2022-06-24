@@ -3,8 +3,11 @@ using System.Collections.Generic;
 
 namespace Ahk.GradeManagement.Data.Entities
 {
+    [Newtonsoft.Json.JsonConverter(typeof(Helper.DisabledJsonConverter))]
     public class PullRequestEvent : StatusEventBase
     {
+        public const string TypeName = "PullRequestEvent";
+
         public PullRequestEvent(string id, string repository, string username, DateTime timestamp, string action, IReadOnlyCollection<string> assignees, string neptun, string htmlUrl, int number)
             : base(id, repository, username, timestamp)
         {
@@ -15,7 +18,7 @@ namespace Ahk.GradeManagement.Data.Entities
             this.Number = number;
         }
 
-        public override string Type { get; } = "PullRequestEvent";
+        public override string Type => TypeName;
         public string Action { get; }
         public IReadOnlyCollection<string> Assignees { get; }
         public string Neptun { get; }

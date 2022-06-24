@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 
 namespace Ahk.GradeManagement.Data.Entities
 {
+    [JsonConverter(typeof(Helper.StatusEventItemJsonConverter))]
     public abstract class StatusEventBase
     {
         protected StatusEventBase(string id, string repository, string username, DateTime timestamp)

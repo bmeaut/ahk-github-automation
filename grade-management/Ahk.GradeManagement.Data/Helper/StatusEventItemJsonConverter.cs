@@ -19,10 +19,10 @@ namespace Ahk.GradeManagement.Data.Helper
             var typeName = obj["$type"]?.Value<string>();
             return typeName switch
             {
-                nameof(RepositoryCreateEvent) => obj.ToObject<RepositoryCreateEvent>(serializer),
-                nameof(BranchCreateEvent) => obj.ToObject<BranchCreateEvent>(serializer),
-                nameof(PullRequestEvent) => obj.ToObject<PullRequestEvent>(serializer),
-                nameof(WorkflowRunEvent) => obj.ToObject<WorkflowRunEvent>(serializer),
+                RepositoryCreateEvent.TypeName => obj.ToObject<RepositoryCreateEvent>(serializer),
+                BranchCreateEvent.TypeName => obj.ToObject<BranchCreateEvent>(serializer),
+                PullRequestEvent.TypeName => obj.ToObject<PullRequestEvent>(serializer),
+                WorkflowRunEvent.TypeName => obj.ToObject<WorkflowRunEvent>(serializer),
                 _ => throw new InvalidOperationException($"Unknown type name '{typeName}'"),
             };
         }
