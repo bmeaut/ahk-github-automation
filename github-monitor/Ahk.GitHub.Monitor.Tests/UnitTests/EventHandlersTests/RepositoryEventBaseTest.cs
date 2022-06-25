@@ -135,20 +135,6 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                 Times.Once());
         }
 
-        [DataTestMethod]
-        [DataRow("org/prefix-username", "username")]
-        [DataRow("org/prefix-123-aaa-uuu1", "uuu1")]
-        [DataRow("prefix-123-aaa-uuu3", "uuu3")]
-        public void GetGithubUsernameFromRepositoryName(string repositoryName, string expectedUserName)
-        {
-            var gitHubMock = GitHubClientMockFactory.CreateDefault();
-
-            var eh = new TestHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
-            var result = eh.GetGitHubUserNameFromRepositoryNameForTest(repositoryName);
-
-            Assert.AreEqual(expectedUserName, result);
-        }
-
         private class TestHandler : RepositoryEventBase<Octokit.ActivityPayload>
         {
             public TestHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
@@ -162,7 +148,6 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             }
 
             public Task<string> GetNeptunForTest() => base.getNeptun(0, "m");
-            public string GetGitHubUserNameFromRepositoryNameForTest(string repositoryName) => base.getGitHubUserNameFromRepositoryName(repositoryName);
         }
     }
 }

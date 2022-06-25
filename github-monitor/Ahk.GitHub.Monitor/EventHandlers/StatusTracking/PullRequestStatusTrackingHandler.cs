@@ -36,14 +36,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task<EventHandlerResult> processPullRequestEvent(PullRequestEventPayload webhookPayload)
         {
             var repository = webhookPayload.Repository.FullName;
-            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
             var action = webhookPayload.Action;
             var assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
             var neptun = await getNeptun(webhookPayload.Repository.Id, webhookPayload.PullRequest.Head.Ref);
 
             await statusTrackingStore.StoreEvent(new PullRequestEvent(
                 repository: repository,
-                username: username,
                 timestamp: DateTime.UtcNow,
                 action: action,
                 assignees: assignees,

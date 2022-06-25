@@ -7,8 +7,8 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "BranchCreateEvent";
 
-        public BranchCreateEvent(string id, string repository, string username, DateTime timestamp, string branch)
-            : base(id, repository, username, timestamp)
+        public BranchCreateEvent(string id, string repository, DateTime timestamp, string branch)
+            : base(id, repository, timestamp)
         {
             this.Branch = branch;
         }

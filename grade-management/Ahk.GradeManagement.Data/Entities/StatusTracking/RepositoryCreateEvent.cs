@@ -6,8 +6,8 @@ namespace Ahk.GradeManagement.Data.Entities
     public class RepositoryCreateEvent : StatusEventBase
     {
         public const string TypeName = "RepositoryCreateEvent";
-        public RepositoryCreateEvent(string id, string repository, string username, DateTime timestamp)
-            : base(id, repository, username, timestamp)
+        public RepositoryCreateEvent(string id, string repository, DateTime timestamp)
+            : base(id, repository, timestamp)
         {
         }
 

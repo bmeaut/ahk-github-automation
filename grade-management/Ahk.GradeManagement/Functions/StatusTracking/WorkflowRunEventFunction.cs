@@ -16,22 +16,22 @@ namespace Ahk.GradeManagement.StatusTracking
         [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahkstatustrackingworkflowrun", Connection = "AHK_EventsQueueConnectionString")] WorkflowRunEvent data, ILogger log)
         {
-            log.LogInformation("WorkflowRunEventFunction triggered for Repository='{Repository}', Username='{Username}', Conclusion='{Conclusion}'", data.Repository, data.Username, data.Conclusion);
+            log.LogInformation("WorkflowRunEventFunction triggered for Repository='{Repository}', Conclusion='{Conclusion}'", data.Repository, data.Conclusion);
 
             if (string.IsNullOrEmpty(data.Repository))
             {
-                log.LogWarning("WorkflowRunEventFunction missing data for Repository='{Repository}', Username='{Username}', Conclusion='{Conclusion}'", data.Repository, data.Username, data.Conclusion);
+                log.LogWarning("WorkflowRunEventFunction missing data for Repository='{Repository}', Conclusion='{Conclusion}'", data.Repository, data.Conclusion);
                 return;
             }
 
             try
             {
                 await service.InsertNewEvent(data);
-                log.LogInformation("WorkflowRunEventFunction completed for Repository='{Repository}', Username='{Username}', Conclusion='{Conclusion}'", data.Repository, data.Username, data.Conclusion);
+                log.LogInformation("WorkflowRunEventFunction completed for Repository='{Repository}', Conclusion='{Conclusion}'", data.Repository, data.Conclusion);
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "WorkflowRunEventFunction failed for Repository='{Repository}', Username='{Username}', Conclusion='{Conclusion}'", data.Repository, data.Username, data.Conclusion);
+                log.LogError(ex, "WorkflowRunEventFunction failed for Repository='{Repository}', Conclusion='{Conclusion}'", data.Repository, data.Conclusion);
                 throw;
             }
         }

@@ -16,22 +16,22 @@ namespace Ahk.GradeManagement.StatusTracking
         [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahkstatustrackingrepocreate", Connection = "AHK_EventsQueueConnectionString")] RepositoryCreateEvent data, ILogger log)
         {
-            log.LogInformation("RepositoryCreateEventFunction triggered for Repository='{Repository}', Username='{Username}'", data.Repository, data.Username);
+            log.LogInformation("RepositoryCreateEventFunction triggered for Repository='{Repository}'", data.Repository);
 
             if (string.IsNullOrEmpty(data.Repository))
             {
-                log.LogWarning("RepositoryCreateEventFunction missing data for Repository='{Repository}', Username='{Username}'", data.Repository, data.Username);
+                log.LogWarning("RepositoryCreateEventFunction missing data for Repository='{Repository}'", data.Repository);
                 return;
             }
 
             try
             {
                 await service.InsertNewEvent(data);
-                log.LogInformation("RepositoryCreateEventFunction completed for Repository='{Repository}', Username='{Username}'", data.Repository, data.Username);
+                log.LogInformation("RepositoryCreateEventFunction completed for Repository='{Repository}'", data.Repository);
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "RepositoryCreateEventFunction failed for Repository='{Repository}', Username='{Username}'", data.Repository, data.Username);
+                log.LogError(ex, "RepositoryCreateEventFunction failed for Repository='{Repository}'", data.Repository);
                 throw;
             }
         }

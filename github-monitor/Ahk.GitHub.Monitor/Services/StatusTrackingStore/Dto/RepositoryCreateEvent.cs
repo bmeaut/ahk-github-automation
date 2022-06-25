@@ -4,8 +4,8 @@ namespace Ahk.GitHub.Monitor.Services
 {
     public class RepositoryCreateEvent : StatusEventBase
     {
-        public RepositoryCreateEvent(string repository, string username, DateTime timestamp)
-            : base(repository, username, timestamp)
+        public RepositoryCreateEvent(string repository, DateTime timestamp)
+            : base(repository, timestamp)
         {
         }
     }

@@ -4,15 +4,13 @@ namespace Ahk.GitHub.Monitor.Services
 {
     public abstract class StatusEventBase
     {
-        protected StatusEventBase(string repository, string username, DateTime timestamp)
+        protected StatusEventBase(string repository, DateTime timestamp)
         {
             this.Repository = repository;
-            this.Username = username;
             this.Timestamp = timestamp;
         }
 
         public string Repository { get; }
-        public string Username { get; }
         public DateTime Timestamp { get; }
     }
 }

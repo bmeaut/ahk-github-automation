@@ -7,8 +7,8 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "WorkflowRunEvent";
 
-        public WorkflowRunEvent(string id, string repository, string username, DateTime timestamp, string conclusion)
-            : base(id, repository, username, timestamp)
+        public WorkflowRunEvent(string id, string repository, DateTime timestamp, string conclusion)
+            : base(id, repository, timestamp)
         {
             this.Conclusion = conclusion;
         }

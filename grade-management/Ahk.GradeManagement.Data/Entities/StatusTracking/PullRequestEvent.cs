@@ -8,8 +8,8 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "PullRequestEvent";
 
-        public PullRequestEvent(string id, string repository, string username, DateTime timestamp, string action, IReadOnlyCollection<string> assignees, string neptun, string htmlUrl, int number)
-            : base(id, repository, username, timestamp)
+        public PullRequestEvent(string id, string repository, DateTime timestamp, string action, IReadOnlyCollection<string> assignees, string neptun, string htmlUrl, int number)
+            : base(id, repository, timestamp)
         {
             this.Action = action;
             this.Assignees = assignees;

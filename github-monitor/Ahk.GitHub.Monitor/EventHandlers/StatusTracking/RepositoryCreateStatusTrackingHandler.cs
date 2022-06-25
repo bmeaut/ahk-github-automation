@@ -29,11 +29,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task<EventHandlerResult> processRepositoryCreateEvent(RepositoryEventPayload webhookPayload)
         {
             var repository = webhookPayload.Repository.FullName;
-            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
 
             await statusTrackingStore.StoreEvent(new RepositoryCreateEvent(
                 repository: repository,
-                username: username,
                 timestamp: DateTime.UtcNow));
 
             return EventHandlerResult.ActionPerformed("repository create lifecycle handled");

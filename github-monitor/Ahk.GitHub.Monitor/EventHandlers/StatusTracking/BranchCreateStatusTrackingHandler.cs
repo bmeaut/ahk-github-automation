@@ -29,12 +29,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task<EventHandlerResult> processBranchCreateEvent(CreateEventPayload webhookPayload)
         {
             var repository = webhookPayload.Repository.FullName;
-            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
             var branch = webhookPayload.Ref;
 
             await statusTrackingStore.StoreEvent(new BranchCreateEvent(
                 repository: repository,
-                username: username,
                 timestamp: DateTime.UtcNow,
                 branch: branch));
 

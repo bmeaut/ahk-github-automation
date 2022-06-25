@@ -4,8 +4,8 @@ namespace Ahk.GitHub.Monitor.Services
 {
     public class BranchCreateEvent : StatusEventBase
     {
-        public BranchCreateEvent(string repository, string username, DateTime timestamp, string branch)
-            : base(repository, username, timestamp)
+        public BranchCreateEvent(string repository, DateTime timestamp, string branch)
+            : base(repository, timestamp)
         {
             this.Branch = branch;
         }

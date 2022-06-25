@@ -32,12 +32,10 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task<EventHandlerResult> processWorkflowRunEvent(WorkflowEventPayload webhookPayload)
         {
             var repository = webhookPayload.Repository.FullName;
-            var username = getGitHubUserNameFromRepositoryName(webhookPayload.Repository.FullName);
             var conclusion = webhookPayload.WorkflowRun.Conclusion;
 
             await statusTrackingStore.StoreEvent(new WorkflowRunEvent(
                 repository: repository,
-                username: username,
                 timestamp: DateTime.UtcNow,
                 conclusion: conclusion));
 

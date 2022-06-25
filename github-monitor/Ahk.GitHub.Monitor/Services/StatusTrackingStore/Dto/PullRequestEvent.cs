@@ -5,8 +5,8 @@ namespace Ahk.GitHub.Monitor.Services
 {
     public class PullRequestEvent : StatusEventBase
     {
-        public PullRequestEvent(string repository, string username, DateTime timestamp, string action, IReadOnlyCollection<string> assignees, string neptun, string htmlUrl, int number)
-            : base(repository, username, timestamp)
+        public PullRequestEvent(string repository, DateTime timestamp, string action, IReadOnlyCollection<string> assignees, string neptun, string htmlUrl, int number)
+            : base(repository, timestamp)
         {
             this.Action = action;
             this.Assignees = assignees;
