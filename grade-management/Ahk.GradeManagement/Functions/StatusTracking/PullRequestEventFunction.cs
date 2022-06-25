@@ -13,7 +13,6 @@ namespace Ahk.GradeManagement.StatusTracking
         public PullRequestEventFunction(IStatusTrackingService service) => this.service = service;
 
         [FunctionName("PullRequestEventFunction")]
-        [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahkstatustrackingpullrequest", Connection = "AHK_EventsQueueConnectionString")] PullRequestEvent data, ILogger log)
         {
             log.LogInformation("PullRequestEventFunction triggered for Repository='{Repository}', Action='{Action}', Neptun='{Neptun}'", data.Repository, data.Action, data.Neptun);

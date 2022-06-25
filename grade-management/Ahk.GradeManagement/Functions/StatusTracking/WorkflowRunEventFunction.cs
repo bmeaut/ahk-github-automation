@@ -13,7 +13,6 @@ namespace Ahk.GradeManagement.StatusTracking
         public WorkflowRunEventFunction(IStatusTrackingService service) => this.service = service;
 
         [FunctionName("WorkflowRunEventFunction")]
-        [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahkstatustrackingworkflowrun", Connection = "AHK_EventsQueueConnectionString")] WorkflowRunEvent data, ILogger log)
         {
             log.LogInformation("WorkflowRunEventFunction triggered for Repository='{Repository}', Conclusion='{Conclusion}'", data.Repository, data.Conclusion);

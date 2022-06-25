@@ -13,7 +13,6 @@ namespace Ahk.GradeManagement.StatusTracking
         public BranchCreateEventFunction(IStatusTrackingService service) => this.service = service;
 
         [FunctionName("BranchCreateEventFunction")]
-        [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahkstatustrackingbranchcreate", Connection = "AHK_EventsQueueConnectionString")] BranchCreateEvent data, ILogger log)
         {
             log.LogInformation("BranchCreateEventFunction triggered for Repository='{Repository}', Branch='{Branch}'", data.Repository, data.Branch);
