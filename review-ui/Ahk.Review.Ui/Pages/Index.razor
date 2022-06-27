@@ -43,13 +43,19 @@ else
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Repository</MudTh>
+                <MudTh>Neptun</MudTh>
                 <MudTh>Branches</MudTh>
                 <MudTh>Pull Request</MudTh>
                 <MudTh>CI workflows</MudTh>
                 <MudTh>Grade</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Repository">@context.Repository</MudTd>
+                <MudTd DataLabel="Repository">
+                    <MudLink Href="@context.RepositoryUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary" Target="_blank">
+                        @context.Repository
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Neptun">@context.Neptun</MudTd>
                 <MudTd DataLabel="Branch">
                     <MudText Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
                         @string.Join(" ", context.Branches)
@@ -64,7 +70,7 @@ else
                     {
                         @foreach (var pr in context.PullRequests)
                         {
-                            <MudLink Href="@pr.HtmlUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
+                            <MudLink Href="@pr.HtmlUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary" Target="_blank">
                                 @string.Format("#{0} ({1}{2})", pr.Number, pr.Status, string.IsNullOrEmpty(pr.Assignee) ? string.Empty : $" @{pr.Assignee}")
                             </MudLink>
                             <MudText Typo="Typo.body2"> </MudText>

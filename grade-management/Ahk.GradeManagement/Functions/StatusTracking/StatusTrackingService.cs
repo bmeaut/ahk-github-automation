@@ -27,10 +27,18 @@ namespace Ahk.GradeManagement.StatusTracking
         {
             return new RepositoryStatus(
                 repository: events.Key,
+                neptun: getNeptun(events),
                 branches: getBranches(events),
                 pullRequests: getPrStatuses(events),
                 workflowRuns: getWorkflowRunsStatus(events));
         }
+
+        private static string getNeptun(IEnumerable<StatusEventBase> events)
+            => events.OfType<PullRequestEvent>()
+                     .Where(e => !string.IsNullOrEmpty(e.Neptun))
+                     .OrderByDescending(e => e.Timestamp)
+                     .Select(e => e.Neptun)
+                     .FirstOrDefault() ?? string.Empty;
 
         private static IReadOnlyCollection<string> getBranches(IEnumerable<StatusEventBase> events)
             => events.OfType<BranchCreateEvent>().Select(e => e.Branch).Distinct().ToArray();
