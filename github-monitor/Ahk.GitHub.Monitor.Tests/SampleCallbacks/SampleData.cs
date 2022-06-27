@@ -13,7 +13,6 @@ namespace Ahk.GitHub.Monitor.Tests
         public static string PrReviewRequested = getTextFromResource("pr_reviewrequested.json");
         public static string PrReviewComment = getTextFromResource("pr_reviewcomment.json");
         public static string WorkflowRun = getTextFromResource("workflow_run.json");
-        public static string RepositoryCreate = getTextFromResource("repository_create.json");
 
         private static string getTextFromResource(string resourceName)
         {

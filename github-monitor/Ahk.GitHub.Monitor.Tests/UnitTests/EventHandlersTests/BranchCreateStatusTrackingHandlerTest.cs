@@ -9,10 +9,26 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
     [TestClass]
     public class BranchCreateStatusTrackingHandlerTest
     {
+        [TestMethod]
+        public async Task BranchCreateStatusEventNotTriggeredForNonBranchEvent()
+        {
+            var gitHubMock = GitHubClientMockFactory.CreateDefault();
+            var statusTrackingStoreMock = StatusTrackingStoreMockFactory.Create();
+
+            var payload = SampleData.BranchCreate.Body
+                .Replace("\"ref_type\": \"branch\"", "\"ref_type\": \"tag\"", System.StringComparison.InvariantCultureIgnoreCase);
+
+            var eh = new BranchCreateStatusTrackingHandler(gitHubMock.CreateFactory(), statusTrackingStoreMock.Object, MemoryCacheMockFactory.Instance, NullLogger.Instance);
+            var result = await eh.Execute(payload);
+
+            Assert.IsTrue(result.Result.Contains("branch create ignored for", System.StringComparison.InvariantCultureIgnoreCase));
+            statusTrackingStoreMock.Verify(c => c.StoreEvent(It.IsAny<Services.BranchCreateEvent>()), Times.Never());
+        }
+
         [DataTestMethod]
         [DataRow("master")]
         [DataRow("main")]
-        public async Task BranchCreateStatusEventNotTriggeredForDefaultBranch(string defaultBranchName)
+        public async Task RepositoryCreateStatusEventIssuedForDefaultBranch(string defaultBranchName)
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
             var statusTrackingStoreMock = StatusTrackingStoreMockFactory.Create();
@@ -25,8 +41,8 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             var eh = new BranchCreateStatusTrackingHandler(gitHubMock.CreateFactory(), statusTrackingStoreMock.Object, MemoryCacheMockFactory.Instance, NullLogger.Instance);
             var result = await eh.Execute(payload);
 
-            Assert.IsTrue(result.Result.Contains("branch create ignored for", System.StringComparison.InvariantCultureIgnoreCase));
-            statusTrackingStoreMock.Verify(c => c.StoreEvent(It.IsAny<Services.BranchCreateEvent>()), Times.Never());
+            Assert.IsTrue(result.Result.Contains("repository create lifecycle handled", System.StringComparison.InvariantCultureIgnoreCase));
+            statusTrackingStoreMock.Verify(c => c.StoreEvent(It.Is<Services.RepositoryCreateEvent>(e => e.Repository == "aabbcc/ddeeff")), Times.Once());
         }
 
         [TestMethod]

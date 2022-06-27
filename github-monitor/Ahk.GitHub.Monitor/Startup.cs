@@ -37,7 +37,6 @@ namespace Ahk.GitHub.Monitor
                 .Add<EventHandlers.GradeCommandIssueCommentHandler>(EventHandlers.GradeCommandIssueCommentHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.GradeCommandReviewCommentHandler>(EventHandlers.GradeCommandReviewCommentHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.ActionWorkflowRunHandler>(EventHandlers.ActionWorkflowRunHandler.GitHubWebhookEventName)
-                .Add<EventHandlers.RepositoryCreateStatusTrackingHandler>(EventHandlers.RepositoryCreateStatusTrackingHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.BranchCreateStatusTrackingHandler>(EventHandlers.BranchCreateStatusTrackingHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.WorkflowRunStatusTrackingHandler>(EventHandlers.WorkflowRunStatusTrackingHandler.GitHubWebhookEventName)
                 .Add<EventHandlers.PullRequestStatusTrackingHandler>(EventHandlers.PullRequestStatusTrackingHandler.GitHubWebhookEventName);
