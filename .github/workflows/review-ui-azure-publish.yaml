@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -15,6 +15,19 @@ jobs:
         with:
           dotnet-version: "6.0.x"
 
+      - name: Add API URL to config file
+        working-directory: review-ui/Ahk.Review.Ui/wwwroot
+        run: sed -i 's#AHK_GradeManagementApi#${{ secrets.REVIEWUI_GRADEMANAGEMENTAPI }}#g' appsettings.json
+
       - name: "Run dotnet publish"
         working-directory: review-ui
         run: dotnet publish --configuration Release --output ./output
+
+      - name: Deploy to Azure Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.REVIEWUI_AZURESTATICWEBAPP_TOKEN }}
+          action: "upload"
+          app_location: "./review-ui/output/wwwroot"
+          output_location: ""
+          skip_app_build: true

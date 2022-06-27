@@ -10,12 +10,12 @@ namespace Ahk.GradeManagement.SetGrade
     {
         private readonly IResultsRepository repo;
 
-        public SetGradeService(IResultsRepository repo)
-            => this.repo = repo;
+        public SetGradeService(IResultsRepository repo) => this.repo = repo;
 
         public async Task SetGrade(SetGradeEvent data)
         {
             var previousResults = await this.repo.GetLastResultOf(neptun: Normalize.Neptun(data.Neptun), gitHubRepoName: Normalize.RepoName(data.Repository), gitHubPrNumber: data.PrNumber);
+
             await this.repo.AddResult(new StudentResult(
                 id: null,
                 neptun: data.Neptun,

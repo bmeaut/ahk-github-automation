@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.AzureQueues;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
@@ -8,7 +9,6 @@ namespace Ahk.GitHub.Monitor.Services
 {
     internal class GradeStoreAzureQueue : IGradeStore
     {
-        public const string QueueClientName = "ahkevents";
         public const string QueueNameSetGrade = "ahksetgrade";
         public const string QueueNameConfirmAutoGrade = "ahkconfirmautograde";
 
@@ -17,7 +17,7 @@ namespace Ahk.GitHub.Monitor.Services
 
         public GradeStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
         {
-            var queueService = clientFactory.CreateClient(QueueClientName);
+            var queueService = clientFactory.CreateClient(QueueClientName.Name);
             this.queueSetGrade = new QueueWithCreateIfNotExists(queueService, QueueNameSetGrade);
             this.queueConfirmAutoGrade = new QueueWithCreateIfNotExists(queueService, QueueNameConfirmAutoGrade);
         }

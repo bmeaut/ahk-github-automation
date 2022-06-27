@@ -21,6 +21,7 @@ namespace Ahk.GradeManagement
             builder.Services.AddScoped<Services.ITokenManagementService, Services.TokenManagementService>();
             builder.Services.AddScoped<SetGrade.ISetGradeService, SetGrade.SetGradeService>();
             builder.Services.AddScoped<ListGrades.IGradeListing, ListGrades.GradeListing>();
+            builder.Services.AddScoped<StatusTracking.IStatusTrackingService, StatusTracking.StatusTrackingService>();
 
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables("AHK_").Build();
             builder.Services.Configure<AhkAppConfig>(configuration);

@@ -13,7 +13,6 @@ namespace Ahk.GradeManagement.SetGrade
             => this.service = service;
 
         [FunctionName("SetGradeEventFunction")]
-        [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahksetgrade", Connection = "AHK_EventsQueueConnectionString")] SetGradeEvent data, ILogger log)
         {
             log.LogInformation("SetGradeEventFunction triggered for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
@@ -32,6 +31,7 @@ namespace Ahk.GradeManagement.SetGrade
             catch (Exception ex)
             {
                 log.LogError(ex, "SetGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                throw;
             }
         }
     }

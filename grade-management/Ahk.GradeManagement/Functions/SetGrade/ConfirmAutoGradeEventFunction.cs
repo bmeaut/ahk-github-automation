@@ -13,7 +13,6 @@ namespace Ahk.GradeManagement.SetGrade
             => this.service = service;
 
         [FunctionName("ConfirmAutoGradeEventFunction")]
-        [ExponentialBackoffRetry(5, "00:01:00", "00:05:00")]
         public async Task Run([QueueTrigger("ahkconfirmautograde", Connection = "AHK_EventsQueueConnectionString")] ConfirmAutoGradeEvent data, ILogger log)
         {
             log.LogInformation("ConfirmAutoGradeEventFunction triggered for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
@@ -32,6 +31,7 @@ namespace Ahk.GradeManagement.SetGrade
             catch (Exception ex)
             {
                 log.LogError(ex, "ConfirmAutoGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                throw;
             }
         }
 
