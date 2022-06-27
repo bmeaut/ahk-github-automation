@@ -30,6 +30,23 @@
   </div>
   <script src="_framework/blazor.webassembly.js"></script>
   <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+  <script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+      const arrayBuffer = await contentStreamReference.arrayBuffer();
+      const blob = new Blob([arrayBuffer]);
+      const url = URL.createObjectURL(blob);
+      triggerFileDownload(fileName, url);
+      URL.revokeObjectURL(url);
+    }
+    window.triggerFileDownload = (fileName, url) => {
+      const anchorElement = document.createElement('a');
+      anchorElement.href = url;
+      anchorElement.download = fileName ?? '';
+      anchorElement.click();
+      anchorElement.remove();
+    }
+  </script>
+
 </body>
 
 </html>

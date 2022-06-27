@@ -1,25 +1,21 @@
 using Ahk.Review.Ui.Models;
 using Ahk.Review.Ui.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Ahk.Review.Ui.Pages
 {
     public partial class Index : ComponentBase
     {
-        [Inject]
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        private DataService DataService { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-
         // displayed info
         private bool loaded = false;
-        private IReadOnlyCollection<SubmissionInfo> repoList = new SubmissionInfo[0];
+        private IReadOnlyCollection<SubmissionInfo> repoList = Array.Empty<SubmissionInfo>();
         private string? message;
         private bool fetchingData;
 
         // inputs
-        private string apiKey = "";
-        private string repoPrefix = "";
+        private string apiKey = string.Empty;
+        private string repoPrefix = string.Empty;
 
         // filters
         private bool filterNoBranch;
@@ -27,12 +23,19 @@ namespace Ahk.Review.Ui.Pages
         private bool filterNoCiWorkflow;
         private bool filterNoGrade;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        [Inject]
+        private DataService DataService { get; set; }
+        [Inject]
+        private IJSRuntime JS { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
         protected override void OnInitialized()
         {
             loaded = true;
         }
 
-        private async Task loadStats()
+        private async Task loadData()
         {
             this.fetchingData = true;
             try
@@ -42,12 +45,27 @@ namespace Ahk.Review.Ui.Pages
             }
             catch (Exception ex)
             {
-                this.repoList = new SubmissionInfo[0];
+                this.repoList = Array.Empty<SubmissionInfo>();
                 this.message = ex.ToString();
             }
             finally
             {
                 this.fetchingData = false;
+            }
+        }
+
+        private async Task downloadGradeCsv()
+        {
+            try
+            {
+                var fileName = $"{repoPrefix}-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm", System.Globalization.CultureInfo.InvariantCulture)}".Replace("/", "-", StringComparison.OrdinalIgnoreCase);
+                var csvBytes = await DataService.DownloadGradesCsv(repoPrefix, apiKey);
+                using var streamRef = new DotNetStreamReference(csvBytes);
+                await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+            }
+            catch (Exception ex)
+            {
+                this.message = ex.ToString();
             }
         }
 

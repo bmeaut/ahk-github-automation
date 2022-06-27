@@ -23,6 +23,20 @@ namespace Ahk.Review.Ui.Services
             return mergeResults(repoStat!, grades!);
         }
 
+        public async Task<Stream> DownloadGradesCsv(string repositoryPrefix, string apiKey)
+        {
+            httpClient.DefaultRequestHeaders.Remove("x-functions-key");
+            httpClient.DefaultRequestHeaders.Add("x-functions-key", apiKey);
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"list-grades/{repositoryPrefix}");
+            req.Headers.Remove("Accept");
+            req.Headers.Add("Accept", "text/csv");
+            var resp = await httpClient.SendAsync(req);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadAsStreamAsync();
+        }
+
         private static IReadOnlyCollection<SubmissionInfo> mergeResults(IReadOnlyCollection<RepositoryStatus> repoStat, IReadOnlyCollection<FinalStudentGrade> grades)
         {
             var gradesLookup = grades.ToDictionary(g => g.Repo);
