@@ -22,74 +22,82 @@ else
         </MudPaper>
     }
 
-    <MudTable Items="@repoList" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info" Filter="filterFunc" T="SubmissionInfo" Dense="true" RowsPerPage="250">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Repositories (@repoList.Count)</MudText>
-            <MudSpacer />
-            <MudSwitch @bind-Checked="@filterNoBranch" Color="Color.Primary">No new branch</MudSwitch>
-            <MudSpacer />
-            <MudSwitch @bind-Checked="@filterNoPr" Color="Color.Primary">No PR</MudSwitch>
-            <MudSpacer />
-            <MudSwitch @bind-Checked="@filterNoCiWorkflow" Color="Color.Primary">No CI workflows</MudSwitch>
-            <MudSpacer />
-            <MudSwitch @bind-Checked="@filterNoGrade" Color="Color.Primary">Not graded</MudSwitch>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh>Repository</MudTh>
-            <MudTh>Branches</MudTh>
-            <MudTh>Pull Request</MudTh>
-            <MudTh>CI workflows</MudTh>
-            <MudTh>Grade</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Repository">@context.Repository</MudTd>
-            <MudTd DataLabel="Branch">
-                <MudText Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
-                    @string.Join(" ", context.Branches)
-                </MudText>
-            </MudTd>
-            <MudTd DataLabel="PullRequest">
-                @if(context.PullRequests.Count == 0)
-                {
-                    <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
-                }
-                else
-                {
-                    @foreach (var pr in context.PullRequests)
-                    {
-                        <MudLink Href="@pr.HtmlUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
-                            #@pr.Number (@pr.Status)
-                        </MudLink>
-                    }
-                }
-            </MudTd>
-            <MudTd DataLabel="CIWorkflows">
-                @if(context.PullRequests.Count == 0)
-                {
-                    <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
-                }
-                else
-                {
+    @if (fetchingData)
+    {
+        <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@repoList" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info" Filter="filterFunc" T="SubmissionInfo" Dense="true" RowsPerPage="250">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Repositories (@repoList.Count)</MudText>
+                <MudSpacer />
+                <MudSwitch @bind-Checked="@filterNoBranch" Color="Color.Primary">No new branch</MudSwitch>
+                <MudSpacer />
+                <MudSwitch @bind-Checked="@filterNoPr" Color="Color.Primary">No PR</MudSwitch>
+                <MudSpacer />
+                <MudSwitch @bind-Checked="@filterNoCiWorkflow" Color="Color.Primary">No CI workflows</MudSwitch>
+                <MudSpacer />
+                <MudSwitch @bind-Checked="@filterNoGrade" Color="Color.Primary">Not graded</MudSwitch>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Repository</MudTh>
+                <MudTh>Branches</MudTh>
+                <MudTh>Pull Request</MudTh>
+                <MudTh>CI workflows</MudTh>
+                <MudTh>Grade</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Repository">@context.Repository</MudTd>
+                <MudTd DataLabel="Branch">
                     <MudText Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
-                        @context.WorkflowRuns.Count runs (last: @context.WorkflowRuns.LastStatus)
+                        @string.Join(" ", context.Branches)
                     </MudText>
-                }
-            </MudTd>
-            <MudTd DataLabel="Graded">
-                @if(string.IsNullOrEmpty(context.Grade))
-                {
-                    <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
-                }
-                else
-                {
-                    <MudText Color="Color.Success" Typo="Typo.body2" Class="mud-text-secondary">
-                        @context.Grade
-                    </MudText>
-                }
-            </MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager Class="pa-4" HorizontalAlignment="HorizontalAlignment.End"/>
-        </PagerContent>
-    </MudTable>
+                </MudTd>
+                <MudTd DataLabel="PullRequest">
+                    @if(context.PullRequests.Count == 0)
+                    {
+                        <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
+                    }
+                    else
+                    {
+                        @foreach (var pr in context.PullRequests)
+                        {
+                            <MudLink Href="@pr.HtmlUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
+                                @string.Format("#{0} ({1}{2})", pr.Number, pr.Status, string.IsNullOrEmpty(pr.Assignee) ? string.Empty : $" @{pr.Assignee}")
+                            </MudLink>
+                            <MudText Typo="Typo.body2"> </MudText>
+                        }
+                    }
+                </MudTd>
+                <MudTd DataLabel="CIWorkflows">
+                    @if(context.PullRequests.Count == 0)
+                    {
+                        <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary">
+                            @context.WorkflowRuns.Count runs (last: @context.WorkflowRuns.LastStatus)
+                        </MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Graded">
+                    @if(string.IsNullOrEmpty(context.Grade))
+                    {
+                        <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Success" Typo="Typo.body2" Class="mud-text-secondary">
+                            @context.Grade
+                        </MudText>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager Class="pa-4" HorizontalAlignment="HorizontalAlignment.End"/>
+            </PagerContent>
+        </MudTable>
+    }
 }

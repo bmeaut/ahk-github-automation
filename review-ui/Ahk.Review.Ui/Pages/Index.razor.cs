@@ -15,6 +15,7 @@ namespace Ahk.Review.Ui.Pages
         private bool loaded = false;
         private IReadOnlyCollection<SubmissionInfo> repoList = new SubmissionInfo[0];
         private string? message;
+        private bool fetchingData;
 
         // inputs
         private string apiKey = "";
@@ -33,6 +34,7 @@ namespace Ahk.Review.Ui.Pages
 
         private async Task loadStats()
         {
+            this.fetchingData = true;
             try
             {
                 this.repoList = await DataService.GetData(repoPrefix, apiKey);
@@ -42,6 +44,10 @@ namespace Ahk.Review.Ui.Pages
             {
                 this.repoList = new SubmissionInfo[0];
                 this.message = ex.ToString();
+            }
+            finally
+            {
+                this.fetchingData = false;
             }
         }
 
