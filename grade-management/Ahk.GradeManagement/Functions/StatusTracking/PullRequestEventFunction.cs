@@ -17,7 +17,7 @@ namespace Ahk.GradeManagement.StatusTracking
         {
             log.LogInformation("PullRequestEventFunction triggered for Repository='{Repository}', Action='{Action}', Neptun='{Neptun}'", data.Repository, data.Action, data.Neptun);
 
-            if (string.IsNullOrEmpty(data.Neptun) || string.IsNullOrEmpty(data.Repository) || data.Number == 0)
+            if (string.IsNullOrEmpty(data.Repository) || data.Number == 0)
             {
                 log.LogWarning("PullRequestEventFunction triggered for Repository='{Repository}', Action='{Action}', Neptun='{Neptun}'", data.Repository, data.Action, data.Neptun);
                 return;

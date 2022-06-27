@@ -72,7 +72,7 @@ else
                     }
                 </MudTd>
                 <MudTd DataLabel="CIWorkflows">
-                    @if(context.PullRequests.Count == 0)
+                    @if(context.WorkflowRuns.Count == 0)
                     {
                         <MudText Color="Color.Warning" Typo="Typo.body2" Class="mud-text-secondary">-</MudText>
                     }
