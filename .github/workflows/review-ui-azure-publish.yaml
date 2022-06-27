@@ -1,0 +1,20 @@
+name: Review UI - Azure publish
+
+on: [workflow_dispatch]
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: "Run dotnet publish"
+        working-directory: review-ui
+        run: dotnet publish --configuration Release --output ./output
