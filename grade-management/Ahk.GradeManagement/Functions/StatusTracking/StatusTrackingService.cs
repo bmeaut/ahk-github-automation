@@ -42,6 +42,7 @@ namespace Ahk.GradeManagement.StatusTracking
         {
             return new PullRequestStatus(
                 number: events.Key,
+                htmlUrl: events.OrderByDescending(e => e.Timestamp).First().HtmlUrl,
                 status: events.OrderByDescending(e => e.Timestamp).First().Action,
                 assignee: string.Join(", ", events.Where(e => e.Assignees != null).SelectMany(e => e.Assignees).Distinct()));
         }
