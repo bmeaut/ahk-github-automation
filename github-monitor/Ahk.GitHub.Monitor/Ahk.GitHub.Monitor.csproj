@@ -29,7 +29,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Azure.Storage.Queues" Version="12.8.0" />
+        <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
         <PackageReference Include="Microsoft.Extensions.Azure" Version="1.1.1" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.15.0" />
