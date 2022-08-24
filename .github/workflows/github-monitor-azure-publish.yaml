@@ -4,6 +4,7 @@ on: [workflow_dispatch]
 
 jobs:
   publish:
+    environment: mobweb
     runs-on: windows-latest
 
     steps:
