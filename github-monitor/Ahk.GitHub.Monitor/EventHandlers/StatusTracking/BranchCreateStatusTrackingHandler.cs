@@ -18,7 +18,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             this.statusTrackingStore = statusTrackingStore;
         }
 
-        protected override async Task<EventHandlerResult> executeCore(CreateEventPayload webhookPayload)
+        protected override async Task<EventHandlerResult> ExecuteCore(CreateEventPayload webhookPayload)
         {
             if (webhookPayload.RefType.Equals(RefType.Branch))
             {

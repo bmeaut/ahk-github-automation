@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> executeCore(WorkflowRunEventPayload webhookPayload)
+        protected override async Task<EventHandlerResult> ExecuteCore(WorkflowRunEventPayload webhookPayload)
         {
             if (webhookPayload.Action.Equals("completed", StringComparison.OrdinalIgnoreCase))
             {

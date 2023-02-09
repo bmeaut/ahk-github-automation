@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GitHub.Monitor", "github-monitor\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor.csproj", "{51E5EF4E-60F3-451B-848A-E2479A4324FA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GitHub.Monitor.Tests", "github-monitor\Ahk.GitHub.Monitor.Tests\Ahk.GitHub.Monitor.Tests.csproj", "{9CCCE503-44EF-42E5-A138-56DD75979BFE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement", "grade-management\Ahk.GradeManagement\Ahk.GradeManagement.csproj", "{34B13FB5-FBFF-4414-8772-0D12D6C71BDB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Data", "grade-management\Ahk.GradeManagement.Data\Ahk.GradeManagement.Data.csproj", "{1D22FE9B-469D-4EC4-9C67-B8B73A7A4966}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Tests", "grade-management\Ahk.GradeManagement.Tests\Ahk.GradeManagement.Tests.csproj", "{BBBD29E3-C1BE-4192-8750-ECCB614CAF1C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.Review.Ui", "review-ui\Ahk.Review.Ui\Ahk.Review.Ui.csproj", "{B9DA6E4F-B4B9-4885-9623-A2F1D127FA4B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{51E5EF4E-60F3-451B-848A-E2479A4324FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51E5EF4E-60F3-451B-848A-E2479A4324FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51E5EF4E-60F3-451B-848A-E2479A4324FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51E5EF4E-60F3-451B-848A-E2479A4324FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CCCE503-44EF-42E5-A138-56DD75979BFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CCCE503-44EF-42E5-A138-56DD75979BFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CCCE503-44EF-42E5-A138-56DD75979BFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CCCE503-44EF-42E5-A138-56DD75979BFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34B13FB5-FBFF-4414-8772-0D12D6C71BDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34B13FB5-FBFF-4414-8772-0D12D6C71BDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34B13FB5-FBFF-4414-8772-0D12D6C71BDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34B13FB5-FBFF-4414-8772-0D12D6C71BDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D22FE9B-469D-4EC4-9C67-B8B73A7A4966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D22FE9B-469D-4EC4-9C67-B8B73A7A4966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D22FE9B-469D-4EC4-9C67-B8B73A7A4966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D22FE9B-469D-4EC4-9C67-B8B73A7A4966}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBBD29E3-C1BE-4192-8750-ECCB614CAF1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBBD29E3-C1BE-4192-8750-ECCB614CAF1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBBD29E3-C1BE-4192-8750-ECCB614CAF1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBBD29E3-C1BE-4192-8750-ECCB614CAF1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9DA6E4F-B4B9-4885-9623-A2F1D127FA4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9DA6E4F-B4B9-4885-9623-A2F1D127FA4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9DA6E4F-B4B9-4885-9623-A2F1D127FA4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9DA6E4F-B4B9-4885-9623-A2F1D127FA4B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AC85ED6C-A378-4F6C-B3D2-E5CF5F51D17E}
+	EndGlobalSection
+EndGlobal

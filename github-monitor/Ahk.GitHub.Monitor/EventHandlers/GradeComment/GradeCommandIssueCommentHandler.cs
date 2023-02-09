@@ -14,7 +14,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> executeCore(IssueCommentPayload webhookPayload)
+        protected override async Task<EventHandlerResult> ExecuteCore(IssueCommentPayload webhookPayload)
         {
             if (webhookPayload.Issue == null)
                 return EventHandlerResult.PayloadError("no issue information in webhook payload");

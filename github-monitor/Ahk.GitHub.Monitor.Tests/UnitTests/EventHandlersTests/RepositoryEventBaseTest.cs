@@ -142,12 +142,12 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
             {
             }
 
-            protected override Task<EventHandlerResult> executeCore(Octokit.ActivityPayload webhookPayload)
+            protected override Task<EventHandlerResult> ExecuteCore(Octokit.ActivityPayload webhookPayload)
             {
                 return Task.FromResult(EventHandlerResult.ActionPerformed("TestHandler ok"));
             }
 
-            public Task<string> GetNeptunForTest() => base.getNeptun(0, "m");
+            public Task<string> GetNeptunForTest() => base.GetNeptun(0, "m");
         }
     }
 }

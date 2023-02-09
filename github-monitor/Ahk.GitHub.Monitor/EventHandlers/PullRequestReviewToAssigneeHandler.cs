@@ -14,7 +14,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
         }
 
-        protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
+        protected override async Task<EventHandlerResult> ExecuteCore(PullRequestEventPayload webhookPayload)
         {
             if (webhookPayload.PullRequest == null)
                 return EventHandlerResult.PayloadError("no pull request information in webhook payload");

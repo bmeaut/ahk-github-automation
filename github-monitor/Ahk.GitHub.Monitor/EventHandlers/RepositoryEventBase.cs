@@ -11,8 +11,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public abstract class RepositoryEventBase<TPayload> : IGitHubEventHandler
         where TPayload : ActivityPayload
     {
-        protected readonly ILogger Logger;
-
         private readonly IGitHubClientFactory gitHubClientFactory;
         private readonly IMemoryCache cache;
 
@@ -20,30 +18,33 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
             this.gitHubClientFactory = gitHubClientFactory;
             this.cache = cache;
-            this.Logger = logger;
+
+            Logger = logger;
         }
+
+        protected ILogger Logger { get; }
 
         protected IGitHubClient GitHubClient { get; private set; }
 
         public async Task<EventHandlerResult> Execute(string requestBody)
         {
-            if (!tryParsePayload(requestBody, out var webhookPayload, out var errorResult))
+            if (!TryParsePayload(requestBody, out var webhookPayload, out var errorResult))
                 return errorResult;
 
             GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id, Logger);
 
-            if (!await isEnabledForRepository(webhookPayload))
+            if (!await IsEnabledForRepository(webhookPayload))
             {
                 Logger.LogInformation("no ahk-monitor.yml or disabled");
                 return EventHandlerResult.Disabled("no ahk-monitor.yml or disabled");
             }
 
-            return await executeCore(webhookPayload);
+            return await ExecuteCore(webhookPayload);
         }
 
-        protected abstract Task<EventHandlerResult> executeCore(TPayload webhookPayload);
+        protected abstract Task<EventHandlerResult> ExecuteCore(TPayload webhookPayload);
 
-        protected bool tryParsePayload(string requestBody, out TPayload payload, out EventHandlerResult errorResult)
+        protected bool TryParsePayload(string requestBody, out TPayload payload, out EventHandlerResult errorResult)
         {
             payload = null;
             if (string.IsNullOrEmpty(requestBody))
@@ -82,25 +83,35 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             return true;
         }
 
-        protected Task<string> getNeptun(long repositoryId, string branchName)
+        protected Task<string> GetNeptun(long repositoryId, string branchName)
             => cache.GetOrCreateAsync(
                 key: $"neptuntxtfile{repositoryId}{branchName}",
                 factory: async cacheEntry =>
                 {
-                    var value = await getNeptunTxtFileContent(repositoryId, branchName);
-                    cacheEntry.SetValue(value);
-                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(12));
+                    // Don't cache null value
+                    // https://schwabencode.com/blog/2022/12/08/dotnet-avoid-caching-with-memorycache-and-getorcreate
+                    var value = await GetNeptunTxtFileContent(repositoryId, branchName);
+                    if (value is null)
+                    {
+                        cacheEntry.Dispose();
+                        return null;
+                    }
+
+                    cacheEntry.Value = value;
+                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12);
                     return value;
                 });
 
-        protected async Task<string> getNeptunTxtFileContent(long repositoryId, string branchName)
+        protected async Task<string> GetNeptunTxtFileContent(long repositoryId, string branchName)
         {
             try
             {
                 var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(repositoryId, "neptun.txt", branchName);
                 if (contents.Count == 0)
                     return null;
-                return contents[0].Content?.Trim();
+                return !string.IsNullOrWhiteSpace(contents[0].Content)
+                    ? contents[0].Content.Trim()
+                    : null;
             }
             catch (NotFoundException)
             {
@@ -117,14 +128,14 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 key: $"githubisorgmember{webhookPayload.Repository.Owner.Login}{username}",
                 factory: async cacheEntry =>
                 {
-                    var isMember = await getIsUserOrganizationMember(webhookPayload.Repository.Owner.Login, username);
+                    var isMember = await IsUserOrganizationMember(webhookPayload.Repository.Owner.Login, username);
                     cacheEntry.SetValue(isMember);
                     cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
                     return isMember;
                 });
         }
 
-        private async Task<bool> getIsUserOrganizationMember(string org, string user)
+        private async Task<bool> IsUserOrganizationMember(string org, string user)
         {
             try
             {
@@ -136,18 +147,18 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             }
         }
 
-        private Task<bool> isEnabledForRepository(TPayload webhookPayload)
+        private Task<bool> IsEnabledForRepository(TPayload webhookPayload)
             => cache.GetOrCreateAsync(
                 key: $"ahkmonitorisenabledinrepo{webhookPayload.Repository.Id}",
                 factory: async cacheEntry =>
                 {
-                    var isEnabled = await getConfigIsEnabledInRepository(webhookPayload);
+                    var isEnabled = await IsAhkEnabledInRepositoryConfig(webhookPayload);
                     cacheEntry.SetValue(isEnabled);
                     cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(12));
                     return isEnabled;
                 });
 
-        private async Task<bool> getConfigIsEnabledInRepository(TPayload webhookPayload)
+        private async Task<bool> IsAhkEnabledInRepositoryConfig(TPayload webhookPayload)
         {
             try
             {

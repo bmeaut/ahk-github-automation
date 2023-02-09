@@ -18,7 +18,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             this.statusTrackingStore = statusTrackingStore;
         }
 
-        protected override async Task<EventHandlerResult> executeCore(WorkflowEventPayload webhookPayload)
+        protected override async Task<EventHandlerResult> ExecuteCore(WorkflowEventPayload webhookPayload)
         {
             if (webhookPayload.WorkflowRun == null)
                 return EventHandlerResult.PayloadError("no workflow run information in webhook payload");

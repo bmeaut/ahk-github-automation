@@ -62,7 +62,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task handleStoreGrade(ICommentPayload<T> webhookPayload, GradeCommentParser gradeCommand, PullRequest pr)
         {
-            var neptun = await getNeptun(webhookPayload.Repository.Id, pr.Head.Ref);
+            var neptun = await GetNeptun(webhookPayload.Repository.Id, pr.Head.Ref);
             Logger.LogInformation($"storing grades for {neptun}");
             if (gradeCommand.HasGrades)
             {

@@ -19,7 +19,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             this.statusTrackingStore = statusTrackingStore;
         }
 
-        protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
+        protected override async Task<EventHandlerResult> ExecuteCore(PullRequestEventPayload webhookPayload)
         {
             if (webhookPayload.PullRequest == null)
                 return EventHandlerResult.PayloadError("no pull request information in webhook payload");
@@ -38,7 +38,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             var repository = webhookPayload.Repository.FullName;
             var action = webhookPayload.Action;
             var assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
-            var neptun = await getNeptun(webhookPayload.Repository.Id, webhookPayload.PullRequest.Head.Ref);
+            var neptun = await GetNeptun(webhookPayload.Repository.Id, webhookPayload.PullRequest.Head.Ref);
 
             await statusTrackingStore.StoreEvent(new PullRequestEvent(
                 repository: repository,
