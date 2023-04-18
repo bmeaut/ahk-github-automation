@@ -18,7 +18,7 @@ namespace Ahk.GradeManagement.Services
 
         public async Task SetSecret(string token, string secret, string description)
         {
-            await this.repo.UpsertToken(new Data.Entities.WebhookToken(token, secret, description));
+            await this.repo.UpsertToken(new Data.Entities.WebhookToken() { Id = token, Secret = secret, Description = description });
             cache.Remove(getCacheKeyForToken(token));
         }
 

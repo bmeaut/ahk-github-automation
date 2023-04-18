@@ -1,5 +1,4 @@
 using System;
-using Newtonsoft.Json;
 
 namespace Ahk.GradeManagement.SetGrade
 {
@@ -13,12 +12,10 @@ namespace Ahk.GradeManagement.SetGrade
             this.Timestamp = timestamp;
         }
 
-        [JsonProperty("id")]
         public string Id { get; }
         public string Repository { get; }
         public string Username { get; }
 
-        [JsonProperty("$type")]
         public string Type { get; } = "SetGradeEvent";
         public DateTime Timestamp { get; }
     }

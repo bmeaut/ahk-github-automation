@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace Ahk.GradeManagement.StatusTracking
@@ -10,14 +9,18 @@ namespace Ahk.GradeManagement.StatusTracking
     public class ListRepositoryStatusesHttpFunction
     {
         private readonly IStatusTrackingService service;
+        private readonly ILogger logger;
 
-        public ListRepositoryStatusesHttpFunction(IStatusTrackingService service) => this.service = service;
+        public ListRepositoryStatusesHttpFunction(IStatusTrackingService service, ILogger logger)
+        {
+            this.service = service;
+            this.logger = logger;
+        }
 
-        [FunctionName("list-statuses")]
+        [Function("list-statuses")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Admin, "get", Route = "list-statuses/{*repoprefix}")] HttpRequest req,
-            string repoprefix,
-            ILogger logger)
+            string repoprefix)
         {
             logger.LogInformation($"Received request to list statuses with prefix: {repoprefix}");
 

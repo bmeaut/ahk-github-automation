@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace Ahk.GradeManagement.SetGrade
@@ -8,29 +8,32 @@ namespace Ahk.GradeManagement.SetGrade
     public class ConfirmAutoGradeEventFunction
     {
         private readonly ISetGradeService service;
-
-        public ConfirmAutoGradeEventFunction(ISetGradeService service)
-            => this.service = service;
-
-        [FunctionName("ConfirmAutoGradeEventFunction")]
-        public async Task Run([QueueTrigger("ahkconfirmautograde", Connection = "AHK_EventsQueueConnectionString")] ConfirmAutoGradeEvent data, ILogger log)
+        private readonly ILogger logger;
+        public ConfirmAutoGradeEventFunction(ISetGradeService service, ILogger logger)
         {
-            log.LogInformation("ConfirmAutoGradeEventFunction triggered for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+            this.service = service;
+            this.logger = logger;
+        }
+
+        [Function("ConfirmAutoGradeEventFunction")]
+        public async Task Run([QueueTrigger("ahkconfirmautograde", Connection = "AHK_EventsQueueConnectionString")] ConfirmAutoGradeEvent data)
+        {
+            logger.LogInformation("ConfirmAutoGradeEventFunction triggered for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
 
             if (string.IsNullOrEmpty(data.Neptun) || string.IsNullOrEmpty(data.Repository))
             {
-                log.LogWarning("ConfirmAutoGradeEventFunction missing data for Neptun={Neptun} Repository={Repository} Pr={PullRequest}; event data is: " + getDataAsString(data), data.Neptun, data.Repository, data.PrNumber);
+                logger.LogWarning("ConfirmAutoGradeEventFunction missing data for Neptun={Neptun} Repository={Repository} Pr={PullRequest}; event data is: " + getDataAsString(data), data.Neptun, data.Repository, data.PrNumber);
                 return;
             }
 
             try
             {
                 await service.ConfirmAutoGrade(data);
-                log.LogInformation("ConfirmAutoGradeEventFunction completed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                logger.LogInformation("ConfirmAutoGradeEventFunction completed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "ConfirmAutoGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                logger.LogError(ex, "ConfirmAutoGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
                 throw;
             }
         }

@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace Ahk.GradeManagement.SetGrade
@@ -8,29 +8,34 @@ namespace Ahk.GradeManagement.SetGrade
     public class SetGradeEventFunction
     {
         private readonly ISetGradeService service;
+        private readonly ILogger logger;
 
-        public SetGradeEventFunction(ISetGradeService service)
-            => this.service = service;
-
-        [FunctionName("SetGradeEventFunction")]
-        public async Task Run([QueueTrigger("ahksetgrade", Connection = "AHK_EventsQueueConnectionString")] SetGradeEvent data, ILogger log)
+        public SetGradeEventFunction(ISetGradeService service, ILogger logger)
         {
-            log.LogInformation("SetGradeEventFunction triggered for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+            this.service = service;
+            this.logger = logger;
+        }
+            
+
+        [Function("SetGradeEventFunction")]
+        public async Task Run([QueueTrigger("ahksetgrade", Connection = "AHK_EventsQueueConnectionString")] SetGradeEvent data)
+        {
+            logger.LogInformation("SetGradeEventFunction triggered for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
 
             if (string.IsNullOrEmpty(data.Neptun) || string.IsNullOrEmpty(data.Repository) || data.Results == null || data.Results.Length == 0)
             {
-                log.LogWarning("SetGradeEventFunction missing data for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                logger.LogWarning("SetGradeEventFunction missing data for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
                 return;
             }
 
             try
             {
                 await service.SetGrade(data);
-                log.LogInformation("SetGradeEventFunction completed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                logger.LogInformation("SetGradeEventFunction completed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "SetGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
+                logger.LogError(ex, "SetGradeEventFunction failed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
                 throw;
             }
         }

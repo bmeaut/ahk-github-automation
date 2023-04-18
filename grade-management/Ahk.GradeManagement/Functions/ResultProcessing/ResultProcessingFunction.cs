@@ -1,11 +1,11 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.ResultProcessing.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
@@ -15,17 +15,18 @@ namespace Ahk.GradeManagement.ResultProcessing
     {
         private readonly IResultProcessor service;
         private readonly IDateTimeProvider dateTimeProvider;
+        private readonly ILogger logger;
 
-        public ResultProcessingFunction(IResultProcessor service, IDateTimeProvider dateTimeProvider)
+        public ResultProcessingFunction(IResultProcessor service, IDateTimeProvider dateTimeProvider, ILogger logger)
         {
             this.service = service;
             this.dateTimeProvider = dateTimeProvider;
+            this.logger = logger;
         }
 
-        [FunctionName("evaluation-result")]
+        [Function("evaluation-result")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest request,
-            ILogger logger)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest request)
         {
             string token = request.Headers.GetValueOrDefault("X-Ahk-Token");
             string receivedSignature = request.Headers.GetValueOrDefault("X-Ahk-Sha256");
@@ -51,7 +52,7 @@ namespace Ahk.GradeManagement.ResultProcessing
             if (string.IsNullOrEmpty(secret))
                 return new BadRequestObjectResult(new { error = "X-Ahk-Token invalid" });
 
-            string requestBody = await request.ReadAsStringAsync();
+            string requestBody = await new StreamReader(request.Body).ReadToEndAsync();
             if (!HmacSha256Validator.IsSignatureValid(request.Method, request.GetDisplayUrl(), date, requestBody, receivedSignature, secret))
                 return new BadRequestObjectResult(new { error = "X-Ahk-Sha256 signature not valid" });
 

@@ -3,8 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
@@ -13,15 +12,18 @@ namespace Ahk.GradeManagement.ListGrades
     public class ListGradesFunction
     {
         private readonly IGradeListing service;
+        private readonly ILogger logger;
 
-        public ListGradesFunction(IGradeListing service)
-            => this.service = service;
+        public ListGradesFunction(IGradeListing service, ILogger logger)
+        {
+            this.service = service;
+            this.logger = logger;
+        }
 
-        [FunctionName("list-grades")]
+        [Function("list-grades")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Admin, "get", Route = "list-grades/{*repoprefix}")] HttpRequest req,
-            string repoprefix,
-            ILogger logger)
+            string repoprefix)
         {
             logger.LogInformation($"Received request to list grades with prefix: {repoprefix}");
 
