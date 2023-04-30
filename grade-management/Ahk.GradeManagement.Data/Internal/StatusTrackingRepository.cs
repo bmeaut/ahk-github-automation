@@ -1,20 +1,18 @@
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
-//using Ahk.GradeManagement.Data.Entities;
-//using Microsoft.Azure.Cosmos;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Ahk.GradeManagement.Data;
+using Ahk.GradeManagement.Data.Entities;
+using Ahk.GradeManagement.Data.Internal;
 
-//namespace Ahk.GradeManagement.Data.Internal
-//{
-//    internal class StatusTrackingRepository : RepositoryBase<StatusEventBase>, IStatusTrackingRepository
-//    {
-//        private const string ContainerName = "events";
+namespace Ahk.Grademanagement.Data.Internal
+{
+    internal class StatusTrackingRepository : IStatusTrackingRepository
+    {
+        public StatusTrackingRepository()
+        {
+        }
 
-//        public StatusTrackingRepository(CosmosClient client)
-//            : base(client, ContainerName, DefaultPartitionKey)
-//        {
-//        }
-
-//        public Task<IReadOnlyCollection<StatusEventBase>> ListEventsForRepositories(string prefix) => base.List(o => o.Repository.StartsWith(prefix));
-//        public Task InsertNewEvent(StatusEventBase data) => base.Insert(data, data.Id);
-//    }
-//}
+        public Task InsertNewEvent(StatusEventBase data) => throw new System.NotImplementedException();
+        public Task<IReadOnlyCollection<StatusEventBase>> ListEventsForRepositories(string prefix) => throw new System.NotImplementedException();
+    }
+}

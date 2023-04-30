@@ -10,7 +10,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Ahk.GradeManagement
 {
-    public static class Program
+    public class Program
     {
         public static async Task Main(string[] args)
         {

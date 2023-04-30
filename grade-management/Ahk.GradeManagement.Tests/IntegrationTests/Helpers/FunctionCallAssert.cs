@@ -19,7 +19,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             req.Path = "/api/path-to-something";
             configureRequest(req);
 
-            return function.Run(req, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+            return function.Run(req);
         }
 
         public static async Task<TResponse> InvokeAndGetResponseAs<TResponse>(this ResultProcessingFunction function, Action<HttpRequest> configureRequest)

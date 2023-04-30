@@ -92,7 +92,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var dtMock = new Mock<IDateTimeProvider>();
             dtMock.Setup(s => s.GetUtcNow()).Returns(new DateTime(2021, 9, 13, 12, 34, 23, DateTimeKind.Utc));
 
-            var func = new ResultProcessingFunction(procService.Object, dtMock.Object);
+            var func = new ResultProcessingFunction(procService.Object, dtMock.Object, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
             var resp = await func.InvokeWithContentAndGetResponseAs<ObjectResult>(data, dtMock.Object);
 
@@ -112,7 +112,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var dtMock = new Mock<IDateTimeProvider>();
             dtMock.Setup(s => s.GetUtcNow()).Returns(new DateTime(2021, 9, 13, 12, 34, 23, DateTimeKind.Utc));
 
-            var func = new ResultProcessingFunction(procService.Object, dtMock.Object);
+            var func = new ResultProcessingFunction(procService.Object, dtMock.Object, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
             var resp = await func.InvokeWithContentAndGetResponseAs<OkResult>(data, dtMock.Object);
 
@@ -126,7 +126,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var procService = new Mock<IResultProcessor>();
             configureProcessorMock?.Invoke(procService);
 
-            var func = new ResultProcessingFunction(procService.Object, new DateTimeProvider());
+            var func = new ResultProcessingFunction(procService.Object, new DateTimeProvider(), Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(configureRequest);
 
