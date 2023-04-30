@@ -41,7 +41,7 @@ namespace Ahk.GradeManagement.ResultProcessing
                 return null;
 
             return value.GroupBy(r => string.IsNullOrEmpty(r.ExerciseName) ? string.Empty : r.ExerciseName)
-                        .Select(g => new Point() { Exercise = new Exercise() { Name = g.Key }, PointEarned = (int)g.Sum(r => r.Points) })
+                        .Select(g => new Point() { Exercise = new Exercise() { Name = g.Key }, PointEarned = g.Sum(r => r.Points) })
                         .OrderBy(x => x.Exercise.Name)
                         .ToList();
         }

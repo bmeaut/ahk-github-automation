@@ -63,7 +63,7 @@ namespace Ahk.GradeManagement.SetGrade
                     exercise = previousPoints.ElementAt(i).Exercise;
                 var p = new Point()
                 {
-                    PointEarned = (int)values[i],
+                    PointEarned = values[i],
                     Exercise = exercise,
                 };
 
