@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data.Entities;
@@ -13,18 +15,33 @@ namespace Ahk.GradeManagement.Data.Internal
         {
         }
 
-        public Task AddGrade(Grade value) => throw new NotImplementedException();
-        public Task<Grade> GetLastResultOf(string neptun, string gitHubRepoName, int gitHubPrNumber) => throw new NotImplementedException();
-        public Task<IReadOnlyCollection<Grade>> ListConfirmedWithRepositoryPrefix(string repoPrefix) => throw new NotImplementedException();
+        public async Task AddGrade(Grade value)
+        {
+            Context.Grades.Add(value);
+            await Context.SaveChangesAsync();
+        }
+        public async Task<Grade> GetLastResultOf(string neptun, string gitHubRepoName, int gitHubPrNumber)
+        {
+            var grades = Context.Grades
+                .Where(s => s.Student.Neptun == neptun.ToUpperInvariant() && s.GithubRepoName == gitHubRepoName.ToLowerInvariant() && s.GithubPrNumber == gitHubPrNumber)
+                .OrderByDescending(s => s.Date);
 
-        //public Task AddResult(Grade value) => base.Insert(value);
-        //public Task<IReadOnlyCollection<Grade>> ListConfirmedWithRepositoryPrefix(string repoPrefix) => base.List(s => s.Confirmed && s.GithubRepoName.StartsWith(repoPrefix));
+            return grades.FirstOrDefault();
+        }
+        public async Task<IReadOnlyCollection<Grade>> ListConfirmedWithRepositoryPrefix(string repoPrefix)
+        {
+            var confirmedGrades = Context.Grades
+                .Where(s => s.Confirmed && s.GithubRepoName.StartsWith(repoPrefix));
+            return confirmedGrades.ToList().AsReadOnly();
+        }
 
-        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Repo name is normalized to lowercase.")]
-        //public Task<Grade> GetLastResultOf(string neptun, string gitHubRepoName, int gitHubPrNumber)
-        //    => base.GetOneWithOrderByDescending(
-        //        predicate: s => s.Student.Neptun == neptun.ToUpperInvariant() && s.GithubRepoName == gitHubRepoName.ToLowerInvariant() && s.GithubPrNumber == gitHubPrNumber,
-        //        orderBy: s => s.Date);
+        public async Task DeleteGrade(int id)
+        {
+            var grade = Context.Grades.Find(id);
+
+            Context.Grades.Remove(grade);
+            await Context.SaveChangesAsync();
+        }
 
     }
 }

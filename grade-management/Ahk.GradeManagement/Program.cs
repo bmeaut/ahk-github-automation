@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data;
+using Ahk.GradeManagement.Functions.Assignments;
+using Ahk.GradeManagement.Functions.Groups;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -28,6 +30,8 @@ namespace Ahk.GradeManagement
                     services.AddScoped<SetGrade.ISetGradeService, SetGrade.SetGradeService>();
                     services.AddScoped<ListGrades.IGradeListing, ListGrades.GradeListing>();
                     services.AddScoped<StatusTracking.IStatusTrackingService, StatusTracking.StatusTrackingService>();
+                    services.AddScoped<IGroupService, GroupService>();
+                    services.AddScoped<IAssignmentService, AssignmentService>();
 
                     string azureSqlConnString = Environment.GetEnvironmentVariable("AhkContext");
 

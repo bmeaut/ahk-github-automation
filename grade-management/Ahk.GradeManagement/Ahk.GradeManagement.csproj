@@ -61,4 +61,8 @@
             <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </None>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Functions\Groups\" />
+    </ItemGroup>
 </Project>
