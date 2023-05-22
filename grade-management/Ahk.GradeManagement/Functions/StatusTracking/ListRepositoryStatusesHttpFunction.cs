@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Ahk.GradeManagement.Functions.StatusTracking;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -11,10 +12,10 @@ namespace Ahk.GradeManagement.StatusTracking
         private readonly IStatusTrackingService service;
         private readonly ILogger logger;
 
-        public ListRepositoryStatusesHttpFunction(IStatusTrackingService service, ILogger logger)
+        public ListRepositoryStatusesHttpFunction(IStatusTrackingService service, ILoggerFactory loggerFactory)
         {
             this.service = service;
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger<ListRepositoryStatusesHttpFunction>();
         }
 
         [Function("list-statuses")]

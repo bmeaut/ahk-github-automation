@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data.Entities;
+using Ahk.GradeManagement.Functions.StatusTracking;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -11,10 +12,10 @@ namespace Ahk.GradeManagement.StatusTracking
         private readonly IStatusTrackingService service;
         private readonly ILogger logger;
 
-        public PullRequestEventFunction(IStatusTrackingService service, ILogger logger)
+        public PullRequestEventFunction(IStatusTrackingService service, ILoggerFactory loggerFactory)
         {
             this.service = service;
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger<PullRequestEventFunction>();
         }
 
         [Function("PullRequestEventFunction")]

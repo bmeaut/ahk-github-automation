@@ -7,28 +7,29 @@ using Ahk.GradeManagement.Data.Internal;
 
 namespace Ahk.Grademanagement.Data.Internal
 {
-    internal class StatusTrackingRepository : IStatusTrackingRepository
+    public class StatusTrackingRepository : IStatusTrackingRepository
     {
         public AhkDbContext Context { get; set; }
-        public StatusTrackingRepository()
+        public StatusTrackingRepository(AhkDbContext context)
         {
+            Context = context;
         }
 
         public Task InsertNewEvent(StatusEventBase data)
         {
-            if (data.GetType() == typeof(WorkflowRunEvent))
+            if (data.Type == "WorkflowRunEvent")
             {
                 Context.WorkflowRunEvents.AddAsync((WorkflowRunEvent)data);
             }
-            if (data.GetType() == typeof(PullRequestEvent))
+            if (data.Type == "PullRequestEvent")
             {
                 Context.PullRequestEvents.AddAsync((PullRequestEvent)data);
             }
-            if (data.GetType() == typeof(RepositoryCreateEvent))
+            if (data.Type == "RepositoryCreateEvent")
             {
                 Context.RepositoryCreateEvents.AddAsync((RepositoryCreateEvent)data);
             }
-            if (data.GetType() == typeof(BranchCreateEvent))
+            if (data.Type == "BranchCreateEvent")
             {
                 Context.BranchCreateEvents.AddAsync((BranchCreateEvent)data);
             }

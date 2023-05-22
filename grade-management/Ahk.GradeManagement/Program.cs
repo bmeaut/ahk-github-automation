@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ahk.Grademanagement.Data.Internal;
 using Ahk.GradeManagement.Data;
 using Ahk.GradeManagement.Data.Entities;
 using Ahk.GradeManagement.Functions.Assignments;
@@ -34,8 +35,9 @@ namespace Ahk.GradeManagement
                     services.AddScoped<StatusTracking.IStatusTrackingService, StatusTracking.StatusTrackingService>();
                     services.AddScoped<IGroupService, GroupService>();
                     services.AddScoped<IAssignmentService, AssignmentService>();
+                    services.AddScoped<IStatusTrackingRepository, StatusTrackingRepository>();
 
-                    string azureSqlConnString = Environment.GetEnvironmentVariable("AhkContext");
+                    string azureSqlConnString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_AHK_ConnString");
 
                     services.AddAhkData();
                     services.AddDbContext<AhkDbContext>(options => options.UseSqlServer(azureSqlConnString));

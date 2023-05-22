@@ -11,14 +11,14 @@ namespace Ahk.GradeManagement.StatusTracking
         private readonly IStatusTrackingService service;
         private readonly ILogger logger;
 
-        public RepositoryCreateEventFunction(IStatusTrackingService service, ILogger logger)
+        public RepositoryCreateEventFunction(IStatusTrackingService service, ILoggerFactory loggerFactory)
         {
             this.service = service;
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger<RepositoryCreateEventFunction>();
         }
 
         [Function("RepositoryCreateEventFunction")]
-        public async Task Run([QueueTrigger("ahkstatustrackingrepocreate", Connection = "AHK_EventsQueueConnectionString")] RepositoryCreateEvent data, ILogger logger)
+        public async Task Run([QueueTrigger("ahkstatustrackingrepocreate", Connection = "AHK_EventsQueueConnectionString")] RepositoryCreateEvent data)
         {
             logger.LogInformation("RepositoryCreateEventFunction triggered for Repository='{Repository}'", data.Repository);
 

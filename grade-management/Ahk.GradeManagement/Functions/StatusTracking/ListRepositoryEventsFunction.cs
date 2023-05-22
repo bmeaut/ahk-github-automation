@@ -13,8 +13,9 @@ namespace Ahk.GradeManagement.Functions.StatusTracking
         private readonly IStatusTrackingService service;
         private readonly ILogger logger;
 
-        public ListRepositoryEventsFunction(ILoggerFactory loggerFactory)
+        public ListRepositoryEventsFunction(IStatusTrackingService service, ILoggerFactory loggerFactory)
         {
+            this.service = service;
             logger = loggerFactory.CreateLogger<ListRepositoryEventsFunction>();
         }
 
