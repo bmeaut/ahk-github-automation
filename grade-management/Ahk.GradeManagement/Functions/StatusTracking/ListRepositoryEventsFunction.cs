@@ -19,7 +19,7 @@ namespace Ahk.GradeManagement.Functions.StatusTracking
         }
 
         [Function("ListRepositoryEventsFunction")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-statuses/{*repoprefix}")] HttpRequestData req, string prefix)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-events/{*repoprefix}")] HttpRequestData req, string prefix)
         {
             logger.LogInformation($"Received request to list events for repo with prefix: {prefix}");
 
