@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data;
+using Ahk.GradeManagement.Data.Entities;
 using Ahk.GradeManagement.Functions.Assignments;
 using Ahk.GradeManagement.Functions.Groups;
+using Ahk.GradeManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,6 +41,21 @@ namespace Ahk.GradeManagement
                     services.AddDbContext<AhkDbContext>(options => options.UseSqlServer(azureSqlConnString));
                 })
                 .Build();
+
+            using (var context = new AhkDbContextFactory().CreateDbContext(args))
+            {
+                context.Database.EnsureCreated();
+                var token = context.WebhookTokens.FirstOrDefault();
+                if (token == null)
+                {
+                    var id = Guid.NewGuid().ToString("N");
+                    var secret = Guid.NewGuid().ToString("N");
+                    var webHookToken = new WebhookToken() { Id = id, Secret = secret };
+                    context.WebhookTokens.Add(webHookToken);
+                    context.SaveChanges();
+                }
+            }
+
             await host.RunAsync();
         }
     }

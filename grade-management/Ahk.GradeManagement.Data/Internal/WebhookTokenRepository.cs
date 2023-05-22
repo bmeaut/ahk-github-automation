@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data.Entities;
 
@@ -11,7 +12,14 @@ namespace Ahk.GradeManagement.Data.Internal
         {
         }
 
-        public Task<WebhookToken> FindToken(string token) => throw new System.NotImplementedException();
-        public Task UpsertToken(WebhookToken value) => throw new System.NotImplementedException();
+        public async Task<WebhookToken> FindToken(string token)
+        {
+            return await Context.WebhookTokens.FindAsync(token);
+        }
+        public async Task UpsertToken(WebhookToken value)
+        {
+            Context.WebhookTokens.Add(value);
+            await Context.SaveChangesAsync();
+        }
     }
 }

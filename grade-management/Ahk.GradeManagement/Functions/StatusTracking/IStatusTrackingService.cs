@@ -8,5 +8,6 @@ namespace Ahk.GradeManagement.StatusTracking
     {
         Task InsertNewEvent(StatusEventBase data);
         Task<IReadOnlyCollection<RepositoryStatus>> ListStatusForRepositories(string repoPrefix);
+        Task<IReadOnlyCollection<StatusEventBase>> ListEventsForRepository(string repo);
     }
 }

@@ -23,6 +23,12 @@ namespace Ahk.GradeManagement.StatusTracking
                 .ToList();
         }
 
+        public async Task<IReadOnlyCollection<StatusEventBase>> ListEventsForRepository(string repo)
+        {
+            var events = await this.repo.ListEventsForRepositories(repo);
+            return events;
+        }
+
         private static RepositoryStatus createStatus(IGrouping<string, StatusEventBase> events)
         {
             return new RepositoryStatus(
