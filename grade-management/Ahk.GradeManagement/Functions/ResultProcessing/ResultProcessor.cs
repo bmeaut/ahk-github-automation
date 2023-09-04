@@ -10,30 +10,31 @@ namespace Ahk.GradeManagement.ResultProcessing
 {
     public class ResultProcessor : IResultProcessor
     {
-        private readonly IGradeRepository repo;
+        private readonly IGradeService service;
         private readonly ITokenManagementService tokensService;
 
-        public ResultProcessor(IGradeRepository repo, ITokenManagementService tokensService)
+        public ResultProcessor(IGradeService service, ITokenManagementService tokensService)
         {
-            this.repo = repo;
+            this.service = service;
             this.tokensService = tokensService;
         }
 
-        public Task<string> GetSecretForToken(string token) => tokensService.GetSecretForToken(token);
+        public Task<string> GetSecretForTokenAsync(string token) => tokensService.GetSecretForTokenAsync(token);
 
-        public Task ProcessResult(AhkProcessResult value, System.DateTime dateTime)
-            => this.repo.AddGrade(new Grade()
-               {
-                    Student = repo.Context.Students.Where(s => s.Neptun == value.NeptunCode).FirstOrDefault(),
-                    GithubRepoName = value.GitHubRepoName,
-                    GithubPrNumber = (int)value.GitHubPullRequestNum,
-                    GithubPrUrl = new Uri(value.GitHubPullRequestNum.HasValue ? $"https://github.com/{value.GitHubRepoName}/pull/{value.GitHubPullRequestNum}" : null),
-                    Date = dateTime,
-                    //Actor = "grade-management-api",
-                    Origin = new Uri(formatOrigin(value)),
-                    Points = GetTotalPoints(value.Result),
-                    Confirmed = false
-                });
+        public Task ProcessResultAsync(AhkProcessResult value, System.DateTime dateTime)
+            => this.service.AddGradeAsync(new Grade()
+            {
+                Student = service.FindStudentAsync(value.NeptunCode),
+                GithubRepoName = value.GitHubRepoName,
+                GithubPrNumber = (int)value.GitHubPullRequestNum,
+                GithubPrUrl = new Uri(value.GitHubPullRequestNum.HasValue ? $"https://github.com/{value.GitHubRepoName}/pull/{value.GitHubPullRequestNum}" : null),
+                Date = dateTime,
+                //Actor = "grade-management-api",
+                Origin = formatOrigin(value),
+                Points = GetTotalPoints(value.Result),
+                IsConfirmed = false,
+                Assignment = service.FindAssignment(value.NeptunCode)
+            });
 
         internal static System.Collections.Generic.List<Point> GetTotalPoints(AhkTaskResult[] value)
         {

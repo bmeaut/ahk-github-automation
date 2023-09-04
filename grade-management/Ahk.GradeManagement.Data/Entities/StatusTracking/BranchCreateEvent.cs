@@ -7,7 +7,7 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "BranchCreateEvent";
 
-        public override string Type { get => TypeName; set { } }
+        public override string Type { get => TypeName; }
         public string Branch { get; set; }
     }
 }

@@ -34,11 +34,7 @@ namespace Ahk.GradeManagement.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<StudentAssignment>().HasKey(e => new { e.StudentId, e.AssignmentId });
-            modelBuilder.Entity<StudentGroup>().HasKey(e => new { e.StudentId, e.GroupId });
-            modelBuilder.Entity<StudentSubject>().HasKey(e => new { e.StudentId, e.SubjectId });
-            modelBuilder.Entity<TeacherGroup>().HasKey(e => new { e.TeacherId, e.GroupId });
-            modelBuilder.Entity<TeacherSubject>().HasKey(e => new { e.TeacherId, e.SubjectId });
+
         }
     }
 }

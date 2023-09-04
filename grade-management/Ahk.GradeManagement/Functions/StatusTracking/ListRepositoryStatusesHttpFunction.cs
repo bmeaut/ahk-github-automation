@@ -1,5 +1,8 @@
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Functions.StatusTracking;
+using Ahk.GradeManagement.Services.StatusTrackingService;
+using AutoMapper;
+using DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -11,11 +14,13 @@ namespace Ahk.GradeManagement.StatusTracking
     {
         private readonly IStatusTrackingService service;
         private readonly ILogger logger;
+        private Mapper mapper;
 
-        public ListRepositoryStatusesHttpFunction(IStatusTrackingService service, ILoggerFactory loggerFactory)
+        public ListRepositoryStatusesHttpFunction(IStatusTrackingService service, ILoggerFactory loggerFactory, Mapper mapper)
         {
             this.service = service;
             this.logger = loggerFactory.CreateLogger<ListRepositoryStatusesHttpFunction>();
+            this.mapper = mapper;
         }
 
         [Function("list-statuses")]
@@ -25,7 +30,7 @@ namespace Ahk.GradeManagement.StatusTracking
         {
             logger.LogInformation($"Received request to list statuses with prefix: {repoprefix}");
 
-            var results = await service.ListStatusForRepositories(repoprefix);
+            SubmissionInfoDTO results = mapper.Map<SubmissionInfoDTO>(await service.ListStatusForRepositoriesAsync(repoprefix)); 
             return new OkObjectResult(results);
         }
     }

@@ -1,6 +1,8 @@
 using System.Net;
 using System.Threading.Tasks;
-using Ahk.GradeManagement.StatusTracking;
+using Ahk.GradeManagement.Services.StatusTrackingService;
+using AutoMapper;
+using DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -12,19 +14,21 @@ namespace Ahk.GradeManagement.Functions.StatusTracking
     {
         private readonly IStatusTrackingService service;
         private readonly ILogger logger;
+        private Mapper mapper;
 
-        public ListRepositoryEventsFunction(IStatusTrackingService service, ILoggerFactory loggerFactory)
+        public ListRepositoryEventsFunction(IStatusTrackingService service, ILoggerFactory loggerFactory, Mapper mapper)
         {
             this.service = service;
             logger = loggerFactory.CreateLogger<ListRepositoryEventsFunction>();
+            this.mapper = mapper;
         }
 
-        [Function("ListRepositoryEventsFunction")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-events/{*repoprefix}")] HttpRequestData req, string prefix)
+        [Function("list-events")]
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-events/{*prefix}")] HttpRequestData req, string prefix)
         {
             logger.LogInformation($"Received request to list events for repo with prefix: {prefix}");
 
-            var results = await service.ListEventsForRepository(prefix);
+            var results = mapper.Map<StatusEventBaseDTO>(await service.ListEventsForRepositoryAsync(prefix));
             return new OkObjectResult(results);
 
         }

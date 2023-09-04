@@ -8,10 +8,10 @@ namespace Ahk.GradeManagement.Data.Entities
 {
     public class StudentAssignment
     {
+        public int Id { get; set; }
         public int StudentId { get; set; }
-        public int AssignmentId { get; set; }
-
         public Student Student { get; set; }
+        public int AssignmentId { get; set; }
         public Assignment Assignment { get; set; }
     }
 }

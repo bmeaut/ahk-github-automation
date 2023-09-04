@@ -9,11 +9,12 @@ namespace Ahk.GradeManagement.Data.Entities
     public class Point
     {
         public int Id { get; set; }
-        public int? GradeId { get; set; }
-        public int ExerciseId { get; set; }
         public double PointEarned { get; set; }
 
+
+        public int ExerciseId { get; set; }
         public Exercise Exercise { get; set; }
+        public int? GradeId { get; set; }
         public Grade? Grade { get; set; }
     }
 }

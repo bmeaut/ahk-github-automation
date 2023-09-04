@@ -7,7 +7,7 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "WorkflowRunEvent";
 
-        public override string Type { get => TypeName; set { } }
+        public override string Type { get => TypeName; }
         public string Conclusion { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Ahk.GradeManagement.Services.SetGradeService;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +31,7 @@ namespace Ahk.GradeManagement.SetGrade
 
             try
             {
-                await service.SetGrade(data);
+                await service.SetGradeAsync(data);
                 logger.LogInformation("SetGradeEventFunction completed for Neptun={Neptun} Repository={Repository} Pr={PullRequest}", data.Neptun, data.Repository, data.PrNumber);
             }
             catch (Exception ex)

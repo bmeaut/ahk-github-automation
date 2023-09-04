@@ -13,9 +13,10 @@ namespace Ahk.GradeManagement.Data.Entities
         public string Semester { get; set; }
         public string SubjectCode { get; set; }
         public string GithubOrg { get; set; }
-        public string ahkConfig { get; set; }
+        public string AhkConfig { get; set; }
 
         public ICollection<Assignment> Assignments { get; set; }
+        public ICollection<Group> Groups { get; set; }
         public ICollection<StudentSubject> StudentSubjects { get; set; }
         public ICollection<TeacherSubject> TeacherSubjects { get; set; }
     }

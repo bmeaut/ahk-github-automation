@@ -13,6 +13,9 @@ builder.Services.AddHttpClient("ApiClient", httpClient =>
 });
 builder.Services.AddMudServices();
 
-builder.Services.AddSingleton<Ahk.Review.Ui.Services.DataService>();
+var mapper = MapperConfig.InitializeAutomapper();
+
+builder.Services.AddSingleton(mapper);
+builder.Services.AddSingleton<Ahk.Review.Ui.Services.SubmissionInfoService>();
 
 await builder.Build().RunAsync();

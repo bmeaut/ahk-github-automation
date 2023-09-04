@@ -9,7 +9,7 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "PullRequestEvent";
 
-        public override string Type {get => TypeName; set { } }
+        public override string Type {get => TypeName; }
         public string Action { get; set; }
         public string Neptun { get; set; }
         public string HtmlUrl { get; set; }

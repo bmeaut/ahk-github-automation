@@ -1,25 +1,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Ahk.GradeManagement.Data;
+using Ahk.GradeManagement.Services;
 
 namespace Ahk.GradeManagement.ListGrades
 {
     public class GradeListing : IGradeListing
     {
-        private readonly IGradeRepository repo;
+        private readonly IGradeService service;
 
-        public GradeListing(IGradeRepository repo)
-            => this.repo = repo;
+        public GradeListing(IGradeService service)
+            => this.service = service;
 
         public async Task<IReadOnlyCollection<FinalStudentGrade>> List(string repoPrefix)
         {
-            var items = await this.repo.ListConfirmedWithRepositoryPrefix(Normalize.RepoName(repoPrefix));
+            var items = await this.service.ListConfirmedWithRepositoryPrefixAsync(Normalize.RepoName(repoPrefix));
             var finalResults = new List<FinalStudentGrade>();
             foreach (var student in items.GroupBy(r => Normalize.Neptun(r.Student.Neptun)))
             {
                 var lastResult = student.OrderByDescending(s => s.Date).First();
                 finalResults.Add(new FinalStudentGrade(
+                    assignmentName: lastResult.Assignment.Name,
                     neptun: student.Key,
                     repo: lastResult.GithubRepoName,
                     prUrl: lastResult.GithubPrUrl.ToString(),

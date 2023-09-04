@@ -42,14 +42,17 @@ else
                 <MudSwitch @bind-Checked="@filterNoGrade" Color="Color.Primary">Not graded</MudSwitch>
             </ToolBarContent>
             <HeaderContent>
-                <MudTh>Repository</MudTh>
+                <MudTh>Assignment</MudTh>
                 <MudTh>Neptun</MudTh>
+                <MudTh>Repository</MudTh>
                 <MudTh>Branches</MudTh>
                 <MudTh>Pull Request</MudTh>
                 <MudTh>CI workflows</MudTh>
                 <MudTh>Grade</MudTh>
+                <MudTh>Action</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel="Assignment">@context.AssignmentName</MudTd>
                 <MudTd DataLabel="Repository">
                     <MudLink Href="@context.RepositoryUrl" Color="Color.Info" Typo="Typo.body2" Class="mud-text-secondary" Target="_blank">
                         @context.Repository
@@ -101,6 +104,7 @@ else
                         </MudText>
                     }
                 </MudTd>
+                <MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small"></MudButton></MudTd>
             </RowTemplate>
             <PagerContent>
                 <MudTablePager Class="pa-4" HorizontalAlignment="HorizontalAlignment.End"/>

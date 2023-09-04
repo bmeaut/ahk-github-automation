@@ -1,11 +1,14 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GradeManagement.Functions.StatusTracking;
 using Ahk.GradeManagement.ResultProcessing.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
@@ -17,21 +20,21 @@ namespace Ahk.GradeManagement.ResultProcessing
         private readonly IDateTimeProvider dateTimeProvider;
         private readonly ILogger logger;
 
-        public ResultProcessingFunction(IResultProcessor service, IDateTimeProvider dateTimeProvider, ILogger logger)
+        public ResultProcessingFunction(IResultProcessor service, IDateTimeProvider dateTimeProvider, ILoggerFactory loggerFactory)
         {
             this.service = service;
             this.dateTimeProvider = dateTimeProvider;
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger<ResultProcessingFunction>();
         }
 
         [Function("evaluation-result")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest request)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData request)
         {
-            string token = request.Headers.GetValueOrDefault("X-Ahk-Token");
-            string receivedSignature = request.Headers.GetValueOrDefault("X-Ahk-Sha256");
-            string deliveryId = request.Headers.GetValueOrDefault("X-Ahk-Delivery");
-            string dateStr = request.Headers.GetValueOrDefault(HeaderNames.Date);
+            string token = request.Headers.GetValues("X-Ahk-Token").FirstOrDefault();
+            string receivedSignature = request.Headers.GetValues("X-Ahk-Sha256").FirstOrDefault();
+            string deliveryId = request.Headers.GetValues("X-Ahk-Delivery").FirstOrDefault();
+            string dateStr = request.Headers.GetValues(HeaderNames.Date).FirstOrDefault();
 
             logger.LogInformation("evaluation-result request with X-Ahk-Delivery='{DeliveryId}', X-Ahk-Token = '{Token}'", deliveryId, token);
 
@@ -48,12 +51,12 @@ namespace Ahk.GradeManagement.ResultProcessing
 
             if (string.IsNullOrEmpty(token))
                 return new BadRequestObjectResult(new { error = "X-Ahk-Token header missing" });
-            var secret = await service.GetSecretForToken(token);
+            var secret = await service.GetSecretForTokenAsync(token);
             if (string.IsNullOrEmpty(secret))
                 return new BadRequestObjectResult(new { error = "X-Ahk-Token invalid" });
 
-            string requestBody = await new StreamReader(request.Body).ReadToEndAsync();
-            if (!HmacSha256Validator.IsSignatureValid(request.Method, request.GetDisplayUrl(), date, requestBody, receivedSignature, secret))
+            string requestBody = await HttpRequestDataExtensions.ReadAsStringAsync(request);
+            if (!HmacSha256Validator.IsSignatureValid(request.Method, request.Url.ToString(), date, requestBody, receivedSignature, secret))
                 return new BadRequestObjectResult(new { error = "X-Ahk-Sha256 signature not valid" });
 
             if (!PayloadReader.TryGetPayload<AhkProcessResult>(requestBody, out var requestDeserialized, out var deserializationError))
@@ -68,7 +71,7 @@ namespace Ahk.GradeManagement.ResultProcessing
 
             try
             {
-                await service.ProcessResult(requestDeserialized, date);
+                await service.ProcessResultAsync(requestDeserialized, date);
                 logger.LogInformation("evaluation-result request handled with success for X-Ahk-Delivery='{DeliveryId}'", deliveryId);
                 return new OkResult();
             }

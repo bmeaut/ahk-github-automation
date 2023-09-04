@@ -7,6 +7,6 @@ namespace Ahk.GradeManagement.Data.Entities
     {
         public const string TypeName = "RepositoryCreateEvent";
 
-        public override string Type { get => TypeName; set { } }
+        public override string Type { get => TypeName; }
     }
 }

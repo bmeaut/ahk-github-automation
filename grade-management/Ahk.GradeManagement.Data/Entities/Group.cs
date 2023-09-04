@@ -13,6 +13,8 @@ namespace Ahk.GradeManagement.Data.Entities
         public string Room { get; set; }
         public string Time { get; set; }
 
+        public int SubjectId { get; set; }
+        public Subject Subject { get; set; }
         public ICollection<StudentGroup> StudentGroups { get; set; }
         public ICollection<TeacherGroup> TeacherGroups { get; set; }
     }

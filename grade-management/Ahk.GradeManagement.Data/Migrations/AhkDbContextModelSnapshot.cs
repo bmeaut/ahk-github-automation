@@ -33,8 +33,8 @@ namespace Ahk.GradeManagement.Data.Migrations
                     b.Property<string>("ClassroomAssignment")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DeadLine")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("DeadLine")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -65,9 +65,6 @@ namespace Ahk.GradeManagement.Data.Migrations
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -109,11 +106,8 @@ namespace Ahk.GradeManagement.Data.Migrations
                     b.Property<int>("AssignmentId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("Confirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("Date")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("GithubPrNumber")
                         .HasColumnType("int");
@@ -123,6 +117,9 @@ namespace Ahk.GradeManagement.Data.Migrations
 
                     b.Property<string>("GithubRepoName")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Origin")
                         .HasColumnType("nvarchar(max)");
@@ -154,10 +151,15 @@ namespace Ahk.GradeManagement.Data.Migrations
                     b.Property<string>("Room")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Time")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
 
                     b.ToTable("Groups");
                 });
@@ -215,9 +217,6 @@ namespace Ahk.GradeManagement.Data.Migrations
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.ToTable("PullRequestEvents");
@@ -236,9 +235,6 @@ namespace Ahk.GradeManagement.Data.Migrations
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -293,43 +289,67 @@ namespace Ahk.GradeManagement.Data.Migrations
 
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.StudentAssignment", b =>
                 {
-                    b.Property<int>("StudentId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AssignmentId")
                         .HasColumnType("int");
 
-                    b.HasKey("StudentId", "AssignmentId");
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("AssignmentId");
+
+                    b.HasIndex("StudentId");
 
                     b.ToTable("StudentAssignments");
                 });
 
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.StudentGroup", b =>
                 {
-                    b.Property<int>("StudentId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
-                    b.HasKey("StudentId", "GroupId");
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("StudentId");
 
                     b.ToTable("StudentGroups");
                 });
 
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.StudentSubject", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
                     b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
-                    b.HasKey("StudentId", "SubjectId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
 
                     b.HasIndex("SubjectId");
 
@@ -344,6 +364,9 @@ namespace Ahk.GradeManagement.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AhkConfig")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("GithubOrg")
                         .HasColumnType("nvarchar(max)");
 
@@ -354,9 +377,6 @@ namespace Ahk.GradeManagement.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SubjectCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ahkConfig")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -384,8 +404,8 @@ namespace Ahk.GradeManagement.Data.Migrations
                     b.Property<string>("Neptun")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -394,30 +414,46 @@ namespace Ahk.GradeManagement.Data.Migrations
 
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.TeacherGroup", b =>
                 {
-                    b.Property<int>("TeacherId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
-                    b.HasKey("TeacherId", "GroupId");
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("TeacherId");
 
                     b.ToTable("TeacherGroups");
                 });
 
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.TeacherSubject", b =>
                 {
-                    b.Property<int>("TeacherId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
-                    b.HasKey("TeacherId", "SubjectId");
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("SubjectId");
+
+                    b.HasIndex("TeacherId");
 
                     b.ToTable("TeacherSubjects");
                 });
@@ -454,9 +490,6 @@ namespace Ahk.GradeManagement.Data.Migrations
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -502,6 +535,17 @@ namespace Ahk.GradeManagement.Data.Migrations
                     b.Navigation("Assignment");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.Group", b =>
+                {
+                    b.HasOne("Ahk.GradeManagement.Data.Entities.Subject", "Subject")
+                        .WithMany("Groups")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.Point", b =>
@@ -672,6 +716,8 @@ namespace Ahk.GradeManagement.Data.Migrations
             modelBuilder.Entity("Ahk.GradeManagement.Data.Entities.Subject", b =>
                 {
                     b.Navigation("Assignments");
+
+                    b.Navigation("Groups");
 
                     b.Navigation("StudentSubjects");
 

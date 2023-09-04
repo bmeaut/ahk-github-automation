@@ -10,7 +10,7 @@ namespace Ahk.GradeManagement.Data.Entities
         public string Repository { get; set; }
 
         
-        public abstract string Type { get; set; }
+        public abstract string Type { get; }
         public DateTime Timestamp { get; set; }
     }
 }

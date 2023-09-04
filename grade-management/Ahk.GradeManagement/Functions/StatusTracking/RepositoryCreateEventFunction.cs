@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data.Entities;
+using Ahk.GradeManagement.Services.StatusTrackingService;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +31,7 @@ namespace Ahk.GradeManagement.StatusTracking
 
             try
             {
-                await service.InsertNewEvent(data);
+                await service.InsertNewEventAsync(data);
                 logger.LogInformation("RepositoryCreateEventFunction completed for Repository='{Repository}'", data.Repository);
             }
             catch (Exception ex)

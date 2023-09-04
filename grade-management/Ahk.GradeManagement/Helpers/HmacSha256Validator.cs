@@ -9,6 +9,11 @@ namespace Ahk.GradeManagement
     {
         public static bool IsSignatureValid(string httpVerb, string httpUrl, DateTime date, string requestBody, string receivedSignature, string secret)
         {
+            if (Environment.GetEnvironmentVariable("VS_TUNNEL_URL") != null)
+            {
+                httpUrl = Environment.GetEnvironmentVariable("VS_TUNNEL_URL"); // Just for testing, remove before deployment.
+            }
+
             if (string.IsNullOrEmpty(receivedSignature))
                 return false;
 

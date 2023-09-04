@@ -12,14 +12,15 @@ namespace Ahk.GradeManagement.Data.Entities
         public string GithubRepoName { get; set; }
         public int GithubPrNumber { get; set; }
         public Uri GithubPrUrl { get; set; }
-        public DateTime Date { get; set; }
-        public bool Confirmed { get; set; }
-        public Uri Origin { get; set; }
+        public DateTimeOffset Date { get; set; }
+        public bool IsConfirmed { get; set; }
+        public string Origin { get; set; }
 
-        public int AssignmentId { get; set; }
-        public int StudentId { get; set; }
+
         public ICollection<Point> Points { get; set; }
+        public int AssignmentId { get; set; }
         public Assignment Assignment { get; set; }
+        public int StudentId { get; set; }
         public Student Student { get; set; }
     }
 }

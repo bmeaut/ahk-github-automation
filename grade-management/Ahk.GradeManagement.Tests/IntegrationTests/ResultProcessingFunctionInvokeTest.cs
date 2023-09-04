@@ -65,7 +65,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
                     req.Headers.Add("X-Ahk-Sha256", "val");
                     req.Headers.Add("Date", DateTime.UtcNow.ToString("R"));
                 },
-                svc => svc.Setup(s => s.GetSecretForToken("notavalidavalue")).ReturnsAsync((string)null).Verifiable());
+                svc => svc.Setup(s => s.GetSecretForTokenAsync("notavalidavalue")).ReturnsAsync((string)null).Verifiable());
 
         [TestMethod]
         public Task SignatureNotValidReturnsError()
@@ -78,7 +78,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
                     req.Headers.Add("X-Ahk-Sha256", "notvalidsignature");
                     req.Headers.Add("Date", DateTime.UtcNow.ToString("R"));
                 },
-                svc => svc.Setup(s => s.GetSecretForToken(data.Token)).ReturnsAsync(data.Secret).Verifiable());
+                svc => svc.Setup(s => s.GetSecretForTokenAsync(data.Token)).ReturnsAsync(data.Secret).Verifiable());
         }
 
         [TestMethod]
@@ -87,7 +87,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var data = SampleCallbackData.InvalidPayload;
 
             var procService = new Mock<IResultProcessor>();
-            procService.Setup(s => s.GetSecretForToken(data.Token)).ReturnsAsync(data.Secret);
+            procService.Setup(s => s.GetSecretForTokenAsync(data.Token)).ReturnsAsync(data.Secret);
 
             var dtMock = new Mock<IDateTimeProvider>();
             dtMock.Setup(s => s.GetUtcNow()).Returns(new DateTime(2021, 9, 13, 12, 34, 23, DateTimeKind.Utc));
@@ -97,8 +97,8 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var resp = await func.InvokeWithContentAndGetResponseAs<ObjectResult>(data, dtMock.Object);
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
-            procService.Verify(s => s.GetSecretForToken(data.Token), Times.Once());
-            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Never());
+            procService.Verify(s => s.GetSecretForTokenAsync(data.Token), Times.Once());
+            procService.Verify(s => s.ProcessResultAsync(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Never());
         }
 
         [TestMethod]
@@ -107,7 +107,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var data = SampleCallbackData.Sample1;
 
             var procService = new Mock<IResultProcessor>();
-            procService.Setup(s => s.GetSecretForToken(data.Token)).ReturnsAsync(data.Secret);
+            procService.Setup(s => s.GetSecretForTokenAsync(data.Token)).ReturnsAsync(data.Secret);
 
             var dtMock = new Mock<IDateTimeProvider>();
             dtMock.Setup(s => s.GetUtcNow()).Returns(new DateTime(2021, 9, 13, 12, 34, 23, DateTimeKind.Utc));
@@ -117,8 +117,8 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var resp = await func.InvokeWithContentAndGetResponseAs<OkResult>(data, dtMock.Object);
 
             Assert.AreEqual(StatusCodes.Status200OK, resp.StatusCode);
-            procService.Verify(s => s.GetSecretForToken(data.Token), Times.Once());
-            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Once());
+            procService.Verify(s => s.GetSecretForTokenAsync(data.Token), Times.Once());
+            procService.Verify(s => s.ProcessResultAsync(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Once());
         }
 
         private static async Task callWebhookAssertIsRejected(Action<HttpRequest> configureRequest, Action<Mock<IResultProcessor>> configureProcessorMock = null)
@@ -131,11 +131,11 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(configureRequest);
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
-            procService.Verify(s => s.ProcessResult(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Never());
+            procService.Verify(s => s.ProcessResultAsync(It.IsAny<ResultProcessing.Dto.AhkProcessResult>(), It.IsAny<DateTime>()), Times.Never());
 
 
             if (configureProcessorMock == null)
-                procService.Verify(s => s.GetSecretForToken(It.IsAny<string>()), Times.Never());
+                procService.Verify(s => s.GetSecretForTokenAsync(It.IsAny<string>()), Times.Never());
             else
                 procService.Verify();
         }

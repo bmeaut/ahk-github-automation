@@ -16,6 +16,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="12.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.5" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.5" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
@@ -24,6 +25,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\grade-management\DTOs\DTOs.csproj" />
     </ItemGroup>
 
     <ItemGroup>
