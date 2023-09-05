@@ -12,10 +12,7 @@ namespace Ahk.Review.Ui
             {
                 cfg.CreateMap<Assignment, AssignmentDTO>();
                 cfg.CreateMap<Exercise, ExerciseDTO>();
-                cfg.CreateMap<Grade, GradeDTO>();
                 cfg.CreateMap<Group, GroupDTO>();
-                cfg.CreateMap<Point, PointDTO>();
-                cfg.CreateMap<User, UserDTO>();
             });
 
             var mapper = new Mapper(config);

@@ -32,7 +32,10 @@ namespace Ahk.Review.Ui.Services
 
             var assignments = await httpClient.GetFromJsonAsync<IReadOnlyCollection<AssignmentDTO>>($"list-assignments/{subject}");
 
-            return assignments;
+            return assignments.Select(aDTO =>
+            {
+                return new Assignment(aDTO);
+            }).ToList();
         }
     }
 }
