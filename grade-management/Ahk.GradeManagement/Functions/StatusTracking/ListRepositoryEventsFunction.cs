@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Services.StatusTrackingService;
@@ -24,11 +25,13 @@ namespace Ahk.GradeManagement.Functions.StatusTracking
         }
 
         [Function("list-events")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-events/{*prefix}")] HttpRequestData req, string prefix)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "list-events/{*prefix}")] HttpRequestData req, string prefix)
         {
             logger.LogInformation($"Received request to list events for repo with prefix: {prefix}");
 
-            var results = mapper.Map<StatusEventBaseDTO>(await service.ListEventsForRepositoryAsync(prefix));
+            var events = await service.ListEventsForRepositoryAsync(prefix);
+
+            var results = events.Select(e => mapper.Map<StatusEventBaseDTO>(e)).ToList();
             return new OkObjectResult(results);
 
         }

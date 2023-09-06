@@ -17,11 +17,8 @@ namespace Ahk.Review.Ui.Services
             this.Mapper = mapper;
         }
 
-        public async void PostData(Group group, string apiKey)
+        public async void PostData(Group group)
         {
-            httpClient.DefaultRequestHeaders.Remove("x-functions-key");
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", apiKey);
-
             await httpClient.PostAsJsonAsync($"create-group", Mapper.Map<GroupDTO>(group));
         }
     }

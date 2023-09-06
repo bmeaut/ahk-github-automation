@@ -17,19 +17,13 @@ namespace Ahk.Review.Ui.Services
             this.Mapper = mapper;
         }
 
-        public async void PostData(Assignment assignment, string apiKey)
+        public async void PostData(Assignment assignment)
         {
-            httpClient.DefaultRequestHeaders.Remove("x-functions-key");
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", apiKey);
-
             await httpClient.PostAsJsonAsync($"create-assignment", Mapper.Map<AssignmentDTO>(assignment));
         }
 
-        public async Task<IReadOnlyCollection<Assignment>> GetAssignments(string subject, string apiKey)
+        public async Task<IReadOnlyCollection<Assignment>> GetAssignments(string subject)
         {
-            httpClient.DefaultRequestHeaders.Remove("x-functions-key");
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", apiKey);
-
             var assignments = await httpClient.GetFromJsonAsync<IReadOnlyCollection<AssignmentDTO>>($"list-assignments/{subject}");
 
             return assignments.Select(aDTO =>

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Functions.StatusTracking;
 using Ahk.GradeManagement.Services.StatusTrackingService;
@@ -30,7 +31,9 @@ namespace Ahk.GradeManagement.StatusTracking
         {
             logger.LogInformation($"Received request to list statuses with prefix: {repoprefix}");
 
-            SubmissionInfoDTO results = mapper.Map<SubmissionInfoDTO>(await service.ListStatusForRepositoriesAsync(repoprefix)); 
+            var infos = await service.ListStatusForRepositoriesAsync(repoprefix);
+
+            var results = infos.Select(info => mapper.Map<SubmissionInfoDTO>(info)).ToList(); 
             return new OkObjectResult(results);
         }
     }

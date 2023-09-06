@@ -26,7 +26,7 @@ namespace Ahk.GradeManagement.Functions.Groups
         }
 
         [Function("CreateGroupFunction")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "create-group")] HttpRequestData request)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "create-group")] HttpRequestData request)
         {
             logger.LogInformation("C# HTTP trigger function processed a request.");
 

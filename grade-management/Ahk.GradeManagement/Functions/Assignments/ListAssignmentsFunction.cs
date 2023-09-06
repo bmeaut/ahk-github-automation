@@ -15,7 +15,7 @@ namespace Ahk.GradeManagement.Functions.Assignments
         }
 
         [Function("list-assignments")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-assignments/{*subject}")] HttpRequestData req, string subject)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "list-assignments/{*subject}")] HttpRequestData req, string subject)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 

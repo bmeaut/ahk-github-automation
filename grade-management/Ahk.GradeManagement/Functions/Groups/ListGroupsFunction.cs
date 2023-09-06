@@ -15,7 +15,7 @@ namespace Ahk.GradeManagement.Functions.Groups
         }
 
         [Function("list-groups")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "list-groups/{*subject}")] HttpRequestData req, string subject)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "list-groups/{*subject}")] HttpRequestData req, string subject)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 

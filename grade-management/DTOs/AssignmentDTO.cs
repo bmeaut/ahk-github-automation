@@ -13,5 +13,6 @@ namespace DTOs
         public DateTime DeadLine { get; set; }
         public Uri ClassroomAssignment { get; set; }
         public ICollection<ExerciseDTO> Exercises { get; set; }
+        public SubjectDTO Subject { get; set; }
     }
 }

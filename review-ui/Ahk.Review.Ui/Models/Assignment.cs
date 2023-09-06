@@ -22,5 +22,6 @@ namespace Ahk.Review.Ui.Models
         public DateTimeOffset DeadLine { get; set; }
         public Uri ClassroomAssignment { get; set; }
         public ICollection<Exercise> Exercises { get; set; }
+        public Subject Subject { get; set; }
     }
 }
