@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.ResultProcessing;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -10,19 +9,20 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
 {
     internal static class FunctionCallAssert
     {
-        public static Task<IActionResult> Invoke(this ResultProcessingFunction function, Action<HttpRequest> configureRequest)
+        public static Task<IActionResult> Invoke(this MockResultProcessingFunction function, Action<HttpRequest> configureRequest)
         {
-            var req = new DefaultHttpRequest(new DefaultHttpContext());
+            var context = new DefaultHttpContext();
+            var req = context.Request;
             req.Scheme = "https";
             req.Method = "POST";
             req.Host = new HostString("api.something.com");
             req.Path = "/api/path-to-something";
             configureRequest(req);
 
-            return function.Run(req);
+            return function.Run(req, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
         }
 
-        public static async Task<TResponse> InvokeAndGetResponseAs<TResponse>(this ResultProcessingFunction function, Action<HttpRequest> configureRequest)
+        public static async Task<TResponse> InvokeAndGetResponseAs<TResponse>(this MockResultProcessingFunction function, Action<HttpRequest> configureRequest)
             where TResponse : IActionResult
         {
             var result = await function.Invoke(configureRequest);
@@ -30,7 +30,7 @@ namespace Ahk.GradeManagement.Tests.IntegrationTests
             return (TResponse)result;
         }
 
-        public static async Task<TResponse> InvokeWithContentAndGetResponseAs<TResponse>(this ResultProcessingFunction function, SampleCallbackData data, IDateTimeProvider dateTimeProvider)
+        public static async Task<TResponse> InvokeWithContentAndGetResponseAs<TResponse>(this MockResultProcessingFunction function, SampleCallbackData data, IDateTimeProvider dateTimeProvider)
             where TResponse : IActionResult
         {
             var result = await function.Invoke(req => configureRequest(req, data, dateTimeProvider));

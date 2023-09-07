@@ -23,7 +23,6 @@ namespace Ahk.GradeManagement.Helpers
                 cfg.CreateMap<Group, GroupDTO>();
                 cfg.CreateMap<Point, PointDTO>();
                 cfg.CreateMap<Subject, SubjectDTO>();
-                cfg.CreateMap<User, UserDTO>();
                 cfg.CreateMap<WebhookToken, WebhookTokenDTO>();
                 cfg.CreateMap<PullRequestStatus, PullRequestStatusDTO>();
                 cfg.CreateMap<WorkflowRunsStatus, WorkflowRunsStatusDTO>();

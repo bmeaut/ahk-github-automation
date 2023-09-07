@@ -1,4 +1,5 @@
 using Ahk.Review.Ui;
+using Ahk.Review.Ui.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -17,5 +18,8 @@ var mapper = MapperConfig.InitializeAutomapper();
 
 builder.Services.AddSingleton(mapper);
 builder.Services.AddSingleton<Ahk.Review.Ui.Services.SubmissionInfoService>();
+builder.Services.AddSingleton<SubjectService>();
+builder.Services.AddSingleton<GroupService>();
+builder.Services.AddSingleton<AssignmentService>();
 
 await builder.Build().RunAsync();

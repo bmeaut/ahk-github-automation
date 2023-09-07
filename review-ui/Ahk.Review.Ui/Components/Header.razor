@@ -1,5 +1,11 @@
 <MudAppBar Elevation="0">
     <MudText Typo="Typo.h6">Ahk Review Ui</MudText>
     <MudSpacer />
+    <MudSelect T="string" @bind-Value="subjectCode" Label="Subject" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter" SelectedValuesChanged="SetTenant">
+        @foreach (Subject subject in subjects)
+        {
+            <MudSelectItem Value="@subject.SubjectCode">@subject.SubjectCode</MudSelectItem>
+        }
+    </MudSelect>
     <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Link="https://github.com/akosdudas/ahk-github-automation/" Target="_blank" />
 </MudAppBar>
