@@ -33,7 +33,7 @@ namespace Ahk.GradeManagement.StatusTracking
 
             var infos = await service.ListStatusForRepositoriesAsync(repoprefix);
 
-            var results = infos.Select(info => mapper.Map<SubmissionInfoDTO>(info)).ToList(); 
+            var results = infos.Select(info => mapper.Map<SubmissionInfoDTO>(info)).ToList();
             return new OkObjectResult(results);
         }
     }

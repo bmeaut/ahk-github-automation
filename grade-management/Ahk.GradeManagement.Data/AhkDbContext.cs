@@ -34,7 +34,7 @@ namespace Ahk.GradeManagement.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
+           
         }
     }
 }

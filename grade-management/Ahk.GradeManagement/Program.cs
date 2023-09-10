@@ -66,6 +66,10 @@ namespace Ahk.GradeManagement
                     context.WebhookTokens.Add(webHookToken);
                     context.SaveChanges();
                 }
+
+                SampleDataSeeder seeder = new SampleDataSeeder(context);
+                //seeder.ClearData();
+                seeder.SeedData();
             }
 
             await host.RunAsync();

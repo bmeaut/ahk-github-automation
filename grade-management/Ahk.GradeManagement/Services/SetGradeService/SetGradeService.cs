@@ -46,7 +46,7 @@ namespace Ahk.GradeManagement.Services.SetGradeService
                 GithubPrNumber = previousResults.GithubPrNumber,
                 GithubRepoName = previousResults.GithubRepoName,
                 GithubPrUrl = previousResults.GithubPrUrl,
-                Date = System.DateTime.UtcNow,
+                Date = System.DateTimeOffset.UtcNow,
                 Origin = previousResults.Origin,
                 Points = previousResults?.Points,
                 IsConfirmed = true,
