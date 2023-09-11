@@ -22,4 +22,15 @@ builder.Services.AddSingleton<SubjectService>();
 builder.Services.AddSingleton<GroupService>();
 builder.Services.AddSingleton<AssignmentService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+            policy =>
+            {
+                policy.WithOrigins(builder.Configuration.GetSection("baseAddress").Value + "*")
+                                  .AllowAnyHeader()
+                                  .AllowAnyMethod();
+            });
+});
+
 await builder.Build().RunAsync();

@@ -10,16 +10,13 @@ namespace Ahk.Review.Ui.Models
             this.Name = groupDTO.Name;
             this.Room = groupDTO.Room;
             this.Time = groupDTO.Time;
-            this.Students = groupDTO.Students.Select(sDTO =>
-            {
-                return new Student(sDTO);
-            }).ToList();
+            this.SubjectId = groupDTO.SubjectId;
         }
 
         public int Id { get; set; }
         public string Name { get; set; }
         public string Room { get; set; }
         public string Time { get; set; }
-        public List<Student> Students { get; set; }
+        public int SubjectId { get; set; }
     }
 }

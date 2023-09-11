@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Services.StatusTrackingService;
@@ -24,12 +25,13 @@ namespace Ahk.GradeManagement.Functions.Subjects
             this.mapper = mapper;
         }
 
-        [Function("GetSubjectsFunction")]
+        [Function("list-subjects")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "list-subjects")] HttpRequestData req)
         {
             _logger.LogInformation($"Received request to list all subjects");
 
-            var results = mapper.Map<SubjectDTO>(service.GetAllSubjects());
+            var subjects = service.GetAllSubjects();
+            var results = subjects.Select(subject => mapper.Map<SubjectDTO>(subject)).ToList();
 
             return new OkObjectResult(results);
         }

@@ -24,12 +24,12 @@
 
     <ItemGroup>
         <PackageReference Include="AutoMapper.EF6" Version="3.0.0" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.14.1" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Core" Version="1.12.1" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.0.0-preview1" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="5.0.1" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.10.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.19.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Core" Version="1.15.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.0.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="6.2.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.14.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.5">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

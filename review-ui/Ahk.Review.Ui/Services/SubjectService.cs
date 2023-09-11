@@ -1,6 +1,9 @@
 using Ahk.Review.Ui.Models;
 using AutoMapper;
 using DTOs;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net.Http.Json;
 
 namespace Ahk.Review.Ui.Services
@@ -20,7 +23,9 @@ namespace Ahk.Review.Ui.Services
 
         public async Task<IReadOnlyCollection<Subject>> GetSubjects()
         {
-            var subjectDTOs = await httpClient.GetFromJsonAsync<IReadOnlyCollection<SubjectDTO>>($"list-subjects");
+            var results = await httpClient.GetFromJsonAsync<OkObjectResult>($"list-subjects");
+
+            var subjectDTOs = JsonConvert.DeserializeObject<List<SubjectDTO>>(results.Value.ToString());
 
             return subjectDTOs.Select(sDTO =>
             {

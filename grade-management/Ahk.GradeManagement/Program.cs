@@ -15,6 +15,7 @@ using Ahk.GradeManagement.Services.GroupService;
 using Ahk.GradeManagement.Services.SetGradeService;
 using Ahk.GradeManagement.Services.StatusTrackingService;
 using Ahk.GradeManagement.Helpers;
+using Ahk.GradeManagement.Services.SubjectService;
 
 namespace Ahk.GradeManagement
 {
@@ -23,11 +24,7 @@ namespace Ahk.GradeManagement
         public static async Task Main(string[] args)
         {
             var host = new HostBuilder()
-                .ConfigureFunctionsWorkerDefaults(workerApplication =>
-                {
-                    workerApplication.UseAspNetCoreIntegration();
-                })
-                .ConfigureAspNetCoreIntegration()
+                .ConfigureFunctionsWorkerDefaults()
                 .ConfigureServices(services =>
                 {
                     services.AddMemoryCache(setup =>
@@ -35,14 +32,17 @@ namespace Ahk.GradeManagement
                         setup.ExpirationScanFrequency = TimeSpan.FromMinutes(4);
                     });
                     services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-                    services.AddScoped<ResultProcessing.IResultProcessor, ResultProcessing.ResultProcessor>();
-                    services.AddScoped<Services.ITokenManagementService, Services.TokenManagementService>();
-                    services.AddScoped<ISetGradeService, SetGradeService>();
-                    services.AddScoped<ListGrades.IGradeListing, ListGrades.GradeListing>();
-                    services.AddScoped<IStatusTrackingService, StatusTrackingService>();
-                    services.AddScoped<IGroupService, GroupService>();
-                    services.AddScoped<IAssignmentService, AssignmentService>();
-                    services.AddScoped<IGradeService, GradeService>();
+                    services.AddSingleton<ResultProcessing.IResultProcessor, ResultProcessing.ResultProcessor>();
+                    services.AddSingleton<Services.ITokenManagementService, Services.TokenManagementService>();
+                    services.AddSingleton<ISetGradeService, SetGradeService>();
+                    services.AddSingleton<ListGrades.IGradeListing, ListGrades.GradeListing>();
+                    services.AddSingleton<IStatusTrackingService, StatusTrackingService>();
+                    services.AddSingleton<IGroupService, GroupService>();
+                    services.AddSingleton<IAssignmentService, AssignmentService>();
+                    services.AddSingleton<IGradeService, GradeService>();
+                    services.AddSingleton<ISubjectService, SubjectService>();
+
+                    services.AddCors();
 
                     var mapper = MapperConfig.InitializeAutomapper();
 
@@ -69,7 +69,7 @@ namespace Ahk.GradeManagement
 
                 SampleDataSeeder seeder = new SampleDataSeeder(context);
                 //seeder.ClearData();
-                seeder.SeedData();
+                //seeder.SeedData();
             }
 
             await host.RunAsync();

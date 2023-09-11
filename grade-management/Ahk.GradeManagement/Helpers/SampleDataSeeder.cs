@@ -110,6 +110,8 @@ namespace Ahk.GradeManagement.Helpers
             Context.TeacherGroups.RemoveRange(Context.TeacherGroups);
             Context.Teachers.RemoveRange(Context.Teachers);
             Context.TeacherSubjects.RemoveRange(Context.TeacherSubjects);
+
+            Context.SaveChanges();
         }
 
         private static List<Subject> CreateSubjectData()

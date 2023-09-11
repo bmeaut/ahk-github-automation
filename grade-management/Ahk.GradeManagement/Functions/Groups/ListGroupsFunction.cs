@@ -1,4 +1,12 @@
+using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
+using Ahk.GradeManagement.Services;
+using Ahk.GradeManagement.Services.GroupService;
+using AutoMapper;
+using DTOs;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
@@ -8,23 +16,24 @@ namespace Ahk.GradeManagement.Functions.Groups
     public class ListGroupsFunction
     {
         private readonly ILogger _logger;
+        private readonly IGroupService groupService;
+        private readonly Mapper mapper;
 
-        public ListGroupsFunction(ILoggerFactory loggerFactory)
+        public ListGroupsFunction(ILoggerFactory loggerFactory, IGroupService groupService, Mapper mapper)
         {
             _logger = loggerFactory.CreateLogger<ListGroupsFunction>();
+            this.groupService = groupService;
+            this.mapper = mapper;
         }
 
         [Function("list-groups")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "list-groups/{*subject}")] HttpRequestData req, string subject)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "list-groups/{subject}")] HttpRequest req, string subject)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+            var results = mapper.Map<List<GroupDTO>>(await groupService.ListGroupsAsync(subject));
 
-            response.WriteString("Welcome to Azure Functions!");
-
-            return response;
+            return new OkObjectResult(results);
         }
     }
 }

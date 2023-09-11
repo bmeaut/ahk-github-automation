@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data;
 using Ahk.GradeManagement.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ahk.GradeManagement.Services.GroupService
 {
@@ -23,9 +24,9 @@ namespace Ahk.GradeManagement.Services.GroupService
             await Context.SaveChangesAsync();
         }
 
-        public async Task<List<Group>> ListGroupsAsync()
+        public async Task<List<Group>> ListGroupsAsync(string subject)
         {
-            return Context.Groups.ToList();
+            return Context.Groups.Where(g => g.Subject.Name == subject).ToList();
         }
 
         public async Task<List<Student>> ListStudentsAsync(int groupId)

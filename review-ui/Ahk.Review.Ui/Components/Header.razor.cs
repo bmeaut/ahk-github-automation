@@ -13,12 +13,14 @@ namespace Ahk.Review.Ui.Components
 
         protected override async void OnInitialized()
         {
-            subjects = service.GetSubjects().Result.ToList();
+            var results = await service.GetSubjects();
+            subjects = results.ToList();
         }
 
         private void SetTenant()
         {
             service.Tenant = subjectCode;
+            Console.WriteLine(service.Tenant);
         }
     }
 }
