@@ -10,9 +10,8 @@ namespace DTOs
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public DateTime DeadLine { get; set; }
+        public DateTimeOffset DeadLine { get; set; }
         public Uri ClassroomAssignment { get; set; }
-        public ICollection<ExerciseDTO> Exercises { get; set; }
-        public SubjectDTO Subject { get; set; }
+        public string SubjectId { get; set; }
     }
 }

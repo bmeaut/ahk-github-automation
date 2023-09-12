@@ -1,6 +1,8 @@
 using Ahk.Review.Ui.Models;
 using AutoMapper;
 using DTOs;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net.Http.Json;
 
 namespace Ahk.Review.Ui.Services
@@ -9,7 +11,7 @@ namespace Ahk.Review.Ui.Services
     {
         private readonly HttpClient httpClient;
 
-        public Mapper Mapper { get; set; }
+        private Mapper Mapper { get; set; }
 
         public GroupService(IHttpClientFactory httpClientFactory, Mapper mapper)
         {
@@ -17,9 +19,20 @@ namespace Ahk.Review.Ui.Services
             this.Mapper = mapper;
         }
 
-        public async void PostData(Group group)
+        public async void PostDataAsync(Group group)
         {
             await httpClient.PostAsJsonAsync($"create-group", Mapper.Map<GroupDTO>(group));
+        }
+
+        public async Task<List<Group>> GetGroupsAsync(string subject)
+        {
+            var response = await httpClient.GetFromJsonAsync<OkObjectResult>($"list-groups/{subject}");
+            var groupDTOs = JsonConvert.DeserializeObject<List<GroupDTO>>(response.Value.ToString());
+
+            return groupDTOs.Select(gDTO =>
+            {
+                return new Group(gDTO);
+            }).ToList();
         }
     }
 }

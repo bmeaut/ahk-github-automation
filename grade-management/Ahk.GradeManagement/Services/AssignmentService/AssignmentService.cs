@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Ahk.GradeManagement.Data;
 using Ahk.GradeManagement.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ahk.GradeManagement.Services.AssignmentService
 {
@@ -23,9 +24,9 @@ namespace Ahk.GradeManagement.Services.AssignmentService
             await Context.SaveChangesAsync();
         }
 
-        public async Task<List<Assignment>> ListAsync()
+        public async Task<List<Assignment>> ListAsync(string subject)
         {
-            return Context.Assignments.ToList();
+            return Context.Assignments.Include(a => a.Subject).Where(a => a.Subject.SubjectCode == subject).ToList();
         }
     }
 }

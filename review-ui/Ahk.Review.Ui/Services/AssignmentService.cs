@@ -1,6 +1,8 @@
 using Ahk.Review.Ui.Models;
 using AutoMapper;
 using DTOs;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net.Http.Json;
 
 namespace Ahk.Review.Ui.Services
@@ -17,16 +19,17 @@ namespace Ahk.Review.Ui.Services
             this.Mapper = mapper;
         }
 
-        public async void PostData(Assignment assignment)
+        public async void PostDataAsync(Assignment assignment)
         {
             await httpClient.PostAsJsonAsync($"create-assignment", Mapper.Map<AssignmentDTO>(assignment));
         }
 
-        public async Task<IReadOnlyCollection<Assignment>> GetAssignments(string subject)
+        public async Task<List<Assignment>> GetAssignmentsAsync(string subject)
         {
-            var assignments = await httpClient.GetFromJsonAsync<IReadOnlyCollection<AssignmentDTO>>($"list-assignments/{subject}");
+            var response = await httpClient.GetFromJsonAsync<OkObjectResult>($"list-assignments/{subject}");
+            var assignmentDTOs = JsonConvert.DeserializeObject<List<AssignmentDTO>>(response.Value.ToString());
 
-            return assignments.Select(aDTO =>
+            return assignmentDTOs.Select(aDTO =>
             {
                 return new Assignment(aDTO);
             }).ToList();

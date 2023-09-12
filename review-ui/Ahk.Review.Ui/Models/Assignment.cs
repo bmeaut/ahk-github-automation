@@ -11,17 +11,13 @@ namespace Ahk.Review.Ui.Models
             this.Name = assignmentDTO.Name;
             this.DeadLine = assignmentDTO.DeadLine;
             this.ClassroomAssignment = assignmentDTO.ClassroomAssignment;
-            this.Exercises = assignmentDTO.Exercises.Select(eDTO =>
-            {
-                return new Exercise(eDTO);
-            }).ToList();
+            this.SubjectId = assignmentDTO.SubjectId;
         }
 
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTimeOffset DeadLine { get; set; }
         public Uri ClassroomAssignment { get; set; }
-        public ICollection<Exercise> Exercises { get; set; }
-        public Subject Subject { get; set; }
+        public string SubjectId { get; set; }
     }
 }

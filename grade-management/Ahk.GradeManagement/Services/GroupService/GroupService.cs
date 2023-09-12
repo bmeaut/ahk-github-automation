@@ -26,7 +26,7 @@ namespace Ahk.GradeManagement.Services.GroupService
 
         public async Task<List<Group>> ListGroupsAsync(string subject)
         {
-            return Context.Groups.Where(g => g.Subject.Name == subject).ToList();
+            return Context.Groups.Include(g => g.Subject).Where(g => g.Subject.SubjectCode == subject).ToList();
         }
 
         public async Task<List<Student>> ListStudentsAsync(int groupId)

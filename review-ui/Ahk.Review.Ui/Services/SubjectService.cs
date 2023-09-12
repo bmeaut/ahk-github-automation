@@ -11,9 +11,12 @@ namespace Ahk.Review.Ui.Services
     public class SubjectService
     {
         private readonly HttpClient httpClient;
-        public string Tenant { get; set; }
+        public string TenantCode { get; set; }
+        public Subject CurrentTenant { get; set; }
 
         public Mapper Mapper { get; set; }
+
+        public event Action? OnChange;
 
         public SubjectService(IHttpClientFactory httpClientFactory, Mapper mapper)
         {
@@ -32,5 +35,17 @@ namespace Ahk.Review.Ui.Services
                 return new Subject(sDTO);
             }).ToList();
         }
+
+        public void SetCurrentTenant(string tenantCode, Subject subject)
+        {
+            TenantCode = tenantCode;
+            CurrentTenant = subject;
+
+            Console.WriteLine("SetCurrentTenant Called");
+
+            NotifyStateChanged();
+        }
+
+        private void NotifyStateChanged() => OnChange?.Invoke();
     }
 }

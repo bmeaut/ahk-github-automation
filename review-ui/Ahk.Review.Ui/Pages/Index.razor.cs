@@ -28,6 +28,8 @@ namespace Ahk.Review.Ui.Pages
         [Inject]
         private SubmissionInfoService DataService { get; set; }
         [Inject]
+        private SubjectService SubjectService { get; set; }
+        [Inject]
         private IJSRuntime JS { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -38,20 +40,27 @@ namespace Ahk.Review.Ui.Pages
 
         private async Task loadData()
         {
-            this.fetchingData = true;
-            try
+            if (string.IsNullOrEmpty(SubjectService.TenantCode) || SubjectService.CurrentTenant == null)
             {
-                this.repoList = await DataService.GetData(repoPrefix, apiKey);
-                this.message = null;
+                await JS.InvokeAsync<object>("alert", "Subject not selected!");
             }
-            catch (Exception ex)
+            else
             {
-                this.repoList = Array.Empty<SubmissionInfo>();
-                this.message = ex.ToString();
-            }
-            finally
-            {
-                this.fetchingData = false;
+                this.fetchingData = true;
+                try
+                {
+                    this.repoList = await DataService.GetData(repoPrefix, apiKey);
+                    this.message = null;
+                }
+                catch (Exception ex)
+                {
+                    this.repoList = Array.Empty<SubmissionInfo>();
+                    this.message = ex.ToString();
+                }
+                finally
+                {
+                    this.fetchingData = false;
+                }
             }
         }
 
