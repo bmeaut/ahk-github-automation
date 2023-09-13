@@ -13,5 +13,6 @@ namespace Ahk.GradeManagement.Services.GroupService
         public Task<List<Group>> ListGroupsAsync(string subject);
         public Task<List<Student>> ListStudentsAsync(int groupId);
         public Task DeleteGroupAsync(int groupId);
+        public Task UpdateGroupAsync(Group update);
     }
 }

@@ -19,7 +19,7 @@ namespace Ahk.Review.Ui.Services
             this.Mapper = mapper;
         }
 
-        public async void PostDataAsync(Group group)
+        public async void CreateGroupAsync(Group group)
         {
             await httpClient.PostAsJsonAsync($"create-group", Mapper.Map<GroupDTO>(group));
         }
@@ -33,6 +33,24 @@ namespace Ahk.Review.Ui.Services
             {
                 return new Group(gDTO);
             }).ToList();
+        }
+
+        public async Task<Group> GetGroupAsync(string subject, string groupId)
+        {
+            var groups = await GetGroupsAsync(subject);
+            var group = groups.Where(g => g.Id.ToString() == groupId).FirstOrDefault();
+
+            return group;
+        }
+
+        public async Task UpdateGroupAsync(string subject, Group group)
+        {
+            await httpClient.PostAsJsonAsync<GroupDTO>($"edit-group/{subject}", Mapper.Map<GroupDTO>(group));
+        }
+
+        public async Task DeleteGroupAsync(string groupId)
+        {
+            await httpClient.DeleteAsync($"delete-group/{groupId}");
         }
     }
 }

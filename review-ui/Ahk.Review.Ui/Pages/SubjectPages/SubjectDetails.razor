@@ -1,10 +1,52 @@
 @page "/subject-details"
 
-<MudStack Row="true">
-    <MudTextField @bind-Value="@courseCode" ReadOnly="true" Label="CourseCode"></MudTextField>
-    <MudTextField @bind-Value="@subjectName" ReadOnly="true" Label="Name"></MudTextField>
-</MudStack>
-<MudTextField @bind-Value="@semester" ReadOnly="true" Label="Semester"></MudTextField>
-<MudTextField @bind-Value="@githubOrg" ReadOnly="true" Label="Github Organization"></MudTextField>
+<MudPaper Class="pa-4 mb-4">
+    <MudStack Row="true">
+        <MudTextField @bind-Value="@courseCode" ReadOnly="true" Label="CourseCode"></MudTextField>
+        <MudTextField @bind-Value="@subjectName" ReadOnly="true" Label="Name"></MudTextField>
+    </MudStack>
+    <MudTextField @bind-Value="@semester" ReadOnly="true" Label="Semester"></MudTextField>
+    <MudTextField @bind-Value="@githubOrg" ReadOnly="true" Label="Github Organization"></MudTextField>
+</MudPaper>
 
+<MudStack Row="true">
+    <MudPaper Class="pa-4 mb-4">
+        <MudTable Items="groups" T="Group">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Room</MudTh>
+                <MudTh>Time</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Room">@context.Room</MudTd>
+                <MudTd DataLabel="Time">@context.Time</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => ShowGroupDetails(context.Id)">Details</MudButton>
+                    <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Create" Color="Color.Secondary" OnClick="() => EditGroup(context.Id)">Edit</MudButton>
+                    <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteGroup(context.Id)">Delete</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+    <MudPaper Class="pa-4 mb-4">
+        <MudTable Items="assignments" T="Assignment">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Deadline</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Deadline">@context.DeadLine</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => ShowAssignmentDetails(context.Id)">Details</MudButton>
+                    <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Create" Color="Color.Secondary" OnClick="() => EditAssignment(context.Id)">Edit</MudButton>
+                    <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteAssignment(context.Id)">Delete</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudStack>
 

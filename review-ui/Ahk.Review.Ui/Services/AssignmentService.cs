@@ -34,5 +34,10 @@ namespace Ahk.Review.Ui.Services
                 return new Assignment(aDTO);
             }).ToList();
         }
+
+        public async Task DeleteAssignmentAsync(string assignmentId)
+        {
+
+        }
     }
 }

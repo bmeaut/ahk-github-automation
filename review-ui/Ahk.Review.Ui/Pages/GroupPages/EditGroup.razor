@@ -1,0 +1,10 @@
+@page "/edit-group/{groupId}"
+
+<MudPaper>
+    <MudTextField Margin="Margin.Normal" @bind-Value="@name" Label="Name"></MudTextField>
+    <MudTextField Margin="Margin.Normal" @bind-Value="@room" Label="Room"></MudTextField>
+    <MudTextField Margin="Margin.Normal" @bind-Value="@time" Label="Time"></MudTextField>
+</MudPaper>
+
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Style="margin:auto" OnClick="() => SubmitAsync()">Submit</MudButton>

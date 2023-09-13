@@ -13,6 +13,8 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
         private GroupService GroupService { get; set; }
         [Inject]
         private AssignmentService AssignmentService { get; set; }
+        [Inject]
+        private NavigationManager NavigationManager { get; set; }
 
         private string courseCode;
         private string subjectName;
@@ -22,15 +24,24 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
         private List<Group> groups;
         private List<Assignment> assignments;
 
+        private bool firstRender = true;
+
         protected override async void OnInitialized()
         {
-            courseCode = SubjectService.TenantCode;
-            subjectName = SubjectService.CurrentTenant.Name;
-            semester = SubjectService.CurrentTenant.Semester;
-            githubOrg = SubjectService.CurrentTenant.GithubOrg;
+            if (firstRender)
+            {
+                courseCode = SubjectService.TenantCode;
+                subjectName = SubjectService.CurrentTenant.Name;
+                semester = SubjectService.CurrentTenant.Semester;
+                githubOrg = SubjectService.CurrentTenant.GithubOrg;
 
-            groups = await GroupService.GetGroupsAsync(SubjectService.TenantCode);
-            assignments = await AssignmentService.GetAssignmentsAsync(SubjectService.TenantCode);
+                groups = await GroupService.GetGroupsAsync(SubjectService.TenantCode);
+                assignments = await AssignmentService.GetAssignmentsAsync(SubjectService.TenantCode);
+
+                firstRender = false;
+
+                StateHasChanged();
+            }
 
             SubjectService.OnChange += SubjectChanged;
         }
@@ -51,6 +62,36 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
             assignments = await AssignmentService.GetAssignmentsAsync(SubjectService.TenantCode);
 
             StateHasChanged();
+        }
+
+        private void EditGroup(int groupId)
+        {
+            NavigationManager.NavigateTo($"/edit-group/{groupId}");
+        }
+
+        private async Task DeleteGroup(int groupId)
+        {
+            await GroupService.DeleteGroupAsync(groupId.ToString());
+        }
+
+        private void ShowGroupDetails(int groupId)
+        {
+            NavigationManager.NavigateTo($"/group-details/{groupId}");
+        }
+
+        private void EditAssignment(int assignmentId)
+        {
+            NavigationManager.NavigateTo($"/edit-assignment/{assignmentId}");
+        }
+
+        private async Task DeleteAssignment(int assignmentId)
+        {
+            await AssignmentService.DeleteAssignmentAsync(assignmentId.ToString());
+        }
+
+        private void ShowAssignmentDetails(int assignmentId)
+        {
+            NavigationManager.NavigateTo($"/assignment-details/{assignmentId}");
         }
     }
 }

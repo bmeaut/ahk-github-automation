@@ -47,5 +47,15 @@ namespace Ahk.GradeManagement.Services.GroupService
             Context.Remove(group);
             await Context.SaveChangesAsync();
         }
+
+        public async Task UpdateGroupAsync(Group update)
+        {
+            var groupToUpdate = await Context.Groups.FindAsync(update.Id);
+            groupToUpdate.Name = update.Name;
+            groupToUpdate.Room = update.Room;
+            groupToUpdate.Time = update.Time;
+
+            await Context.SaveChangesAsync();
+        }
     }
 }
