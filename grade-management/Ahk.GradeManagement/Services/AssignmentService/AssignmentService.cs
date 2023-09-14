@@ -28,5 +28,12 @@ namespace Ahk.GradeManagement.Services.AssignmentService
         {
             return Context.Assignments.Include(a => a.Subject).Where(a => a.Subject.SubjectCode == subject).ToList();
         }
+
+        public async Task<List<Exercise>> ListExercisesAsync(string subject, string assignmentId)
+        {
+            return Context.Exercises.Include(e => e.Assignment)
+                .ThenInclude(a => a.Subject)
+                .Where(e => e.Assignment.Subject.SubjectCode == subject && e.AssignmentId.ToString() == assignmentId).ToList();
+        }
     }
 }

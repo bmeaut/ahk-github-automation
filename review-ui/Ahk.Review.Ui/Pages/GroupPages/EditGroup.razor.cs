@@ -42,6 +42,8 @@ namespace Ahk.Review.Ui.Pages.GroupPages
             update.Time = time;
 
             await GroupService.UpdateGroupAsync(SubjectService.TenantCode, update);
+
+            NavigationManager.NavigateTo($"/subject-details");
         }
     }
 }

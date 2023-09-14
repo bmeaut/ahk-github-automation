@@ -16,6 +16,7 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
         [Inject]
         private NavigationManager NavigationManager { get; set; }
 
+        private int subjectId;
         private string courseCode;
         private string subjectName;
         private string semester;
@@ -30,6 +31,7 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
         {
             if (firstRender)
             {
+                subjectId = SubjectService.CurrentTenant.Id;
                 courseCode = SubjectService.TenantCode;
                 subjectName = SubjectService.CurrentTenant.Name;
                 semester = SubjectService.CurrentTenant.Semester;
@@ -64,6 +66,11 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
             StateHasChanged();
         }
 
+        private void EditSubject(int subjectId)
+        {
+            NavigationManager.NavigateTo($"/edit-subject/{subjectId}");
+        }
+
         private void EditGroup(int groupId)
         {
             NavigationManager.NavigateTo($"/edit-group/{groupId}");
@@ -72,6 +79,9 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
         private async Task DeleteGroup(int groupId)
         {
             await GroupService.DeleteGroupAsync(groupId.ToString());
+            groups.Remove(groups.Find(g => g.Id == groupId));
+
+            StateHasChanged();
         }
 
         private void ShowGroupDetails(int groupId)
@@ -87,6 +97,7 @@ namespace Ahk.Review.Ui.Pages.SubjectPages
         private async Task DeleteAssignment(int assignmentId)
         {
             await AssignmentService.DeleteAssignmentAsync(assignmentId.ToString());
+            StateHasChanged();
         }
 
         private void ShowAssignmentDetails(int assignmentId)

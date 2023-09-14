@@ -35,6 +35,25 @@ namespace Ahk.Review.Ui.Services
             }).ToList();
         }
 
+        public async Task<Assignment> GetAssignmentAsync(string subject, string assignmentId)
+        {
+            var assignments = await GetAssignmentsAsync(subject);
+            var assignment = assignments.Where(a => a.Id.ToString() == assignmentId).FirstOrDefault();
+
+            return assignment;
+        }
+        
+        public async Task<List<Exercise>> GetExercisesAsync(string subject, string assignmentId)
+        {
+            var response = await httpClient.GetFromJsonAsync<OkObjectResult>($"list-exercises/{subject}/{assignmentId}");
+            var exerciseDTOs = JsonConvert.DeserializeObject<List<ExerciseDTO>>(response.Value.ToString());
+
+            return exerciseDTOs.Select(eDTO =>
+            {
+                return new Exercise(eDTO);
+            }).ToList();
+        }
+
         public async Task DeleteAssignmentAsync(string assignmentId)
         {
 

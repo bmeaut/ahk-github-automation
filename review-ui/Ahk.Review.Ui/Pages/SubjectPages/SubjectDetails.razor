@@ -7,11 +7,12 @@
     </MudStack>
     <MudTextField @bind-Value="@semester" ReadOnly="true" Label="Semester"></MudTextField>
     <MudTextField @bind-Value="@githubOrg" ReadOnly="true" Label="Github Organization"></MudTextField>
+    <MudButton Class="ma-4 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Create" Color="Color.Secondary" OnClick="() => EditSubject(subjectId)">Edit</MudButton>
 </MudPaper>
 
-<MudStack Row="true">
-    <MudPaper Class="pa-4 mb-4">
-        <MudTable Items="groups" T="Group">
+<MudStack  Row="true">
+    <MudPaper Width="50%" Class="pa-4 mb-4">
+        <MudTable Items="groups" T="Group" RowsPerPage="50">
             <HeaderContent>
                 <MudTh>Name</MudTh>
                 <MudTh>Room</MudTh>
@@ -28,10 +29,13 @@
                     <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteGroup(context.Id)">Delete</MudButton>
                 </MudTd>
             </RowTemplate>
+            <PagerContent>
+                <MudTablePager Class="pa-4" HorizontalAlignment="HorizontalAlignment.End" />
+            </PagerContent>
         </MudTable>
     </MudPaper>
-    <MudPaper Class="pa-4 mb-4">
-        <MudTable Items="assignments" T="Assignment">
+    <MudPaper Width="50%" Class="pa-4 mb-4">
+        <MudTable Items="assignments" T="Assignment" RowsPerPage="50">
             <HeaderContent>
                 <MudTh>Name</MudTh>
                 <MudTh>Deadline</MudTh>
@@ -46,6 +50,9 @@
                     <MudButton Class="ma-2 pa-2" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteAssignment(context.Id)">Delete</MudButton>
                 </MudTd>
             </RowTemplate>
+            <PagerContent>
+                <MudTablePager Class="pa-4" HorizontalAlignment="HorizontalAlignment.End" />
+            </PagerContent>
         </MudTable>
     </MudPaper>
 </MudStack>
