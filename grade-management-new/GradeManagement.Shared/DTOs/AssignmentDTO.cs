@@ -1,8 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using GradeManagement.Data.Models;
-
-namespace GradeManagement.Shared.DTOs;
+﻿namespace GradeManagement.Shared.DTOs;
 
 public class AssignmentDTO
 {

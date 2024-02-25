@@ -1,12 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GradeManagement.Data.Models
+namespace GradeManagement.Shared.DTOs
 {
 	public class SubjectDTO
 	{
