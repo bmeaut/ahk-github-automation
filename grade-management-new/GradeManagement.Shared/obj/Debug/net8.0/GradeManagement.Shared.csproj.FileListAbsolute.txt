@@ -1,0 +1,12 @@
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\bin\Debug\net8.0\GradeManagement.Shared.deps.json
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\bin\Debug\net8.0\GradeManagement.Shared.dll
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\bin\Debug\net8.0\GradeManagement.Shared.pdb
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.AssemblyInfoInputs.cache
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.AssemblyInfo.cs
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.csproj.CoreCompileInputs.cache
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.sourcelink.json
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.dll
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\refint\GradeManagement.Shared.dll
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\GradeManagement.Shared.pdb
+C:\Users\Marci\Documents\GitHub\ahk-github-automation\grade-management-new\GradeManagement.Shared\obj\Debug\net8.0\ref\GradeManagement.Shared.dll

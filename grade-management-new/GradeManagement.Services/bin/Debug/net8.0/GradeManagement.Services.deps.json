@@ -1,0 +1,50 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "GradeManagement.Services/1.0.0": {
+        "dependencies": {
+          "GradeManagement.Data": "1.0.0",
+          "GradeManagement.Shared": "1.0.0"
+        },
+        "runtime": {
+          "GradeManagement.Services.dll": {}
+        }
+      },
+      "GradeManagement.Data/1.0.0": {
+        "dependencies": {
+          "GradeManagement.Shared": "1.0.0"
+        },
+        "runtime": {
+          "GradeManagement.Data.dll": {}
+        }
+      },
+      "GradeManagement.Shared/1.0.0": {
+        "runtime": {
+          "GradeManagement.Shared.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "GradeManagement.Services/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "GradeManagement.Data/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "GradeManagement.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
