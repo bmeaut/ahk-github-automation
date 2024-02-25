@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GradeManagement.Data.Models;
@@ -13,5 +13,5 @@ public class Assignment
     public Task Task { get; set; }
     public List<PullRequest> PullRequests { get; set; }
     public List<Score> Scores { get; set; }
-    public List<AssignmentEvent> AssignmentEvents { get; set; }
+    //public List<AssignmentEvent> AssignmentEvents { get; set; }
 }

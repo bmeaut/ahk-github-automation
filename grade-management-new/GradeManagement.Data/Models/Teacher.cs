@@ -13,4 +13,5 @@ public class Teacher
     public string GithubId { get; set; }
     public string BmeEmail { get; set; }
     public List<CourseTeacher> CourseTeachers { get; set; }
+    public List<GroupTeacher> GroupTeachers { get; set; }
 }

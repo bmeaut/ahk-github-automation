@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using GradeManagement.Shared;
 
@@ -12,6 +12,6 @@ public class AssignmentEvent
     public DateTime Date { get; set; }
     public EventType EventType { get; set; }
     public string Description { get; set; }
-    public Assignment Assignment { get; set; }
+    //public Assignment Assignment { get; set; }
     public PullRequest PullRequest { get; set; }
 }
