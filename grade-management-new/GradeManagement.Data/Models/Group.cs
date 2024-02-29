@@ -11,5 +11,5 @@ public class Group
     public string Name { get; set; }
     public Course Course { get; set; }
     public List<GroupStudent> GroupStudents { get; set; }
-    public List<GroupTeacher> GroupTeachers { get; set; }
+    public List<CourseTeacher> CourseTeachers { get; set; }
 }

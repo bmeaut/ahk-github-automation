@@ -12,6 +12,7 @@ public class AssignmentEvent
     public DateTime Date { get; set; }
     public EventType EventType { get; set; }
     public string Description { get; set; }
-    //public Assignment Assignment { get; set; }
+    public long AssignmentId { get; set; }
+    public Assignment Assignment { get; set; }
     public PullRequest PullRequest { get; set; }
 }

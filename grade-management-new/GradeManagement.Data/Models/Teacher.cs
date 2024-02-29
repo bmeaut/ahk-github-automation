@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GradeManagement.Data.Models;
@@ -13,5 +13,4 @@ public class Teacher
     public string GithubId { get; set; }
     public string BmeEmail { get; set; }
     public List<CourseTeacher> CourseTeachers { get; set; }
-    public List<GroupTeacher> GroupTeachers { get; set; }
 }

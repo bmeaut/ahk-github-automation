@@ -10,4 +10,6 @@ public class CourseTeacher
     public long Id { get; set; }
     public Course Course { get; set; }
     public Teacher Teacher { get; set; }
+    public long GroupId { get; set; }
+    public Group Group { get; set; }
 }
