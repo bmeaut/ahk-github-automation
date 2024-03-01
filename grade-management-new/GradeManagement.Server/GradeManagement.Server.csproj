@@ -24,8 +24,4 @@
     <ProjectReference Include="..\GradeManagement.Shared\GradeManagement.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>
