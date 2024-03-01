@@ -8,5 +8,5 @@ public class AssignmentDTO
     public TaskDTO TaskDto { get; set; }
     public List<PullRequestDTO> PullRequestDtos { get; set; }
     public List<ScoreDTO> ScoreDtos { get; set; }
-    //public List<AssignmentEventDTO> AssignmentEventDtos { get; set; }
+    public List<AssignmentEventDTO> AssignmentEventDtos { get; set; }
 }

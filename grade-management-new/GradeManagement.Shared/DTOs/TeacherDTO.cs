@@ -8,5 +8,4 @@ public class TeacherDTO
     public string GithubId { get; set; }
     public string BmeEmail { get; set; }
     public List<CourseTeacherDTO> CourseTeacherDtos { get; set; }
-    public List<GroupTeacherDTO> GroupTeacherDtos { get; set; }
 }

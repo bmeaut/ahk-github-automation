@@ -6,5 +6,5 @@ public class GroupDTO
     public string Name { get; set; }
     public CourseDTO CourseDto { get; set; }
     public List<GroupStudentDTO> GroupStudentDtos { get; set; }
-    public List<GroupTeacherDTO> GroupTeacherDtos { get; set; }
+    public List<CourseTeacherDTO> CourseTeacherDtos { get; set; }
 }
