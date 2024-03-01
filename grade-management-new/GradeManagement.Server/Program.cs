@@ -16,18 +16,22 @@ namespace GradeManagement.Server
             // Add services to the container.
 
             builder.Services.AddControllersWithViews();
+            builder.Services.AddOpenApiDocument();
             builder.Services.AddRazorPages();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                // Add OpenAPI 3.0 document serving middleware
+                // Available at: https://localhost:7136/swagger/v1/swagger.json
+                app.UseOpenApi();
+                // Add web UIs to interact with the document
+                // Available at: https://localhost:7136/swagger
+                app.UseSwaggerUi();
                 app.UseWebAssemblyDebugging();
             }
 
