@@ -1,5 +1,6 @@
 
 using GradeManagement.Data.Data;
+using GradeManagement.Services.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Server
@@ -20,6 +21,21 @@ namespace GradeManagement.Server
             builder.Services.AddRazorPages();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
+
+            builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+            builder.Services.AddTransient<AssignmentService>();
+            builder.Services.AddTransient<AssignmentEventService>();
+            builder.Services.AddTransient<CourseService>();
+            builder.Services.AddTransient<GroupService>();
+            builder.Services.AddTransient<LanguageService>();
+            builder.Services.AddTransient<PullRequestService>();
+            builder.Services.AddTransient<ScoreService>();
+            builder.Services.AddTransient<SemesterService>();
+            builder.Services.AddTransient<StudentService>();
+            builder.Services.AddTransient<SubjectService>();
+            builder.Services.AddTransient<TaskService>();
+            builder.Services.AddTransient<TeacherService>();
 
             var app = builder.Build();
 
