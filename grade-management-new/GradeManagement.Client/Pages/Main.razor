@@ -1,0 +1,265 @@
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+@page "/"
+<PageTitle>AHK Review UI</PageTitle>
+
+<style>
+	.sort-direction-icon {
+		--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+	}
+
+		.sort-direction-icon.mud-direction-asc {
+			--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+		}
+
+		.sort-direction-icon.mud-direction-desc {
+			--path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+		}
+
+	.custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
+		d: path(var(--path-svg))
+	}
+</style>
+
+@if (loading)
+{
+	<MudProgressCircular Color="Color.Primary" Indeterminate="true" Style="position:absolute; left:50vw; top:50vh;" Size="Size.Large" />
+}
+else
+{
+	<MudStack Row="true" Class="mt-6">
+		<MudSelect T="SubjectDTO" Label="Subject" @bind-Value="selectedSubject" @bind-Value:after="SubjectChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+			@foreach (var subject in subjects ?? [])
+			{
+				<MudSelectItem Value="@subject">@subject.Name</MudSelectItem>
+			}
+		</MudSelect>
+		<MudSelect T="CourseDTO" Label="Course" @bind-Value="selectedCourse" @bind-Value:after="CourseChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+			@foreach (var course in selectedSubject?.CourseDtos ?? [])
+			{
+				<MudSelectItem Value="@course">@course.Name</MudSelectItem>
+			}
+		</MudSelect>
+		<MudSelect T="TaskDTO" Label="Task" @bind-Value="selectedTask" @bind-Value:after="TaskChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+			@foreach (var task in selectedCourse?.TaskDtos ?? [])
+			{
+				<MudSelectItem Value="@task">@task.Name</MudSelectItem>
+			}
+		</MudSelect>
+		<MudSpacer />
+		<MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" />
+	</MudStack>
+	<MudDataGrid Items="@AssignmentsData" T="AssignmentDTO" Class="custom-grid">
+		<Columns>
+			<PropertyColumn Property="x => x.Id" Title="Id" />
+			<PropertyColumn Property="x => x.GithubRepoName" Title="Repository name" />
+			<PropertyColumn Property="x => x.StudentDto.NeptunCode" Title="Neptun" />
+			<PropertyColumn Property="x => JoinPullRequests(x) " Title="PRs" />
+			<PropertyColumn Property=" x=> JoinCIWorkflows(x)" Title="Workflows" />
+			<PropertyColumn Property=" x=> JoinScore(x)" Title="Workflows" />
+		</Columns>
+		<PagerContent>
+			<MudDataGridPager T="AssignmentDTO" />
+		</PagerContent>
+	</MudDataGrid>
+}
+
+@code
+{
+	#region Data Grid helpers
+	private string JoinPullRequests(AssignmentDTO data)
+	{
+		//Kéne menteni a branch nevét is?
+		return string.Join(", ", data.PullRequestDtos.Select(x => x.Url));
+	}
+	private string JoinCIWorkflows(AssignmentDTO data)
+	{
+		var filtered = data.AssignmentEventDtos?.Where(IsCICDWorkflow) ?? [];
+		string run = filtered.Count() == 1 ? "run" : "runs";
+		return $"{filtered.Count()} {run}, last: {filtered.LastOrDefault()?.Description}";
+	}
+	private bool IsCICDWorkflow(AssignmentEventDTO data)
+	{
+		return true;
+	}
+
+	private string JoinScore(AssignmentDTO data)
+	{
+		return string.Join(".", data.ScoreDtos.Select(x => x.Value));
+	}
+	#endregion
+
+    private const bool demo = true;
+
+	private bool loading = true;
+	private SubjectDTO? selectedSubject = null;
+	private CourseDTO? selectedCourse = null;
+	private TaskDTO? selectedTask = null;
+	private IEnumerable<SubjectDTO>? subjects;
+	private IEnumerable<AssignmentDTO> AssignmentsData = new List<AssignmentDTO>();
+
+	private void SubjectChanged()
+	{
+		selectedCourse = null;
+		selectedTask = null;
+	}
+	private void CourseChanged()
+	{
+		selectedTask = null;
+	}
+
+    private void TaskChanged()
+    {
+        AssignmentsData = selectedTask?.AssignmentDtos ?? [];
+    }
+
+	private async Task<IEnumerable<SubjectDTO>> GetSubjects()
+	{
+        if (!demo)
+        {
+            return await Http.GetFromJsonAsync<IEnumerable<SubjectDTO>>("api/subjects");
+        }
+		return new List<SubjectDTO>()
+		{
+			new()
+			{
+				Id=1,
+				Name="Mobweb",
+				NeptunSubjectCode="Neptun",
+				CourseDtos=new List<CourseDTO>()
+				{
+					new()
+					{
+						Name="L01",
+						Id=1,
+						MoodleCourseId="Moodle",
+						TaskDtos=new List<TaskDTO>()
+						{
+							new TaskDTO()
+							{
+								Id=1,
+								Name="Android init",
+								githubPrefix="Hello there"
+							},
+							new TaskDTO()
+							{
+								Id=2,
+								Name="Kotlin",
+								githubPrefix="General Kenobi"
+							}
+						}
+					},
+					new CourseDTO()
+					{
+						Name="LA",
+						Id=2,
+						MoodleCourseId="MoodleAngol",
+						TaskDtos=new List<TaskDTO>()
+						{
+							new TaskDTO()
+							{
+								Id=1,
+								Name="Demo angol",
+								githubPrefix="Hello there",
+                                AssignmentDtos = new List<AssignmentDTO>()
+                                {
+                                    new AssignmentDTO()
+                                    {
+                                        Id=1,
+                                        GithubRepoName="Repo",
+                                        StudentDto=new StudentDTO()
+                                        {
+                                            NeptunCode="Neptun"
+                                        },
+                                        PullRequestDtos=new List<PullRequestDTO>()
+                                        {
+                                            new PullRequestDTO()
+                                            {
+                                                Url="PR"
+                                            }
+                                        },
+                                        ScoreDtos=new List<ScoreDTO>()
+                                        {
+                                            new ScoreDTO()
+                                            {
+                                                Value="5"
+                                            }
+                                        },
+                                        AssignmentEventDtos = new List<AssignmentEventDTO>()
+                                    }
+                                }
+							},
+							new TaskDTO()
+							{
+								Id=2,
+								Name="Kotlin angol",
+								githubPrefix="General Kenobi"
+
+							}
+						}
+					}
+				}
+			}
+		};
+	}
+
+    private async Task<IEnumerable<SubjectDTO>> GetAssignments()
+    {
+        if (!demo)
+        {
+            return await Http.GetFromJsonAsync<IEnumerable<SubjectDTO>>("api/subjects");
+        }
+
+        return new List<SubjectDTO>();
+    }
+
+    protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			subjects = await GetSubjects();
+		}
+		catch (Exception e)
+		{
+			Console.Error.WriteLine(e.StackTrace);
+			Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+			Snackbar.Add("Database error", Severity.Error);
+		}
+		loading = false;
+	}
+
+	/*private IEnumerable<CourseDTO> courses = new List<CourseDTO>
+		{
+		new CourseDTO(){
+			Id=13,
+			Name="Hello there",
+			TaskDtos = new List<TaskDTO>()
+				{
+				new TaskDTO()
+					{
+					Id=1L,
+					Name="General Kenobi"
+			}
+		},
+		},
+		new CourseDTO(){
+			Id=15L,
+			Name="Mobweb",
+			TaskDtos = new List<TaskDTO>()
+				{
+				new TaskDTO()
+					{
+					Id=1L,
+					Name="Task 1"
+				},
+				new TaskDTO()
+					{
+					Id=2L,
+					Name="Task 4"
+			}
+		}
+	},
+		};*/
+
+}
