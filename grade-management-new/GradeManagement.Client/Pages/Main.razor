@@ -22,7 +22,7 @@
 	}
 </style>
 
-@if (loading)
+@if (isLoading)
 {
 	<MudProgressCircular Color="Color.Primary" Indeterminate="true" Style="position:absolute; left:50vw; top:50vh;" Size="Size.Large" />
 }
@@ -90,9 +90,9 @@ else
 	}
 	#endregion
 
-    private const bool demo = true;
+    private const bool isDemo = true;
 
-	private bool loading = true;
+	private bool isLoading = true;
 	private SubjectDTO? selectedSubject = null;
 	private CourseDTO? selectedCourse = null;
 	private TaskDTO? selectedTask = null;
@@ -114,9 +114,9 @@ else
         AssignmentsData = selectedTask?.AssignmentDtos ?? [];
     }
 
-	private async Task<IEnumerable<SubjectDTO>> GetSubjects()
+	private async Task<IEnumerable<SubjectDTO>> GetSubjectsAsync()
 	{
-        if (!demo)
+        if (!isDemo)
         {
             return await Http.GetFromJsonAsync<IEnumerable<SubjectDTO>>("api/subjects");
         }
@@ -204,9 +204,9 @@ else
 		};
 	}
 
-    private async Task<IEnumerable<SubjectDTO>> GetAssignments()
+    private async Task<IEnumerable<SubjectDTO>> GetAssignmentsAsync()
     {
-        if (!demo)
+        if (!isDemo)
         {
             return await Http.GetFromJsonAsync<IEnumerable<SubjectDTO>>("api/subjects");
         }
@@ -218,7 +218,7 @@ else
 	{
 		try
 		{
-			subjects = await GetSubjects();
+			subjects = await GetSubjectsAsync();
 		}
 		catch (Exception e)
 		{
@@ -226,7 +226,7 @@ else
 			Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
 			Snackbar.Add("Database error", Severity.Error);
 		}
-		loading = false;
+		isLoading = false;
 	}
 
 	/*private IEnumerable<CourseDTO> courses = new List<CourseDTO>
