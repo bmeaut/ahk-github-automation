@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Data", "Gra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Client", "GradeManagement.Client\GradeManagement.Client.csproj", "{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Services", "GradeManagement.Services\GradeManagement.Services.csproj", "{C35296DC-6738-461E-BE3C-44C29081E4D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Bll", "GradeManagement.Bll\GradeManagement.Bll.csproj", "{C35296DC-6738-461E-BE3C-44C29081E4D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

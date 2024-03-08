@@ -1,5 +1,5 @@
-using GradeManagement.Services.Services;
-using GradeManagement.Shared.DTOs;
+using GradeManagement.Bll;
+using GradeManagement.Shared.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers
@@ -8,7 +8,7 @@ namespace GradeManagement.Server.Controllers
     [ApiController]
     public class SubjectController : ControllerBase
     {
-        SubjectService _subjectService;
+        private readonly SubjectService _subjectService;
 
         public SubjectController(SubjectService subjectService)
         {
@@ -16,59 +16,34 @@ namespace GradeManagement.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SubjectDTO>>> GetSubjects()
+        public async Task<IEnumerable<Subject>> GetSubjectsAsync()
         {
-            return this.Ok(await _subjectService.GetAllSubjects());
+            return await _subjectService.GetAllSubjectsAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<SubjectDTO>> GetSubjectById([FromRoute] long id)
+        public async Task<Subject> GetSubjectByIdAsync([FromRoute] long id)
         {
-            try
-            {
-                return this.Ok(await _subjectService.GetSubjectById(id));
-            }
-            catch (NullReferenceException e)
-            {
-                return this.NotFound(e.Message);
-            }
+            return await _subjectService.GetSubjectByIdAsync(id);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<SubjectDTO>> UpdateSubject([FromRoute] long id, [FromBody] SubjectDTO subjectDto)
+        public async Task<Subject> UpdateSubjectAsync([FromRoute] long id, [FromBody] Subject subject)
         {
-            try
-            {
-                return this.Ok(await _subjectService.UpdateSubject(id, subjectDto));
-            }
-            catch (ArgumentException e)
-            {
-                return this.BadRequest(e.Message);
-            }
-            catch (NullReferenceException e)
-            {
-                return this.NotFound(e.Message);
-            }
+            return await _subjectService.UpdateSubjectAsync(id, subject);
         }
 
         [HttpPost]
-        public async Task<ActionResult<SubjectDTO>> CreateSubject([FromBody] SubjectDTO subjectDto)
+        public async Task<Subject> CreateSubjectAsync([FromBody] Subject subject)
         {
-            return this.Ok(await _subjectService.CreateSubject(subjectDto));
+            return await _subjectService.CreateSubjectAsync(subject);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteSubject([FromRoute] long id)
+        public async Task<ActionResult> DeleteSubjectAsync([FromRoute] long id)
         {
-            try
-            {
-                await _subjectService.DeleteSubject(id);
-                return this.NoContent();
-            }
-            catch (NullReferenceException e)
-            {
-                return this.NotFound(e.Message);
-            }
+            await _subjectService.DeleteSubjectAsync(id);
+            return this.NoContent();
         }
     }
 }

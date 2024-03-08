@@ -1,6 +1,6 @@
-﻿namespace GradeManagement.Data.Models;
+﻿namespace GradeManagement.Shared.Dtos;
 
-public class Language
+public class Semester
 {
     public long Id { get; set; }
     public string Name { get; set; }

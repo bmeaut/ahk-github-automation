@@ -1,6 +1,4 @@
-using GradeManagement.Shared;
-
-namespace GradeManagement.Data.Models;
+namespace GradeManagement.Shared.Dtos;
 
 public class AssignmentEvent
 {
