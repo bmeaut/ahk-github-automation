@@ -1,6 +1,8 @@
 
+using AutSoft.Common.Exceptions;
 using GradeManagement.Data.Data;
-using GradeManagement.Services.Services;
+using GradeManagement.Bll;
+using GradeManagement.Server.ExceptionHandlers;
 using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Server
@@ -34,10 +36,16 @@ namespace GradeManagement.Server
             builder.Services.AddTransient<SemesterService>();
             builder.Services.AddTransient<StudentService>();
             builder.Services.AddTransient<SubjectService>();
-            builder.Services.AddTransient<TaskService>();
+            builder.Services.AddTransient<ExerciseService>();
             builder.Services.AddTransient<TeacherService>();
 
+            builder.Services.AddExceptionHandler<EntityNotFoundExceptionHandler>();
+            builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+            builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
+            builder.Services.AddProblemDetails();
+
             var app = builder.Build();
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -52,6 +60,8 @@ namespace GradeManagement.Server
             }
 
             app.UseHttpsRedirection();
+
+            app.UseExceptionHandler();
 
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();

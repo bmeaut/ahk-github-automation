@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34616.47
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GradeManagement.Server", "GradeManagement.Server\GradeManagement.Server.csproj", "{46F4253C-2972-44EA-954F-F3FA505EA493}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Server", "GradeManagement.Server\GradeManagement.Server.csproj", "{46F4253C-2972-44EA-954F-F3FA505EA493}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GradeManagement.Shared", "GradeManagement.Shared\GradeManagement.Shared.csproj", "{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Shared", "GradeManagement.Shared\GradeManagement.Shared.csproj", "{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GradeManagement.Data", "GradeManagement.Data\GradeManagement.Data.csproj", "{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Data", "GradeManagement.Data\GradeManagement.Data.csproj", "{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GradeManagement.Client", "GradeManagement.Client\GradeManagement.Client.csproj", "{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Client", "GradeManagement.Client\GradeManagement.Client.csproj", "{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GradeManagement.Services", "GradeManagement.Services\GradeManagement.Services.csproj", "{C35296DC-6738-461E-BE3C-44C29081E4D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagement.Bll", "GradeManagement.Bll\GradeManagement.Bll.csproj", "{C35296DC-6738-461E-BE3C-44C29081E4D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
