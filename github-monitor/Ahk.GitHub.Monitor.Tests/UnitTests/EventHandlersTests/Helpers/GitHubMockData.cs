@@ -12,14 +12,43 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         public static PullRequest CreatePullRequest(int number, ItemState state, int userId = 111, bool? mergeable = null)
             => new PullRequest(
                         id: number,
-                        nodeId: string.Empty, url: string.Empty, htmlUrl: $"https://www.github.com/org1/repo1/pull/{number}", diffUrl: string.Empty, patchUrl: string.Empty, issueUrl: string.Empty, statusesUrl: string.Empty,
-                        number: number, state: state,
-                        title: string.Empty, body: string.Empty,
-                        createdAt: DateTimeOffset.UtcNow, updatedAt: DateTimeOffset.UtcNow, closedAt: null, mergedAt: null,
-                        head: new GitReference(nodeId: "121sdad23", url: "", label: "", @ref: "branch", sha: "aaaaa1111", user: null, repository: null), @base: null, user: CreateUser(userId), assignee: null, assignees: null,
-                        draft: false, mergeable: mergeable, mergeableState: null, mergedBy: null, mergeCommitSha: string.Empty,
-                        comments: 0, commits: 0, additions: 0, deletions: 0, changedFiles: 0, milestone: null,
-                        locked: false, maintainerCanModify: null, requestedReviewers: null, requestedTeams: null, labels: null);
+                        nodeId: string.Empty,
+                        url: string.Empty,
+                        htmlUrl: $"https://www.github.com/org1/repo1/pull/{number}",
+                        diffUrl: string.Empty,
+                        patchUrl: string.Empty,
+                        issueUrl: string.Empty,
+                        statusesUrl: string.Empty,
+                        number: number,
+                        state: state,
+                        title: string.Empty,
+                        body: string.Empty,
+                        createdAt: DateTimeOffset.UtcNow,
+                        updatedAt: DateTimeOffset.UtcNow,
+                        closedAt: null,
+                        mergedAt: null,
+                        head: new GitReference(nodeId: "121sdad23", url: "", label: "", @ref: "branch", sha: "aaaaa1111", user: null, repository: null),
+                        @base: null,
+                        user: CreateUser(userId),
+                        assignee: null,
+                        assignees: null,
+                        draft: false,
+                        mergeable: mergeable,
+                        mergeableState: null,
+                        mergedBy: null,
+                        mergeCommitSha: string.Empty,
+                        comments: 0,
+                        commits: 0,
+                        additions: 0,
+                        deletions: 0,
+                        changedFiles: 0,
+                        milestone: null,
+                        locked: false,
+                        maintainerCanModify: null,
+                        requestedReviewers: null,
+                        requestedTeams: null,
+                        labels: null,
+                        activeLockReason: null);
 
         public static RepositoryContent CreateRepositoryFileContent(string filePath, string content)
             => new RepositoryContent(
@@ -38,9 +67,25 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
 
         public static IssueEvent CreateIssueEvent(EventInfoState @event, int actorId)
             => new IssueEvent(
-                        id: 1234, nodeId: string.Empty, url: string.Empty, actor: CreateUser(actorId),
-                        assignee: null, label: null, @event: @event,
-                        commitId: null, createdAt: DateTimeOffset.UtcNow, issue: null, commitUrl: null, rename: null, projectCard: null);
+                        id: 1234,
+                        nodeId: string.Empty,
+                        url: string.Empty,
+                        actor: CreateUser(actorId),
+                        assignee: null,
+                        label: null,
+                        @event: @event,
+                        commitId: null,
+                        createdAt: DateTimeOffset.UtcNow,
+                        issue: null,
+                        commitUrl: null,
+                        rename: null,
+                        projectCard: null,
+                        reviewRequester: null,
+                        requestedReviewer: null,
+                        assigner: null,
+                        dismissedReview: null,
+                        milestone: null,
+                        lockReason: LockReason.Resolved);
 
         public static User CreateUser(int actorId)
             => new User(
