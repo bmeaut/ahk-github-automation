@@ -22,7 +22,7 @@ public class GradeManagementDbContext : DbContext
     public DbSet<Semester> Semester { get; set; }
     public DbSet<Student> Student { get; set; }
     public DbSet<Subject> Subject { get; set; }
-    public DbSet<Exercise> Task { get; set; }
+    public DbSet<Exercise> Exercise { get; set; }
     public DbSet<Teacher> Teacher { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
