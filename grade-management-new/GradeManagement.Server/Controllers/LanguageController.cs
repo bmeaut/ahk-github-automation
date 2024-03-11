@@ -1,11 +1,14 @@
+using GradeManagement.Bll;
+using GradeManagement.Bll.BaseServices;
+using GradeManagement.Server.Controllers.BaseControllers;
+using GradeManagement.Shared.Dtos;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers
-{
-    [Route("api/languages")]
-    [ApiController]
-    public class LanguageController : ControllerBase
-    {
-    }
-}
+namespace GradeManagement.Server.Controllers;
+
+[Route("api/languages")]
+[ApiController]
+public class LanguageController(LanguageService languageService)
+    : RestrictedControllerBase<Language>(languageService);
