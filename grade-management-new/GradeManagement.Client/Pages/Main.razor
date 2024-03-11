@@ -22,27 +22,28 @@
 	}
 </style>
 
-@if (isLoading)
+
+@if (_isLoading)
 {
     <MudProgressCircular Color="Color.Primary" Indeterminate="true" Style="position:absolute; left:50vw; top:50vh;" Size="Size.Large"/>
 }
 else
 {
     <MudStack Row="true" Class="mt-6">
-        <MudSelect T="Subject" Label="Subject" @bind-Value="selectedSubject" @bind-Value:after="SubjectChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var subject in subjects ?? [])
+        <MudSelect T="Subject" Label="Subject" @bind-Value="_selectedSubject" @bind-Value:after="SubjectChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            @foreach (var subject in _subjects ?? [])
             {
                 <MudSelectItem Value="@subject">@subject.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudSelect T="Course" Label="Course" @bind-Value="selectedCourse" @bind-Value:after="CourseChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var course in selectedSubject?.Courses ?? [])
+        <MudSelect T="Course" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            @foreach (var course in _selectedSubject?.Courses ?? [])
             {
                 <MudSelectItem Value="@course">@course.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudSelect T="Exercise" Label="Task" @bind-Value="selectedTask" @bind-Value:after="TaskChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var task in selectedCourse?.Tasks ?? [])
+        <MudSelect T="Exercise" Label="Task" @bind-Value="_selectedTask" @bind-Value:after="TaskChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            @foreach (var task in _selectedCourse?.Tasks ?? [])
             {
                 <MudSelectItem Value="@task">@task.Name</MudSelectItem>
             }
@@ -50,13 +51,13 @@ else
         <MudSpacer/>
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
     </MudStack>
-    <MudDataGrid Items="@AssignmentsData" T="Assignment" Class="custom-grid">
+    <MudDataGrid Items="@_assignmentsData" T="Assignment" Class="custom-grid">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id"/>
             <PropertyColumn Property="x => x.GithubRepoName" Title="Repository name"/>
             <PropertyColumn Property="x => x.Student.NeptunCode" Title="Neptun"/>
             <PropertyColumn Property="x => JoinPullRequests(x)" Title="PRs"/>
-            <PropertyColumn Property="x => JoinCIWorkflows(x)" Title="Workflows"/>
+            <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/>
             <PropertyColumn Property="x => JoinScore(x)" Title="Pontok"/>
         </Columns>
         <PagerContent>
@@ -76,14 +77,15 @@ else
         return string.Join(", ", data.PullRequests.Select(x => x.Url));
     }
 
-    private string JoinCIWorkflows(Assignment data)
+    private string JoinCiWorkflows(Assignment data)
     {
-        var filtered = data.AssignmentEvents?.Where(IsCICDWorkflow) ?? [];
-        string run = filtered.Count() == 1 ? "run" : "runs";
-        return $"{filtered.Count()} {run}, last: {filtered.LastOrDefault()?.Description}";
+        var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
+        var assignmentEvents = filtered as AssignmentEvent[] ?? filtered.ToArray();
+        string run = assignmentEvents.Length == 1 ? "run" : "runs";
+        return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
     }
 
-    private bool IsCICDWorkflow(AssignmentEvent data)
+    private bool IsCicdWorkflow(AssignmentEvent data)
     {
         return true;
     }
@@ -95,34 +97,34 @@ else
 
     #endregion
 
-    private const bool isDemo = true;
+    private const bool IsDemo = true;
 
-    private bool isLoading = true;
-    private Subject? selectedSubject = null;
-    private Course? selectedCourse = null;
-    private Exercise? selectedTask = null;
-    private IEnumerable<Subject>? subjects;
-    private IEnumerable<Assignment> AssignmentsData = new List<Assignment>();
+    private bool _isLoading = true;
+    private Subject? _selectedSubject = null;
+    private Course? _selectedCourse = null;
+    private Exercise? _selectedTask = null;
+    private IEnumerable<Subject>? _subjects;
+    private IEnumerable<Assignment> _assignmentsData = new List<Assignment>();
 
     private void SubjectChanged()
     {
-        selectedCourse = null;
-        selectedTask = null;
+        _selectedCourse = null;
+        _selectedTask = null;
     }
 
     private void CourseChanged()
     {
-        selectedTask = null;
+        _selectedTask = null;
     }
 
     private void TaskChanged()
     {
-        AssignmentsData = selectedTask?.Assignments ?? [];
+        _assignmentsData = _selectedTask?.Assignments ?? [];
     }
 
     private async Task<IEnumerable<Subject>> GetSubjectsAsync()
     {
-        if (!isDemo)
+        if (!IsDemo)
         {
             return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
         }
@@ -212,7 +214,7 @@ else
 
     private async Task<IEnumerable<Subject>> GetAssignmentsAsync()
     {
-        if (!isDemo)
+        if (!IsDemo)
         {
             return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
         }
@@ -224,7 +226,7 @@ else
     {
         try
         {
-            subjects = await GetSubjectsAsync();
+            _subjects = await GetSubjectsAsync();
         }
         catch (Exception e)
         {
@@ -233,7 +235,7 @@ else
             Snackbar.Add("Database error", Severity.Error);
         }
 
-        isLoading = false;
+        _isLoading = false;
     }
 
     /*private IEnumerable<CourseDTO> courses = new List<CourseDTO>

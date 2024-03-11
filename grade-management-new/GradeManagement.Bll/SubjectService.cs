@@ -1,9 +1,13 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
+
 using GradeManagement.Data.Data;
+
 using Microsoft.EntityFrameworkCore;
+
 using Course = GradeManagement.Data.Models.Course;
 using Subject = GradeManagement.Shared.Dtos.Subject;
 using Task = System.Threading.Tasks.Task;

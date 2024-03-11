@@ -1,0 +1,113 @@
+﻿@page "/subjects"
+@using System.Reflection
+@inject HttpClient Http
+@inject IDialogService DialogService
+
+<PageTitle>Subjects</PageTitle>
+
+<LoadingComponent IsLoading="_isLoading">
+    <MudDataGrid Items="_subjects" T="Subject" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" HeaderText="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Name" HeaderText="Name"/>
+            <PropertyColumn Property="x => x.NeptunCode" HeaderText="Description"/>
+            <TemplateColumn HeaderText="Actions">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@context.Actions.StartEditingItemAsync"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+</LoadingComponent>
+
+@code {
+    private List<Subject> _subjects = new();
+    private bool _isLoading = true;
+
+
+    private async Task<List<Subject>> LoadSubjects()
+    {
+        return await Http.GetFromJsonAsync<List<Subject>>("/api/subjects") ?? new List<Subject>();
+    }
+
+    private string[] EditableProperties =
+    [
+        "Name", "NeptunCode"
+    ];
+
+    private bool FilterProperties(PropertyInfo property)
+    {
+        return EditableProperties.Contains(property.Name);
+    }
+
+    private string GetLabel(PropertyInfo property)
+    {
+        // Customize the label based on the property name
+        return property.Name switch
+        {
+            "Name" => "Name",
+            "NeptunCode" => "Neptun Code",
+            _ => property.Name
+        };
+    }
+
+    private async Task OpenDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            ["value"] = new Subject(),
+            ["PropertyFilter"] = new Func<PropertyInfo, bool>(FilterProperties),
+            ["LabelProvider"] = new Func<PropertyInfo, string>(GetLabel)
+        };
+        var dialog = await DialogService.ShowAsync<NewItemDialog<Subject>>("Hello", parameters);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            var response = await Http.PostAsJsonAsync("/api/subjects", result.Data);
+            _subjects.Add(result.Data as Subject);
+            if (response.IsSuccessStatusCode)
+            {
+                Subject newObject = await response.Content.ReadFromJsonAsync<Subject>();
+                //Right now it needs Course list to be filled
+                _subjects.Remove(result.Data as Subject);
+                _subjects.Add(newObject);
+            }
+            else
+            {
+                await Console.Error.WriteLineAsync("Error");
+            }
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Thread.Sleep(1000);
+        _subjects = await LoadSubjects();
+        _isLoading = false;
+    }
+
+    private async Task CommittedItemChanges(Subject items)
+    {
+        var response = await Http.PutAsJsonAsync($"/api/subjects/{items.Id}", items);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+    private async Task DeleteItem(Subject item)
+    {
+        _subjects.Remove(item);
+        var response = await Http.DeleteAsync($"/api/subjects/{item.Id}");
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+}
