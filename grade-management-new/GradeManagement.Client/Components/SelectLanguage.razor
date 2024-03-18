@@ -1,0 +1,36 @@
+﻿@using GradeManagement.Client.Pages
+@inject HttpClient Http
+
+<MudSelect T="Language" Value="@Value" ValueChanged="@((Language value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@_languageToString" Label="Language" @attributes="AdditionalAttributes">
+    @foreach (var language in _languages)
+    {
+        <MudSelectItem Value="@language"/>
+    }
+</MudSelect>
+
+@code {
+    [Parameter] public Language Value { get; set; }
+    [Parameter] public EventCallback<Language> ValueChanged { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+
+    readonly Func<Language, string> _languageToString = p => p.Name;
+    private List<Language> _languages = new();
+
+    private async Task<List<Language>> LoadLanguages()
+    {
+        return
+        [
+            new Language { Id = 1, Name = "Language 1" },
+            new Language { Id = 2, Name = "Language 2" },
+        ];
+        return await Http.GetFromJsonAsync<List<Language>>(Endpoints.LANGUAGES) ?? new List<Language>();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _languages = await LoadLanguages();
+    }
+
+}

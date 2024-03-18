@@ -1,0 +1,33 @@
+﻿@using GradeManagement.Client.Pages
+@inject HttpClient Http
+
+<MudSelect T="Subject" Value="@Value" ValueChanged="@((Subject value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@subjectToString" Label="Subject">
+    @foreach (var semester in _subjects)
+    {
+        <MudSelectItem Value="@semester"/>
+    }
+</MudSelect>
+
+@code {
+    [Parameter] public Subject Value { get; set; }
+    [Parameter] public EventCallback<Subject> ValueChanged { get; set; }
+
+    Func<Subject, string> subjectToString = p => p.Name;
+    private List<Subject> _subjects = new();
+
+    private async Task<List<Subject>> LoadSubjects()
+    {
+        return
+        [
+            new Subject { Id = 1, Name = "Subject 1" },
+            new Subject { Id = 2, Name = "Subject 2" },
+        ];
+        return await Http.GetFromJsonAsync<List<Subject>>(Endpoints.SUBJECTS) ?? new List<Subject>();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _subjects = await LoadSubjects();
+    }
+
+}

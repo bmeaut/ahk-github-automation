@@ -1,17 +1,16 @@
 ﻿@page "/subjects"
-@using System.Reflection
 @inject HttpClient Http
 @inject IDialogService DialogService
 
 <PageTitle>Subjects</PageTitle>
 
-<LoadingComponent IsLoading="_isLoading">
+<LoadingComponent IsLoading="@_isLoading">
     <MudDataGrid Items="_subjects" T="Subject" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
-            <PropertyColumn Property="x => x.Id" HeaderText="Id" IsEditable="false"/>
-            <PropertyColumn Property="x => x.Name" HeaderText="Name"/>
-            <PropertyColumn Property="x => x.NeptunCode" HeaderText="Description"/>
-            <TemplateColumn HeaderText="Actions">
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Name" Title="Name"/>
+            <PropertyColumn Property="x => x.NeptunCode" Title="Description"/>
+            <TemplateColumn Title="Actions">
                 <CellTemplate>
                     <MudStack Row>
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@context.Actions.StartEditingItemAsync"/>
@@ -28,47 +27,26 @@
     private List<Subject> _subjects = new();
     private bool _isLoading = true;
 
+    readonly string BaseUrl = Endpoints.SUBJECTS;
+
+    /*private string[] EditableProperties =
+    [
+        "Name", "NeptunCode"
+    ];*/
 
     private async Task<List<Subject>> LoadSubjects()
     {
-        return await Http.GetFromJsonAsync<List<Subject>>("/api/subjects") ?? new List<Subject>();
-    }
-
-    private string[] EditableProperties =
-    [
-        "Name", "NeptunCode"
-    ];
-
-    private bool FilterProperties(PropertyInfo property)
-    {
-        return EditableProperties.Contains(property.Name);
-    }
-
-    private string GetLabel(PropertyInfo property)
-    {
-        // Customize the label based on the property name
-        return property.Name switch
-        {
-            "Name" => "Name",
-            "NeptunCode" => "Neptun Code",
-            _ => property.Name
-        };
+        return await Http.GetFromJsonAsync<List<Subject>>(BaseUrl) ?? new List<Subject>();
     }
 
     private async Task OpenDialog()
     {
-        var parameters = new DialogParameters
-        {
-            ["value"] = new Subject(),
-            ["PropertyFilter"] = new Func<PropertyInfo, bool>(FilterProperties),
-            ["LabelProvider"] = new Func<PropertyInfo, string>(GetLabel)
-        };
-        var dialog = await DialogService.ShowAsync<NewItemDialog<Subject>>("Hello", parameters);
+        var dialog = await DialogService.ShowAsync<NewSubjectDialog>("Hello");
         var result = await dialog.Result;
-        if (!result.Canceled)
+        if (!result.Canceled && result.Data != null)
         {
-            var response = await Http.PostAsJsonAsync("/api/subjects", result.Data);
             _subjects.Add(result.Data as Subject);
+            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
             if (response.IsSuccessStatusCode)
             {
                 Subject newObject = await response.Content.ReadFromJsonAsync<Subject>();
@@ -78,6 +56,7 @@
             }
             else
             {
+                _subjects.Remove(result.Data as Subject);
                 await Console.Error.WriteLineAsync("Error");
             }
         }
@@ -86,14 +65,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Thread.Sleep(1000);
         _subjects = await LoadSubjects();
         _isLoading = false;
     }
 
     private async Task CommittedItemChanges(Subject items)
     {
-        var response = await Http.PutAsJsonAsync($"/api/subjects/{items.Id}", items);
+        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync("Error");
@@ -103,7 +81,7 @@
     private async Task DeleteItem(Subject item)
     {
         _subjects.Remove(item);
-        var response = await Http.DeleteAsync($"/api/subjects/{item.Id}");
+        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync("Error");

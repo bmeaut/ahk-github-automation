@@ -1,0 +1,125 @@
+﻿@page "/courses"
+
+@inject HttpClient Http
+@inject IDialogService DialogService
+
+<LoadingComponent IsLoading="@_isLoading">
+    <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Name" Title="Name"/>
+            <PropertyColumn Property="x => x.MoodleCourseId" Title="Moodle Course Id"/>
+            <TemplateColumn Title="Semester">
+                <CellTemplate>
+                    @context.Item.Semester.Name
+                </CellTemplate>
+                <EditTemplate>
+                    <SelectSemester @bind-Value="@context.Item.Semester"/>
+                </EditTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Subject">
+                <CellTemplate>
+                    @context.Item.Subject.Name
+                </CellTemplate>
+                <EditTemplate>
+                    <SelectSubject @bind-Value="@context.Item.Subject"/>
+                </EditTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Language">
+                <CellTemplate>
+                    @context.Item.Language.Name
+                </CellTemplate>
+                <EditTemplate>
+                    <SelectLanguage @bind-Value="@context.Item.Language"/>
+                </EditTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Actions">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+</LoadingComponent>
+
+@code {
+    private List<Course> _courses = new();
+    private bool _isLoading = true;
+
+    readonly string BaseUrl = Endpoints.COURSES;
+
+    private async Task<List<Course>> LoadCourses()
+    {
+        return
+        [
+            new Course
+            {
+                Id = 1,
+                Name = "Course 1",
+                MoodleCourseId = "1234",
+                Semester = new Semester { Id = 1, Name = "Semester 1" },
+                Subject = new Subject { Id = 1, Name = "Subject 1" },
+                Language = new Language { Id = 1, Name = "Language 1" }
+            },
+        ];
+        return await Http.GetFromJsonAsync<List<Course>>(BaseUrl);
+    }
+
+    private async Task OpenDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewCourseDialog>("Hello");
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data != null)
+        {
+            _courses.Add(result.Data as Course);
+            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
+            if (response.IsSuccessStatusCode)
+            {
+                Course newObject = await response.Content.ReadFromJsonAsync<Course>();
+                //Right now it needs Course list to be filled
+                _courses.Remove(result.Data as Course);
+                _courses.Add(newObject);
+            }
+            else
+            {
+                _courses.Remove(result.Data as Course);
+                await Console.Error.WriteLineAsync("Error");
+            }
+        }
+    }
+
+    private async Task StartEditing(CellContext<Course?> context)
+    {
+        await context.Actions.StartEditingItemAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _courses = await LoadCourses();
+        _isLoading = false;
+    }
+
+    private async Task CommittedItemChanges(Course items)
+    {
+        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+    private async Task DeleteItem(Course item)
+    {
+        _courses.Remove(item);
+        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+}
