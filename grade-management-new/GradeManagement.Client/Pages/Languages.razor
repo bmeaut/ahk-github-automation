@@ -1,0 +1,96 @@
+﻿@page "/languages"
+
+@inject HttpClient Http
+@inject IDialogService DialogService
+
+<LoadingComponent IsLoading="@_isLoading">
+    <MudDataGrid T="Language" Items="_languages" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Name" Title="Name"/>
+            <TemplateColumn Title="Actions">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+</LoadingComponent>
+
+@code {
+    private List<Language> _languages = new();
+    private bool _isLoading = true;
+
+    readonly string BaseUrl = Endpoints.LANGUAGES;
+
+    private async Task<List<Language>> LoadLanguages()
+    {
+        return
+        [
+            new Language
+            {
+                Id = 1,
+                Name = "Language 1",
+            },
+        ];
+        return await Http.GetFromJsonAsync<List<Language>>(BaseUrl);
+    }
+
+    private async Task OpenDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewLanguageDialog>("Hello");
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data != null)
+        {
+            _languages.Add(result.Data as Language);
+            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
+            if (response.IsSuccessStatusCode)
+            {
+                Language newObject = await response.Content.ReadFromJsonAsync<Language>();
+                //Right now it needs Language list to be filled
+                _languages.Remove(result.Data as Language);
+                _languages.Add(newObject);
+            }
+            else
+            {
+                _languages.Remove(result.Data as Language);
+                await Console.Error.WriteLineAsync("Error");
+            }
+        }
+    }
+
+    private async Task StartEditing(CellContext<Language?> context)
+    {
+        await context.Actions.StartEditingItemAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _languages = await LoadLanguages();
+        _isLoading = false;
+    }
+
+    private async Task CommittedItemChanges(Language items)
+    {
+        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+    private async Task DeleteItem(Language item)
+    {
+        _languages.Remove(item);
+        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+}

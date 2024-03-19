@@ -1,0 +1,50 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h4">New Student</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
+            <MudTextField T="string" Label="Neptun Code" For="@(() => value.NeptunCode)" @bind-Value="value.NeptunCode" Required="true"></MudTextField>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@OnSubmitClicked">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private MudForm form;
+    private bool success;
+    private string[] errors;
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    void Cancel() => MudDialog.Cancel();
+
+    async void OnSubmitClicked()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            Submit();
+        }
+    }
+    /*new Teacher
+            {
+                Id = 1,
+                Name = "Teacher 1",
+                NeptunCode = "ABC123",
+                GithubId = "github",
+                BmeEmail = "email@edu.bme.hu",
+            },*/
+
+    public Student value = new()
+    {
+        GroupStudents = new(),
+        Assignments = new()
+    };
+
+}

@@ -1,0 +1,96 @@
+﻿@page "/semesters"
+
+@inject HttpClient Http
+@inject IDialogService DialogService
+
+<LoadingComponent IsLoading="@_isLoading">
+    <MudDataGrid T="Semester" Items="_semesters" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Name" Title="Name"/>
+            <TemplateColumn Title="Actions">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+</LoadingComponent>
+
+@code {
+    private List<Semester> _semesters = new();
+    private bool _isLoading = true;
+
+    readonly string BaseUrl = Endpoints.SEMESTERS;
+
+    private async Task<List<Semester>> LoadSemesters()
+    {
+        return
+        [
+            new Semester
+            {
+                Id = 1,
+                Name = "Semester 1",
+            },
+        ];
+        return await Http.GetFromJsonAsync<List<Semester>>(BaseUrl);
+    }
+
+    private async Task OpenDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewSemesterDialog>("Hello");
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data != null)
+        {
+            _semesters.Add(result.Data as Semester);
+            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
+            if (response.IsSuccessStatusCode)
+            {
+                Semester newObject = await response.Content.ReadFromJsonAsync<Semester>();
+                //Right now it needs Semester list to be filled
+                _semesters.Remove(result.Data as Semester);
+                _semesters.Add(newObject);
+            }
+            else
+            {
+                _semesters.Remove(result.Data as Semester);
+                await Console.Error.WriteLineAsync("Error");
+            }
+        }
+    }
+
+    private async Task StartEditing(CellContext<Semester?> context)
+    {
+        await context.Actions.StartEditingItemAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _semesters = await LoadSemesters();
+        _isLoading = false;
+    }
+
+    private async Task CommittedItemChanges(Semester items)
+    {
+        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+    private async Task DeleteItem(Semester item)
+    {
+        _semesters.Remove(item);
+        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+}

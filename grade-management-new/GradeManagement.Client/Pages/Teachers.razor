@@ -1,0 +1,102 @@
+﻿@page "/teachers"
+
+@inject HttpClient Http
+@inject IDialogService DialogService
+
+<LoadingComponent IsLoading="@_isLoading">
+    <MudDataGrid T="Teacher" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Name" Title="Name"/>
+            <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
+            <PropertyColumn Property="x => x.GithubId" Title="Github Id"/>
+            <PropertyColumn Property="x => x.BmeEmail" Title="Bme Email"/>
+            <TemplateColumn Title="Actions">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+</LoadingComponent>
+
+@code {
+    private List<Teacher> _teachers = new();
+    private bool _isLoading = true;
+
+    readonly string BaseUrl = Endpoints.TEACHERS;
+
+    private async Task<List<Teacher>> LoadTeachers()
+    {
+        return
+        [
+            new Teacher
+            {
+                Id = 1,
+                Name = "Teacher 1",
+                NeptunCode = "ABC123",
+                GithubId = "github",
+                BmeEmail = "email@edu.bme.hu",
+            },
+        ];
+        return await Http.GetFromJsonAsync<List<Teacher>>(BaseUrl);
+    }
+
+    private async Task OpenDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewTeacherDialog>("Hello");
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data != null)
+        {
+            _teachers.Add(result.Data as Teacher);
+            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
+            if (response.IsSuccessStatusCode)
+            {
+                Teacher newObject = await response.Content.ReadFromJsonAsync<Teacher>();
+                //Right now it needs Teacher list to be filled
+                _teachers.Remove(result.Data as Teacher);
+                _teachers.Add(newObject);
+            }
+            else
+            {
+                _teachers.Remove(result.Data as Teacher);
+                await Console.Error.WriteLineAsync("Error");
+            }
+        }
+    }
+
+    private async Task StartEditing(CellContext<Teacher?> context)
+    {
+        await context.Actions.StartEditingItemAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _teachers = await LoadTeachers();
+        _isLoading = false;
+    }
+
+    private async Task CommittedItemChanges(Teacher items)
+    {
+        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+    private async Task DeleteItem(Teacher item)
+    {
+        _teachers.Remove(item);
+        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync("Error");
+        }
+    }
+
+}

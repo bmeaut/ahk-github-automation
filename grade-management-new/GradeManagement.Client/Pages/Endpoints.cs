@@ -8,4 +8,7 @@ public static class Endpoints
 
     public static string LANGUAGES = "api/languages";
     public static string COURSES = "api/courses";
+    public static string TEACHERS = "api/teachers";
+    public static string STUDENTS = "api/students";
+
 }

@@ -1,6 +1,13 @@
 <MudAppBar Elevation="5">
-	<MudText Typo="Typo.h3" Class="ml-3">AHK Review UI</MudText>
-	<MudSpacer />
-	<MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" />
+    <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+    <MudText Typo="Typo.h3" Class="ml-3">AHK Review UI</MudText>
+    <MudSpacer/>
+    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
 </MudAppBar>
 
+@code{
+
+    [Parameter] public Action DrawerToggle { get; set; }
+    [Parameter] public bool DrawerOpened { get; set; }
+
+}

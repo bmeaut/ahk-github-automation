@@ -1,14 +1,28 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout>
-	<AppBar />
-	<MudMainContent>
-		<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
-			@Body
-		</MudContainer>
-	</MudMainContent>
+    <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
+    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
+        <NavMenu/>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+            @Body
+        </MudContainer>
+    </MudMainContent>
 </MudLayout>
+
+@code {
+    bool _drawerOpen = false;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+        StateHasChanged();
+    }
+
+}
