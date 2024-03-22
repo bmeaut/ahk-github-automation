@@ -7,5 +7,6 @@ public class Teacher
     public string NeptunCode { get; set; }
     public string GithubId { get; set; }
     public string BmeEmail { get; set; }
-    public List<CourseTeacher> CourseTeachers { get; set; }
+    public bool IsDemonstrator { get; set; }
+    public List<GroupTeacher> GroupTeachers { get; set; }
 }
