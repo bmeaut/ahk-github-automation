@@ -6,4 +6,5 @@ public class Subject
     public string Name { get; set; }
     public string NeptunCode { get; set; }
     public List<Course> Courses { get; set; }
+    public List<SubjectTeacher> SubjectTeachers { get; set; }
 }

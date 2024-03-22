@@ -13,16 +13,17 @@ public class GradeManagementDbContext : DbContext
     public DbSet<Assignment> Assignment { get; set; }
     public DbSet<AssignmentEvent> AssignmentEvent { get; set; }
     public DbSet<Course> Course { get; set; }
-    public DbSet<CourseTeacher> CourseTeacher { get; set; }
+    public DbSet<Exercise> Exercise { get; set; }
     public DbSet<Group> Group { get; set; }
     public DbSet<GroupStudent> GroupStudent { get; set; }
+    public DbSet<GroupTeacher> GroupTeacher { get; set; }
     public DbSet<Language> Language { get; set; }
     public DbSet<PullRequest> PullRequest { get; set; }
     public DbSet<Score> Score { get; set; }
     public DbSet<Semester> Semester { get; set; }
     public DbSet<Student> Student { get; set; }
     public DbSet<Subject> Subject { get; set; }
-    public DbSet<Exercise> Exercise { get; set; }
+    public DbSet<SubjectTeacher> SubjectTeacher { get; set; }
     public DbSet<Teacher> Teacher { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -35,9 +36,9 @@ public class GradeManagementDbContext : DbContext
         .HasForeignKey(e => e.AssignmentId)
         .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<CourseTeacher>()
+        modelBuilder.Entity<GroupTeacher>()
         .HasOne(ct => ct.Group)
-        .WithMany(g => g.CourseTeachers)
+        .WithMany(g => g.GroupTeachers)
         .HasForeignKey(ct => ct.GroupId)
         .OnDelete(DeleteBehavior.Restrict);
     }

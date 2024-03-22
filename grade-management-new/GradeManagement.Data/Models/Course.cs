@@ -11,6 +11,6 @@ public class Course
     public long SubjectId { get; set; }
     public Language Language { get; set; }
     public long LanguageId { get; set; }
-    public List<CourseTeacher> CourseTeachers { get; set; }
-    public List<Exercise> Tasks { get; set; }
+    public List<Group> Groups { get; set; }
+    public List<Exercise> Exercises { get; set; }
 }
