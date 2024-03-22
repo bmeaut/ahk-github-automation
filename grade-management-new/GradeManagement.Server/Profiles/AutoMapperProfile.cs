@@ -14,7 +14,6 @@ using Score = GradeManagement.Shared.Dtos.Score;
 using Semester = GradeManagement.Shared.Dtos.Semester;
 using Student = GradeManagement.Shared.Dtos.Student;
 using Subject = GradeManagement.Shared.Dtos.Response.Subject;
-using Teacher = GradeManagement.Shared.Dtos.Teacher;
 
 namespace GradeManagement.Server.Profiles;
 
@@ -35,6 +34,6 @@ public class AutoMapperProfile : Profile
         CreateMap<Data.Models.Semester, Semester>();
         CreateMap<Data.Models.Student, Student>();
         CreateMap<Data.Models.Subject, Subject>();
-        CreateMap<Data.Models.Teacher, Teacher>();
+        CreateMap<Data.Models.User, User>();
     }
 }

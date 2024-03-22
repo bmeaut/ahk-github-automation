@@ -1,4 +1,6 @@
-﻿namespace GradeManagement.Shared.Dtos;
+﻿using GradeManagement.Shared.Dtos.Response;
+
+namespace GradeManagement.Shared.Dtos;
 
 public class GroupStudent
 {

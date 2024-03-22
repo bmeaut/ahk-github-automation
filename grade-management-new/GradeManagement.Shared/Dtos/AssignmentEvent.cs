@@ -1,3 +1,5 @@
+using GradeManagement.Shared.Enums;
+
 namespace GradeManagement.Shared.Dtos;
 
 public class AssignmentEvent

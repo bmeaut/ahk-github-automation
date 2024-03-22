@@ -1,4 +1,4 @@
-using GradeManagement.Shared;
+using GradeManagement.Shared.Enums;
 
 namespace GradeManagement.Data.Models;
 

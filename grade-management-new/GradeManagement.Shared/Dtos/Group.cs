@@ -4,6 +4,6 @@ public class Group
 {
     public long Id { get; set; }
     public string Name { get; set; }
-    public List<GroupStudent> GroupStudents { get; set; }
-    public List<GroupTeacher> GroupTeachers { get; set; }
+    public long CourseId { get; set; }
+    public List<User> Teachers { get; set; }
 }

@@ -17,7 +17,7 @@ public class SubjectTeacherService
     }
 
 
-    public async Task<List<SubjectTeacher>> UpdateForSingleSubjectAsync(long subjectId, List<Teacher> teachers)
+    public async Task<List<SubjectTeacher>> UpdateForSingleSubjectAsync(long subjectId, List<User> teachers)
     {
         var subjectTeachersForSubject = await _gradeManagementDbContext.SubjectTeacher
             .Where(st => st.SubjectId == subjectId)

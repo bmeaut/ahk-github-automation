@@ -1,12 +1,13 @@
-﻿namespace GradeManagement.Shared.Dtos;
+﻿using GradeManagement.Shared.Enums;
 
-public class Teacher
+namespace GradeManagement.Shared.Dtos;
+
+public class User
 {
     public long Id { get; set; }
     public string Name { get; set; }
     public string NeptunCode { get; set; }
     public string GithubId { get; set; }
     public string BmeEmail { get; set; }
-    public bool IsDemonstrator { get; set; }
-    public List<GroupTeacher> GroupTeachers { get; set; }
+    public UserType Type { get; set; }
 }

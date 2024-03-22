@@ -17,7 +17,7 @@ public class SubjectController(SubjectService subjectService) : CrudControllerBa
         return await subjectService.GetAllCoursesByIdAsync(id);
     }
     [HttpGet("{id:long}/teachers")]
-    public async Task<List<Teacher>> GetAllTeachersByIdAsync([FromRoute] long id)
+    public async Task<List<User>> GetAllTeachersByIdAsync([FromRoute] long id)
     {
         return await subjectService.GetAllTeachersByIdAsync(id);
     }
