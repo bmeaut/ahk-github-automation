@@ -10,15 +10,15 @@ using GradeManagement.Shared.Dtos;
 
 using Microsoft.EntityFrameworkCore;
 
-using Subject = GradeManagement.Shared.Dtos.Subject;
 using Task = System.Threading.Tasks.Task;
 
 namespace GradeManagement.Bll;
 
-public class SubjectService : ICrudServiceBase<Subject>
+public class SubjectService : ICrudServiceBase<Shared.Dtos.Request.Subject,Shared.Dtos.Response.Subject>
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly IMapper _mapper;
+    private readonly SubjectTeacherService _subjectTeacherService;
 
     public SubjectService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     {
@@ -26,21 +26,21 @@ public class SubjectService : ICrudServiceBase<Subject>
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Subject>> GetAllAsync()
+    public async Task<IEnumerable<Shared.Dtos.Response.Subject>> GetAllAsync()
     {
         return await _gradeManagementDbContext.Subject
-            .ProjectTo<Subject>(_mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.Response.Subject>(_mapper.ConfigurationProvider)
             .OrderBy(s => s.Id).ToListAsync();
     }
 
-    public async Task<Subject> GetByIdAsync(long id)
+    public async Task<Shared.Dtos.Response.Subject> GetByIdAsync(long id)
     {
         return await _gradeManagementDbContext.Subject
-            .ProjectTo<Subject>(_mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.Response.Subject>(_mapper.ConfigurationProvider)
             .SingleEntityAsync(s => s.Id == id, id);
     }
 
-    public async Task<Subject> UpdateAsync(long id, Subject requestDto)
+    public async Task<Shared.Dtos.Response.Subject> UpdateAsync(long id, Shared.Dtos.Request.Subject requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -51,25 +51,36 @@ public class SubjectService : ICrudServiceBase<Subject>
         var subjectEntity = await _gradeManagementDbContext.Subject
             .SingleEntityAsync(s => s.Id == id, id);
 
+        var teachers = await _gradeManagementDbContext.Teacher
+            .Where(t => requestDto.Teachers.Select(rqT=>rqT.Id).Contains(t.Id))
+            .ToListAsync();
+        var subjectTeachers = await _subjectTeacherService.UpdateForSingleSubjectAsync(subjectEntity.Id, teachers);
+
         subjectEntity.Name = requestDto.Name;
         subjectEntity.NeptunCode = requestDto.NeptunCode;
+        //subjectEntity.SubjectTeachers = subjectTeachers; TODO check if needed
 
         await _gradeManagementDbContext.SaveChangesAsync();
 
-        return _mapper.Map<Subject>(subjectEntity);
+        return _mapper.Map<Shared.Dtos.Response.Subject>(subjectEntity);
     }
 
-    public async Task<Subject> CreateAsync(Subject requestDto)
+    public async Task<GradeManagement.Shared.Dtos.Response.Subject> CreateAsync(Shared.Dtos.Request.Subject requestDto)
     {
+        var teachers = await _gradeManagementDbContext.Teacher
+            .Where(t => requestDto.Teachers.Select(rqT=>rqT.Id).Contains(t.Id))
+            .ToListAsync();
+        var subjectTeachers = await _subjectTeacherService.UpdateForSingleSubjectAsync(requestDto.Id, teachers);
         var subjectEntity = new Data.Models.Subject
         {
             Name = requestDto.Name,
             NeptunCode = requestDto.NeptunCode,
-            Courses = []
+            Courses = [],
+            //SubjectTeachers = subjectTeachers TODO check if needed
         };
         _gradeManagementDbContext.Subject.Add(subjectEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<Subject>(subjectEntity);
+        return _mapper.Map<Shared.Dtos.Response.Subject>(subjectEntity);
     }
 
     public async Task DeleteAsync(long id)
@@ -85,5 +96,14 @@ public class SubjectService : ICrudServiceBase<Subject>
             .Include(s => s.Courses).Select(s => new { Id = s.Id, Courses = s.Courses })
             .SingleEntityAsync(s => s.Id == id, id);
         return _mapper.Map<List<Course>>(selectedSubjectEntity.Courses);
+    }
+
+    public async Task<List<Teacher>> GetAllTeachersByIdAsync(long id)
+    {
+        var selctedSubjectEntity = await _gradeManagementDbContext.Subject
+            .Include(s => s.SubjectTeachers).ThenInclude(st => st.Teacher)
+            .Select(s => new { Id = s.Id, SubjectTeachers = s.SubjectTeachers })
+            .SingleEntityAsync(s => s.Id == id, id);
+        return _mapper.Map<List<Teacher>>(selctedSubjectEntity.SubjectTeachers.Select(st => st.Teacher));
     }
 }
