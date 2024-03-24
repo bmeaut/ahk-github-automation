@@ -6,5 +6,5 @@ public class SubjectTeacher
     public Subject Subject { get; set; }
     public long SubjectId { get; set; }
     public User User { get; set; }
-    public long TeacherId { get; set; }
+    public long UserId { get; set; }
 }

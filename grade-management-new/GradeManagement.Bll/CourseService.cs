@@ -52,13 +52,11 @@ public class CourseService : ICrudServiceBase<Course>
 
         var courseEntity = await _gradeManagementDbContext.Course
             .SingleEntityAsync(c => c.Id == id, id);
-        courseEntity.Id = requestDto.Id;
         courseEntity.Name = requestDto.Name;
         courseEntity.MoodleCourseId = requestDto.MoodleCourseId;
         courseEntity.SubjectId = requestDto.SubjectId;
         courseEntity.SemesterId = requestDto.Semester.Id;
         courseEntity.LanguageId = requestDto.Language.Id;
-        //TODO: discuss course, teachers, groups connection
 
         await _gradeManagementDbContext.SaveChangesAsync();
 
@@ -75,7 +73,6 @@ public class CourseService : ICrudServiceBase<Course>
             SubjectId = requestDto.SubjectId,
             SemesterId = requestDto.Semester.Id,
             LanguageId = requestDto.Language.Id
-            //TODO: discuss course, teachers, groups connection
         };
         _gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
         await _gradeManagementDbContext.SaveChangesAsync();

@@ -24,11 +24,11 @@ public class SubjectTeacherService
             .ToListAsync();
 
         var teachersToAdd = teachers
-            .Where(t => !subjectTeachersForSubject.Select(st => st.TeacherId).Contains(t.Id))
-            .Select(t => new SubjectTeacher { SubjectId = subjectId, TeacherId = t.Id });
+            .Where(t => !subjectTeachersForSubject.Select(st => st.UserId).Contains(t.Id))
+            .Select(t => new SubjectTeacher { SubjectId = subjectId, UserId = t.Id });
 
         var teachersToRemove = subjectTeachersForSubject
-            .Where(st => !teachers.Select(t => t.Id).Contains(st.TeacherId));
+            .Where(st => !teachers.Select(t => t.Id).Contains(st.UserId));
 
         _gradeManagementDbContext.SubjectTeacher.AddRange(teachersToAdd);
         _gradeManagementDbContext.SubjectTeacher.RemoveRange(teachersToRemove);

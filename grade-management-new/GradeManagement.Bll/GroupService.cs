@@ -7,50 +7,58 @@ using AutSoft.Linq.Queryable;
 using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
 using GradeManagement.Shared.Dtos;
+using GradeManagement.Shared.Dtos.Request;
 
 using Microsoft.EntityFrameworkCore;
 
+using GroupTeacher = GradeManagement.Data.Models.GroupTeacher;
+
 namespace GradeManagement.Bll;
 
-public class GroupService : ICrudServiceBase<Group>
+public class GroupService : ICrudServiceBase<Group, Shared.Dtos.Response.Group>
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly IMapper _mapper;
-    private readonly GroupTeacherService _groupTeacherService;
+    private readonly UserService _userService;
 
     public GroupService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper,
-        GroupTeacherService groupTeacherService)
+        UserService userService)
     {
         _gradeManagementDbContext = gradeManagementDbContext;
         _mapper = mapper;
-        _groupTeacherService = groupTeacherService;
+        _userService = userService;
     }
 
-    public async Task<IEnumerable<Group>> GetAllAsync()
+    public async Task<IEnumerable<Shared.Dtos.Response.Group>> GetAllAsync()
     {
         return await _gradeManagementDbContext.Group
-            .ProjectTo<Group>(_mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.Response.Group>(_mapper.ConfigurationProvider)
             .OrderBy(g => g.Id).ToListAsync();
     }
 
-    public async Task<Group> GetByIdAsync(long id)
+    public async Task<Shared.Dtos.Response.Group> GetByIdAsync(long id)
     {
         return await _gradeManagementDbContext.Group
-            .ProjectTo<Group>(_mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.Response.Group>(_mapper.ConfigurationProvider)
             .SingleEntityAsync(g => g.Id == id, id);
     }
 
-    public async Task<Group> CreateAsync(Group requestDto)
+    public async Task<Shared.Dtos.Response.Group> CreateAsync(Group requestDto)
     {
         var groupEntity = new Data.Models.Group { Name = requestDto.Name, CourseId = requestDto.CourseId };
-        var teachers = await _gradeManagementDbContext.User
-            .Where(t => requestDto.Teachers.Select(rqT => rqT.Id).Contains(t.Id))
-            .ToListAsync();
-        var groupTeachers = await _groupTeacherService.UpdateTeachersByGroupIdAsync(groupEntity.Id, teachers);
-        groupEntity.GroupTeachers = groupTeachers;
         _gradeManagementDbContext.Group.Add(groupEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<Group>(groupEntity);
+        var teachers = await _userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
+        foreach (var teacher in teachers)
+        {
+            _gradeManagementDbContext.GroupTeacher.Add(new GroupTeacher
+            {
+                GroupId = groupEntity.Id, UserId = teacher.Id
+            });
+        }
+
+        await _gradeManagementDbContext.SaveChangesAsync();
+        return _mapper.Map<Shared.Dtos.Response.Group>(groupEntity);
     }
 
     public async Task DeleteAsync(long id)
@@ -61,7 +69,7 @@ public class GroupService : ICrudServiceBase<Group>
         await _gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<Group> UpdateAsync(long id, Group requestDto)
+    public async Task<Shared.Dtos.Response.Group> UpdateAsync(long id, Group requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -73,13 +81,17 @@ public class GroupService : ICrudServiceBase<Group>
             .SingleEntityAsync(g => g.Id == id, id);
         groupEntity.Name = requestDto.Name;
         groupEntity.CourseId = requestDto.CourseId;
-        var teachers = await _gradeManagementDbContext.User
-            .Where(t => requestDto.Teachers.Select(rqT => rqT.Id).Contains(t.Id))
-            .ToListAsync();
-        var groupTeachers = await _groupTeacherService.UpdateTeachersByGroupIdAsync(groupEntity.Id, teachers);
-        groupEntity.GroupTeachers = groupTeachers;
+
+        var teachers = await _userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
+        var oldGroupTeachers = await _gradeManagementDbContext.GroupTeacher.Where(gt => gt.GroupId == id).ToListAsync();
+        _gradeManagementDbContext.GroupTeacher.RemoveRange(oldGroupTeachers);
+        foreach (var teacher in teachers)
+        {
+            _gradeManagementDbContext.GroupTeacher.Add(new GroupTeacher { GroupId = id, UserId = teacher.Id });
+        }
+
         await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<Group>(groupEntity);
+        return _mapper.Map<Shared.Dtos.Response.Group>(groupEntity);
     }
 
     public async Task<List<User>> GetAllTeachersByIdAsync(long id)

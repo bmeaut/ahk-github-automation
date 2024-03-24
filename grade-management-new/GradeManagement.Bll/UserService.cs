@@ -98,4 +98,21 @@ public class UserService : ICrudServiceBase<User>
             .ProjectTo<Subject>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
+
+    public async Task<List<Data.Models.User>> GetAllUserEntitiesFromDtoListAsync(List<User> users)
+    {
+        var userEntities = await _gradeManagementDbContext.User
+            .Where(t => users.Select(rqT => rqT.Id).Contains(t.Id))
+            .ToListAsync();
+        if (userEntities.Count != users.Count)
+        {
+            //Select teachers not found
+            var teachersNotFoundIds = users.Where(rqT => userEntities.All(t => t.Id != rqT.Id)).Select(t => t.Id).ToList();
+            foreach (var teacherId in teachersNotFoundIds)
+            {
+                throw EntityNotFoundException.CreateForType<Data.Models.User>(teacherId);
+            }
+        }
+        return userEntities;
+    }
 }
