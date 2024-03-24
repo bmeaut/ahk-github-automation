@@ -1,6 +1,6 @@
 ﻿namespace GradeManagement.Data.Models;
 
-public class Exercise
+public class Exercise : ISoftDelete
 {
     public long Id { get; set; }
     public string Name { get; set; }
@@ -8,4 +8,5 @@ public class Exercise
     public Course Course { get; set; }
     public long CourseId { get; set; }
     public List<Assignment> Assignments { get; set; }
+    public bool IsDeleted { get; set; }
 }

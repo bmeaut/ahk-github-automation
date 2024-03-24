@@ -2,7 +2,7 @@ using GradeManagement.Shared.Enums;
 
 namespace GradeManagement.Data.Models;
 
-public class AssignmentEvent
+public class AssignmentEvent : ISoftDelete
 {
     public long Id { get; set; }
     public DateTimeOffset Date { get; set; }
@@ -12,4 +12,5 @@ public class AssignmentEvent
     public long AssignmentId { get; set; }
     public PullRequest PullRequest { get; set; }
     public long PullRequestId { get; set; }
+    public bool IsDeleted { get; set; }
 }

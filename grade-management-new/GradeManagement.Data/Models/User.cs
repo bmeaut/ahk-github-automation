@@ -2,7 +2,7 @@ using GradeManagement.Shared.Enums;
 
 namespace GradeManagement.Data.Models;
 
-public class User
+public class User : ISoftDelete
 {
     public long Id { get; set; }
     public string Name { get; set; }
@@ -12,4 +12,5 @@ public class User
     public UserType Type { get; set; }
     public List<GroupTeacher> GroupTeachers { get; set; }
     public List<SubjectTeacher> SubjectTeachers { get; set; }
+    public bool IsDeleted { get; set; }
 }

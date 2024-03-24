@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Linq.Queryable;
@@ -51,6 +51,6 @@ public class LanguageService : IRestrictedServiceBase<Language>
     {
         var languageEntity = await _gradeManagementDbContext.Language.SingleEntityAsync(l => l.Id == id, id);
         _gradeManagementDbContext.Language.Remove(languageEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
+        _gradeManagementDbContext.SaveChanges();
     }
 }

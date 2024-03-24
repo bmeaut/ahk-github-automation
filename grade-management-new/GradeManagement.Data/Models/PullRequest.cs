@@ -1,6 +1,6 @@
 ﻿namespace GradeManagement.Data.Models;
 
-public class PullRequest
+public class PullRequest : ISoftDelete
 {
     public long Id { get; set; }
     public string Url { get; set; }
@@ -9,4 +9,5 @@ public class PullRequest
     public Assignment Assignment { get; set; }
     public long AssignmentId { get; set; }
     public List<AssignmentEvent> AssignmentEvents { get; set; }
+    public bool IsDeleted { get; set; }
 }
