@@ -1,0 +1,272 @@
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+@page "/"
+<PageTitle>AHK Review UI</PageTitle>
+
+<style>
+	.sort-direction-icon {
+		--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+	}
+
+		.sort-direction-icon.mud-direction-asc {
+			--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+		}
+
+		.sort-direction-icon.mud-direction-desc {
+			--path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+		}
+
+	.custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
+		d: path(var(--path-svg))
+	}
+</style>
+
+@if (isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Style="position:absolute; left:50vw; top:50vh;" Size="Size.Large"/>
+}
+else
+{
+    <MudStack Row="true" Class="mt-6">
+        <MudSelect T="Subject" Label="Subject" @bind-Value="selectedSubject" @bind-Value:after="SubjectChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            @foreach (var subject in subjects ?? [])
+            {
+                <MudSelectItem Value="@subject">@subject.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="Course" Label="Course" @bind-Value="selectedCourse" @bind-Value:after="CourseChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            @foreach (var course in selectedSubject?.Courses ?? [])
+            {
+                <MudSelectItem Value="@course">@course.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="Exercise" Label="Task" @bind-Value="selectedTask" @bind-Value:after="TaskChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            @foreach (var task in selectedCourse?.Tasks ?? [])
+            {
+                <MudSelectItem Value="@task">@task.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSpacer/>
+        <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
+    </MudStack>
+    <MudDataGrid Items="@AssignmentsData" T="Assignment" Class="custom-grid">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id"/>
+            <PropertyColumn Property="x => x.GithubRepoName" Title="Repository name"/>
+            <PropertyColumn Property="x => x.Student.NeptunCode" Title="Neptun"/>
+            <PropertyColumn Property="x => JoinPullRequests(x)" Title="PRs"/>
+            <PropertyColumn Property="x => JoinCIWorkflows(x)" Title="Workflows"/>
+            <PropertyColumn Property="x => JoinScore(x)" Title="Pontok"/>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Assignment"/>
+        </PagerContent>
+    </MudDataGrid>
+}
+
+@code
+{
+
+    #region Data Grid helpers
+
+    private string JoinPullRequests(Assignment data)
+    {
+        //Kéne menteni a branch nevét is?
+        return string.Join(", ", data.PullRequests.Select(x => x.Url));
+    }
+
+    private string JoinCIWorkflows(Assignment data)
+    {
+        var filtered = data.AssignmentEvents?.Where(IsCICDWorkflow) ?? [];
+        string run = filtered.Count() == 1 ? "run" : "runs";
+        return $"{filtered.Count()} {run}, last: {filtered.LastOrDefault()?.Description}";
+    }
+
+    private bool IsCICDWorkflow(AssignmentEvent data)
+    {
+        return true;
+    }
+
+    private string JoinScore(Assignment data)
+    {
+        return string.Join(".", data.Scores.Select(x => x.Value));
+    }
+
+    #endregion
+
+    private const bool isDemo = true;
+
+    private bool isLoading = true;
+    private Subject? selectedSubject = null;
+    private Course? selectedCourse = null;
+    private Exercise? selectedTask = null;
+    private IEnumerable<Subject>? subjects;
+    private IEnumerable<Assignment> AssignmentsData = new List<Assignment>();
+
+    private void SubjectChanged()
+    {
+        selectedCourse = null;
+        selectedTask = null;
+    }
+
+    private void CourseChanged()
+    {
+        selectedTask = null;
+    }
+
+    private void TaskChanged()
+    {
+        AssignmentsData = selectedTask?.Assignments ?? [];
+    }
+
+    private async Task<IEnumerable<Subject>> GetSubjectsAsync()
+    {
+        if (!isDemo)
+        {
+            return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
+        }
+
+        return new List<Subject>()
+        {
+            new()
+            {
+                Id = 1,
+                Name = "Mobweb",
+                NeptunCode = "Neptun",
+                Courses = new List<Course>()
+                {
+                    new()
+                    {
+                        Name = "L01",
+                        Id = 1,
+                        MoodleCourseId = "Moodle",
+                        Tasks = new List<Exercise>()
+                        {
+                            new()
+                            {
+                                Id = 1,
+                                Name = "Android init",
+                                GithubPrefix = "Hello there"
+                            },
+                            new()
+                            {
+                                Id = 2,
+                                Name = "Kotlin",
+                                GithubPrefix = "General Kenobi"
+                            }
+                        }
+                    },
+                    new Course()
+                    {
+                        Name = "LA",
+                        Id = 2,
+                        MoodleCourseId = "MoodleAngol",
+                        Tasks = new List<Exercise>()
+                        {
+                            new()
+                            {
+                                Id = 1,
+                                Name = "Demo angol",
+                                GithubPrefix = "Hello there",
+                                Assignments = new List<Assignment>()
+                                {
+                                    new()
+                                    {
+                                        Id = 1,
+                                        GithubRepoName = "Repo",
+                                        Student = new Student()
+                                        {
+                                            NeptunCode = "Neptun"
+                                        },
+                                        PullRequests = new List<PullRequest>()
+                                        {
+                                            new()
+                                            {
+                                                Url = "PR"
+                                            }
+                                        },
+                                        Scores = new List<Score>()
+                                        {
+                                            new()
+                                            {
+                                                Value = "5"
+                                            }
+                                        },
+                                        AssignmentEvents = new List<AssignmentEvent>()
+                                    }
+                                }
+                            },
+                            new()
+                            {
+                                Id = 2,
+                                Name = "Kotlin angol",
+                                GithubPrefix = "General Kenobi"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private async Task<IEnumerable<Subject>> GetAssignmentsAsync()
+    {
+        if (!isDemo)
+        {
+            return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
+        }
+
+        return new List<Subject>();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            subjects = await GetSubjectsAsync();
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine(e.StackTrace);
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+            Snackbar.Add("Database error", Severity.Error);
+        }
+
+        isLoading = false;
+    }
+
+    /*private IEnumerable<CourseDTO> courses = new List<CourseDTO>
+        {
+        new CourseDTO(){
+            Id=13,
+            Name="Hello there",
+            TaskDtos = new List<TaskDTO>()
+                {
+                new TaskDTO()
+                    {
+                    Id=1L,
+                    Name="General Kenobi"
+            }
+        },
+        },
+        new CourseDTO(){
+            Id=15L,
+            Name="Mobweb",
+            TaskDtos = new List<TaskDTO>()
+                {
+                new TaskDTO()
+                    {
+                    Id=1L,
+                    Name="Task 1"
+                },
+                new TaskDTO()
+                    {
+                    Id=2L,
+                    Name="Task 4"
+            }
+        }
+    },
+        };*/
+
+}
