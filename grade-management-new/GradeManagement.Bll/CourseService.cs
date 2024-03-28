@@ -30,7 +30,8 @@ public class CourseService : ICrudServiceBase<Course>
             .Include(c => c.Semester)
             .Include(c => c.Language)
             .ProjectTo<Course>(_mapper.ConfigurationProvider)
-            .OrderBy(c => c.Id).ToListAsync();
+            .OrderBy(c => c.Id)
+            .ToListAsync();
     }
 
     public async Task<Course> GetByIdAsync(long id)
@@ -60,7 +61,7 @@ public class CourseService : ICrudServiceBase<Course>
 
         await _gradeManagementDbContext.SaveChangesAsync();
 
-        return _mapper.Map<Course>(await GetByIdAsync(courseEntity.Id));
+        return await GetByIdAsync(courseEntity.Id);
     }
 
     public async Task<Course> CreateAsync(Course requestDto)
@@ -76,7 +77,7 @@ public class CourseService : ICrudServiceBase<Course>
         };
         _gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
         await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<Course>(await GetByIdAsync(courseEntityToBeCreated.Id));
+        return await GetByIdAsync(courseEntityToBeCreated.Id);
     }
 
     public async Task DeleteAsync(long id)
@@ -88,10 +89,10 @@ public class CourseService : ICrudServiceBase<Course>
 
     public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync(long id)
     {
-        var selectedCourseEntity = await _gradeManagementDbContext.Course
-            .Include(c => c.Exercises)
-            .Select(c => new { Id = c.Id, Exercises = c.Exercises }).SingleEntityAsync(c => c.Id == id, id);
-        return _mapper.Map<List<Exercise>>(selectedCourseEntity.Exercises);
+        return await _gradeManagementDbContext.Exercise
+            .Where(e => e.CourseId == id)
+            .ProjectTo<Exercise>(_mapper.ConfigurationProvider)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync(long id)
