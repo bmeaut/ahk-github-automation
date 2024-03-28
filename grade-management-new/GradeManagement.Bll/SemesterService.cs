@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll;
 
-public class SemesterService : IRestrictedServiceBase<Semester>
+public class SemesterService : IRestrictedCrudServiceBase<Semester>
 {
 
     private readonly GradeManagementDbContext _gradeManagementDbContext;

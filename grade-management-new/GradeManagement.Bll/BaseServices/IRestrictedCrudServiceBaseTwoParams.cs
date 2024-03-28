@@ -1,6 +1,6 @@
 ﻿namespace GradeManagement.Bll.BaseServices;
 
-public interface IRestrictedServiceBase<TRequestDto, TResponseDto>
+public interface IRestrictedCrudServiceBase<TRequestDto, TResponseDto>
 {
     public Task<IEnumerable<TResponseDto>> GetAllAsync();
 

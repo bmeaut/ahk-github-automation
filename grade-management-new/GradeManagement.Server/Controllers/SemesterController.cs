@@ -10,4 +10,4 @@ namespace GradeManagement.Server.Controllers;
 
 [Route("api/semesters")]
 [ApiController]
-public class SemesterController(SemesterService semesterService) : RestrictedControllerBase<Semester>(semesterService);
+public class SemesterController(SemesterService semesterService) : RestrictedCrudControllerBase<Semester>(semesterService);

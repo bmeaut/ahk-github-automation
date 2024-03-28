@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers.BaseControllers;
 
-public abstract class CrudControllerBase<DtoClass>(ICrudServiceBase<DtoClass> crudService)
-    : RestrictedControllerBase<DtoClass>(crudService)
+public abstract class CrudControllerBase<TDto>(ICrudServiceBase<TDto> crudService)
+    : RestrictedCrudControllerBase<TDto>(crudService)
 {
     [HttpPut("{id:long}")]
-    public async Task<DtoClass> UpdateAsync([FromRoute] long id, [FromBody] DtoClass requestDto)
+    public async Task<TDto> UpdateAsync([FromRoute] long id, [FromBody] TDto requestDto)
     {
         return await crudService.UpdateAsync(id, requestDto);
     }

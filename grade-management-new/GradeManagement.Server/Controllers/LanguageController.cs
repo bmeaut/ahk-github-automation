@@ -11,4 +11,4 @@ namespace GradeManagement.Server.Controllers;
 [Route("api/languages")]
 [ApiController]
 public class LanguageController(LanguageService languageService)
-    : RestrictedControllerBase<Language>(languageService);
+    : RestrictedCrudControllerBase<Language>(languageService);

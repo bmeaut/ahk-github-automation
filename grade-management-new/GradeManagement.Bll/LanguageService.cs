@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll;
 
-public class LanguageService : IRestrictedServiceBase<Language>
+public class LanguageService : IRestrictedCrudServiceBase<Language>
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly IMapper _mapper;
