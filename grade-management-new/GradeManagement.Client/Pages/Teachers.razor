@@ -2,6 +2,8 @@
 
 @inject HttpClient Http
 @inject IDialogService DialogService
+@inject CrudSnackbarService SnackbarService
+@inject SubjectService SubjectService
 
 <LoadingComponent IsLoading="@_isLoading">
     <MudDataGrid T="Teacher" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
@@ -30,21 +32,6 @@
 
     readonly string BaseUrl = Endpoints.TEACHERS;
 
-    private async Task<List<Teacher>> LoadTeachers()
-    {
-        return
-        [
-            new Teacher
-            {
-                Id = 1,
-                Name = "Teacher 1",
-                NeptunCode = "ABC123",
-                GithubId = "github",
-                BmeEmail = "email@edu.bme.hu",
-            },
-        ];
-        return await Http.GetFromJsonAsync<List<Teacher>>(BaseUrl);
-    }
 
     private async Task OpenDialog()
     {
@@ -60,11 +47,13 @@
                 //Right now it needs Teacher list to be filled
                 _teachers.Remove(result.Data as Teacher);
                 _teachers.Add(newObject);
+                SnackbarService.ShowAddSuccess();
             }
             else
             {
                 _teachers.Remove(result.Data as Teacher);
                 await Console.Error.WriteLineAsync("Error");
+                SnackbarService.ShowAddError();
             }
         }
     }
@@ -72,11 +61,12 @@
     private async Task StartEditing(CellContext<Teacher?> context)
     {
         await context.Actions.StartEditingItemAsync();
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _teachers = await LoadTeachers();
+        _teachers = await SubjectService.LoadTeachers();
         _isLoading = false;
     }
 
@@ -86,6 +76,11 @@
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync("Error");
+            SnackbarService.ShowEditError();
+        }
+        else
+        {
+            SnackbarService.ShowEditSuccess();
         }
     }
 
@@ -96,7 +91,14 @@
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync("Error");
+            SnackbarService.ShowDeleteError();
         }
+        else
+        {
+            SnackbarService.ShowDeleteSuccess();
+        }
+
+        StateHasChanged();
     }
 
 }

@@ -1,0 +1,34 @@
+﻿@typeparam TItem
+<TemplateColumn Title="Actions" T="TItem">
+    <CellTemplate>
+        <MudStack Row>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+        </MudStack>
+    </CellTemplate>
+</TemplateColumn>
+
+@code {
+    [Inject] private IDialogService DialogService { get; set; }
+
+    [Parameter] public Func<CellContext<TItem>, Task>? OnEditItem { get; set; }
+    [Parameter] public Func<TItem, Task>? OnDeleteItem { get; set; }
+
+    private async Task StartEditing(CellContext<TItem> context)
+    {
+        await OnEditItem?.Invoke(context);
+    }
+
+    private async Task DeleteItem(TItem item)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Are you sure you want to delete this item?",
+            yesText: "Delete!", cancelText: "Cancel");
+        if (result == true)
+        {
+            await OnDeleteItem?.Invoke(item);
+        }
+    }
+
+}

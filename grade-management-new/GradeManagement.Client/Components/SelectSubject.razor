@@ -1,7 +1,7 @@
 ﻿@using GradeManagement.Client.Pages
 @inject HttpClient Http
 
-<MudSelect T="Subject" Value="@Value" ValueChanged="@((Subject value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@subjectToString" Label="Subject">
+<MudSelect T="Subject" Value="@Value" ValueChanged="@((Subject value) => { Value = value; ValueChanged.InvokeAsync(value); })" ToStringFunc="@subjectToString" Label="Subject" Style="background-color: white;" Dense="true" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
     @foreach (var semester in _subjects)
     {
         <MudSelectItem Value="@semester"/>

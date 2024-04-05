@@ -1,13 +1,21 @@
+@inject SubjectService SubjectService
+
 <MudAppBar Elevation="5">
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
     <MudText Typo="Typo.h3" Class="ml-3">AHK Review UI</MudText>
     <MudSpacer/>
-    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
+    <SelectSubject @bind-Value="@SubjectService.CurrentSubject"/>
+    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/>
 </MudAppBar>
 
 @code{
 
     [Parameter] public Action DrawerToggle { get; set; }
     [Parameter] public bool DrawerOpened { get; set; }
+
+    private void SelectSubject(Subject value)
+    {
+        SubjectService.CurrentSubject = value;
+    }
 
 }

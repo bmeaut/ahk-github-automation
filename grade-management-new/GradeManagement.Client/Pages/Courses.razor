@@ -2,9 +2,12 @@
 
 @inject HttpClient Http
 @inject IDialogService DialogService
+@inject CrudSnackbarService SnackbarService
+@inject SubjectService SubjectService
+@inject NavigationManager NavigationManager
 
 <LoadingComponent IsLoading="@_isLoading">
-    <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+    <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
@@ -17,14 +20,6 @@
                     <SelectSemester @bind-Value="@context.Item.Semester"/>
                 </EditTemplate>
             </TemplateColumn>
-            <TemplateColumn Title="Subject">
-                <CellTemplate>
-                    @context.Item.Subject.Name
-                </CellTemplate>
-                <EditTemplate>
-                    <SelectSubject @bind-Value="@context.Item.Subject"/>
-                </EditTemplate>
-            </TemplateColumn>
             <TemplateColumn Title="Language">
                 <CellTemplate>
                     @context.Item.Language.Name
@@ -33,14 +28,7 @@
                     <SelectLanguage @bind-Value="@context.Item.Language"/>
                 </EditTemplate>
             </TemplateColumn>
-            <TemplateColumn Title="Actions">
-                <CellTemplate>
-                    <MudStack Row>
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
+            <DataGridActions TItem="Course" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
     <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
@@ -52,22 +40,12 @@
 
     readonly string BaseUrl = Endpoints.COURSES;
 
-    private async Task<List<Course>> LoadCourses()
+    private void RowClickEvent(DataGridRowClickEventArgs<Course> args)
     {
-        return
-        [
-            new Course
-            {
-                Id = 1,
-                Name = "Course 1",
-                MoodleCourseId = "1234",
-                Semester = new Semester { Id = 1, Name = "Semester 1" },
-                Subject = new Subject { Id = 1, Name = "Subject 1" },
-                Language = new Language { Id = 1, Name = "Language 1" }
-            },
-        ];
-        return await Http.GetFromJsonAsync<List<Course>>(BaseUrl);
+        var courseId = args.Item.Id;
+        NavigationManager.NavigateTo($"/courses/{courseId}");
     }
+
 
     private async Task OpenDialog()
     {
@@ -83,11 +61,13 @@
                 //Right now it needs Course list to be filled
                 _courses.Remove(result.Data as Course);
                 _courses.Add(newObject);
+                SnackbarService.ShowAddSuccess();
             }
             else
             {
                 _courses.Remove(result.Data as Course);
                 await Console.Error.WriteLineAsync("Error");
+                SnackbarService.ShowAddError();
             }
         }
     }
@@ -95,11 +75,12 @@
     private async Task StartEditing(CellContext<Course?> context)
     {
         await context.Actions.StartEditingItemAsync();
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _courses = await LoadCourses();
+        _courses = await SubjectService.LoadCourses();
         _isLoading = false;
     }
 
@@ -109,6 +90,11 @@
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync("Error");
+            SnackbarService.ShowEditError();
+        }
+        else
+        {
+            SnackbarService.ShowEditSuccess();
         }
     }
 
@@ -119,7 +105,14 @@
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync("Error");
+            SnackbarService.ShowDeleteError();
         }
+        else
+        {
+            SnackbarService.ShowDeleteSuccess();
+        }
+
+        StateHasChanged();
     }
 
 }

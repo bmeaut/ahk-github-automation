@@ -1,0 +1,96 @@
+﻿
+
+@inject HttpClient Http
+
+<LoadingComponent LongTask="@_loading">
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">@course.Name</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudField Label="Moodle Course Id" Variant="Variant.Text">@course.MoodleCourseId</MudField>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudField Label="Semester" Variant="Variant.Text">@course.Semester.Name</MudField>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudField Label="Language" Variant="Variant.Text">@course.Language.Name</MudField>
+                </MudItem>
+            </MudGrid>
+            <MudDivider Class="my-3"/>
+            <MudText Typo="Typo.subtitle2">Teachers</MudText>
+            <MudList>
+                @foreach (var teacher in course.CourseTeachers)
+                {
+                    <MudListItem>@teacher.Teacher.Name</MudListItem>
+                }
+            </MudList>
+            <MudDivider Class="my-3"/>
+            <MudText Typo="Typo.subtitle2">Groups</MudText>
+            <MudList>
+                @foreach (var group in course.Groups)
+                {
+                    <MudListItem>@group.Name</MudListItem>
+                }
+            </MudList>
+            <MudDivider Class="my-3"/>
+            <MudText Typo="Typo.subtitle2">Tasks</MudText>
+            <MudList>
+                @foreach (var task in course.Tasks)
+                {
+                    <MudListItem>@task.Name</MudListItem>
+                }
+            </MudList>
+        </MudCardContent>
+    </MudCard>
+</LoadingComponent>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    Course course;
+
+    private async Task<Course> _loadCourseAsync()
+    {
+        await Task.Delay(2000);
+        return new Course
+        {
+            Id = 1,
+            Name = "Course 1",
+            MoodleCourseId = "1234",
+            Semester = new Semester { Id = 1, Name = "Semester 1" },
+            Subject = new Subject { Id = 1, Name = "Subject 1" },
+            Language = new Language { Id = 1, Name = "Language 1" },
+            CourseTeachers = new List<CourseTeacher>
+            {
+                new() { Id = 1, Teacher = new Teacher { Id = 1, Name = "Teacher 1" } },
+                new() { Id = 2, Teacher = new Teacher { Id = 2, Name = "Teacher 2" } }
+            },
+            Groups = new List<Group>
+            {
+                new() { Id = 1, Name = "Group 1" },
+                new() { Id = 2, Name = "Group 2" }
+            },
+            Tasks = new List<Exercise>
+            {
+                new() { Id = 1, Name = "Task 1" },
+                new() { Id = 2, Name = "Task 2" }
+            }
+        };
+        return await Http.GetFromJsonAsync<Course>($"{Endpoints.COURSES}/{Id}");
+    }
+
+    /*protected override async Task OnInitializedAsync()
+    {
+        course = await _loadCourseAsync();
+    }*/
+
+    private async Task _loading()
+    {
+        course = await _loadCourseAsync();
+    }
+
+}
