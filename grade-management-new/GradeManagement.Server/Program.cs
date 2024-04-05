@@ -37,7 +37,9 @@ namespace GradeManagement.Server
             builder.Services.AddTransient<StudentService>();
             builder.Services.AddTransient<SubjectService>();
             builder.Services.AddTransient<ExerciseService>();
-            builder.Services.AddTransient<TeacherService>();
+            builder.Services.AddTransient<UserService>();
+            builder.Services.AddTransient<GroupTeacherService>();
+            builder.Services.AddTransient<SubjectTeacherService>();
 
             builder.Services.AddExceptionHandler<EntityNotFoundExceptionHandler>();
             builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
