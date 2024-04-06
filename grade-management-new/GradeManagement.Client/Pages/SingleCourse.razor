@@ -21,30 +21,6 @@
                     <MudField Label="Language" Variant="Variant.Text">@course.Language.Name</MudField>
                 </MudItem>
             </MudGrid>
-            <MudDivider Class="my-3"/>
-            <MudText Typo="Typo.subtitle2">Teachers</MudText>
-            <MudList>
-                @foreach (var teacher in course.CourseTeachers)
-                {
-                    <MudListItem>@teacher.Teacher.Name</MudListItem>
-                }
-            </MudList>
-            <MudDivider Class="my-3"/>
-            <MudText Typo="Typo.subtitle2">Groups</MudText>
-            <MudList>
-                @foreach (var group in course.Groups)
-                {
-                    <MudListItem>@group.Name</MudListItem>
-                }
-            </MudList>
-            <MudDivider Class="my-3"/>
-            <MudText Typo="Typo.subtitle2">Tasks</MudText>
-            <MudList>
-                @foreach (var task in course.Tasks)
-                {
-                    <MudListItem>@task.Name</MudListItem>
-                }
-            </MudList>
         </MudCardContent>
     </MudCard>
 </LoadingComponent>
@@ -62,8 +38,8 @@
             Name = "Course 1",
             MoodleCourseId = "1234",
             Semester = new Semester { Id = 1, Name = "Semester 1" },
-            Subject = new Subject { Id = 1, Name = "Subject 1" },
             Language = new Language { Id = 1, Name = "Language 1" },
+            /*Subject = new Subject { Id = 1, Name = "Subject 1" },
             CourseTeachers = new List<CourseTeacher>
             {
                 new() { Id = 1, Teacher = new Teacher { Id = 1, Name = "Teacher 1" } },
@@ -78,7 +54,7 @@
             {
                 new() { Id = 1, Name = "Task 1" },
                 new() { Id = 2, Name = "Task 2" }
-            }
+            }*/
         };
         return await Http.GetFromJsonAsync<Course>($"{Endpoints.COURSES}/{Id}");
     }

@@ -3,10 +3,15 @@ using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
+
+using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
+using GradeManagement.Data.Models;
+
 using Microsoft.EntityFrameworkCore;
-using Course = GradeManagement.Data.Models.Course;
-using Subject = GradeManagement.Shared.Dtos.Subject;
+
+using Course = GradeManagement.Shared.Dtos.Course;
+using Subject = GradeManagement.Shared.Dtos.Request.Subject;
 using Task = System.Threading.Tasks.Task;
 using User = GradeManagement.Shared.Dtos.User;
 

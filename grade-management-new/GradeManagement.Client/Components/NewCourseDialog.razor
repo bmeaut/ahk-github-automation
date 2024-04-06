@@ -3,14 +3,13 @@
 
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h4">New Subject</MudText>
+        <MudText Typo="Typo.h4">New Course</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
             <MudTextField T="string" Label="Neptun Code" @bind-Value="@value.MoodleCourseId" Required="true"></MudTextField>
             <SelectSemester @bind-Value="@value.Semester"/>
-            <SelectSubject @bind-Value="@value.Subject"/>
             <SelectLanguage @bind-Value="@value.Language"/>
         </MudForm>
     </DialogContent>

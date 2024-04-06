@@ -1,0 +1,14 @@
+﻿@using MudBlazor
+@using GradeManagement.Shared.Enums
+
+<MudSelect T="UserType" Label="User Type" Variant="Variant.Outlined" Value="Value" ValueChanged="ValueChanged">
+    @foreach (var userType in Enum.GetValues<UserType>())
+    {
+        <MudSelectItem T="UserType" Value="@userType">@userType</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter] public UserType Value { get; set; }
+    [Parameter] public EventCallback<UserType> ValueChanged { get; set; }
+}

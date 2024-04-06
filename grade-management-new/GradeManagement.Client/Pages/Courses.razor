@@ -53,19 +53,21 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _courses.Add(result.Data as Course);
-            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
+            var newCourse = result.Data as Course;
+            newCourse.SubjectId = SubjectService.CurrentSubject.Id;
+            _courses.Add(newCourse);
+            var response = await Http.PostAsJsonAsync(BaseUrl, newCourse);
             if (response.IsSuccessStatusCode)
             {
                 Course newObject = await response.Content.ReadFromJsonAsync<Course>();
                 //Right now it needs Course list to be filled
-                _courses.Remove(result.Data as Course);
+                _courses.Remove(newCourse);
                 _courses.Add(newObject);
                 SnackbarService.ShowAddSuccess();
             }
             else
             {
-                _courses.Remove(result.Data as Course);
+                _courses.Remove(newCourse);
                 await Console.Error.WriteLineAsync("Error");
                 SnackbarService.ShowAddError();
             }

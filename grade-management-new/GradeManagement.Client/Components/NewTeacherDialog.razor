@@ -1,6 +1,7 @@
-﻿<MudDialog>
+﻿@using GradeManagement.Shared.Enums
+<MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h4">New Teacher</MudText>
+        <MudText Typo="Typo.h4">New User</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
@@ -8,6 +9,7 @@
             <MudTextField T="string" Label="Neptun Code" For="@(() => value.NeptunCode)" @bind-Value="value.NeptunCode" Required="true"></MudTextField>
             <MudTextField T="string" Label="Github Id" For="@(() => value.GithubId)" @bind-Value="value.GithubId" Required="true"></MudTextField>
             <MudTextField T="string" Label="BME Email" For="@(() => value.BmeEmail)" @bind-Value="value.BmeEmail" Required="true"></MudTextField>
+            <SelectUserType @bind-Value="value.Type"></SelectUserType>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -43,9 +45,9 @@
                 BmeEmail = "email@edu.bme.hu",
             },*/
 
-    public Teacher value = new()
+    public User value = new()
     {
-        CourseTeachers = new()
+        Type = UserType.User
     };
 
 }

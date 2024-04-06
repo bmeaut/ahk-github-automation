@@ -2,6 +2,7 @@
 @inject ISnackbar Snackbar
 
 @page "/"
+@using GradeManagement.Shared.Dtos.Response
 <PageTitle>AHK Review UI</PageTitle>
 
 <style>
@@ -36,18 +37,7 @@ else
                 <MudSelectItem Value="@subject">@subject.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudSelect T="Course" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var course in _selectedSubject?.Courses ?? [])
-            {
-                <MudSelectItem Value="@course">@course.Name</MudSelectItem>
-            }
-        </MudSelect>
-        <MudSelect T="Exercise" Label="Task" @bind-Value="_selectedTask" @bind-Value:after="TaskChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var task in _selectedCourse?.Tasks ?? [])
-            {
-                <MudSelectItem Value="@task">@task.Name</MudSelectItem>
-            }
-        </MudSelect>
+
         <MudSpacer/>
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
     </MudStack>
@@ -136,7 +126,7 @@ else
                 Id = 1,
                 Name = "Mobweb",
                 NeptunCode = "Neptun",
-                Courses = new List<Course>()
+                /*Courses = new List<Course>()
                 {
                     new()
                     {
@@ -207,7 +197,7 @@ else
                             }
                         }
                     }
-                }
+                }*/
             }
         };
     }

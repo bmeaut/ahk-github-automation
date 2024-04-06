@@ -6,13 +6,14 @@
 @inject SubjectService SubjectService
 
 <LoadingComponent IsLoading="@_isLoading">
-    <MudDataGrid T="Teacher" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+    <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
             <PropertyColumn Property="x => x.GithubId" Title="Github Id"/>
             <PropertyColumn Property="x => x.BmeEmail" Title="Bme Email"/>
+            <PropertyColumn Property="x => x.Type" Title="Type"/>
             <TemplateColumn Title="Actions">
                 <CellTemplate>
                     <MudStack Row>
@@ -27,7 +28,7 @@
 </LoadingComponent>
 
 @code {
-    private List<Teacher> _teachers = new();
+    private List<User> _teachers = new();
     private bool _isLoading = true;
 
     readonly string BaseUrl = Endpoints.TEACHERS;
@@ -39,26 +40,26 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _teachers.Add(result.Data as Teacher);
+            _teachers.Add(result.Data as User);
             var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
             if (response.IsSuccessStatusCode)
             {
-                Teacher newObject = await response.Content.ReadFromJsonAsync<Teacher>();
+                User newObject = await response.Content.ReadFromJsonAsync<User>();
                 //Right now it needs Teacher list to be filled
-                _teachers.Remove(result.Data as Teacher);
+                _teachers.Remove(result.Data as User);
                 _teachers.Add(newObject);
                 SnackbarService.ShowAddSuccess();
             }
             else
             {
-                _teachers.Remove(result.Data as Teacher);
+                _teachers.Remove(result.Data as User);
                 await Console.Error.WriteLineAsync("Error");
                 SnackbarService.ShowAddError();
             }
         }
     }
 
-    private async Task StartEditing(CellContext<Teacher?> context)
+    private async Task StartEditing(CellContext<User?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
@@ -70,7 +71,7 @@
         _isLoading = false;
     }
 
-    private async Task CommittedItemChanges(Teacher items)
+    private async Task CommittedItemChanges(User items)
     {
         var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
         if (!response.IsSuccessStatusCode)
@@ -84,7 +85,7 @@
         }
     }
 
-    private async Task DeleteItem(Teacher item)
+    private async Task DeleteItem(User item)
     {
         _teachers.Remove(item);
         var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");

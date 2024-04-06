@@ -25,63 +25,6 @@
                     <MudTextField @bind-Value="@course.Language.Name" Label="Language" Disabled="@(!EditMode)"/>
                 </MudItem>
             </MudGrid>
-            <MudDivider/>
-            <MudText Typo="Typo.subtitle2">Teachers</MudText>
-            @if (EditMode)
-            {
-                <MudChipSet @bind-Values="@SelectedTeacherIds" AllowAddingDuplicates="false">
-                    @foreach (var teacher in AvailableTeachers)
-                    {
-                        <MudChip Value="@teacher.Id">@teacher.Name</MudChip>
-                    }
-                </MudChipSet>
-            }
-            else
-            {
-                <MudList Dense="true">
-                    @foreach (var teacher in course.CourseTeachers)
-                    {
-                        <MudListItem>@teacher.Teacher.Name</MudListItem>
-                    }
-                </MudList>
-            }
-            <MudDivider/>
-            <MudText Typo="Typo.subtitle2">Groups</MudText>
-            @if (EditMode)
-            {
-                <MudChipSet @bind-Values="@SelectedGroupIds" AllowAddingDuplicates="false">
-                    @foreach (var group in AvailableGroups)
-                    {
-                        <MudChip Value="@group.Id">@group.Name</MudChip>
-                    }
-                </MudChipSet>
-            }
-            else
-            {
-                <MudList Dense="true">
-                    @foreach (var group in course.Groups)
-                    {
-                        <MudListItem>@group.Name</MudListItem>
-                    }
-                </MudList>
-            }
-            <MudDivider/>
-            <MudText Typo="Typo.subtitle2">Tasks</MudText>
-            @if (EditMode)
-            {
-                <MultiSelectAutoComplete T="Exercise" @bind-Values="SelectedTask"
-                                         SearchFunc="ExerciseSearchFunc"
-                                         GetIDFunc="c => (int)c.Id" GetNameFunc="c => c.Name"/>
-            }
-            else
-            {
-                <MudList Dense="true">
-                    @foreach (var task in course.Tasks)
-                    {
-                        <MudListItem>@task.Name</MudListItem>
-                    }
-                </MudList>
-            }
         </MudCardContent>
     </MudCard>
 </LoadingComponent>
@@ -94,8 +37,6 @@
     private List<long> SelectedGroupIds { get; set; } = new();
     private IEnumerable<Exercise> SelectedTask { get; set; } = new List<Exercise>();
 
-    private List<Teacher> AvailableTeachers { get; set; } = new();
-    private List<Group> AvailableGroups { get; set; } = new();
     private List<Exercise> AvailableTasks { get; set; } = new();
 
 
@@ -112,30 +53,6 @@
     private async Task<Course> _loadCourseAsync()
     {
         await Task.Delay(2000);
-        return new Course
-        {
-            Id = 1,
-            Name = "Course 1",
-            MoodleCourseId = "1234",
-            Semester = new Semester { Id = 1, Name = "Semester 1" },
-            Subject = new Subject { Id = 1, Name = "Subject 1" },
-            Language = new Language { Id = 1, Name = "Language 1" },
-            CourseTeachers = new List<CourseTeacher>
-            {
-                new() { Id = 1, Teacher = new Teacher { Id = 1, Name = "Teacher 1" } },
-                new() { Id = 2, Teacher = new Teacher { Id = 2, Name = "Teacher 2" } }
-            },
-            Groups = new List<Group>
-            {
-                new() { Id = 1, Name = "Group 1" },
-                new() { Id = 2, Name = "Group 2" }
-            },
-            Tasks = new List<Exercise>
-            {
-                new() { Id = 1, Name = "Exercise 1" },
-                new() { Id = 2, Name = "Exercise 2" },
-            }
-        };
         return await Http.GetFromJsonAsync<Course>($"{Endpoints.COURSES}/{Id}");
     }
 
@@ -147,13 +64,8 @@
     private async Task _loading()
     {
         course = await _loadCourseAsync();
-        AvailableTeachers = await SubjectService.LoadTeachers();
-        AvailableGroups = await SubjectService.LoadGroups();
         AvailableTasks = await SubjectService.LoadExercises();
 
-        SelectedTeacherIds = course.CourseTeachers.Select(ct => ct.Teacher.Id).ToList();
-        SelectedGroupIds = course.Groups.Select(g => g.Id).ToList();
-        SelectedTask = course.Tasks.ToList();
     }
 
 }
