@@ -1,11 +1,26 @@
-using Microsoft.AspNetCore.Http;
+using GradeManagement.Bll;
+using GradeManagement.Server.Controllers.BaseControllers;
+using GradeManagement.Shared.Dtos;
+using GradeManagement.Shared.Dtos.Request;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers
 {
     [Route("api/groups")]
     [ApiController]
-    public class GroupController : ControllerBase
+    public class GroupController(GroupService groupService) : CrudControllerBase<Group,Shared.Dtos.Response.Group>(groupService)
     {
+        [HttpGet("{id:long}/teachers")]
+        public async Task<List<User>> GetAllTeachersByIdAsync([FromRoute] long id)
+        {
+            return await groupService.GetAllTeachersByIdAsync(id);
+        }
+
+        [HttpGet("{id:long}/students")]
+        public async Task<List<User>> GetAllStudentsByIdAsync([FromRoute] long id)
+        {
+            return await groupService.GetAllStudentsByIdAsync(id);
+        }
     }
 }
