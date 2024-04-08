@@ -38,7 +38,7 @@ public class SubjectService(HttpClient Http)
 
     public async Task<List<Course>> LoadCourses(bool loadAll = false)
     {
-        return await Http.GetFromJsonAsync<List<Course>>(Endpoints.COURSES) ?? [];
+        return await Http.GetFromJsonAsync<List<Course>>(Endpoints.SUBJECTS + $"/{_currentSubject.Id}/courses") ?? [];
     }
 
     public async Task<List<Semester>> LoadSemesters(bool loadAll = false)
@@ -53,7 +53,7 @@ public class SubjectService(HttpClient Http)
 
     public async Task<List<User>> LoadTeachers(bool loadAll = false)
     {
-        return await Http.GetFromJsonAsync<List<User>>(Endpoints.TEACHERS) ?? [];
+        return await Http.GetFromJsonAsync<List<User>>(Endpoints.SUBJECTS + $"/{_currentSubject.Id}/teachers") ?? [];
     }
 
     public async Task<List<Student>> LoadStudents(bool loadAll = false)

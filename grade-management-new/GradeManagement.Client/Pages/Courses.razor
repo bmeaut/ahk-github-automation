@@ -1,12 +1,14 @@
 ﻿@page "/courses"
 
+@implements IDisposable
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
 @inject NavigationManager NavigationManager
 
-<LoadingComponent IsLoading="@_isLoading">
+
+<LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
     <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
@@ -36,6 +38,7 @@
 
 @code {
     private List<Course> _courses = new();
+    private LoadingComponent? loadingComponentRef;
     private bool _isLoading = true;
 
     readonly string BaseUrl = Endpoints.COURSES;
@@ -44,6 +47,11 @@
     {
         var courseId = args.Item.Id;
         NavigationManager.NavigateTo($"/courses/{courseId}");
+    }
+
+    private async Task _loading()
+    {
+        _courses = await SubjectService.LoadCourses();
     }
 
 
@@ -80,12 +88,6 @@
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        _courses = await SubjectService.LoadCourses();
-        _isLoading = false;
-    }
-
     private async Task CommittedItemChanges(Course items)
     {
         var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
@@ -115,6 +117,21 @@
         }
 
         StateHasChanged();
+    }
+
+    private void OnSubjectChanged()
+    {
+        loadingComponentRef?.StartLoading();
+    }
+
+    protected override void OnInitialized()
+    {
+        SubjectService.OnChange += OnSubjectChanged;
+    }
+
+    public void Dispose()
+    {
+        SubjectService.OnChange -= OnSubjectChanged;
     }
 
 }

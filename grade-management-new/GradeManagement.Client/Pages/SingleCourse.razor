@@ -1,24 +1,41 @@
-﻿
+﻿@page "/courses/{Id:int}"
+@using GradeManagement.Shared.Dtos.Request
 
 @inject HttpClient Http
+@inject CrudSnackbarService SnackbarService
+@inject IDialogService DialogService
 
 <LoadingComponent LongTask="@_loading">
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@course.Name</MudText>
+                <MudText Typo="Typo.h4">@_course.Name</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudGrid>
                 <MudItem xs="12" sm="6" md="4">
-                    <MudField Label="Moodle Course Id" Variant="Variant.Text">@course.MoodleCourseId</MudField>
+                    <MudField Label="Moodle Course Id" Variant="Variant.Text">@_course.MoodleCourseId</MudField>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="4">
-                    <MudField Label="Semester" Variant="Variant.Text">@course.Semester.Name</MudField>
+                    <MudField Label="Semester" Variant="Variant.Text">@_course.Semester.Name</MudField>
                 </MudItem>
                 <MudItem xs="12" sm="6" md="4">
-                    <MudField Label="Language" Variant="Variant.Text">@course.Language.Name</MudField>
+                    <MudField Label="Language" Variant="Variant.Text">@_course.Language.Name</MudField>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
+                        <MudText Typo="Typo.h6" Style="align-self: start">Exercises:</MudText>
+                        <ExerciseDataGrid Values="_exercises"/>
+                        <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewExerciseDialog">New Exercise</MudButton>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
+                        <MudText Typo="Typo.h6" Style="align-self: start">Groups:</MudText>
+                        <GroupDataGrid Values="_groups"/>
+                        <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewGroupDialog">New Exercise</MudButton>
+                    </MudStack>
                 </MudItem>
             </MudGrid>
         </MudCardContent>
@@ -27,46 +44,82 @@
 
 @code {
     [Parameter] public int Id { get; set; }
-    Course course;
+    Course _course;
+    List<Exercise> _exercises;
+    List<Group> _groups;
 
     private async Task<Course> _loadCourseAsync()
     {
-        await Task.Delay(2000);
-        return new Course
-        {
-            Id = 1,
-            Name = "Course 1",
-            MoodleCourseId = "1234",
-            Semester = new Semester { Id = 1, Name = "Semester 1" },
-            Language = new Language { Id = 1, Name = "Language 1" },
-            /*Subject = new Subject { Id = 1, Name = "Subject 1" },
-            CourseTeachers = new List<CourseTeacher>
-            {
-                new() { Id = 1, Teacher = new Teacher { Id = 1, Name = "Teacher 1" } },
-                new() { Id = 2, Teacher = new Teacher { Id = 2, Name = "Teacher 2" } }
-            },
-            Groups = new List<Group>
-            {
-                new() { Id = 1, Name = "Group 1" },
-                new() { Id = 2, Name = "Group 2" }
-            },
-            Tasks = new List<Exercise>
-            {
-                new() { Id = 1, Name = "Task 1" },
-                new() { Id = 2, Name = "Task 2" }
-            }*/
-        };
         return await Http.GetFromJsonAsync<Course>($"{Endpoints.COURSES}/{Id}");
     }
 
-    /*protected override async Task OnInitializedAsync()
+    private async Task<List<Exercise>> _loadExercisesAsync()
     {
-        course = await _loadCourseAsync();
-    }*/
+        return await Http.GetFromJsonAsync<List<Exercise>>($"{Endpoints.COURSES}/{Id}/exercises");
+    }
+
+    private async Task<List<Group>> _loadGroupsAsync()
+    {
+        return await Http.GetFromJsonAsync<List<Group>>($"{Endpoints.COURSES}/{Id}/groups");
+    }
 
     private async Task _loading()
     {
-        course = await _loadCourseAsync();
+        _course = await _loadCourseAsync();
+        _exercises = await _loadExercisesAsync();
+        _groups = await _loadGroupsAsync();
+    }
+
+    private async Task NewExerciseDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewExerciseDialog>("Hello");
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data != null)
+        {
+            var newExercise = result.Data as Exercise;
+            newExercise.CourseId = Id;
+            _exercises.Add(newExercise);
+            var response = await Http.PostAsJsonAsync(Endpoints.EXERCISES, newExercise);
+            if (response.IsSuccessStatusCode)
+            {
+                Exercise newObject = await response.Content.ReadFromJsonAsync<Exercise>();
+                _exercises.Remove(newExercise);
+                _exercises.Add(newObject);
+                SnackbarService.ShowAddSuccess();
+            }
+            else
+            {
+                //_exercises.Remove(newCourse);
+                await Console.Error.WriteLineAsync("Error");
+                SnackbarService.ShowAddError();
+            }
+        }
+    }
+
+    private async Task NewGroupDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewGroupDialog>("Hello");
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data != null)
+        {
+            var newGroup = result.Data as Group;
+            newGroup.CourseId = Id;
+            _groups.Add(newGroup);
+            var response = await Http.PostAsJsonAsync(Endpoints.GROUPS, newGroup);
+            if (response.IsSuccessStatusCode)
+            {
+                Group newObject = await response.Content.ReadFromJsonAsync<Group>();
+                _groups.Remove(newGroup);
+                _groups.Add(newObject);
+                SnackbarService.ShowAddSuccess();
+            }
+            else
+            {
+                //_exercises.Remove(newCourse);
+                await Console.Error.WriteLineAsync("Error");
+                SnackbarService.ShowAddError();
+            }
+        }
     }
 
 }

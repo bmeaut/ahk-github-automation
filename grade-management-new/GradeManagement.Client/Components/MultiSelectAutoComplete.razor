@@ -28,7 +28,7 @@
 
     [Parameter, EditorRequired] public Func<T, string> GetNameFunc { get; set; }
 
-    [Parameter, EditorRequired] public Func<T, int> GetIDFunc { get; set; }
+    [Parameter, EditorRequired] public Func<T, long> GetIDFunc { get; set; }
 
     private HashSet<T> selectedValues = new HashSet<T>();
 

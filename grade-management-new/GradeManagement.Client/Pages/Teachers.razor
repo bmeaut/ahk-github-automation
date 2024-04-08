@@ -1,4 +1,5 @@
 ﻿@page "/teachers"
+@using GradeManagement.Shared.Dtos.Request
 
 @inject HttpClient Http
 @inject IDialogService DialogService
@@ -29,6 +30,7 @@
 
 @code {
     private List<User> _teachers = new();
+    private Subject _subject = new();
     private bool _isLoading = true;
 
     readonly string BaseUrl = Endpoints.TEACHERS;
@@ -40,15 +42,25 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _teachers.Add(result.Data as User);
-            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
+            User newTeacher = result.Data as User;
+            _teachers.Add(newTeacher);
+            var response = await Http.PostAsJsonAsync(BaseUrl, newTeacher);
             if (response.IsSuccessStatusCode)
             {
                 User newObject = await response.Content.ReadFromJsonAsync<User>();
                 //Right now it needs Teacher list to be filled
-                _teachers.Remove(result.Data as User);
+                _teachers.Remove(newTeacher);
                 _teachers.Add(newObject);
-                SnackbarService.ShowAddSuccess();
+                response = await Http.PutAsJsonAsync($"{Endpoints.SUBJECTS}/{_subject.Id}", _subject);
+                if (response.IsSuccessStatusCode)
+                {
+                    SnackbarService.ShowAddSuccess();
+                }
+                else
+                {
+                    await Console.Error.WriteLineAsync("Error");
+                    SnackbarService.ShowAddError();
+                }
             }
             else
             {
@@ -68,6 +80,13 @@
     protected override async Task OnInitializedAsync()
     {
         _teachers = await SubjectService.LoadTeachers();
+        _subject = new Subject
+        {
+            Id = SubjectService.CurrentSubject.Id,
+            Name = SubjectService.CurrentSubject.Name,
+            NeptunCode = SubjectService.CurrentSubject.NeptunCode,
+            Teachers = _teachers
+        };
         _isLoading = false;
     }
 

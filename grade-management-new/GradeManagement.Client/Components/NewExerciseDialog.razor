@@ -1,0 +1,38 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h4">New Exercise</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
+            <MudTextField T="string" Label="Github Prefix" For="@(() => value.GithubPrefix)" @bind-Value="value.GithubPrefix" Required="true"></MudTextField>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@OnSubmitClicked">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private MudForm form;
+    private bool success;
+    private string[] errors;
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    void Cancel() => MudDialog.Cancel();
+
+    async void OnSubmitClicked()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            Submit();
+        }
+    }
+
+    public Exercise value = new();
+
+}

@@ -20,6 +20,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await StartLoading();
+    }
+
+    public async Task StartLoading()
+    {
         if (LongTask != null)
         {
             IsLoading = true;

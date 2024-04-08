@@ -1,0 +1,64 @@
+﻿@using GradeManagement.Shared.Dtos.Request
+@inject SubjectService SubjectService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h4">New Group</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
+            <MultiSelectAutoComplete @bind-Values="_selectedUsers" Label="Teachers" SearchFunc="@SearchFunc" GetNameFunc="user => user.Name" GetIDFunc="user => user.Id"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@OnSubmitClicked">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private MudForm form;
+    private bool success;
+    private string[] errors;
+
+    void Submit()
+    {
+        value.Teachers = _selectedUsers.ToList();
+        MudDialog.Close(DialogResult.Ok(value));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    async void OnSubmitClicked()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            Submit();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _availableUsers = await SubjectService.LoadTeachers();
+    }
+
+    public Group value = new();
+    private List<User> _availableUsers = new();
+    private IEnumerable<User> _selectedUsers = new List<User>();
+
+    public async Task<IEnumerable<User>> SearchFunc(string search)
+    {
+        if (string.IsNullOrEmpty(search))
+        {
+            return _availableUsers;
+        }
+
+        return await Task.FromResult(_availableUsers.Where(x => x.Name.Contains(search, StringComparison.OrdinalIgnoreCase)));
+    }
+
+}
