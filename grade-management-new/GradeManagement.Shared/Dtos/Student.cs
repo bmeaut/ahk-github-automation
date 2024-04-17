@@ -6,5 +6,4 @@ public class Student
     public string Name { get; set; }
     public string NeptunCode { get; set; }
     public string GithubId { get; set; }
-    public List<Assignment> Assignments { get; set; }
 }
