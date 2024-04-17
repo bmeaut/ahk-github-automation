@@ -6,21 +6,21 @@ using GradeManagement.Shared.Dtos.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers
+namespace GradeManagement.Server.Controllers;
+
+[Route("api/courses")]
+[ApiController]
+public class CourseController(CourseService courseService) : CrudControllerBase<Course>(courseService)
 {
-    [Route("api/courses")]
-    [ApiController]
-    public class CourseController(CourseService courseService) : CrudControllerBase<Course>(courseService)
+    [HttpGet("{id:long}/exercises")]
+    public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync([FromRoute] long id)
     {
-        [HttpGet("{id:long}/exercises")]
-        public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync([FromRoute] long id)
-        {
-            return await courseService.GetAllExercisesByIdAsync(id);
-        }
-        [HttpGet("{id:long}/groups")]
-        public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync([FromRoute] long id)
-        {
-            return await courseService.GetAllGroupsByIdAsync(id);
-        }
+        return await courseService.GetAllExercisesByIdAsync(id);
+    }
+
+    [HttpGet("{id:long}/groups")]
+    public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync([FromRoute] long id)
+    {
+        return await courseService.GetAllGroupsByIdAsync(id);
     }
 }

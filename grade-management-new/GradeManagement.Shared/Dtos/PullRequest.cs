@@ -7,7 +7,5 @@ public class PullRequest
     public DateTimeOffset OpeningDate { get; set; }
     public bool IsClosed { get; set; }
     public string BranchName { get; set; }
-    public Assignment Assignment { get; set; }
     public long AssignmentId { get; set; }
-    public List<AssignmentEvent> AssignmentEvents { get; set; }
 }
