@@ -152,6 +152,9 @@ namespace GradeManagement.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset>("dueDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
@@ -267,6 +270,10 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long>("AssignmentId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("BranchName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsClosed")
                         .HasColumnType("bit");
 
@@ -298,12 +305,17 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long>("AssignmentId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<long>("ScoreTypeId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Value")
                         .IsRequired()
@@ -313,7 +325,29 @@ namespace GradeManagement.Data.Migrations
 
                     b.HasIndex("AssignmentId");
 
+                    b.HasIndex("ScoreTypeId");
+
                     b.ToTable("Score");
+                });
+
+            modelBuilder.Entity("GradeManagement.Data.Models.ScoreType", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ScoreType");
                 });
 
             modelBuilder.Entity("GradeManagement.Data.Models.Semester", b =>
@@ -343,6 +377,10 @@ namespace GradeManagement.Data.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("GithubId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -589,7 +627,15 @@ namespace GradeManagement.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GradeManagement.Data.Models.ScoreType", "ScoreType")
+                        .WithMany("Scores")
+                        .HasForeignKey("ScoreTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Assignment");
+
+                    b.Navigation("ScoreType");
                 });
 
             modelBuilder.Entity("GradeManagement.Data.Models.SubjectTeacher", b =>
@@ -647,6 +693,11 @@ namespace GradeManagement.Data.Migrations
             modelBuilder.Entity("GradeManagement.Data.Models.PullRequest", b =>
                 {
                     b.Navigation("AssignmentEvents");
+                });
+
+            modelBuilder.Entity("GradeManagement.Data.Models.ScoreType", b =>
+                {
+                    b.Navigation("Scores");
                 });
 
             modelBuilder.Entity("GradeManagement.Data.Models.Semester", b =>
