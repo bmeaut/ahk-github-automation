@@ -1,0 +1,41 @@
+﻿@inherits LayoutComponentBase
+@inject SubjectService SubjectService
+
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <AuthorizeView>
+        <Authorized>
+            <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
+            <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
+                <NavMenu/>
+            </MudDrawer>
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+                    @Body
+                </MudContainer>
+            </MudMainContent>
+        </Authorized>
+        <NotAuthorized>
+            <RedirectToLogin/>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = false;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SubjectService.LoadSubjects();
+    }
+
+}

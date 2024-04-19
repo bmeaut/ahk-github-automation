@@ -15,6 +15,10 @@ namespace GradeManagement.Client
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+            builder.Services.AddMsalAuthentication(options =>            {
+                builder.Configuration.Bind("AzureAd", options.ProviderOptions.Authentication);
+            });
             builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<CrudSnackbarService>();
             builder.Services.AddMudServices();

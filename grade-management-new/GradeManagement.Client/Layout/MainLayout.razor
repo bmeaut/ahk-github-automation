@@ -5,10 +5,6 @@
 <MudSnackbarProvider/>
 
 <MudLayout>
-    <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
-    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
-        <NavMenu/>
-    </MudDrawer>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
             @Body
@@ -17,12 +13,5 @@
 </MudLayout>
 
 @code {
-    bool _drawerOpen = false;
-
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-        StateHasChanged();
-    }
 
 }

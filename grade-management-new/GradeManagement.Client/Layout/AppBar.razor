@@ -1,9 +1,11 @@
+@using System.Security.Claims
 @using GradeManagement.Shared.Dtos.Response
 @inject SubjectService SubjectService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <MudAppBar Elevation="5">
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
-    <MudText Typo="Typo.h3" Class="ml-3">AHK Review UI</MudText>
+    <MudText Typo="Typo.h3" Class="ml-3">@name</MudText>
     <MudSpacer/>
     <SelectSubject @bind-Value="@SubjectService.CurrentSubject"/>
     <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/>
@@ -14,9 +16,20 @@
     [Parameter] public Action DrawerToggle { get; set; }
     [Parameter] public bool DrawerOpened { get; set; }
 
+
+    private string name { get; set; }
+
     private void SelectSubject(Subject value)
     {
         SubjectService.CurrentSubject = value;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        name = user.Identity.Name; // Get the logged-in user's name
+        // Now you can use userName as needed
     }
 
 }

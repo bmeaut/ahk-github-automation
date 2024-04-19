@@ -1,4 +1,5 @@
 ﻿@page "/teachers"
+@layout AuthenticatedLayout
 @using GradeManagement.Shared.Dtos.Request
 
 @inject HttpClient Http
@@ -6,7 +7,7 @@
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
 
-<LoadingComponent IsLoading="@_isLoading">
+<LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
     <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
@@ -32,6 +33,7 @@
     private List<User> _teachers = new();
     private Subject _subject = new();
     private bool _isLoading = true;
+    private LoadingComponent? loadingComponentRef;
 
     readonly string BaseUrl = Endpoints.TEACHERS;
 
@@ -77,7 +79,7 @@
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    private async Task _loading()
     {
         _teachers = await SubjectService.LoadTeachers();
         _subject = new Subject
@@ -87,7 +89,6 @@
             NeptunCode = SubjectService.CurrentSubject.NeptunCode,
             Teachers = _teachers
         };
-        _isLoading = false;
     }
 
     private async Task CommittedItemChanges(User items)
@@ -119,6 +120,21 @@
         }
 
         StateHasChanged();
+    }
+
+    private void OnSubjectChanged()
+    {
+        loadingComponentRef?.StartLoading();
+    }
+
+    protected override void OnInitialized()
+    {
+        SubjectService.OnChange += OnSubjectChanged;
+    }
+
+    public void Dispose()
+    {
+        SubjectService.OnChange -= OnSubjectChanged;
     }
 
 }
