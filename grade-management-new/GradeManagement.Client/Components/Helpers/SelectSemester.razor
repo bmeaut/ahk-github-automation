@@ -1,5 +1,4 @@
-﻿@using GradeManagement.Client.Pages
-@inject HttpClient Http
+﻿@inject HttpClient Http
 @inject SubjectService SubjectService
 
 <MudSelect T="Semester" Value="@Value" ValueChanged="@((Semester value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@semesterToString" Label="Semester">

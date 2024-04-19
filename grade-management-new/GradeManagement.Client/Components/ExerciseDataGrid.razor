@@ -7,14 +7,7 @@
         <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
         <PropertyColumn Property="x => x.GithubPrefix" Title="Github Prefix"/>
-        <TemplateColumn Title="Actions">
-            <CellTemplate>
-                <MudStack Row>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+        <DataGridActions TItem="Exercise" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
     </Columns>
 </MudDataGrid>
 
