@@ -9,6 +9,6 @@ public class PullRequest : ISoftDelete
     public string BranchName { get; set; }
     public Assignment Assignment { get; set; }
     public long AssignmentId { get; set; }
-    public List<AssignmentEvent> AssignmentEvents { get; set; }
+    public List<AssignmentLog> AssignmentEvents { get; set; }
     public bool IsDeleted { get; set; }
 }

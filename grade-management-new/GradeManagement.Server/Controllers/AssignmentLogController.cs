@@ -5,7 +5,7 @@ namespace GradeManagement.Server.Controllers
 {
     [Route("api/assignmentevents")]
     [ApiController]
-    public class AssignmentEventController : ControllerBase
+    public class AssignmentLogController : ControllerBase
     {
     }
 }

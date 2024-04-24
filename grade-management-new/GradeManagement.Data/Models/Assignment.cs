@@ -10,6 +10,6 @@ public class Assignment : ISoftDelete
     public long ExcerciseId { get; set; }
     public List<PullRequest> PullRequests { get; set; }
     public List<Score> Scores { get; set; }
-    public List<AssignmentEvent> AssignmentEvents { get; set; }
+    public List<AssignmentLog> AssignmentEvents { get; set; }
     public bool IsDeleted { get; set; }
 }

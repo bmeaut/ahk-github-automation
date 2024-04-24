@@ -27,7 +27,7 @@ namespace GradeManagement.Server
             builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
             builder.Services.AddTransient<AssignmentService>();
-            builder.Services.AddTransient<AssignmentEventService>();
+            builder.Services.AddTransient<AssignmentLogService>();
             builder.Services.AddTransient<CourseService>();
             builder.Services.AddTransient<GroupService>();
             builder.Services.AddTransient<LanguageService>();
