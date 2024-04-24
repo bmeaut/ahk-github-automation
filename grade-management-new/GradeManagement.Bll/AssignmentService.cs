@@ -44,7 +44,7 @@ public class AssignmentService : IQueryServiceBase<Assignment>
             Id = requestDto.Id,
             GithubRepoName = requestDto.GithubRepoName,
             StudentId = requestDto.StudentId,
-            ExcerciseId = requestDto.ExcerciseId
+            ExerciseId = requestDto.ExerciseId
         };
         _gradeManagementDbContext.Assignment.Add(assignmentEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
