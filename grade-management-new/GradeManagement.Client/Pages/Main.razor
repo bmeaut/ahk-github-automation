@@ -70,12 +70,12 @@ else
     private string JoinCiWorkflows(Assignment data)
     {
         var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
-        var assignmentEvents = filtered as AssignmentEvent[] ?? filtered.ToArray();
+        var assignmentEvents = filtered as AssignmentLog[] ?? filtered.ToArray();
         string run = assignmentEvents.Length == 1 ? "run" : "runs";
         return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
     }
 
-    private bool IsCicdWorkflow(AssignmentEvent data)
+    private bool IsCicdWorkflow(AssignmentLog data)
     {
         return true;
     }
