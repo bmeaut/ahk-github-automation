@@ -22,4 +22,10 @@ public class StudentController(StudentService studentService) : QueryControllerB
     {
         return await studentService.GetAllAssignmentsByIdAsync(id);
     }
+
+    [HttpPost]
+    public async Task<Student> CreateAsync([FromBody] Shared.Dtos.Request.Student requestDto)
+    {
+        return await studentService.CreateAsync(requestDto);
+    }
 }

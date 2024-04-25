@@ -51,20 +51,17 @@ public class AssignmentService : IQueryServiceBase<Assignment>
         return _mapper.Map<Assignment>(assignmentEntity);
     }
 
-    public async Task<IEnumerable<Score>> GetAllScoresByIdAsync(long id)
-    {
-        return await _gradeManagementDbContext.Score
-            .ProjectTo<Score>(_mapper.ConfigurationProvider)
-            .Where(s => s.AssignmentId == id)
-            .Include(s=>s.ScoreType)
-            .ToListAsync();
-    }
-
     public async Task<IEnumerable<PullRequest>> GetAllPullRequestsByIdAsync(long id)
     {
         return await _gradeManagementDbContext.PullRequest
             .ProjectTo<PullRequest>(_mapper.ConfigurationProvider)
             .Where(p => p.AssignmentId == id)
             .ToListAsync();
+    }
+
+    public async Task<Data.Models.Assignment> GetAssignmentModelByGitHubRepoNameAsync(string githubRepoName)
+    {
+        return await _gradeManagementDbContext.Assignment
+            .SingleEntityAsync(a => githubRepoName == a.GithubRepoName, 0);
     }
 }

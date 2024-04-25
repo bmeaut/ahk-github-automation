@@ -8,4 +8,5 @@ public class PullRequest
     public bool IsClosed { get; set; }
     public string BranchName { get; set; }
     public long AssignmentId { get; set; }
+    public long? TeacherId { get; set; }
 }

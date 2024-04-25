@@ -17,7 +17,7 @@ public class AutoMapperProfile : Profile
         CreateMap<PullRequest, Shared.Dtos.PullRequest>();
         CreateMap<Score, Shared.Dtos.Score>();
         CreateMap<Semester, Shared.Dtos.Semester>();
-        CreateMap<Student, Shared.Dtos.Student>();
+        CreateMap<Student, Shared.Dtos.Response.Student>();
         CreateMap<Subject, Shared.Dtos.Response.Subject>();
         CreateMap<User, Shared.Dtos.User>();
     }

@@ -5,6 +5,8 @@ using GradeManagement.Shared.Dtos.Request;
 
 using Microsoft.AspNetCore.Mvc;
 
+using Student = GradeManagement.Shared.Dtos.Response.Student;
+
 namespace GradeManagement.Server.Controllers
 {
     [Route("api/groups")]
@@ -18,7 +20,7 @@ namespace GradeManagement.Server.Controllers
         }
 
         [HttpGet("{id:long}/students")]
-        public async Task<List<User>> GetAllStudentsByIdAsync([FromRoute] long id)
+        public async Task<List<Student>> GetAllStudentsByIdAsync([FromRoute] long id)
         {
             return await groupService.GetAllStudentsByIdAsync(id);
         }

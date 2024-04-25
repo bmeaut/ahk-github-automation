@@ -7,5 +7,6 @@ public class Score
     public bool IsApproved { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
     public ScoreType ScoreType { get; set; }
-    public long AssignmentId { get; set; }
+    public long? TeacherId { get; set; }
+    public long PullRequesId { get; set; }
 }

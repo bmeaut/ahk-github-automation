@@ -12,6 +12,7 @@ using GradeManagement.Shared.Dtos.Request;
 using Microsoft.EntityFrameworkCore;
 
 using GroupTeacher = GradeManagement.Data.Models.GroupTeacher;
+using Student = GradeManagement.Shared.Dtos.Response.Student;
 
 namespace GradeManagement.Bll;
 
@@ -103,12 +104,12 @@ public class GroupService : ICrudServiceBase<Group, Shared.Dtos.Response.Group>
             .ToListAsync();
     }
 
-    public async Task<List<User>> GetAllStudentsByIdAsync(long id)
+    public async Task<List<Student>> GetAllStudentsByIdAsync(long id)
     {
         return await _gradeManagementDbContext.GroupStudent
             .Where(gs => gs.GroupId == id)
             .Select(gs => gs.Student)
-            .ProjectTo<User>(_mapper.ConfigurationProvider)
+            .ProjectTo<Student>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 }

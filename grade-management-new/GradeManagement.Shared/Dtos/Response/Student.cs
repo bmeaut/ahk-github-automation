@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Shared.Dtos;
+﻿namespace GradeManagement.Shared.Dtos.Response;
 
 public class Student
 {

@@ -4,6 +4,7 @@ using GradeManagement.Data.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GradeManagement.Data.Migrations
 {
     [DbContext(typeof(GradeManagementDbContext))]
-    partial class GradeManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240425144159_mig3")]
+    partial class mig3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -499,13 +502,13 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Exercise", "Exercise")
                         .WithMany("Assignments")
                         .HasForeignKey("ExerciseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.Student", "Student")
                         .WithMany("Assignments")
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Exercise");
@@ -524,7 +527,7 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.PullRequest", "PullRequest")
                         .WithMany("AssignmentLogs")
                         .HasForeignKey("PullRequestId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Assignment");
@@ -537,19 +540,19 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Language", "Language")
                         .WithMany("Courses")
                         .HasForeignKey("LanguageId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.Semester", "Semester")
                         .WithMany("Courses")
                         .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.Subject", "Subject")
                         .WithMany("Courses")
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Language");
@@ -564,7 +567,7 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Course", "Course")
                         .WithMany("Exercises")
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Course");
@@ -575,7 +578,7 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Course", "Course")
                         .WithMany("Groups")
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Course");
@@ -586,13 +589,13 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Group", "Group")
                         .WithMany("GroupStudents")
                         .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.Student", "Student")
                         .WithMany("GroupStudents")
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Group");
@@ -611,7 +614,7 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.User", "User")
                         .WithMany("GroupTeachers")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Group");
@@ -624,13 +627,12 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Assignment", "Assignment")
                         .WithMany("PullRequests")
                         .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.User", "Teacher")
                         .WithMany("PullRequests")
-                        .HasForeignKey("TeacherId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("TeacherId");
 
                     b.Navigation("Assignment");
 
@@ -642,13 +644,13 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.PullRequest", "PullRequest")
                         .WithMany("Scores")
                         .HasForeignKey("PullRequestId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.ScoreType", "ScoreType")
                         .WithMany("Scores")
                         .HasForeignKey("ScoreTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.User", "Teacher")
@@ -668,13 +670,13 @@ namespace GradeManagement.Data.Migrations
                     b.HasOne("GradeManagement.Data.Models.Subject", "Subject")
                         .WithMany("SubjectTeachers")
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GradeManagement.Data.Models.User", "User")
                         .WithMany("SubjectTeachers")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Subject");

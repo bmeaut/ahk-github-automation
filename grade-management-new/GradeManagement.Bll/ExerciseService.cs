@@ -87,9 +87,11 @@ public class ExerciseService : ICrudServiceBase<Exercise>
             .ToListAsync();
     }
 
-    public async Task<Data.Models.Exercise> GetExerciseByGitHubRepoNameAsync(string githubRepoName)
+    public async Task<Data.Models.Exercise> GetExerciseModelByGitHubRepoNameAsync(string githubRepoName)
     {
         return await _gradeManagementDbContext.Exercise
+            .Include(e => e.Course)
+            .Include(e => e.Assignments)
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);
     }
 }

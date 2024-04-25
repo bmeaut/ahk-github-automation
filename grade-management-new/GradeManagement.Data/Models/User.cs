@@ -10,7 +10,9 @@ public class User : ISoftDelete
     public string GithubId { get; set; }
     public string BmeEmail { get; set; }
     public UserType Type { get; set; }
+    public List<PullRequest> PullRequests { get; set; }
     public List<GroupTeacher> GroupTeachers { get; set; }
     public List<SubjectTeacher> SubjectTeachers { get; set; }
+    public List<Score> Scores { get; set; }
     public bool IsDeleted { get; set; }
 }

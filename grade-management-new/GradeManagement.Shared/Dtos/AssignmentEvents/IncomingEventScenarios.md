@@ -13,7 +13,7 @@ Incoming Data:
     - Student GitHubId is included so student can be identified
     - Subject GitHub Organiztation Name is included so subject can be identified if needed
 
-## Scenario 2/1: Student opens a pull request
+## Scenario 2: Student opens a pull request
 
 ### Description
 
@@ -26,7 +26,7 @@ Incoming Data:
 - Pull Request Opening Date/Time
 - Pull Request branch name
 
-## Scenario 2/2: If automated grading is enabled points get calculated
+## Scenario 3: CI sends evaluation results
 
 ### Description
 
@@ -36,11 +36,12 @@ Incoming Data:
 
 - Assignment GitHub Repo Url
 - Pull Request Url
-- Points
-- Points Type
-- Date of points calculation
+- Student Neptun Code
+- Points (empty if automated grading is disabled)
+- Points Type (empty if automated grading is disabled)
+- Date of evaluation
 
-## Scenario 3: Student assigns teacher a.k.a. submits assignment
+## Scenario 4: Student assigns teacher a.k.a. submits assignment
 
 ### Description
 
@@ -52,14 +53,13 @@ Incoming Data:
 - Assigned teachers gitHubId
 - Pull Request Url
 
-## Scenario 4: Teacher approves / overrides points
+## Scenario 5: Teacher approves / overrides points
 
 ### Description
 
 Teacher approves or overrides points for an assignment. Grade management system is notified through gitHub monitor.
 If there is a change in points, new points get registered and also approved otherwise latest already existing points get
 approved.
-Pull request is closed.
 
 Incoming Data:
 
@@ -69,4 +69,13 @@ Incoming Data:
 - Points in order (type1, type2, ...)
 - Date of approval
 
+## Scenario 6: Pull request gets closed
 
+### Description
+
+Pull request gets closed. Grade management system is notified through gitHub monitor.
+
+Incoming Data:
+
+- Assignment GitHub Repo Url
+- Pull Request Url

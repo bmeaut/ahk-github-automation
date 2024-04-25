@@ -19,17 +19,10 @@ public class GradeManagementDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<AssignmentLog>()
-            .HasOne(e => e.Assignment)
-            .WithMany(a => a.AssignmentEvents)
-            .HasForeignKey(e => e.AssignmentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<GroupTeacher>()
-            .HasOne(ct => ct.Group)
-            .WithMany(g => g.GroupTeachers)
-            .HasForeignKey(ct => ct.GroupId)
-            .OnDelete(DeleteBehavior.Restrict);
+        foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+        {
+            relationship.DeleteBehavior = DeleteBehavior.Restrict;
+        }
 
         modelBuilder.Entity<Assignment>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<AssignmentLog>().HasQueryFilter(x => x.IsDeleted == false);
@@ -58,7 +51,7 @@ public class GradeManagementDbContext : DbContext
     public DbSet<GroupTeacher> GroupTeacher { get; set; }
     public DbSet<Language> Language { get; set; }
     public DbSet<PullRequest> PullRequest { get; set; }
-    public DbSet<Score> Score { get; set; }
+    public DbSet<Score?> Score { get; set; }
     public DbSet<ScoreType> ScoreType { get; set; }
     public DbSet<Semester> Semester { get; set; }
     public DbSet<Student> Student { get; set; }

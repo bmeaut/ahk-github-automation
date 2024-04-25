@@ -77,6 +77,7 @@ namespace GradeManagement.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     NeptunCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GitHubOrgName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -218,7 +219,6 @@ namespace GradeManagement.Data.Migrations
                     GithubRepoName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StudentId = table.Column<long>(type: "bigint", nullable: false),
                     ExerciseId = table.Column<long>(type: "bigint", nullable: false),
-                    ExcerciseId = table.Column<long>(type: "bigint", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -303,6 +303,7 @@ namespace GradeManagement.Data.Migrations
                     IsClosed = table.Column<bool>(type: "bit", nullable: false),
                     BranchName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AssignmentId = table.Column<long>(type: "bigint", nullable: false),
+                    TeacherId = table.Column<long>(type: "bigint", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -312,6 +313,42 @@ namespace GradeManagement.Data.Migrations
                         name: "FK_PullRequest_Assignment_AssignmentId",
                         column: x => x.AssignmentId,
                         principalTable: "Assignment",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PullRequest_User_TeacherId",
+                        column: x => x.TeacherId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AssignmentLog",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Date = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    EventType = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AssignmentId = table.Column<long>(type: "bigint", nullable: false),
+                    PullRequestId = table.Column<long>(type: "bigint", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AssignmentLog", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AssignmentLog_Assignment_AssignmentId",
+                        column: x => x.AssignmentId,
+                        principalTable: "Assignment",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AssignmentLog_PullRequest_PullRequestId",
+                        column: x => x.PullRequestId,
+                        principalTable: "PullRequest",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -326,16 +363,17 @@ namespace GradeManagement.Data.Migrations
                     IsApproved = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     ScoreTypeId = table.Column<long>(type: "bigint", nullable: false),
-                    AssignmentId = table.Column<long>(type: "bigint", nullable: false),
+                    PullRequestId = table.Column<long>(type: "bigint", nullable: false),
+                    TeacherId = table.Column<long>(type: "bigint", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Score", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Score_Assignment_AssignmentId",
-                        column: x => x.AssignmentId,
-                        principalTable: "Assignment",
+                        name: "FK_Score_PullRequest_PullRequestId",
+                        column: x => x.PullRequestId,
+                        principalTable: "PullRequest",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -344,36 +382,12 @@ namespace GradeManagement.Data.Migrations
                         principalTable: "ScoreType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AssignmentEvent",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Date = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    EventType = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AssignmentId = table.Column<long>(type: "bigint", nullable: false),
-                    PullRequestId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AssignmentEvent", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssignmentEvent_Assignment_AssignmentId",
-                        column: x => x.AssignmentId,
-                        principalTable: "Assignment",
+                        name: "FK_Score_User_TeacherId",
+                        column: x => x.TeacherId,
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_AssignmentEvent_PullRequest_PullRequestId",
-                        column: x => x.PullRequestId,
-                        principalTable: "PullRequest",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -387,13 +401,13 @@ namespace GradeManagement.Data.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssignmentEvent_AssignmentId",
-                table: "AssignmentEvent",
+                name: "IX_AssignmentLog_AssignmentId",
+                table: "AssignmentLog",
                 column: "AssignmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssignmentEvent_PullRequestId",
-                table: "AssignmentEvent",
+                name: "IX_AssignmentLog_PullRequestId",
+                table: "AssignmentLog",
                 column: "PullRequestId");
 
             migrationBuilder.CreateIndex(
@@ -447,14 +461,24 @@ namespace GradeManagement.Data.Migrations
                 column: "AssignmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Score_AssignmentId",
+                name: "IX_PullRequest_TeacherId",
+                table: "PullRequest",
+                column: "TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Score_PullRequestId",
                 table: "Score",
-                column: "AssignmentId");
+                column: "PullRequestId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Score_ScoreTypeId",
                 table: "Score",
                 column: "ScoreTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Score_TeacherId",
+                table: "Score",
+                column: "TeacherId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubjectTeacher_SubjectId",
@@ -471,7 +495,7 @@ namespace GradeManagement.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AssignmentEvent");
+                name: "AssignmentLog");
 
             migrationBuilder.DropTable(
                 name: "GroupStudent");
@@ -486,19 +510,19 @@ namespace GradeManagement.Data.Migrations
                 name: "SubjectTeacher");
 
             migrationBuilder.DropTable(
-                name: "PullRequest");
+                name: "Group");
 
             migrationBuilder.DropTable(
-                name: "Group");
+                name: "PullRequest");
 
             migrationBuilder.DropTable(
                 name: "ScoreType");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "Assignment");
 
             migrationBuilder.DropTable(
-                name: "Assignment");
+                name: "User");
 
             migrationBuilder.DropTable(
                 name: "Exercise");

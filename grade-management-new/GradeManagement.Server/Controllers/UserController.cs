@@ -5,6 +5,7 @@ using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace GradeManagement.Server.Controllers;
 
 [Route("api/users")]
@@ -21,5 +22,11 @@ public class UserController(UserService userService) : CrudControllerBase<User>(
     public async Task<List<Subject>> GetAllSubjectsByIdAsync([FromRoute] long id)
     {
         return await userService.GetAllSubjectsByIdAsync(id);
+    }
+
+    [HttpGet("{id:long}/pullrequests")]
+    public async Task<List<PullRequest>> GetAllPullRequestsByIdAsync([FromRoute] long id)
+    {
+        return await userService.GetAllPullRequestsByIdAsync(id);
     }
 }

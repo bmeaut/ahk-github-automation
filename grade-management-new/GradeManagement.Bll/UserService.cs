@@ -107,12 +107,28 @@ public class UserService : ICrudServiceBase<User>
         if (userEntities.Count != users.Count)
         {
             //Select teachers not found
-            var teachersNotFoundIds = users.Where(rqT => userEntities.All(t => t.Id != rqT.Id)).Select(t => t.Id).ToList();
+            var teachersNotFoundIds =
+                users.Where(rqT => userEntities.All(t => t.Id != rqT.Id)).Select(t => t.Id).ToList();
             foreach (var teacherId in teachersNotFoundIds)
             {
                 throw EntityNotFoundException.CreateForType<Data.Models.User>(teacherId);
             }
         }
+
         return userEntities;
+    }
+
+    public async Task<List<PullRequest>> GetAllPullRequestsByIdAsync(long id)
+    {
+        return await _gradeManagementDbContext.PullRequest
+            .Where(pr => pr.TeacherId == id)
+            .ProjectTo<PullRequest>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<Data.Models.User> GetModelByGitHubIdAsync(string githubId)
+    {
+        return await _gradeManagementDbContext.User
+            .SingleEntityAsync(u => u.GithubId == githubId, 0);
     }
 }

@@ -58,6 +58,7 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
 
         subjectEntity.Name = requestDto.Name;
         subjectEntity.NeptunCode = requestDto.NeptunCode;
+        subjectEntity.GitHubOrgName = requestDto.GitHubOrgName;
 
         var teachers = await _userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
         var oldSubjectTeachers = await _gradeManagementDbContext.SubjectTeacher
@@ -81,7 +82,10 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
     {
         var subjectEntity = new Data.Models.Subject
         {
-            Name = requestDto.Name, NeptunCode = requestDto.NeptunCode, Courses = [],
+            Name = requestDto.Name,
+            NeptunCode = requestDto.NeptunCode,
+            GitHubOrgName = requestDto.GitHubOrgName,
+            Courses = []
         };
         _gradeManagementDbContext.Subject.Add(subjectEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
