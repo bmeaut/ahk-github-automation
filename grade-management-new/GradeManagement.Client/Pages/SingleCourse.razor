@@ -1,10 +1,10 @@
 ﻿@page "/courses/{Id:int}"
 @layout AuthenticatedLayout
-@using GradeManagement.Shared.Dtos.Request
 
 @inject HttpClient Http
 @inject CrudSnackbarService SnackbarService
 @inject IDialogService DialogService
+@inject CourseClient CourseClient
 
 <LoadingComponent LongTask="@_loading">
     <MudCard>
@@ -46,22 +46,22 @@
 @code {
     [Parameter] public int Id { get; set; }
     Course _course;
-    List<Exercise> _exercises;
-    List<Group> _groups;
+    ICollection<Exercise> _exercises;
+    ICollection<Group> _groups;
 
     private async Task<Course> _loadCourseAsync()
     {
-        return await Http.GetFromJsonAsync<Course>($"{Endpoints.COURSES}/{Id}");
+        return await CourseClient.GetByIdAsync(Id);
     }
 
-    private async Task<List<Exercise>> _loadExercisesAsync()
+    private async Task<ICollection<Exercise>> _loadExercisesAsync()
     {
-        return await Http.GetFromJsonAsync<List<Exercise>>($"{Endpoints.COURSES}/{Id}/exercises");
+        return await CourseClient.GetAllExercisesByIdAsync(Id);
     }
 
-    private async Task<List<Group>> _loadGroupsAsync()
+    private async Task<ICollection<Group>> _loadGroupsAsync()
     {
-        return await Http.GetFromJsonAsync<List<Group>>($"{Endpoints.COURSES}/{Id}/groups");
+        return await CourseClient.GetAllGroupsByIdAsync(Id);
     }
 
     private async Task _loading()

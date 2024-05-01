@@ -4,7 +4,7 @@
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
-@inject SubjectService SubjectService
+@inject SemesterClient SemesterClient
 
 <PageTitle>Semesters</PageTitle>
 
@@ -20,7 +20,7 @@
 </LoadingComponent>
 
 @code {
-    private List<Semester> _semesters = new();
+    private ICollection<Semester> _semesters = new List<Semester>();
     private bool _isLoading = true;
 
     readonly string BaseUrl = Endpoints.SEMESTERS;
@@ -58,7 +58,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _semesters = await SubjectService.LoadSemesters();
+        _semesters = await SemesterClient.GetALlAsync();
         _isLoading = false;
     }
 
@@ -89,6 +89,7 @@
         {
             SnackbarService.ShowDeleteSuccess();
         }
+
         StateHasChanged();
     }
 

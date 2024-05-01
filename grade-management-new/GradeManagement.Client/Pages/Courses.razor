@@ -6,6 +6,8 @@
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject CourseClient CourseClient
+@inject SubjectClient SubjectClient
 @inject NavigationManager NavigationManager
 
 
@@ -38,7 +40,7 @@
 </LoadingComponent>
 
 @code {
-    private List<Course> _courses = new();
+    private ICollection<Course> _courses = new List<Course>();
     private LoadingComponent? loadingComponentRef;
     private bool _isLoading = true;
 
@@ -52,7 +54,7 @@
 
     private async Task _loading()
     {
-        _courses = await SubjectService.LoadCourses();
+        _courses = await SubjectClient.GetAllCoursesByIdAsync(SubjectService.CurrentSubject.Id);
     }
 
 
@@ -64,22 +66,8 @@
         {
             var newCourse = result.Data as Course;
             newCourse.SubjectId = SubjectService.CurrentSubject.Id;
-            _courses.Add(newCourse);
-            var response = await Http.PostAsJsonAsync(BaseUrl, newCourse);
-            if (response.IsSuccessStatusCode)
-            {
-                Course newObject = await response.Content.ReadFromJsonAsync<Course>();
-                //Right now it needs Course list to be filled
-                _courses.Remove(newCourse);
-                _courses.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                _courses.Remove(newCourse);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            await CourseClient.CreateAsync(newCourse);
+            await _loading();
         }
     }
 
@@ -91,32 +79,17 @@
 
     private async Task CommittedItemChanges(Course items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await CourseClient.UpdateAsync(items.Id, items);
+        SnackbarService.ShowEditSuccess();
+        await _loading();
+        StateHasChanged();
     }
 
     private async Task DeleteItem(Course item)
     {
-        _courses.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
+        await CourseClient.DeleteAsync(item.Id);
+        SnackbarService.ShowDeleteSuccess();
+        await _loading();
         StateHasChanged();
     }
 

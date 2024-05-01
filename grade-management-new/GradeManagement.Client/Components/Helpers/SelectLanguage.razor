@@ -1,6 +1,6 @@
 ﻿@using GradeManagement.Client.Pages
 @inject HttpClient Http
-@inject SubjectService SubjectService
+@inject LanguageClient LanguageClient
 
 <MudSelect T="Language" Value="@Value" ValueChanged="@((Language value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@_languageToString" Label="Language" @attributes="AdditionalAttributes">
     @foreach (var language in _languages)
@@ -17,11 +17,11 @@
     public Dictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
 
     readonly Func<Language, string> _languageToString = p => p.Name;
-    private List<Language> _languages = new();
+    private ICollection<Language> _languages = new List<Language>();
 
-    private async Task<List<Language>> LoadLanguages()
+    private async Task<ICollection<Language>> LoadLanguages()
     {
-        return await SubjectService.LoadLanguages();
+        return await LanguageClient.GetALlAsync();
     }
 
     protected override async Task OnInitializedAsync()

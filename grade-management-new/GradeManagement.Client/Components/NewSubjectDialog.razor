@@ -1,5 +1,4 @@
-﻿@using GradeManagement.Shared.Dtos.Request
-<MudDialog>
+﻿<MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h4">New Subject</MudText>
     </TitleContent>
@@ -34,10 +33,7 @@
         }
     }
 
-    public Subject value = new()
-    {
-        Teachers = new List<User>()
-    };
+    public Subject value = new();
 
     private IEnumerable<string> NeptunCodeValidator(string pw)
     {

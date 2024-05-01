@@ -1,11 +1,11 @@
 ﻿@page "/teachers"
 @layout AuthenticatedLayout
-@using GradeManagement.Shared.Dtos.Request
 
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject UserClient UserClient
 
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
     <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
@@ -30,7 +30,7 @@
 </LoadingComponent>
 
 @code {
-    private List<User> _teachers = new();
+    private ICollection<User> _teachers = new List<User>();
     private Subject _subject = new();
     private bool _isLoading = true;
     private LoadingComponent? loadingComponentRef;
@@ -49,6 +49,7 @@
             var response = await Http.PostAsJsonAsync(BaseUrl, newTeacher);
             if (response.IsSuccessStatusCode)
             {
+                //TODO: This is a workaround, it should be fixed
                 User newObject = await response.Content.ReadFromJsonAsync<User>();
                 //Right now it needs Teacher list to be filled
                 _teachers.Remove(newTeacher);
@@ -81,14 +82,7 @@
 
     private async Task _loading()
     {
-        _teachers = await SubjectService.LoadTeachers();
-        _subject = new Subject
-        {
-            Id = SubjectService.CurrentSubject.Id,
-            Name = SubjectService.CurrentSubject.Name,
-            NeptunCode = SubjectService.CurrentSubject.NeptunCode,
-            Teachers = _teachers
-        };
+        _teachers = await UserClient.GetALlAsync();
     }
 
     private async Task CommittedItemChanges(User items)

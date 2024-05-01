@@ -5,6 +5,7 @@
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject MockClient StudentClient
 
 <LoadingComponent IsLoading="@_isLoading">
     <MudDataGrid T="Student" Items="_students" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
@@ -19,7 +20,7 @@
 </LoadingComponent>
 
 @code {
-    private List<Student> _students = new();
+    private ICollection<Student> _students = new List<Student>();
     private bool _isLoading = true;
 
     readonly string BaseUrl = Endpoints.LANGUAGES;
@@ -32,6 +33,7 @@
         if (!result.Canceled && result.Data != null)
         {
             _students.Add(result.Data as Student);
+            //TODO: Do others through API
             var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
             if (response.IsSuccessStatusCode)
             {
@@ -58,7 +60,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _students = await SubjectService.LoadStudents();
+        _students = await StudentClient.GetAllAsync<Student>();
         _isLoading = false;
     }
 

@@ -1,6 +1,5 @@
 ﻿@using GradeManagement.Client.Pages
-@inject HttpClient Http
-@inject CrudSnackbarService SnackbarService
+@inject ExerciseService ExerciseService
 
 <MudDataGrid T="Exercise" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
@@ -13,7 +12,7 @@
 
 
 @code {
-    [Parameter] public List<Exercise> Values { get; set; }
+    [Parameter] public ICollection<Exercise> Values { get; set; }
 
     string BaseUrl = Endpoints.EXERCISES;
 
@@ -25,32 +24,13 @@
 
     private async Task CommittedItemChanges(Exercise items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await ExerciseService.UpdateExercise(items);
     }
 
     private async Task DeleteItem(Exercise item)
     {
         Values.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
+        await ExerciseService.DeleteExercise(item.Id);
         StateHasChanged();
     }
 

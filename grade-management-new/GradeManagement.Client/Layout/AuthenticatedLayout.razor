@@ -14,7 +14,14 @@
             </MudDrawer>
             <MudMainContent>
                 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
-                    @Body
+                    <ErrorBoundary >
+                        <ChildContent>
+                            @Body
+                        </ChildContent>
+                        <ErrorContent Context="exception">
+                            <ErrorComponent Exception="@exception"/>
+                        </ErrorContent>
+                    </ErrorBoundary>
                 </MudContainer>
             </MudMainContent>
         </Authorized>

@@ -4,7 +4,7 @@
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
-@inject SubjectService SubjectService
+@inject LanguageClient LanguageClient
 
 <PageTitle>Languages</PageTitle>
 
@@ -20,7 +20,7 @@
 </LoadingComponent>
 
 @code {
-    private List<Language> _languages = new();
+    private ICollection<Language> _languages = new List<Language>();
     private bool _isLoading = true;
 
     readonly string BaseUrl = Endpoints.LANGUAGES;
@@ -58,7 +58,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _languages = await SubjectService.LoadLanguages();
+        _languages = await LanguageClient.GetALlAsync();
         _isLoading = false;
     }
 
@@ -89,6 +89,7 @@
         {
             SnackbarService.ShowDeleteSuccess();
         }
+
         StateHasChanged();
     }
 

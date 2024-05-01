@@ -1,5 +1,4 @@
 ﻿@using GradeManagement.Client.Pages
-@using GradeManagement.Shared.Dtos.Request
 @inject HttpClient Http
 @inject CrudSnackbarService SnackbarService
 
@@ -13,7 +12,7 @@
 
 
 @code {
-    [Parameter] public List<Group> Values { get; set; }
+    [Parameter] public ICollection<Group> Values { get; set; }
 
     string BaseUrl = Endpoints.GROUPS;
 
