@@ -9,10 +9,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace GradeManagement.Bll;
 
-public class AssingmentEventConsumerService
+public class AssingmentEventProcessorService
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
     private readonly AssignmentService _assignmentService;
     private readonly ExerciseService _exerciseService;
     private readonly StudentService _studentService;
@@ -20,13 +19,12 @@ public class AssingmentEventConsumerService
     private readonly ScoreService _scoreService;
     private readonly UserService _userService;
 
-    public AssingmentEventConsumerService(
-        GradeManagementDbContext gradeManagementDbContext, IMapper mapper, AssignmentService assignmentService,
+    public AssingmentEventProcessorService(
+        GradeManagementDbContext gradeManagementDbContext, AssignmentService assignmentService,
         ExerciseService exerciseService, StudentService studentService,
         PullRequestService pullRequestService, ScoreService scoreService, UserService userService)
     {
         _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
         _assignmentService = assignmentService;
         _exerciseService = exerciseService;
         _studentService = studentService;

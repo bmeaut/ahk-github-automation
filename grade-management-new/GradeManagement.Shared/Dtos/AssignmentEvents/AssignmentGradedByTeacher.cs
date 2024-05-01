@@ -1,8 +1,7 @@
 ﻿namespace GradeManagement.Shared.Dtos.AssignmentEvents;
 
-public class AssignmentGradedByTeacher
+public class AssignmentGradedByTeacher : AssignmentEventBase
 {
-    public string GitHubRepositoryUrl { get; set; }
     public string PullRequestUrl { get; set; }
     public string TeacherGitHubId { get; set; }
     public List<EventScore> Scores { get; set; }

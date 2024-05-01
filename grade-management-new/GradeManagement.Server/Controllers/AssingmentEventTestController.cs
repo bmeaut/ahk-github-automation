@@ -7,48 +7,48 @@ namespace GradeManagement.Server.Controllers;
 
 [ApiController]
 [Route("api/testassignmentevents")]
-public class AssingmentEventTestController(AssingmentEventConsumerService assingmentEventConsumerService)
+public class AssingmentEventTestController(AssingmentEventProcessorService assingmentEventProcessorService)
     : ControllerBase
 {
     [HttpPost("assignmentaccepted")]
     public async Task<IActionResult> AssignmentAcceptedAsync(AssignmentAccepted assignmentAccepted)
     {
-        await assingmentEventConsumerService.ConsumeAssignmentAcceptedEventAsync(assignmentAccepted);
+        await assingmentEventProcessorService.ConsumeAssignmentAcceptedEventAsync(assignmentAccepted);
         return Ok();
     }
 
     [HttpPost("pullrequestopened")]
     public async Task<IActionResult> PullRequestOpenedAsync(PullRequestOpened pullRequestOpened)
     {
-        await assingmentEventConsumerService.ConsumePullRequestOpenedEvent(pullRequestOpened);
+        await assingmentEventProcessorService.ConsumePullRequestOpenedEvent(pullRequestOpened);
         return Ok();
     }
 
     [HttpPost("cievaluationcompleted")]
     public async Task<IActionResult> CiEvaluationCompletedAsync(CiEvaluationCompleted ciEvaluationCompleted)
     {
-        await assingmentEventConsumerService.ConsumeCiEvaluationCompletedEvent(ciEvaluationCompleted);
+        await assingmentEventProcessorService.ConsumeCiEvaluationCompletedEvent(ciEvaluationCompleted);
         return Ok();
     }
 
     [HttpPost("teacherassigned")]
     public async Task<IActionResult> TeacherAssignedAsync(TeacherAssigned teacherAssigned)
     {
-        await assingmentEventConsumerService.ConsumeTeacherAssignedEvent(teacherAssigned);
+        await assingmentEventProcessorService.ConsumeTeacherAssignedEvent(teacherAssigned);
         return Ok();
     }
 
     [HttpPost("assignmentgraded")]
     public async Task<IActionResult> AssignmentGradedAsync(AssignmentGradedByTeacher assignmentGraded)
     {
-        await assingmentEventConsumerService.ConsumeAssignmentGradedByTeacherEvent(assignmentGraded);
+        await assingmentEventProcessorService.ConsumeAssignmentGradedByTeacherEvent(assignmentGraded);
         return Ok();
     }
 
     [HttpPost("pullrequestclosed")]
     public async Task<IActionResult> PullRequestClosedAsync(PullRequestStatusChanged pullRequestStatusChanged)
     {
-        await assingmentEventConsumerService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
+        await assingmentEventProcessorService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
         return Ok();
     }
 }
