@@ -3,7 +3,7 @@
 public class Score : ISoftDelete
 {
     public long Id { get; set; }
-    public string Value { get; set; }
+    public long Value { get; set; }
     public bool IsApproved { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
     public ScoreType ScoreType { get; set; }
