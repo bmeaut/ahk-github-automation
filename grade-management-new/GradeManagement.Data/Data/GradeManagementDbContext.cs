@@ -19,19 +19,13 @@ public class GradeManagementDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<AssignmentEvent>()
-            .HasOne(e => e.Assignment)
-            .WithMany(a => a.AssignmentEvents)
-            .HasForeignKey(e => e.AssignmentId)
-            .OnDelete(DeleteBehavior.Restrict);
+        foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+        {
+            relationship.DeleteBehavior = DeleteBehavior.Restrict;
+        }
 
-        modelBuilder.Entity<GroupTeacher>()
-            .HasOne(ct => ct.Group)
-            .WithMany(g => g.GroupTeachers)
-            .HasForeignKey(ct => ct.GroupId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<AssignmentEvent>().HasQueryFilter(x => x.IsDeleted == false);
+        modelBuilder.Entity<Assignment>().HasQueryFilter(x => x.IsDeleted == false);
+        modelBuilder.Entity<AssignmentLog>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Course>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Exercise>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Group>().HasQueryFilter(x => x.IsDeleted == false);
@@ -40,6 +34,7 @@ public class GradeManagementDbContext : DbContext
         modelBuilder.Entity<Language>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<PullRequest>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Score>().HasQueryFilter(x => x.IsDeleted == false);
+        modelBuilder.Entity<ScoreType>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Semester>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Student>().HasQueryFilter(x => x.IsDeleted == false);
         modelBuilder.Entity<Subject>().HasQueryFilter(x => x.IsDeleted == false);
@@ -48,7 +43,7 @@ public class GradeManagementDbContext : DbContext
     }
 
     public DbSet<Assignment> Assignment { get; set; }
-    public DbSet<AssignmentEvent> AssignmentEvent { get; set; }
+    public DbSet<AssignmentLog> AssignmentLog { get; set; }
     public DbSet<Course> Course { get; set; }
     public DbSet<Exercise> Exercise { get; set; }
     public DbSet<Group> Group { get; set; }
@@ -57,6 +52,7 @@ public class GradeManagementDbContext : DbContext
     public DbSet<Language> Language { get; set; }
     public DbSet<PullRequest> PullRequest { get; set; }
     public DbSet<Score> Score { get; set; }
+    public DbSet<ScoreType> ScoreType { get; set; }
     public DbSet<Semester> Semester { get; set; }
     public DbSet<Student> Student { get; set; }
     public DbSet<Subject> Subject { get; set; }

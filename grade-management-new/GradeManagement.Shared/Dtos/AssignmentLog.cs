@@ -2,7 +2,7 @@ using GradeManagement.Shared.Enums;
 
 namespace GradeManagement.Shared.Dtos;
 
-public class AssignmentEvent
+public class AssignmentLog
 {
     public long Id { get; set; }
     public DateTimeOffset Date { get; set; }

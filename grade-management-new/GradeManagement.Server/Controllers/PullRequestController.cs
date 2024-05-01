@@ -1,11 +1,17 @@
-using Microsoft.AspNetCore.Http;
+﻿using GradeManagement.Bll;
+using GradeManagement.Shared.Dtos;
+
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers
+namespace GradeManagement.Server.Controllers;
+
+[Route("api/pullrequests")]
+[ApiController]
+public class PullRequestController(PullRequestService pullRequestService) : ControllerBase
 {
-    [Route("api/pullrequests")]
-    [ApiController]
-    public class PullRequestController : ControllerBase
+    [HttpGet("{id:long}/scores")]
+    public async Task<IEnumerable<Score>> GetAllScoresByIdAsync([FromRoute] long id)
     {
+        return await pullRequestService.GetAllScoresByIdSortedByDateDescendingAsync(id);
     }
 }

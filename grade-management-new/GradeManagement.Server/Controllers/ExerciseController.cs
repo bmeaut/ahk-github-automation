@@ -1,11 +1,23 @@
-using Microsoft.AspNetCore.Http;
+using GradeManagement.Bll;
+using GradeManagement.Server.Controllers.BaseControllers;
+using GradeManagement.Shared.Dtos;
+
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers
+namespace GradeManagement.Server.Controllers;
+
+[Route("api/exercises")]
+[ApiController]
+public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<Exercise>(exerciseService)
 {
-    [Route("api/exercises")]
-    [ApiController]
-    public class ExerciseController : ControllerBase
+    [HttpGet("{id:long}/assignments")]
+    public async Task<IEnumerable<Assignment>> GetAssignmentsByIdAsync([FromRoute] long id)
     {
+        return await exerciseService.GetAssignmentsByIdAsync(id);
+    }
+    [HttpGet("{id:long}/export")]
+    public async Task<FileContentResult> ExportToCsvAsync([FromRoute] long id)
+    {
+        return await exerciseService.GetCsvByExerciseId(id);
     }
 }
