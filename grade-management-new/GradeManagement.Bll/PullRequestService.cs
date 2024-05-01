@@ -43,7 +43,7 @@ public class PullRequestService
         {
             Url = pullRequest.Url,
             OpeningDate = pullRequest.OpeningDate,
-            IsClosed = pullRequest.IsClosed,
+            Status = pullRequest.Status,
             BranchName = pullRequest.BranchName,
             AssignmentId = pullRequest.AssignmentId,
         };
@@ -67,7 +67,7 @@ public class PullRequestService
 
         pullRequestEntity.Url = pullRequest.Url;
         pullRequestEntity.OpeningDate = pullRequest.OpeningDate;
-        pullRequestEntity.IsClosed = pullRequest.IsClosed;
+        pullRequestEntity.Status = pullRequest.Status;
         pullRequestEntity.BranchName = pullRequest.BranchName;
         pullRequestEntity.AssignmentId = pullRequest.AssignmentId;
 
@@ -79,10 +79,10 @@ public class PullRequestService
     public async Task<IEnumerable<Score>> GetAllScoresByIdSortedByDateDescendingAsync(long id)
     {
         return await _gradeManagementDbContext.Score
-            .ProjectTo<Score>(_mapper.ConfigurationProvider)
-            .Where(s => s.PullRequesId == id)
+            .Where(s => s.PullRequestId == id)
             .Include(s => s.ScoreType)
             .OrderByDescending(s => s.CreatedDate)
+            .ProjectTo<Score>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
@@ -93,6 +93,14 @@ public class PullRequestService
             .Include(s=>s.ScoreType)
             .GroupBy(s => s.ScoreType)
             .Select(g => g.OrderByDescending(s => s.CreatedDate).FirstOrDefault())
+            .ToListAsync();
+    }
+
+    public async Task<List<Data.Models.Score>> GetApprovedScoreModelsByIdAsync(long id)
+    {
+        return await _gradeManagementDbContext.Score
+            .Where(s => s.PullRequestId == id && s.IsApproved)
+            .Include(s => s.ScoreType)
             .ToListAsync();
     }
 }

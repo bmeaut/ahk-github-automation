@@ -1,14 +1,21 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
-using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
+
+using CsvHelper;
 
 using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
 using GradeManagement.Shared.Dtos;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
+using System.Globalization;
+using System.Text;
+
+using ValidationException = AutSoft.Common.Exceptions.ValidationException;
 
 namespace GradeManagement.Bll;
 
@@ -16,11 +23,16 @@ public class ExerciseService : ICrudServiceBase<Exercise>
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly IMapper _mapper;
+    private readonly PullRequestService _pullRequestService;
+    private readonly AssignmentService _assignmentService;
 
-    public ExerciseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
+    public ExerciseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper,
+        PullRequestService pullRequestService, AssignmentService assignmentService)
     {
         _gradeManagementDbContext = gradeManagementDbContext;
         _mapper = mapper;
+        _pullRequestService = pullRequestService;
+        _assignmentService = assignmentService;
     }
 
     public async Task<IEnumerable<Exercise>> GetAllAsync()
@@ -93,5 +105,64 @@ public class ExerciseService : ICrudServiceBase<Exercise>
             .Include(e => e.Course)
             .Include(e => e.Assignments)
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);
+    }
+
+    public async Task<FileContentResult> GetCsvByExerciseId(long exerciseId)
+    {
+        var assignments = await _gradeManagementDbContext.Assignment
+            .Where(a => a.ExerciseId == exerciseId)
+            .Include(assignment => assignment.Student)
+            .ToListAsync();
+
+        var records = new List<Dictionary<string, object>>();
+
+        foreach (var assignment in assignments)
+        {
+            var pullRequest = await _assignmentService.GetMergedPullRequestModelByIdAsync(assignment.Id);
+            if (pullRequest == null)
+            {
+                continue;
+            }
+
+            var scores = await _pullRequestService.GetApprovedScoreModelsByIdAsync(pullRequest.Id);
+            var record = new Dictionary<string, object>
+            {
+                { "NeptunCode", assignment.Student.NeptunCode }, { "SumOfScores", scores.Sum(s => s.Value) }
+            };
+            foreach (var score in scores)
+            {
+                record[score.ScoreType.Type] = score.Value;
+            }
+
+
+            records.Add(record);
+        }
+
+        await using var writer = new StringWriter();
+        await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+        // Write the header
+        var keys = records[0].Keys;
+        foreach (var key in keys)
+        {
+            csv.WriteField(key);
+        }
+
+        await csv.NextRecordAsync();
+
+// Write the records
+        foreach (var record in records)
+        {
+            foreach (var value in record.Values)
+            {
+                csv.WriteField(value);
+            }
+
+            await csv.NextRecordAsync();
+        }
+
+        await csv.FlushAsync();
+
+        return new FileContentResult(Encoding.UTF8.GetBytes(writer.ToString()), "text/csv; charset=utf-8");
     }
 }

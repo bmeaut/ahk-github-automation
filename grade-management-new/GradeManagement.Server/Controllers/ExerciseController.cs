@@ -11,8 +11,13 @@ namespace GradeManagement.Server.Controllers;
 public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<Exercise>(exerciseService)
 {
     [HttpGet("{id:long}/assignments")]
-    public async Task<IEnumerable<Assignment>> GetAssignmentsByIdAsync(long id)
+    public async Task<IEnumerable<Assignment>> GetAssignmentsByIdAsync([FromRoute] long id)
     {
         return await exerciseService.GetAssignmentsByIdAsync(id);
+    }
+    [HttpGet("{id:long}/export")]
+    public async Task<FileContentResult> ExportToCsvAsync([FromRoute] long id)
+    {
+        return await exerciseService.GetCsvByExerciseId(id);
     }
 }

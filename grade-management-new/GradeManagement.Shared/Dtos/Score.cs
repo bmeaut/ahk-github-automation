@@ -8,5 +8,5 @@ public class Score
     public DateTimeOffset CreatedDate { get; set; }
     public ScoreType ScoreType { get; set; }
     public long? TeacherId { get; set; }
-    public long PullRequesId { get; set; }
+    public long PullRequestId { get; set; }
 }

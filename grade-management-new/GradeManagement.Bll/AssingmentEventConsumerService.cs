@@ -3,6 +3,7 @@
 using GradeManagement.Data.Data;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
+using GradeManagement.Shared.Enums;
 
 using Microsoft.IdentityModel.Tokens;
 
@@ -62,7 +63,7 @@ public class AssingmentEventConsumerService
         {
             Url = pullRequestOpened.PullRequestUrl,
             OpeningDate = pullRequestOpened.OpeningDate,
-            IsClosed = false,
+            Status = PullRequestStatus.Open,
             BranchName = pullRequestOpened.BranchName,
             AssignmentId = assignment.Id
         };
@@ -127,10 +128,10 @@ public class AssingmentEventConsumerService
         }
     }
 
-    public async Task ConsumePullRequestClosedEvent(PullRequestClosed pullRequestClosed)
+    public async Task ConsumePullRequestStatusChangedEventAsync(PullRequestStatusChanged pullRequestStatusChanged)
     {
-        var pullRequest = await _pullRequestService.GetModelByUrlAsync(pullRequestClosed.PullRequestUrl);
-        pullRequest.IsClosed = true;
+        var pullRequest = await _pullRequestService.GetModelByUrlAsync(pullRequestStatusChanged.PullRequestUrl);
+        pullRequest.Status = pullRequestStatusChanged.pullRequestStatus;
         await _gradeManagementDbContext.SaveChangesAsync();
     }
 }

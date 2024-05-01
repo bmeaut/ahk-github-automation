@@ -1,3 +1,5 @@
+using GradeManagement.Shared.Enums;
+
 namespace GradeManagement.Data.Models;
 
 public class PullRequest : ISoftDelete
@@ -5,7 +7,7 @@ public class PullRequest : ISoftDelete
     public long Id { get; set; }
     public string Url { get; set; }
     public DateTimeOffset OpeningDate { get; set; }
-    public bool IsClosed { get; set; }
+    public PullRequestStatus Status { get; set; } = PullRequestStatus.Open;
     public string BranchName { get; set; }
     public Assignment Assignment { get; set; }
     public long AssignmentId { get; set; }

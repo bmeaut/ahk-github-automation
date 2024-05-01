@@ -46,9 +46,9 @@ public class AssingmentEventTestController(AssingmentEventConsumerService assing
     }
 
     [HttpPost("pullrequestclosed")]
-    public async Task<IActionResult> PullRequestClosedAsync(PullRequestClosed pullRequestClosed)
+    public async Task<IActionResult> PullRequestClosedAsync(PullRequestStatusChanged pullRequestStatusChanged)
     {
-        await assingmentEventConsumerService.ConsumePullRequestClosedEvent(pullRequestClosed);
+        await assingmentEventConsumerService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
         return Ok();
     }
 }

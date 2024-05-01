@@ -6,6 +6,7 @@ using AutSoft.Linq.Queryable;
 using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
 using GradeManagement.Shared.Dtos;
+using GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -57,6 +58,12 @@ public class AssignmentService : IQueryServiceBase<Assignment>
             .ProjectTo<PullRequest>(_mapper.ConfigurationProvider)
             .Where(p => p.AssignmentId == id)
             .ToListAsync();
+    }
+
+    public async Task<Data.Models.PullRequest?> GetMergedPullRequestModelByIdAsync(long id)
+    {
+        return await _gradeManagementDbContext.PullRequest
+            .SingleOrDefaultAsync(pr => pr.AssignmentId == id && pr.Status == PullRequestStatus.Merged);
     }
 
     public async Task<Data.Models.Assignment> GetAssignmentModelByGitHubRepoNameAsync(string githubRepoName)
