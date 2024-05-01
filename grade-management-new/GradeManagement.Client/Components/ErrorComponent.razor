@@ -1,0 +1,22 @@
+﻿@if (Exception is not null)
+{
+    <div class="error-container">
+        @if (Exception is ApiException)
+        {
+            <p>Custom message for ApiException.</p>
+        }
+        else
+        {
+            <p>An unexpected error has occurred. @Exception.GetType()</p>
+        }
+        <details>
+            <summary>Details</summary>
+            @Exception.Message
+        </details>
+    </div>
+}
+
+@code {
+    [Parameter] public Exception? Exception { get; set; }
+
+}
