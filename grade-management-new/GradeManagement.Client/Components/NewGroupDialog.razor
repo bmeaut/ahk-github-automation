@@ -44,7 +44,7 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _availableUsers = await UserClient.GetALlAsync();
+        _availableUsers = await UserClient.GetAllAsync();
     }
 
     public Group value = new();

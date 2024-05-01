@@ -1,6 +1,6 @@
 ﻿@if (Exception is not null)
 {
-    <div class="error-container">
+    <MudContainer>
         @if (Exception is ApiException)
         {
             <p>Custom message for ApiException.</p>
@@ -12,11 +12,19 @@
         <details>
             <summary>Details</summary>
             @Exception.Message
+            @Exception.StackTrace
         </details>
-    </div>
+        <MudButton OnClick="onClick">Close</MudButton>
+    </MudContainer>
 }
 
 @code {
     [Parameter] public Exception? Exception { get; set; }
+    [Parameter] public ErrorBoundary? ErrorBoundary { get; set; }
+
+    private void onClick()
+    {
+        ErrorBoundary?.Recover();
+    }
 
 }

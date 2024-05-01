@@ -18,18 +18,20 @@ public class SubjectService(SubjectClient client)
         }
     }
 
+    public List<Subject> Subjects { get; private set; }
+
     public event Action OnChange;
 
     private void NotifyStateChanged() => OnChange?.Invoke();
 
     public async Task<List<Subject>> LoadSubjects()
     {
-        var subjects = (await client.GetALlAsync()).ToList();
-        if (_currentSubject is null && subjects.Count > 0)
+        Subjects = (await client.GetAllAsync()).ToList();
+        if (_currentSubject is null && Subjects.Count > 0)
         {
-            _currentSubject = subjects[0];
+            _currentSubject = Subjects[0];
         }
 
-        return subjects;
+        return Subjects;
     }
 }

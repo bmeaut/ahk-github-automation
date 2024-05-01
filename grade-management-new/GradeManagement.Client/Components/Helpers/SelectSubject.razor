@@ -1,8 +1,7 @@
 ﻿@inject HttpClient Http
-@inject SubjectService SubjectService
 
 <MudSelect T="Subject" Value="@Value" ValueChanged="@((Subject value) => { Value = value; ValueChanged.InvokeAsync(value); })" ToStringFunc="@subjectToString" Label="Subject" Style="background-color: white;" Dense="true" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-    @foreach (var semester in _subjects)
+    @foreach (var semester in PossibleValues)
     {
         <MudSelectItem Value="@semester"/>
     }
@@ -10,19 +9,9 @@
 
 @code {
     [Parameter] public Subject Value { get; set; }
+    [Parameter] public List<Subject> PossibleValues { get; set; }
     [Parameter] public EventCallback<Subject> ValueChanged { get; set; }
 
     Func<Subject, string> subjectToString = p => p.Name;
-    private List<Subject> _subjects = new();
-
-    private async Task<List<Subject>> LoadSubjects()
-    {
-        return await SubjectService.LoadSubjects();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        _subjects = await LoadSubjects();
-    }
 
 }

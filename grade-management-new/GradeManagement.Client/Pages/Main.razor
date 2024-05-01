@@ -45,10 +45,10 @@ else
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id"/>
             <PropertyColumn Property="x => x.GithubRepoName" Title="Repository name"/>
-            <PropertyColumn Property="x => x.Student.NeptunCode" Title="Neptun"/>
-            <PropertyColumn Property="x => JoinPullRequests(x)" Title="PRs"/>
-            <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/>
-            <PropertyColumn Property="x => JoinScore(x)" Title="Pontok"/>
+            @* <PropertyColumn Property="x => x.Student.NeptunCode" Title="Neptun"/> *@
+            @* <PropertyColumn Property="x => JoinPullRequests(x)" Title="PRs"/> *@
+            @* <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/> *@
+            @* <PropertyColumn Property="x => JoinScore(x)" Title="Pontok"/> *@
         </Columns>
         <PagerContent>
             <MudDataGridPager T="Assignment"/>
@@ -61,29 +61,29 @@ else
 
     #region Data Grid helpers
 
-    private string JoinPullRequests(Assignment data)
-    {
-        //Kéne menteni a branch nevét is?
-        return string.Join(", ", data.PullRequests.Select(x => x.Url));
-    }
-
-    private string JoinCiWorkflows(Assignment data)
-    {
-        var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
-        var assignmentEvents = filtered as AssignmentLog[] ?? filtered.ToArray();
-        string run = assignmentEvents.Length == 1 ? "run" : "runs";
-        return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
-    }
-
-    private bool IsCicdWorkflow(AssignmentLog data)
-    {
-        return true;
-    }
-
-    private string JoinScore(Assignment data)
-    {
-        return string.Join(".", data.Scores.Select(x => x.Value));
-    }
+    // private string JoinPullRequests(Assignment data)
+    // {
+    //     //Kéne menteni a branch nevét is?
+    //     return string.Join(", ", data.PullRequests.Select(x => x.Url));
+    // }
+    //
+    // private string JoinCiWorkflows(Assignment data)
+    // {
+    //     var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
+    //     var assignmentEvents = filtered as AssignmentEvent[] ?? filtered.ToArray();
+    //     string run = assignmentEvents.Length == 1 ? "run" : "runs";
+    //     return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
+    // }
+    //
+    // private bool IsCicdWorkflow(AssignmentEvent data)
+    // {
+    //     return true;
+    // }
+    //
+    // private string JoinScore(Assignment data)
+    // {
+    //     return string.Join(".", data.Scores.Select(x => x.Value));
+    // }
 
     #endregion
 
@@ -102,16 +102,6 @@ else
         _selectedTask = null;
     }
 
-    private void CourseChanged()
-    {
-        _selectedTask = null;
-    }
-
-    private void TaskChanged()
-    {
-        _assignmentsData = _selectedTask?.Assignments ?? [];
-    }
-
     private async Task<IEnumerable<Subject>> GetSubjectsAsync()
     {
         if (!IsDemo)
@@ -126,78 +116,6 @@ else
                 Id = 1,
                 Name = "Mobweb",
                 NeptunCode = "Neptun",
-                /*Courses = new List<Course>()
-                {
-                    new()
-                    {
-                        Name = "L01",
-                        Id = 1,
-                        MoodleCourseId = "Moodle",
-                        Tasks = new List<Exercise>()
-                        {
-                            new()
-                            {
-                                Id = 1,
-                                Name = "Android init",
-                                GithubPrefix = "Hello there"
-                            },
-                            new()
-                            {
-                                Id = 2,
-                                Name = "Kotlin",
-                                GithubPrefix = "General Kenobi"
-                            }
-                        }
-                    },
-                    new Course()
-                    {
-                        Name = "LA",
-                        Id = 2,
-                        MoodleCourseId = "MoodleAngol",
-                        Tasks = new List<Exercise>()
-                        {
-                            new()
-                            {
-                                Id = 1,
-                                Name = "Demo angol",
-                                GithubPrefix = "Hello there",
-                                Assignments = new List<Assignment>()
-                                {
-                                    new()
-                                    {
-                                        Id = 1,
-                                        GithubRepoName = "Repo",
-                                        Student = new Student()
-                                        {
-                                            NeptunCode = "Neptun"
-                                        },
-                                        PullRequests = new List<PullRequest>()
-                                        {
-                                            new()
-                                            {
-                                                Url = "PR"
-                                            }
-                                        },
-                                        Scores = new List<Score>()
-                                        {
-                                            new()
-                                            {
-                                                Value = "5"
-                                            }
-                                        },
-                                        AssignmentEvents = new List<AssignmentEvent>()
-                                    }
-                                }
-                            },
-                            new()
-                            {
-                                Id = 2,
-                                Name = "Kotlin angol",
-                                GithubPrefix = "General Kenobi"
-                            }
-                        }
-                    }
-                }*/
             }
         };
     }

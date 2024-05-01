@@ -58,7 +58,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _semesters = await SemesterClient.GetALlAsync();
+        _semesters = await SemesterClient.GetAllAsync();
         _isLoading = false;
     }
 

@@ -6,6 +6,7 @@
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
             <MudTextField T="string" Label="Neptun Code" @bind-Value="value.NeptunCode" Required="true" Validation="@(new Func<string, IEnumerable<string>>(NeptunCodeValidator))"></MudTextField>
+            <MudTextField T="string" Label="Github Org" For="@(() => value.GitHubOrgName)" @bind-Value="value.GitHubOrgName" Required="true"></MudTextField>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -33,7 +34,10 @@
         }
     }
 
-    public Subject value = new();
+    public Subject2 value = new()
+    {
+        Teachers = new List<User>() //TODO: add current user
+    };
 
     private IEnumerable<string> NeptunCodeValidator(string pw)
     {

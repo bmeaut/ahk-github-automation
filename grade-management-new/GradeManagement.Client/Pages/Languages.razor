@@ -58,7 +58,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _languages = await LanguageClient.GetALlAsync();
+        _languages = await LanguageClient.GetAllAsync();
         _isLoading = false;
     }
 

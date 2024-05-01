@@ -14,12 +14,12 @@
             </MudDrawer>
             <MudMainContent>
                 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
-                    <ErrorBoundary >
+                    <ErrorBoundary @ref="errorBoundary">
                         <ChildContent>
                             @Body
                         </ChildContent>
                         <ErrorContent Context="exception">
-                            <ErrorComponent Exception="@exception"/>
+                            <ErrorComponent Exception="@exception" ErrorBoundary="@errorBoundary"/>
                         </ErrorContent>
                     </ErrorBoundary>
                 </MudContainer>
@@ -33,6 +33,7 @@
 
 @code {
     bool _drawerOpen = false;
+    private ErrorBoundary? errorBoundary;
 
     void DrawerToggle()
     {

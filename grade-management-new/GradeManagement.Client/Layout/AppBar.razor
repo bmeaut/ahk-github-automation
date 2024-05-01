@@ -5,7 +5,7 @@
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
     <MudText Typo="Typo.h3" Class="ml-3">@name</MudText>
     <MudSpacer/>
-    <SelectSubject @bind-Value="@SubjectService.CurrentSubject"/>
+    <SelectSubject @bind-Value="@SubjectService.CurrentSubject" PossibleValues="@SubjectService.Subjects"/>
     <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/>
 </MudAppBar>
 
@@ -17,17 +17,13 @@
 
     private string name { get; set; }
 
-    private void SelectSubject(Subject value)
-    {
-        SubjectService.CurrentSubject = value;
-    }
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         name = user.Identity.Name; // Get the logged-in user's name
-        // Now you can use userName as needed
+        SubjectService.OnChange += StateHasChanged;
     }
 
 }
