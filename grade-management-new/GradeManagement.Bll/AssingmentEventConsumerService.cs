@@ -107,9 +107,23 @@ public class AssingmentEventConsumerService
         var teacher = await _userService.GetModelByGitHubIdAsync(assignmentGradedByTeacher.TeacherGitHubId);
         var pullRequest = await _pullRequestService.GetModelByUrlAsync(assignmentGradedByTeacher.PullRequestUrl);
 
-        foreach (var eventScore in assignmentGradedByTeacher.Scores)
+        if (assignmentGradedByTeacher.Scores.IsNullOrEmpty())
         {
-            await _scoreService.CreateOrApprovePointsFromTeacherInput(eventScore, pullRequest.Id, teacher.Id);
+            var latestScores = await _pullRequestService.GetLatestUnapprovedScoremodelsByIdAsync(pullRequest.Id);
+            foreach (var scoreEntity in latestScores)
+            {
+                scoreEntity.IsApproved = true;
+                scoreEntity.TeacherId = teacher.Id;
+            }
+
+            await _gradeManagementDbContext.SaveChangesAsync();
+        }
+        else
+        {
+            foreach (var eventScore in assignmentGradedByTeacher.Scores)
+            {
+                await _scoreService.CreateOrApprovePointsFromTeacherInput(eventScore, pullRequest.Id, teacher.Id);
+            }
         }
     }
 

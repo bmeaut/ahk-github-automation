@@ -12,6 +12,6 @@ public class PullRequestController(PullRequestService pullRequestService) : Cont
     [HttpGet("{id:long}/scores")]
     public async Task<IEnumerable<Score>> GetAllScoresByIdAsync([FromRoute] long id)
     {
-        return await pullRequestService.GetAllScoresByIdAsync(id);
+        return await pullRequestService.GetAllScoresByIdSortedByDateDescendingAsync(id);
     }
 }

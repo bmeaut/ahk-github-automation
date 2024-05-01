@@ -76,12 +76,23 @@ public class PullRequestService
         return await GetByIdAsync(pullRequestEntity.Id);
     }
 
-    public async Task<IEnumerable<Score>> GetAllScoresByIdAsync(long id)
+    public async Task<IEnumerable<Score>> GetAllScoresByIdSortedByDateDescendingAsync(long id)
     {
         return await _gradeManagementDbContext.Score
             .ProjectTo<Score>(_mapper.ConfigurationProvider)
             .Where(s => s.PullRequesId == id)
             .Include(s => s.ScoreType)
+            .OrderByDescending(s => s.CreatedDate)
+            .ToListAsync();
+    }
+
+    public async Task<List<Data.Models.Score>> GetLatestUnapprovedScoremodelsByIdAsync(long id)
+    {
+        return await _gradeManagementDbContext.Score
+            .Where(s => s.PullRequestId == id && !s.IsApproved)
+            .Include(s=>s.ScoreType)
+            .GroupBy(s => s.ScoreType)
+            .Select(g => g.OrderByDescending(s => s.CreatedDate).FirstOrDefault())
             .ToListAsync();
     }
 }

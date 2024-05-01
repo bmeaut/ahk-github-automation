@@ -51,7 +51,7 @@ public class GradeManagementDbContext : DbContext
     public DbSet<GroupTeacher> GroupTeacher { get; set; }
     public DbSet<Language> Language { get; set; }
     public DbSet<PullRequest> PullRequest { get; set; }
-    public DbSet<Score?> Score { get; set; }
+    public DbSet<Score> Score { get; set; }
     public DbSet<ScoreType> ScoreType { get; set; }
     public DbSet<Semester> Semester { get; set; }
     public DbSet<Student> Student { get; set; }

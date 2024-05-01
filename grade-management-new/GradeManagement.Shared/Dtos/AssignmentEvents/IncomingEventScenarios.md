@@ -66,7 +66,7 @@ Incoming Data:
 - Assignment GitHub Repo Url
 - Pull Request Url
 - Teachers gitHubId
-- Points in order (type1, type2, ...)
+- Points in order (type1, type2, ...) (empty if teacher approves latest auto generated points)
 - Date of approval
 
 ## Scenario 6: Pull request gets closed
