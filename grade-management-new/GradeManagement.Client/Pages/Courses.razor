@@ -1,8 +1,8 @@
 ﻿@page "/courses"
 @layout AuthenticatedLayout
 
+@using GradeManagement.Client.Components.NewDialogs
 @implements IDisposable
-@inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
@@ -41,10 +41,7 @@
 
 @code {
     private ICollection<Course> _courses = new List<Course>();
-    private LoadingComponent? loadingComponentRef;
-    private bool _isLoading = true;
-
-    readonly string BaseUrl = Endpoints.COURSES;
+    private LoadingComponent loadingComponentRef;
 
     private void RowClickEvent(DataGridRowClickEventArgs<Course> args)
     {
@@ -67,7 +64,7 @@
             var newCourse = result.Data as Course;
             newCourse.SubjectId = SubjectService.CurrentSubject.Id;
             await CourseClient.CreateAsync(newCourse);
-            await _loading();
+            await loadingComponentRef.StartLoading();
         }
     }
 
@@ -80,22 +77,22 @@
     private async Task CommittedItemChanges(Course items)
     {
         await CourseClient.UpdateAsync(items.Id, items);
-        SnackbarService.ShowEditSuccess();
-        await _loading();
         StateHasChanged();
+        SnackbarService.ShowEditSuccess();
+        //await loadingComponentRef.StartLoading();
     }
 
     private async Task DeleteItem(Course item)
     {
         await CourseClient.DeleteAsync(item.Id);
         SnackbarService.ShowDeleteSuccess();
-        await _loading();
+        await loadingComponentRef.StartLoading();
         StateHasChanged();
     }
 
     private void OnSubjectChanged()
     {
-        loadingComponentRef?.StartLoading();
+        loadingComponentRef.StartLoading();
     }
 
     protected override void OnInitialized()

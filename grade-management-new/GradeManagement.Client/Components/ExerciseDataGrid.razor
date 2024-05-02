@@ -1,5 +1,4 @@
-﻿@using GradeManagement.Client.Pages
-@inject ExerciseService ExerciseService
+﻿@inject ExerciseClient ExerciseClient
 
 <MudDataGrid T="Exercise" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
@@ -14,8 +13,6 @@
 @code {
     [Parameter] public ICollection<Exercise> Values { get; set; }
 
-    string BaseUrl = Endpoints.EXERCISES;
-
     private async Task StartEditing(CellContext<Exercise?> context)
     {
         await context.Actions.StartEditingItemAsync();
@@ -24,13 +21,13 @@
 
     private async Task CommittedItemChanges(Exercise items)
     {
-        await ExerciseService.UpdateExercise(items);
+        await ExerciseClient.UpdateAsync(items.Id, items);
     }
 
     private async Task DeleteItem(Exercise item)
     {
         Values.Remove(item);
-        await ExerciseService.DeleteExercise(item.Id);
+        await ExerciseClient.DeleteAsync(item.Id);
         StateHasChanged();
     }
 

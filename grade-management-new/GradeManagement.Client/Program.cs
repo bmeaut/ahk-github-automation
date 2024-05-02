@@ -58,6 +58,12 @@ namespace GradeManagement.Client
                 new UserClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
             builder.Services.AddScoped<GroupClient>(sp =>
                 new GroupClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
+            builder.Services.AddScoped<ExerciseClient>(sp =>
+                new ExerciseClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
+            builder.Services.AddScoped<AssignmentClient>(sp =>
+                new AssignmentClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
+            builder.Services.AddScoped<StudentClient>(sp =>
+                new StudentClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
 
 
             builder.Services.AddMudServices();

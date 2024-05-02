@@ -25,8 +25,7 @@
 
     void Submit()
     {
-        //TODO: Save the group
-        //value.Teachers = _selectedUsers.ToList();
+        value.Teachers = _selectedUsers.ToList();
         MudDialog.Close(DialogResult.Ok(value));
     }
 
@@ -47,7 +46,7 @@
         _availableUsers = await UserClient.GetAllAsync();
     }
 
-    public Group value = new();
+    public Group2 value = new();
     private ICollection<User> _availableUsers = new List<User>();
     private IEnumerable<User> _selectedUsers = new List<User>();
 

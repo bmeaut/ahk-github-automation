@@ -3,6 +3,7 @@ using GradeManagement.Bll.BaseServices;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

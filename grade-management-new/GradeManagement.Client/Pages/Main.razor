@@ -1,44 +1,53 @@
-@inject HttpClient Http
-@inject ISnackbar Snackbar
-
 @page "/"
 @layout AuthenticatedLayout
+
+@inject SubjectService SubjectService
+@inject SubjectClient SubjectClient
+@inject CourseClient CourseClient
+@inject ExerciseClient ExerciseClient
+@inject AssignmentClient AssignmentClient
 <PageTitle>AHK Review UI</PageTitle>
 
 <style>
-	.sort-direction-icon {
-		--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
-	}
+    .sort-direction-icon {
+        --path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+    }
 
-		.sort-direction-icon.mud-direction-asc {
-			--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
-		}
+    .sort-direction-icon.mud-direction-asc {
+        --path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+    }
 
-		.sort-direction-icon.mud-direction-desc {
-			--path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
-		}
+    .sort-direction-icon.mud-direction-desc {
+        --path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+    }
 
-	.custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
-		d: path(var(--path-svg))
-	}
+    .custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
+        d: path(var(--path-svg))
+    }
 </style>
 
+<LoadingComponent LongTask="@Loading" @ref="loadingRef">
 
-@if (_isLoading)
-{
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Style="position:absolute; left:50vw; top:50vh;" Size="Size.Large"/>
-}
-else
-{
     <MudStack Row="true" Class="mt-6">
-        <MudSelect T="Subject" Label="Subject" @bind-Value="_selectedSubject" @bind-Value:after="SubjectChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var subject in _subjects ?? [])
+        <MudSelect T="Course" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged"
+                   Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
+                   TransformOrigin="Origin.TopCenter">
+            @foreach (var course in _courses ?? [])
             {
-                <MudSelectItem Value="@subject">@subject.Name</MudSelectItem>
+                <MudSelectItem Value="@course">@course.Name</MudSelectItem>
             }
         </MudSelect>
-
         <MudSpacer/>
+        <MudSelect T="Exercise" Label="Exercise" @bind-Value="_selectedTask" @bind-Value:after="ExerciseChanged"
+                   Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
+                   TransformOrigin="Origin.TopCenter">
+            @foreach (var task in _tasks ?? [])
+            {
+                <MudSelectItem Value="@task">@task.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSpacer/>
+
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
     </MudStack>
     <MudDataGrid Items="@_assignmentsData" T="Assignment" Class="custom-grid">
@@ -54,129 +63,62 @@ else
             <MudDataGridPager T="Assignment"/>
         </PagerContent>
     </MudDataGrid>
-}
+</LoadingComponent>
 
 @code
 {
 
     #region Data Grid helpers
 
-    // private string JoinPullRequests(Assignment data)
-    // {
-    //     //Kéne menteni a branch nevét is?
-    //     return string.Join(", ", data.PullRequests.Select(x => x.Url));
-    // }
-    //
-    // private string JoinCiWorkflows(Assignment data)
-    // {
-    //     var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
-    //     var assignmentEvents = filtered as AssignmentEvent[] ?? filtered.ToArray();
-    //     string run = assignmentEvents.Length == 1 ? "run" : "runs";
-    //     return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
-    // }
-    //
-    // private bool IsCicdWorkflow(AssignmentEvent data)
-    // {
-    //     return true;
-    // }
-    //
-    // private string JoinScore(Assignment data)
-    // {
-    //     return string.Join(".", data.Scores.Select(x => x.Value));
-    // }
+// private string JoinPullRequests(Assignment data)
+// {
+//     //Kéne menteni a branch nevét is?
+//     return string.Join(", ", data.PullRequests.Select(x => x.Url));
+// }
+//
+// private string JoinCiWorkflows(Assignment data)
+// {
+//     var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
+//     var assignmentEvents = filtered as AssignmentEvent[] ?? filtered.ToArray();
+//     string run = assignmentEvents.Length == 1 ? "run" : "runs";
+//     return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
+// }
+//
+// private bool IsCicdWorkflow(AssignmentEvent data)
+// {
+//     return true;
+// }
+//
+// private string JoinScore(Assignment data)
+// {
+//     return string.Join(".", data.Scores.Select(x => x.Value));
+// }
 
     #endregion
 
-    private const bool IsDemo = true;
+    private LoadingComponent loadingRef;
 
-    private bool _isLoading = true;
     private Subject? _selectedSubject = null;
     private Course? _selectedCourse = null;
     private Exercise? _selectedTask = null;
-    private IEnumerable<Subject>? _subjects;
+    private IEnumerable<Course>? _courses = new List<Course>();
+    private IEnumerable<Exercise>? _tasks = new List<Exercise>();
     private IEnumerable<Assignment> _assignmentsData = new List<Assignment>();
 
-    private void SubjectChanged()
+
+    private async Task Loading()
     {
-        _selectedCourse = null;
-        _selectedTask = null;
+        _selectedSubject = SubjectService.CurrentSubject;
+        _courses = await SubjectClient.GetAllCoursesByIdAsync(_selectedSubject.Id);
     }
 
-    private async Task<IEnumerable<Subject>> GetSubjectsAsync()
+    private async Task CourseChanged()
     {
-        if (!IsDemo)
-        {
-            return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
-        }
-
-        return new List<Subject>()
-        {
-            new()
-            {
-                Id = 1,
-                Name = "Mobweb",
-                NeptunCode = "Neptun",
-            }
-        };
+        _tasks = await CourseClient.GetAllExercisesByIdAsync(_selectedCourse.Id);
     }
 
-    private async Task<IEnumerable<Subject>> GetAssignmentsAsync()
+    private async Task ExerciseChanged()
     {
-        if (!IsDemo)
-        {
-            return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
-        }
-
-        return new List<Subject>();
+        _assignmentsData = await ExerciseClient.GetAssignmentsByIdAsync(_selectedTask.Id);
     }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _subjects = await GetSubjectsAsync();
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine(e.StackTrace);
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Add("Database error", Severity.Error);
-        }
-
-        _isLoading = false;
-    }
-
-    /*private IEnumerable<CourseDTO> courses = new List<CourseDTO>
-        {
-        new CourseDTO(){
-            Id=13,
-            Name="Hello there",
-            TaskDtos = new List<TaskDTO>()
-                {
-                new TaskDTO()
-                    {
-                    Id=1L,
-                    Name="General Kenobi"
-            }
-        },
-        },
-        new CourseDTO(){
-            Id=15L,
-            Name="Mobweb",
-            TaskDtos = new List<TaskDTO>()
-                {
-                new TaskDTO()
-                    {
-                    Id=1L,
-                    Name="Task 1"
-                },
-                new TaskDTO()
-                    {
-                    Id=2L,
-                    Name="Task 4"
-            }
-        }
-    },
-        };*/
-
 }

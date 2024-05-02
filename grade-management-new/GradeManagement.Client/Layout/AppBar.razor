@@ -1,9 +1,8 @@
 @inject SubjectService SubjectService
-@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <MudAppBar Elevation="5">
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
-    <MudText Typo="Typo.h3" Class="ml-3">@name</MudText>
+    <MudText Typo="Typo.h3" Class="ml-3">AHK Review UI</MudText>
     <MudSpacer/>
     <SelectSubject @bind-Value="@SubjectService.CurrentSubject" PossibleValues="@SubjectService.Subjects"/>
     <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/>
@@ -15,14 +14,8 @@
     [Parameter] public bool DrawerOpened { get; set; }
 
 
-    private string name { get; set; }
-
-
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        name = user.Identity.Name; // Get the logged-in user's name
         SubjectService.OnChange += StateHasChanged;
     }
 

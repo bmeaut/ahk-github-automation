@@ -1,10 +1,12 @@
 ﻿@page "/teachers"
+@using GradeManagement.Client.Components.NewDialogs
 @layout AuthenticatedLayout
 
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject SubjectClient SubjectClient
 @inject UserClient UserClient
 
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
@@ -16,14 +18,7 @@
             <PropertyColumn Property="x => x.GithubId" Title="Github Id"/>
             <PropertyColumn Property="x => x.BmeEmail" Title="Bme Email"/>
             <PropertyColumn Property="x => x.Type" Title="Type"/>
-            <TemplateColumn Title="Actions">
-                <CellTemplate>
-                    <MudStack Row>
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
+            <DataGridActions TItem="User" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
     <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
@@ -31,11 +26,7 @@
 
 @code {
     private ICollection<User> _teachers = new List<User>();
-    private Subject _subject = new();
-    private bool _isLoading = true;
-    private LoadingComponent? loadingComponentRef;
-
-    readonly string BaseUrl = Endpoints.TEACHERS;
+    private LoadingComponent loadingComponentRef;
 
 
     private async Task OpenDialog()
@@ -44,33 +35,23 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            User newTeacher = result.Data as User;
-            _teachers.Add(newTeacher);
-            var response = await Http.PostAsJsonAsync(BaseUrl, newTeacher);
-            if (response.IsSuccessStatusCode)
+            var user = result.Data as User;
+            user = await UserClient.CreateAsync(user);
+            SnackbarService.ShowMessage("user id:" + user.Id);
+            var subject = SubjectService.CurrentSubject;
+            //await SubjectClient.AddTeacherToSubjectAsync(subject.Id, user.Id);
+            _teachers.Add(user);
+            var subject2 = new Subject2
             {
-                //TODO: This is a workaround, it should be fixed
-                User newObject = await response.Content.ReadFromJsonAsync<User>();
-                //Right now it needs Teacher list to be filled
-                _teachers.Remove(newTeacher);
-                _teachers.Add(newObject);
-                response = await Http.PutAsJsonAsync($"{Endpoints.SUBJECTS}/{_subject.Id}", _subject);
-                if (response.IsSuccessStatusCode)
-                {
-                    SnackbarService.ShowAddSuccess();
-                }
-                else
-                {
-                    await Console.Error.WriteLineAsync("Error");
-                    SnackbarService.ShowAddError();
-                }
-            }
-            else
-            {
-                _teachers.Remove(result.Data as User);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+                Id = subject.Id,
+                Teachers = _teachers,
+                GitHubOrgName = subject.GitHubOrgName,
+                Name = subject.Name,
+                NeptunCode = subject.NeptunCode,
+            };
+            await SubjectClient.UpdateAsync(subject2.Id, subject2);
+            SnackbarService.ShowAddSuccess();
+            await loadingComponentRef.StartLoading();
         }
     }
 
@@ -82,38 +63,32 @@
 
     private async Task _loading()
     {
-        _teachers = await UserClient.GetAllAsync();
+        _teachers = await SubjectClient.GetAllTeachersByIdAsync(SubjectService.CurrentSubject.Id);
     }
 
     private async Task CommittedItemChanges(User items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await UserClient.UpdateAsync(items.Id, items);
+        SnackbarService.ShowEditSuccess();
+        await loadingComponentRef.StartLoading();
     }
 
     private async Task DeleteItem(User item)
     {
+        await UserClient.DeleteAsync(item.Id);
         _teachers.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
+        var subject = SubjectService.CurrentSubject;
+        var subject2 = new Subject2
         {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
-        StateHasChanged();
+            Id = subject.Id,
+            Teachers = _teachers,
+            GitHubOrgName = subject.GitHubOrgName,
+            Name = subject.Name,
+            NeptunCode = subject.NeptunCode,
+        };
+        await SubjectClient.UpdateAsync(subject2.Id, subject2);
+        SnackbarService.ShowDeleteSuccess();
+        await loadingComponentRef.StartLoading();
     }
 
     private void OnSubjectChanged()

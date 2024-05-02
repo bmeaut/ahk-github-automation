@@ -1,14 +1,14 @@
 ﻿@page "/languages"
+@using GradeManagement.Client.Components.NewDialogs
 @layout AuthenticatedLayout
 
-@inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject LanguageClient LanguageClient
 
 <PageTitle>Languages</PageTitle>
 
-<LoadingComponent IsLoading="@_isLoading">
+<LoadingComponent @ref="loadingRef" LongTask="@Loading">
     <MudDataGrid T="Language" Items="_languages" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
@@ -21,9 +21,7 @@
 
 @code {
     private ICollection<Language> _languages = new List<Language>();
-    private bool _isLoading = true;
-
-    readonly string BaseUrl = Endpoints.LANGUAGES;
+    private LoadingComponent loadingRef;
 
     private async Task OpenDialog()
     {
@@ -31,22 +29,9 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _languages.Add(result.Data as Language);
-            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
-            if (response.IsSuccessStatusCode)
-            {
-                Language newObject = await response.Content.ReadFromJsonAsync<Language>();
-                //Right now it needs Language list to be filled
-                _languages.Remove(result.Data as Language);
-                _languages.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                _languages.Remove(result.Data as Language);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            await LanguageClient.CreateAsync(result.Data as Language);
+            SnackbarService.ShowAddSuccess();
+            await loadingRef.StartLoading();
         }
     }
 
@@ -56,41 +41,22 @@
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    private async Task Loading()
     {
         _languages = await LanguageClient.GetAllAsync();
-        _isLoading = false;
     }
 
     private async Task CommittedItemChanges(Language items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        //await LanguageClient.UpdateAsync(items);
+        SnackbarService.ShowError("Edit not implemented");
     }
 
     private async Task DeleteItem(Language item)
     {
-        _languages.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
-        StateHasChanged();
+        await LanguageClient.DeleteAsync(item.Id);
+        SnackbarService.ShowDeleteSuccess();
+        await loadingRef.StartLoading();
     }
 
 }

@@ -8,22 +8,22 @@
 <MudLayout>
     <AuthorizeView>
         <Authorized>
-            <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
-            <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
-                <NavMenu/>
-            </MudDrawer>
-            <MudMainContent>
-                <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
-                    <ErrorBoundary @ref="errorBoundary">
-                        <ChildContent>
+            <ErrorBoundary @ref="errorBoundary">
+                <ChildContent>
+                    <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
+                    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
+                        <NavMenu/>
+                    </MudDrawer>
+                    <MudMainContent>
+                        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
                             @Body
-                        </ChildContent>
-                        <ErrorContent Context="exception">
-                            <ErrorComponent Exception="@exception" ErrorBoundary="@errorBoundary"/>
-                        </ErrorContent>
-                    </ErrorBoundary>
-                </MudContainer>
-            </MudMainContent>
+                        </MudContainer>
+                    </MudMainContent>
+                </ChildContent>
+                <ErrorContent Context="exception">
+                    <ErrorComponent Exception="@exception" ErrorBoundary="@errorBoundary"/>
+                </ErrorContent>
+            </ErrorBoundary>
         </Authorized>
         <NotAuthorized>
             <RedirectToLogin/>
