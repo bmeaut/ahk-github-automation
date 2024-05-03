@@ -31,7 +31,6 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            //TODO: Do others through API
             await StudentClient.CreateAsync(result.Data as Student2);
             SnackbarService.ShowAddSuccess();
             await loadingRef.StartLoading();

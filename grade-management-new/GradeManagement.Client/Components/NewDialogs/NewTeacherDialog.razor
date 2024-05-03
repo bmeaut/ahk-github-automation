@@ -24,10 +24,10 @@
     private bool success;
     private string[] errors;
 
-    void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    private void Submit() => MudDialog.Close(DialogResult.Ok(value));
     void Cancel() => MudDialog.Cancel();
 
-    async void OnSubmitClicked()
+    private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)
@@ -35,14 +35,6 @@
             Submit();
         }
     }
-    /*new Teacher
-            {
-                Id = 1,
-                Name = "Teacher 1",
-                NeptunCode = "ABC123",
-                GithubId = "github",
-                BmeEmail = "email@edu.bme.hu",
-            },*/
 
     public User value = new()
     {

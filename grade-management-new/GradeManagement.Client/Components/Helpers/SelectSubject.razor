@@ -12,6 +12,6 @@
     [Parameter] public List<Subject> PossibleValues { get; set; }
     [Parameter] public EventCallback<Subject> ValueChanged { get; set; }
 
-    Func<Subject, string> subjectToString = p => p.Name;
+    private Func<Subject, string> subjectToString = p => p.Name;
 
 }

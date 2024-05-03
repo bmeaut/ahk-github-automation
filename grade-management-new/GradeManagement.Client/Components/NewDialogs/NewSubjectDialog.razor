@@ -22,10 +22,10 @@
     private bool success;
     private string[] errors;
 
-    void Submit() => MudDialog.Close(DialogResult.Ok(value));
-    void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    private void Cancel() => MudDialog.Cancel();
 
-    async void OnSubmitClicked()
+    private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)

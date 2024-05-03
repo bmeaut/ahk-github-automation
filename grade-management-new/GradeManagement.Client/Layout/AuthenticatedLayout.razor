@@ -32,10 +32,10 @@
 </MudLayout>
 
 @code {
-    bool _drawerOpen = false;
+    private bool _drawerOpen = false;
     private ErrorBoundary? errorBoundary;
 
-    void DrawerToggle()
+    private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
         StateHasChanged();

@@ -12,7 +12,7 @@
     [Parameter] public Semester Value { get; set; }
     [Parameter] public EventCallback<Semester> ValueChanged { get; set; }
 
-    Func<Semester, string> semesterToString = p => p.Name;
+    private Func<Semester, string> semesterToString = p => p.Name;
     private ICollection<Semester> _semesters = new List<Semester>();
 
     private async Task<ICollection<Semester>> LoadSemesters()

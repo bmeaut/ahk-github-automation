@@ -23,7 +23,7 @@
     private bool success;
     private string[] errors;
 
-    Course value = new Course();
+    private Course value = new Course();
 
     void Submit() => MudDialog.Close(DialogResult.Ok(value));
     void Cancel() => MudDialog.Cancel();

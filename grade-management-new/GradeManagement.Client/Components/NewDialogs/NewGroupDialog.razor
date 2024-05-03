@@ -23,15 +23,15 @@
     private bool success;
     private string[] errors;
 
-    void Submit()
+    private void Submit()
     {
         value.Teachers = _selectedUsers.ToList();
         MudDialog.Close(DialogResult.Ok(value));
     }
 
-    void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog.Cancel();
 
-    async void OnSubmitClicked()
+    private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)
