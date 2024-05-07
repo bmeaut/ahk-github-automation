@@ -3,10 +3,29 @@ using GradeManagement.Data.Models;
 
 using Microsoft.EntityFrameworkCore;
 
+using System.Linq.Expressions;
+
 namespace GradeManagement.Data.Data;
 
 public class GradeManagementDbContext : DbContext
 {
+    public DbSet<Assignment> Assignment { get; set; }
+    public DbSet<AssignmentLog> AssignmentLog { get; set; }
+    public DbSet<Course> Course { get; set; }
+    public DbSet<Exercise> Exercise { get; set; }
+    public DbSet<Group> Group { get; set; }
+    public DbSet<GroupStudent> GroupStudent { get; set; }
+    public DbSet<GroupTeacher> GroupTeacher { get; set; }
+    public DbSet<Language> Language { get; set; }
+    public DbSet<PullRequest> PullRequest { get; set; }
+    public DbSet<Score> Score { get; set; }
+    public DbSet<ScoreType> ScoreType { get; set; }
+    public DbSet<Semester> Semester { get; set; }
+    public DbSet<Student> Student { get; set; }
+    public DbSet<Subject> Subject { get; set; }
+    public DbSet<SubjectTeacher> SubjectTeacher { get; set; }
+    public DbSet<User> User { get; set; }
+
     //Add Migration: dotnet ef migrations add <MigrationName> --project GradeManagement.Data --startup-project GradeManagement.Server
     public GradeManagementDbContext(DbContextOptions<GradeManagementDbContext> options) : base(options)
     {
@@ -24,38 +43,24 @@ public class GradeManagementDbContext : DbContext
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
         }
 
-        modelBuilder.Entity<Assignment>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<AssignmentLog>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Course>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Exercise>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Group>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<GroupStudent>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<GroupTeacher>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Language>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<PullRequest>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Score>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<ScoreType>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Semester>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Student>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<Subject>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<SubjectTeacher>().HasQueryFilter(x => x.IsDeleted == false);
-        modelBuilder.Entity<User>().HasQueryFilter(x => x.IsDeleted == false);
+        RegisterSoftDeleteQueryFilters(modelBuilder);
     }
 
-    public DbSet<Assignment> Assignment { get; set; }
-    public DbSet<AssignmentLog> AssignmentLog { get; set; }
-    public DbSet<Course> Course { get; set; }
-    public DbSet<Exercise> Exercise { get; set; }
-    public DbSet<Group> Group { get; set; }
-    public DbSet<GroupStudent> GroupStudent { get; set; }
-    public DbSet<GroupTeacher> GroupTeacher { get; set; }
-    public DbSet<Language> Language { get; set; }
-    public DbSet<PullRequest> PullRequest { get; set; }
-    public DbSet<Score> Score { get; set; }
-    public DbSet<ScoreType> ScoreType { get; set; }
-    public DbSet<Semester> Semester { get; set; }
-    public DbSet<Student> Student { get; set; }
-    public DbSet<Subject> Subject { get; set; }
-    public DbSet<SubjectTeacher> SubjectTeacher { get; set; }
-    public DbSet<User> User { get; set; }
+    private void RegisterSoftDeleteQueryFilters(ModelBuilder modelBuilder)
+    {
+        var entityTypes = modelBuilder.Model.GetEntityTypes()
+            .Where(e => typeof(ISoftDelete)
+                .IsAssignableFrom(e.ClrType));
+
+        foreach (var entityType in entityTypes)
+        {
+            var parameter = Expression.Parameter(entityType.ClrType);
+
+            var softDeletableProperty = Expression.Property(parameter, nameof(ISoftDelete.IsDeleted));
+            var compareExpression = Expression.MakeBinary(ExpressionType.Equal, softDeletableProperty, Expression.Constant(false));
+            var lambda = Expression.Lambda(compareExpression, parameter);
+
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+        }
+    }
 }
