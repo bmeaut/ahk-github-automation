@@ -8,7 +8,6 @@ using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
 using GradeManagement.Data.Models;
 
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Course = GradeManagement.Shared.Dtos.Course;

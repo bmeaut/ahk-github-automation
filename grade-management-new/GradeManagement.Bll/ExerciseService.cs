@@ -9,11 +9,9 @@ using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
 using GradeManagement.Shared.Dtos;
 
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using System.Globalization;
-using System.Text;
 
 using ValidationException = AutSoft.Common.Exceptions.ValidationException;
 
@@ -107,7 +105,7 @@ public class ExerciseService : ICrudServiceBase<Exercise>
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);
     }
 
-    public async Task<FileContentResult> GetCsvByExerciseId(long exerciseId)
+    public async Task<string> GetCsvByExerciseId(long exerciseId)
     {
         var assignments = await _gradeManagementDbContext.Assignment
             .Where(a => a.ExerciseId == exerciseId)
@@ -150,7 +148,7 @@ public class ExerciseService : ICrudServiceBase<Exercise>
 
         await csv.NextRecordAsync();
 
-// Write the records
+        // Write the records
         foreach (var record in records)
         {
             foreach (var value in record.Values)
@@ -163,6 +161,6 @@ public class ExerciseService : ICrudServiceBase<Exercise>
 
         await csv.FlushAsync();
 
-        return new FileContentResult(Encoding.UTF8.GetBytes(writer.ToString()), "text/csv; charset=utf-8");
+        return writer.ToString();
     }
 }
