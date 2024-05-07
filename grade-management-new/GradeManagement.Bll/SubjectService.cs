@@ -8,6 +8,7 @@ using GradeManagement.Bll.BaseServices;
 using GradeManagement.Data.Data;
 using GradeManagement.Data.Models;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Course = GradeManagement.Shared.Dtos.Course;
@@ -128,5 +129,31 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
             .Select(s => new { Id = s.Id, SubjectTeachers = s.SubjectTeachers })
             .SingleEntityAsync(s => s.Id == id, id);
         return _mapper.Map<List<User>>(selctedSubjectEntity.SubjectTeachers.Select(st => st.User));
+    }
+
+    public async Task<List<User>> AddTeacherToSubjectByIdAsync(long subjectId, long teacherId)
+    {
+        var subjectEntity = await _gradeManagementDbContext.Subject
+            .SingleEntityAsync(s => s.Id == subjectId, subjectId);
+        var teacherEntity = await _gradeManagementDbContext.User
+            .SingleEntityAsync(u => u.Id == teacherId, teacherId);
+
+        _gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
+        {
+            SubjectId = subjectEntity.Id, UserId = teacherEntity.Id
+        });
+
+        await _gradeManagementDbContext.SaveChangesAsync();
+
+        return await GetAllTeachersByIdAsync(subjectId);
+    }
+
+    public async Task DeleteTeacherFromSubjectByIdAsync(long subjectId, long teacherId)
+    {
+        object[] keyValues = [subjectId, teacherId];
+        var subjectTeacherEntity = await _gradeManagementDbContext.SubjectTeacher
+            .SingleEntityAsync(st => st.SubjectId == subjectId && st.UserId == teacherId, keyValues);
+        _gradeManagementDbContext.SubjectTeacher.Remove(subjectTeacherEntity);
+        await _gradeManagementDbContext.SaveChangesAsync();
     }
 }

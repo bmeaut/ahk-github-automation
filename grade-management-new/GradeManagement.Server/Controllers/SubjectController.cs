@@ -23,4 +23,19 @@ public class SubjectController(SubjectService subjectService) : CrudControllerBa
     {
         return await subjectService.GetAllTeachersByIdAsync(id);
     }
+
+    [HttpPost("{subjectId:long}/teachers/{teacherId:long}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<List<User>> AddTeacherToSubjectByIdAsync([FromRoute] long subjectId, [FromRoute] long teacherId)
+    {
+        return await subjectService.AddTeacherToSubjectByIdAsync(subjectId, teacherId);
+    }
+
+    [HttpDelete("{subjectId:long}/teachers/{teacherId:long}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId, [FromRoute] long teacherId)
+    {
+        await subjectService.DeleteTeacherFromSubjectByIdAsync(subjectId, teacherId);
+        return NoContent();
+    }
 }
