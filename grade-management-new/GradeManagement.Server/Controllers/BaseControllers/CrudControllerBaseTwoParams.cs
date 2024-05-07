@@ -8,6 +8,7 @@ public abstract class CrudControllerBase<TRequestDto, TResponseDto>(ICrudService
     : RestrictedCrudControllerBase<TRequestDto, TResponseDto>(crudService)
 {
     [HttpPut("{id:long}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<TResponseDto> UpdateAsync([FromRoute] long id, [FromBody] TRequestDto requestDto)
     {
         return await crudService.UpdateAsync(id, requestDto);

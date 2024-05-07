@@ -10,6 +10,7 @@ namespace GradeManagement.Server.Controllers;
 public class PullRequestController(PullRequestService pullRequestService) : ControllerBase
 {
     [HttpGet("{id:long}/scores")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IEnumerable<Score>> GetAllScoresByIdAsync([FromRoute] long id)
     {
         return await pullRequestService.GetAllScoresByIdSortedByDateDescendingAsync(id);

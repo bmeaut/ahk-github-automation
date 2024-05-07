@@ -13,18 +13,21 @@ namespace GradeManagement.Server.Controllers;
 public class UserController(UserService userService) : CrudControllerBase<User>(userService)
 {
     [HttpGet("{id:long}/groups")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<Group>> GetAllGroupsByIdAsync([FromRoute] long id)
     {
         return await userService.GetAllGroupsByIdAsync(id);
     }
 
     [HttpGet("{id:long}/subjects")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<Subject>> GetAllSubjectsByIdAsync([FromRoute] long id)
     {
         return await userService.GetAllSubjectsByIdAsync(id);
     }
 
     [HttpGet("{id:long}/pullrequests")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<PullRequest>> GetAllPullRequestsByIdAsync([FromRoute] long id)
     {
         return await userService.GetAllPullRequestsByIdAsync(id);

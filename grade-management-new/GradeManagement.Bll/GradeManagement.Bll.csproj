@@ -24,4 +24,8 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="AssignmentEventConsumerService.cs" />
+  </ItemGroup>
+
 </Project>

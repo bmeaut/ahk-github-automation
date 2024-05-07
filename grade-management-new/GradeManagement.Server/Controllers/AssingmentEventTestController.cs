@@ -11,6 +11,7 @@ public class AssingmentEventTestController(AssignmentEventProcessorService assig
     : ControllerBase
 {
     [HttpPost("assignmentaccepted")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignmentAcceptedAsync(AssignmentAccepted assignmentAccepted)
     {
         await assignmentEventProcessorService.ConsumeAssignmentAcceptedEventAsync(assignmentAccepted);
@@ -18,6 +19,7 @@ public class AssingmentEventTestController(AssignmentEventProcessorService assig
     }
 
     [HttpPost("pullrequestopened")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PullRequestOpenedAsync(PullRequestOpened pullRequestOpened)
     {
         await assignmentEventProcessorService.ConsumePullRequestOpenedEventAsync(pullRequestOpened);
@@ -25,6 +27,7 @@ public class AssingmentEventTestController(AssignmentEventProcessorService assig
     }
 
     [HttpPost("cievaluationcompleted")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CiEvaluationCompletedAsync(CiEvaluationCompleted ciEvaluationCompleted)
     {
         await assignmentEventProcessorService.ConsumeCiEvaluationCompletedEventAsync(ciEvaluationCompleted);
@@ -32,6 +35,7 @@ public class AssingmentEventTestController(AssignmentEventProcessorService assig
     }
 
     [HttpPost("teacherassigned")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> TeacherAssignedAsync(TeacherAssigned teacherAssigned)
     {
         await assignmentEventProcessorService.ConsumeTeacherAssignedEventAsync(teacherAssigned);
@@ -39,6 +43,7 @@ public class AssingmentEventTestController(AssignmentEventProcessorService assig
     }
 
     [HttpPost("assignmentgraded")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignmentGradedAsync(AssignmentGradedByTeacher assignmentGraded)
     {
         await assignmentEventProcessorService.ConsumeAssignmentGradedByTeacherEventAsync(assignmentGraded);
@@ -46,6 +51,7 @@ public class AssingmentEventTestController(AssignmentEventProcessorService assig
     }
 
     [HttpPost("pullrequestclosed")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PullRequestClosedAsync(PullRequestStatusChanged pullRequestStatusChanged)
     {
         await assignmentEventProcessorService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);

@@ -12,11 +12,13 @@ namespace GradeManagement.Server.Controllers;
 public class SubjectController(SubjectService subjectService) : CrudControllerBase<Subject, Shared.Dtos.Response.Subject>(subjectService)
 {
     [HttpGet("{id:long}/courses")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<Course>> GetAllCoursesByIdAsync([FromRoute] long id)
     {
         return await subjectService.GetAllCoursesByIdAsync(id);
     }
     [HttpGet("{id:long}/teachers")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<User>> GetAllTeachersByIdAsync([FromRoute] long id)
     {
         return await subjectService.GetAllTeachersByIdAsync(id);

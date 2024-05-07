@@ -12,18 +12,21 @@ namespace GradeManagement.Server.Controllers;
 public class StudentController(StudentService studentService) : QueryControllerBase<Student>(studentService)
 {
     [HttpGet("{id:long}/groups")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<Group>> GetAllGroupsByIdAsync(long id)
     {
         return await studentService.GetAllGroupsByIdAsync(id);
     }
 
     [HttpGet("{id:long}/assignments")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<Assignment>> GetAllAssignmentsByIdAsync(long id)
     {
         return await studentService.GetAllAssignmentsByIdAsync(id);
     }
 
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<Student> CreateAsync([FromBody] Shared.Dtos.Request.Student requestDto)
     {
         return await studentService.CreateAsync(requestDto);

@@ -14,6 +14,7 @@ public abstract class QueryControllerBase<TDto> : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IEnumerable<TDto>> GetAllAsync()
     {
         return await _queryService.GetAllAsync();
