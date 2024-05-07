@@ -28,7 +28,7 @@ namespace GradeManagement.Server
 
             builder.Services.AddTransient<AssignmentService>();
             builder.Services.AddTransient<AssignmentLogService>();
-            builder.Services.AddTransient<AssingmentEventProcessorService>();
+            builder.Services.AddTransient<AssignmentEventProcessorService>();
             builder.Services.AddTransient<CourseService>();
             builder.Services.AddTransient<GroupService>();
             builder.Services.AddTransient<LanguageService>();

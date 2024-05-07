@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace GradeManagement.Bll;
 
-public class AssingmentEventProcessorService
+public class AssignmentEventProcessorService
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly AssignmentService _assignmentService;
@@ -19,7 +19,7 @@ public class AssingmentEventProcessorService
     private readonly ScoreService _scoreService;
     private readonly UserService _userService;
 
-    public AssingmentEventProcessorService(
+    public AssignmentEventProcessorService(
         GradeManagementDbContext gradeManagementDbContext, AssignmentService assignmentService,
         ExerciseService exerciseService, StudentService studentService,
         PullRequestService pullRequestService, ScoreService scoreService, UserService userService)
@@ -53,7 +53,7 @@ public class AssingmentEventProcessorService
         await _assignmentService.CreateAsync(assignment);
     }
 
-    public async Task ConsumePullRequestOpenedEvent(PullRequestOpened pullRequestOpened)
+    public async Task ConsumePullRequestOpenedEventAsync(PullRequestOpened pullRequestOpened)
     {
         var repositoryName = GetRepositoryNameFromUrl(pullRequestOpened.GitHubRepositoryUrl);
         var assignment = await _assignmentService.GetAssignmentModelByGitHubRepoNameAsync(repositoryName);
@@ -68,7 +68,7 @@ public class AssingmentEventProcessorService
         await _pullRequestService.CreateAsync(pullRequest);
     }
 
-    public async Task ConsumeCiEvaluationCompletedEvent(CiEvaluationCompleted ciEvaluationCompleted)
+    public async Task ConsumeCiEvaluationCompletedEventAsync(CiEvaluationCompleted ciEvaluationCompleted)
     {
         var pullRequest = await _pullRequestService.GetModelByUrlAsync(ciEvaluationCompleted.PullRequestUrl);
 
@@ -93,7 +93,7 @@ public class AssingmentEventProcessorService
         }
     }
 
-    public async Task ConsumeTeacherAssignedEvent(TeacherAssigned teacherAssigned)
+    public async Task ConsumeTeacherAssignedEventAsync(TeacherAssigned teacherAssigned)
     {
         var teacher = await _userService.GetModelByGitHubIdAsync(teacherAssigned.TeacherGitHubId);
         var pullRequest = await _pullRequestService.GetModelByUrlAsync(teacherAssigned.PullRequestUrl);
@@ -101,7 +101,7 @@ public class AssingmentEventProcessorService
         await _gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task ConsumeAssignmentGradedByTeacherEvent(AssignmentGradedByTeacher assignmentGradedByTeacher)
+    public async Task ConsumeAssignmentGradedByTeacherEventAsync(AssignmentGradedByTeacher assignmentGradedByTeacher)
     {
         var teacher = await _userService.GetModelByGitHubIdAsync(assignmentGradedByTeacher.TeacherGitHubId);
         var pullRequest = await _pullRequestService.GetModelByUrlAsync(assignmentGradedByTeacher.PullRequestUrl);
