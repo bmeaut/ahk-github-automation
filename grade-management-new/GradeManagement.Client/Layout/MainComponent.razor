@@ -1,0 +1,40 @@
+﻿@inherits LayoutComponentBase
+@inject SubjectService SubjectService
+
+<LoadingComponent LongTask="@Init">
+    <ErrorBoundary @ref="errorBoundary">
+        <ChildContent>
+            <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
+            <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
+                <NavMenu/>
+            </MudDrawer>
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+                    @ChildContent
+                </MudContainer>
+            </MudMainContent>
+        </ChildContent>
+        <ErrorContent Context="exception">
+            <ErrorComponent Exception="@exception" ErrorBoundary="@errorBoundary"/>
+        </ErrorContent>
+    </ErrorBoundary>
+</LoadingComponent>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    private bool _drawerOpen = false;
+    private ErrorBoundary? errorBoundary;
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+        StateHasChanged();
+    }
+
+    private async Task Init()
+    {
+        await SubjectService.LoadSubjects();
+    }
+
+}

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/courses")]
 [ApiController]
 public class CourseController(CourseService courseService) : CrudControllerBase<Course>(courseService)

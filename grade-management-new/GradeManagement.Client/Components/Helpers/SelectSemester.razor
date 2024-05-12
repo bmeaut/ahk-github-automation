@@ -1,5 +1,4 @@
-﻿@inject HttpClient Http
-@inject SemesterClient SemesterClient
+﻿@inject SemesterClient SemesterClient
 
 <MudSelect T="Semester" Value="@Value" ValueChanged="@((Semester value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@semesterToString" Label="Semester">
     @foreach (var semester in _semesters)

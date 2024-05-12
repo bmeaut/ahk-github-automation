@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/languages")]
 [ApiController]
 public class LanguageController(LanguageService languageService)

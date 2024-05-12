@@ -29,6 +29,8 @@ namespace GradeManagement.Client
             builder.Services.AddMsalAuthentication(options =>
             {
                 builder.Configuration.Bind("AzureAd", options.ProviderOptions.Authentication);
+                options.ProviderOptions.DefaultAccessTokenScopes
+                    .Add("api://01834b53-87a0-4236-85d3-a999ecec0115/access_backend");
             });
 
             builder.Services.AddScoped<SubjectService>();

@@ -14,7 +14,7 @@
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
     <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false" />
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.MoodleCourseId" Title="Moodle Course Id"/>
             <TemplateColumn Title="Semester">
@@ -52,6 +52,7 @@
     private async Task _loading()
     {
         _courses = await SubjectClient.GetAllCoursesByIdAsync(SubjectService.CurrentSubject.Id);
+        StateHasChanged();
     }
 
 
@@ -64,7 +65,7 @@
             var newCourse = result.Data as Course;
             newCourse.SubjectId = SubjectService.CurrentSubject.Id;
             await CourseClient.CreateAsync(newCourse);
-            await loadingComponentRef.StartLoading();
+            await _loading();
         }
     }
 
@@ -77,9 +78,10 @@
     private async Task CommittedItemChanges(Course items)
     {
         await CourseClient.UpdateAsync(items.Id, items);
-        StateHasChanged();
+        //StateHasChanged();
         SnackbarService.ShowEditSuccess();
         //await loadingComponentRef.StartLoading();
+        _courses = await SubjectClient.GetAllCoursesByIdAsync(SubjectService.CurrentSubject.Id);
     }
 
     private async Task DeleteItem(Course item)

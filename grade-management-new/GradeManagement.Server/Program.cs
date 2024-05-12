@@ -2,11 +2,15 @@ using AutSoft.Common.Exceptions;
 
 using GradeManagement.Data.Data;
 using GradeManagement.Bll;
+using GradeManagement.Server.Authorization.Handlers;
+using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.ExceptionHandlers;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
@@ -20,13 +24,10 @@ namespace GradeManagement.Server
             var builder = WebApplication.CreateBuilder(args);
 
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApi(options =>
-                    {
-                        options.Authority = "https://login.microsoftonline.com/6a3548ab-7570-4271-91a8-58da00697029/";
-                        options.Audience = "fed1f289-3643-41e3-8a22-cc46db1547d9";
-                    }, options => { builder.Configuration.Bind("AzureAd", options); },
-                    subscribeToJwtBearerMiddlewareDiagnosticsEvents: true);
+            builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+            builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -88,11 +89,7 @@ namespace GradeManagement.Server
             app.MapControllers();
             app.MapFallbackToFile("index.html");
 
-            IdentityModelEventSource.ShowPII = true;
-            IdentityModelEventSource.LogCompleteSecurityArtifact = true;
             app.Run();
-            IdentityModelEventSource.ShowPII = true;
-            IdentityModelEventSource.LogCompleteSecurityArtifact = true;
         }
     }
 }

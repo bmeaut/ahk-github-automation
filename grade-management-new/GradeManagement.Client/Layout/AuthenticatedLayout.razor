@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject SubjectService SubjectService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 
 <MudThemeProvider/>
 <MudDialogProvider/>
@@ -8,22 +10,9 @@
 <MudLayout>
     <AuthorizeView>
         <Authorized>
-            <ErrorBoundary @ref="errorBoundary">
-                <ChildContent>
-                    <AppBar DrawerOpened="@_drawerOpen" DrawerToggle="@DrawerToggle"/>
-                    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Docked">
-                        <NavMenu/>
-                    </MudDrawer>
-                    <MudMainContent>
-                        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
-                            @Body
-                        </MudContainer>
-                    </MudMainContent>
-                </ChildContent>
-                <ErrorContent Context="exception">
-                    <ErrorComponent Exception="@exception" ErrorBoundary="@errorBoundary"/>
-                </ErrorContent>
-            </ErrorBoundary>
+            <MainComponent>
+                @Body
+            </MainComponent>
         </Authorized>
         <NotAuthorized>
             <RedirectToLogin/>
@@ -32,18 +21,6 @@
 </MudLayout>
 
 @code {
-    private bool _drawerOpen = false;
-    private ErrorBoundary? errorBoundary;
 
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-        StateHasChanged();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await SubjectService.LoadSubjects();
-    }
 
 }

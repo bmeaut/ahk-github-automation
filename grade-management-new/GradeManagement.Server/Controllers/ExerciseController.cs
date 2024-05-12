@@ -2,10 +2,12 @@ using GradeManagement.Bll;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/exercises")]
 [ApiController]
 public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<Exercise>(exerciseService)

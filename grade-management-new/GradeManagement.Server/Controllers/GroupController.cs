@@ -3,12 +3,14 @@ using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Request;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Student = GradeManagement.Shared.Dtos.Response.Student;
 
 namespace GradeManagement.Server.Controllers
 {
+    [Authorize]
     [Route("api/groups")]
     [ApiController]
     public class GroupController(GroupService groupService) : CrudControllerBase<Group,Shared.Dtos.Response.Group>(groupService)

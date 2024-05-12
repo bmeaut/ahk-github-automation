@@ -1,3 +1,5 @@
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
@@ -25,7 +27,9 @@
         parameters.SetParameterProperties(this);
         if (!_initialized)
         {
-            await service.LoadSubjects();
+            var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (state.User.Identity.IsAuthenticated)
+                await service.LoadSubjects();
 
             _initialized = true;
         }

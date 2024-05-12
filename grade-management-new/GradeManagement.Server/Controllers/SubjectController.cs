@@ -1,12 +1,15 @@
 using GradeManagement.Bll;
+using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Request;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize(Policy = TeacherRequirement.PolicyName)]
 [Route("api/subjects")]
 [ApiController]
 public class SubjectController(SubjectService subjectService) : CrudControllerBase<Subject, Shared.Dtos.Response.Subject>(subjectService)
