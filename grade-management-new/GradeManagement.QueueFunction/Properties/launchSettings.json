@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "QueueTriggerFunction": {
+    "GradeManagement.QueueFunction": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7035",
+      "commandLineArgs": "--port 7106",
       "launchBrowser": false
     }
   }

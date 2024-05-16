@@ -3,7 +3,7 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace QueueTriggerFunction
+namespace GradeManagement.QueueFunction
 {
     public class Function1
     {
@@ -15,7 +15,7 @@ namespace QueueTriggerFunction
         }
 
         [Function(nameof(Function1))]
-        public void Run([QueueTrigger("assignment-accepted_queue", Connection = "AHK_EventsQueueConnectionString")] QueueMessage message)
+        public void Run([QueueTrigger("myqueue-items", Connection = "AHK_EventsQueueConnectionString")] QueueMessage message)
         {
             _logger.LogInformation($"C# Queue trigger function processed: {message.MessageText}");
         }
