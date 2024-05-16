@@ -1,19 +1,17 @@
-using Azure.Storage.Queues.Models;
-
 using GradeManagement.Bll;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace GradeManagement.QueueFunction;
+namespace GradeManagement.QueueFunction.Functions;
 
 public class PullRequestOpenedEventFunction
 {
-    private readonly ILogger<AssignmentAcceptedEventFunction> _logger;
+    private readonly ILogger<PullRequestOpenedEventFunction> _logger;
     private readonly AssignmentEventProcessorService _assignmentEventProcessorService;
 
-    public PullRequestOpenedEventFunction(ILogger<AssignmentAcceptedEventFunction> logger,
+    public PullRequestOpenedEventFunction(ILogger<PullRequestOpenedEventFunction> logger,
         AssignmentEventProcessorService assignmentEventProcessorService)
     {
         _logger = logger;
