@@ -20,6 +20,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GradeManagement.Bll\GradeManagement.Bll.csproj" />
+    <ProjectReference Include="..\GradeManagement.Shared\GradeManagement.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
