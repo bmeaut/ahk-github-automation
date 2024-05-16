@@ -66,7 +66,16 @@ public class GroupService : ICrudServiceBase<Group, Shared.Dtos.Response.Group>
     {
         var groupEntity = await _gradeManagementDbContext.Group
             .SingleEntityAsync(g => g.Id == id, id);
+        var groupTeachers = await _gradeManagementDbContext.GroupTeacher
+            .Where(gt => gt.GroupId == id)
+            .ToListAsync();
+        var groupStudents = await _gradeManagementDbContext.GroupStudent
+            .Where(gs => gs.GroupId == id)
+            .ToListAsync();
+        _gradeManagementDbContext.GroupTeacher.RemoveRange(groupTeachers);
+        _gradeManagementDbContext.GroupStudent.RemoveRange(groupStudents);
         _gradeManagementDbContext.Group.Remove(groupEntity);
+
         await _gradeManagementDbContext.SaveChangesAsync();
     }
 

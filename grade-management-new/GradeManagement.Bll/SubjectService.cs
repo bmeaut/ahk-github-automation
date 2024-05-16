@@ -107,6 +107,10 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
     public async Task DeleteAsync(long id)
     {
         var subject = await _gradeManagementDbContext.Subject.SingleEntityAsync(s => s.Id == id, id);
+        var subjectTeachers = await _gradeManagementDbContext.SubjectTeacher
+            .Where(st => st.SubjectId == id)
+            .ToListAsync();
+        _gradeManagementDbContext.SubjectTeacher.RemoveRange(subjectTeachers);
         _gradeManagementDbContext.Subject.Remove(subject);
         await _gradeManagementDbContext.SaveChangesAsync();
     }

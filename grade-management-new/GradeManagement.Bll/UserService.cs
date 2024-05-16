@@ -56,6 +56,14 @@ public class UserService : ICrudServiceBase<User>
     public async Task DeleteAsync(long id)
     {
         var userEntity = await _gradeManagementDbContext.User.SingleEntityAsync(u => u.Id == id, id);
+        var groupTeachers = await _gradeManagementDbContext.GroupTeacher
+            .Where(gt => gt.UserId == id)
+            .ToListAsync();
+        var subjectTeachers = await _gradeManagementDbContext.SubjectTeacher
+            .Where(st => st.UserId == id)
+            .ToListAsync();
+        _gradeManagementDbContext.SubjectTeacher.RemoveRange(subjectTeachers);
+        _gradeManagementDbContext.GroupTeacher.RemoveRange(groupTeachers);
         _gradeManagementDbContext.User.Remove(userEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
     }

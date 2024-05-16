@@ -101,6 +101,8 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
     public async Task DeleteAsync(long id)
     {
         var studentEntity = await _gradeManagementDbContext.Student.SingleEntityAsync(s => s.Id == id, id);
+        _gradeManagementDbContext.GroupStudent.RemoveRange(
+            await _gradeManagementDbContext.GroupStudent.Where(gs => gs.StudentId == id).ToListAsync());
         _gradeManagementDbContext.Student.Remove(studentEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
     }
