@@ -1,10 +1,10 @@
-﻿using GradeManagement.Server.Authorization.Policies;
+﻿using GradeManagement.Client.Authorization.Policies;
 
 using Microsoft.AspNetCore.Authorization;
 
 using System.Security.Claims;
 
-namespace GradeManagement.Server.Authorization.Handlers;
+namespace GradeManagement.Client.Authorization.Handlers;
 
 public class TeacherRequirementHandler : AuthorizationHandler<TeacherRequirement>
 {
@@ -13,8 +13,7 @@ public class TeacherRequirementHandler : AuthorizationHandler<TeacherRequirement
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context, TeacherRequirement requirement)
     {
-        //Here the email should be in Tenant or invited in by one meeting
-        var emailAddress = context.User.FindFirstValue(ClaimTypes.Email);
+        var emailAddress = context.User.FindFirst("email")?.Value;
         if (emailAddress is not null && (emailAddress.EndsWith("@vik.bme.hu") == true ||
                                          Whitelist.Contains(emailAddress)))
         {

@@ -1,4 +1,5 @@
 ﻿@page "/subjects"
+@using GradeManagement.Client.Authorization.Policies
 @using GradeManagement.Client.Components.NewDialogs
 @layout AuthenticatedLayout
 @inject IDialogService DialogService
@@ -8,17 +9,24 @@
 
 <PageTitle>Subjects</PageTitle>
 
-<LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">
-    <MudDataGrid Items="_subjects" T="Subject2" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
-        <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
-            <PropertyColumn Property="x => x.Name" Title="Name"/>
-            <PropertyColumn Property="x => x.NeptunCode" Title="Description"/>
-            <DataGridActions TItem="Subject2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
-        </Columns>
-    </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
-</LoadingComponent>
+<AuthorizeView Policy="@TeacherRequirement.PolicyName">
+    <Authorized>
+        <LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">
+            <MudDataGrid Items="_subjects" T="Subject2" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+                <Columns>
+                    <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+                    <PropertyColumn Property="x => x.Name" Title="Name"/>
+                    <PropertyColumn Property="x => x.NeptunCode" Title="Description"/>
+                    <DataGridActions TItem="Subject2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+                </Columns>
+            </MudDataGrid>
+            <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+        </LoadingComponent>
+    </Authorized>
+    <NotAuthorized>
+        <h1>Not authorized</h1>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private List<Subject2> _subjects = new();

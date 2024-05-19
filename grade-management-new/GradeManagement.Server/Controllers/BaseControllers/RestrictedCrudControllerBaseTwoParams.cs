@@ -9,7 +9,7 @@ public abstract class RestrictedCrudControllerBase<TRequestDto, TResponseDto>(
     : QueryControllerBase<TResponseDto>(restrictedCrudService)
 {
     [HttpPost]
-    public async Task<TResponseDto> CreateAsync([FromBody] TRequestDto requestDto)
+    public virtual async Task<TResponseDto> CreateAsync([FromBody] TRequestDto requestDto)
     {
         return await restrictedCrudService.CreateAsync(requestDto);
     }

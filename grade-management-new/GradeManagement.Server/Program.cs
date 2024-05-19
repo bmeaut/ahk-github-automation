@@ -1,5 +1,3 @@
-using AutSoft.Common.Exceptions;
-
 using GradeManagement.Data.Data;
 using GradeManagement.Bll;
 using GradeManagement.Server.Authorization.Handlers;
@@ -7,13 +5,8 @@ using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.ExceptionHandlers;
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
-using Microsoft.IdentityModel.Logging;
 
 namespace GradeManagement.Server
 {
@@ -26,6 +19,7 @@ namespace GradeManagement.Server
 
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
             builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
+
             builder.Services.AddAuthorizationBuilder()
                 .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
 

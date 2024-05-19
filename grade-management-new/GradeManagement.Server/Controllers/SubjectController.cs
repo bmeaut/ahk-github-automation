@@ -9,19 +9,27 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
-[Authorize(Policy = TeacherRequirement.PolicyName)]
 [Route("api/subjects")]
 [ApiController]
-public class SubjectController(SubjectService subjectService) : CrudControllerBase<Subject, Shared.Dtos.Response.Subject>(subjectService)
+public class SubjectController(SubjectService subjectService)
+    : CrudControllerBase<Subject, Shared.Dtos.Response.Subject>(subjectService)
 {
     [HttpGet("{id:long}/courses")]
     public async Task<List<Course>> GetAllCoursesByIdAsync([FromRoute] long id)
     {
         return await subjectService.GetAllCoursesByIdAsync(id);
     }
+
     [HttpGet("{id:long}/teachers")]
     public async Task<List<User>> GetAllTeachersByIdAsync([FromRoute] long id)
     {
         return await subjectService.GetAllTeachersByIdAsync(id);
+    }
+
+    [Authorize(Policy = TeacherRequirement.PolicyName)]
+    [HttpPost]
+    public override async Task<Shared.Dtos.Response.Subject> CreateAsync([FromBody] Subject requestDto)
+    {
+        return await base.CreateAsync(requestDto);
     }
 }
