@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Bll.BaseServices;
+﻿namespace GradeManagement.Bll.Services.BaseServices;
 
 public interface ICrudServiceBase<TDto> : IRestrictedCrudServiceBase<TDto>
 {

@@ -5,7 +5,7 @@ using AutSoft.Linq.Queryable;
 
 using CsvHelper;
 
-using GradeManagement.Bll.BaseServices;
+using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 

@@ -1,4 +1,4 @@
-﻿using GradeManagement.Bll.BaseServices;
+﻿using GradeManagement.Bll.Services.BaseServices;
 
 using Microsoft.AspNetCore.Mvc;
 

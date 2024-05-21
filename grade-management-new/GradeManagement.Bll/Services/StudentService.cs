@@ -4,7 +4,7 @@ using AutoMapper.QueryableExtensions;
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.BaseServices;
+using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
 

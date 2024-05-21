@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Bll.BaseServices;
+﻿namespace GradeManagement.Bll.Services.BaseServices;
 
 public interface IRestrictedCrudServiceBase<TRequestDto, TResponseDto> : IQueryServiceBase<TResponseDto>
 {
