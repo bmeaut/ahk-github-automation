@@ -6,7 +6,7 @@ using AutSoft.Linq.Queryable;
 using CsvHelper;
 
 using GradeManagement.Bll.BaseServices;
-using GradeManagement.Data.Data;
+using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 
 using Microsoft.EntityFrameworkCore;

@@ -2,7 +2,6 @@ using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Bll.Services;
 using GradeManagement.Data;
-using GradeManagement.Data.Data;
 
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;

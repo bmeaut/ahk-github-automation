@@ -1,4 +1,4 @@
-﻿using GradeManagement.Data.Data;
+﻿using GradeManagement.Data;
 using GradeManagement.Data.Models;
 
 using Microsoft.EntityFrameworkCore;

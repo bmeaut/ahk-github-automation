@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 
-using GradeManagement.Data.Data;
+using GradeManagement.Data;
 using GradeManagement.Data.Models;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 

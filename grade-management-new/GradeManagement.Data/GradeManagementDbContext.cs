@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using System.Linq.Expressions;
 
-namespace GradeManagement.Data.Data;
+namespace GradeManagement.Data;
 
 public class GradeManagementDbContext : DbContext
 {
@@ -57,7 +57,8 @@ public class GradeManagementDbContext : DbContext
             var parameter = Expression.Parameter(entityType.ClrType);
 
             var softDeletableProperty = Expression.Property(parameter, nameof(ISoftDelete.IsDeleted));
-            var compareExpression = Expression.MakeBinary(ExpressionType.Equal, softDeletableProperty, Expression.Constant(false));
+            var compareExpression =
+                Expression.MakeBinary(ExpressionType.Equal, softDeletableProperty, Expression.Constant(false));
             var lambda = Expression.Lambda(compareExpression, parameter);
 
             modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);

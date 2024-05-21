@@ -1,4 +1,4 @@
-﻿using GradeManagement.Data.Data;
+﻿using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 using GradeManagement.Shared.Enums;

@@ -4,7 +4,7 @@ using AutoMapper.QueryableExtensions;
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Data.Data;
+using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 
 using Microsoft.EntityFrameworkCore;

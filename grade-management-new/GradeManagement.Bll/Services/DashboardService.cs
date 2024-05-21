@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 
-using GradeManagement.Data.Data;
+using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 
 using Microsoft.EntityFrameworkCore;
