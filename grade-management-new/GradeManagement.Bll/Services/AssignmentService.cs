@@ -72,4 +72,16 @@ public class AssignmentService : IQueryServiceBase<Assignment>
         return await _gradeManagementDbContext.Assignment
             .SingleEntityAsync(a => githubRepoName == a.GithubRepoName, 0);
     }
+
+    public async Task ChangeStudentIdOnAllAssignmentsAsync(long studentIdFrom, long studentIdTo)
+    {
+        var assignments = await _gradeManagementDbContext.Assignment.Where(a => a.StudentId == studentIdFrom)
+            .ToListAsync();
+        foreach (var assignment in assignments)
+        {
+            assignment.StudentId = studentIdTo;
+        }
+
+        await _gradeManagementDbContext.SaveChangesAsync();
+    }
 }

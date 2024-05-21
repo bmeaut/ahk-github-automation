@@ -1,8 +1,11 @@
-﻿using GradeManagement.Data;
+﻿using AutSoft.Linq.Enumerable;
+
+using GradeManagement.Data;
 using GradeManagement.Data.Models;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 using GradeManagement.Shared.Enums;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Assignment = GradeManagement.Shared.Dtos.Assignment;
@@ -107,11 +110,12 @@ public class AssignmentEventProcessorService
 
         if (student.NeptunCode.IsNullOrEmpty())
         {
-            await _studentService.DeleteAsync(student.Id);
-            student = await _studentService.GetStudentModelByNeptunAsync(ciEvaluationCompleted.StudentNeptun);
-            student.GithubId = studentGitHubId;
-            assignment.StudentId = student.Id;
+            var newStudent = await _studentService.GetStudentModelByNeptunAsync(ciEvaluationCompleted.StudentNeptun);
+            newStudent.GithubId = studentGitHubId;
+            await _assignmentService.ChangeStudentIdOnAllAssignmentsAsync(student.Id, newStudent.Id);
             await _gradeManagementDbContext.SaveChangesAsync();
+            await _studentService.DeleteAsync(student.Id);
+            student = newStudent;
         }
 
         foreach (var scoreEvent in ciEvaluationCompleted.Scores)

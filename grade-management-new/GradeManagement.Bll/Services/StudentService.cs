@@ -101,8 +101,8 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
     public async Task DeleteAsync(long id)
     {
         var studentEntity = await _gradeManagementDbContext.Student.SingleEntityAsync(s => s.Id == id, id);
-        _gradeManagementDbContext.GroupStudent.RemoveRange(
-            await _gradeManagementDbContext.GroupStudent.Where(gs => gs.StudentId == id).ToListAsync());
+        var groupStudents = await _gradeManagementDbContext.GroupStudent.Where(gs => gs.StudentId == id).ToListAsync();
+        _gradeManagementDbContext.GroupStudent.RemoveRange(groupStudents);
         _gradeManagementDbContext.Student.Remove(studentEntity);
         await _gradeManagementDbContext.SaveChangesAsync();
     }
@@ -133,8 +133,7 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
         {
             student = new Data.Models.Student
             {
-                Name = "Auto created from GitHub ID: " + studentGitHubId,
-                GithubId = studentGitHubId
+                Name = "Auto created from GitHub ID: " + studentGitHubId, GithubId = studentGitHubId
             };
             _gradeManagementDbContext.Student.Add(student);
             await _gradeManagementDbContext.SaveChangesAsync();
