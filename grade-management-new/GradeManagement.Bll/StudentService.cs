@@ -134,7 +134,6 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
             student = new Data.Models.Student
             {
                 Name = "Auto created from GitHub ID: " + studentGitHubId,
-                NeptunCode = "",
                 GithubId = studentGitHubId
             };
             _gradeManagementDbContext.Student.Add(student);
