@@ -15,7 +15,7 @@ using Subject = GradeManagement.Shared.Dtos.Request.Subject;
 using Task = System.Threading.Tasks.Task;
 using User = GradeManagement.Shared.Dtos.User;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Subject>
 {

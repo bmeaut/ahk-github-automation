@@ -1,13 +1,11 @@
-﻿using AutoMapper;
-
-using GradeManagement.Data.Data;
+﻿using GradeManagement.Data.Data;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 using GradeManagement.Shared.Enums;
 
 using Microsoft.IdentityModel.Tokens;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class AssignmentEventProcessorService
 {

@@ -11,7 +11,7 @@ using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class UserService : ICrudServiceBase<User>
 {

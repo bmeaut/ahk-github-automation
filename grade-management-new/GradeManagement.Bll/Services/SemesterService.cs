@@ -9,7 +9,7 @@ using GradeManagement.Shared.Dtos;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class SemesterService : IRestrictedCrudServiceBase<Semester>
 {

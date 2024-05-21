@@ -9,9 +9,7 @@ using GradeManagement.Shared.Dtos;
 
 using Microsoft.EntityFrameworkCore;
 
-using Assignment = GradeManagement.Data.Models.Assignment;
-
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class PullRequestService
 {

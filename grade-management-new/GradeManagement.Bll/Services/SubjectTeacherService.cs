@@ -1,11 +1,9 @@
-﻿using AutoMapper;
-
-using GradeManagement.Data.Data;
+﻿using GradeManagement.Data.Data;
 using GradeManagement.Data.Models;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class SubjectTeacherService
 {

@@ -10,7 +10,7 @@ using GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class AssignmentService : IQueryServiceBase<Assignment>
 {

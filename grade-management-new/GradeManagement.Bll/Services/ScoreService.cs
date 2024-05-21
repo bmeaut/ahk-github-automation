@@ -1,7 +1,4 @@
-﻿
-using AutoMapper;
-
-using AutSoft.Linq.Queryable;
+﻿using AutoMapper;
 
 using GradeManagement.Data.Data;
 using GradeManagement.Data.Models;
@@ -9,7 +6,7 @@ using GradeManagement.Shared.Dtos.AssignmentEvents;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class ScoreService
 {

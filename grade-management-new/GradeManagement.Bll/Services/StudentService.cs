@@ -15,7 +15,7 @@ using Assignment = GradeManagement.Shared.Dtos.Assignment;
 using Group = GradeManagement.Shared.Dtos.Response.Group;
 using Student = GradeManagement.Shared.Dtos.Request.Student;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Student>
 {

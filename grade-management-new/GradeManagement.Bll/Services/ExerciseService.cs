@@ -15,7 +15,7 @@ using System.Globalization;
 
 using ValidationException = AutSoft.Common.Exceptions.ValidationException;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class ExerciseService : ICrudServiceBase<Exercise>
 {

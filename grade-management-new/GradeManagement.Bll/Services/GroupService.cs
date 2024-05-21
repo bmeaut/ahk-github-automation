@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using GroupTeacher = GradeManagement.Data.Models.GroupTeacher;
 using Student = GradeManagement.Shared.Dtos.Response.Student;
 
-namespace GradeManagement.Bll;
+namespace GradeManagement.Bll.Services;
 
 public class GroupService : ICrudServiceBase<Group, Shared.Dtos.Response.Group>
 {
