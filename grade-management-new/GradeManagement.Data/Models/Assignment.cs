@@ -4,6 +4,7 @@ public class Assignment : ISoftDelete
 {
     public long Id { get; set; }
     public string GithubRepoName { get; set; }
+    public string GithubRepoUrl { get; set; }
     public Student Student { get; set; }
     public long StudentId { get; set; }
     public Exercise Exercise { get; set; }

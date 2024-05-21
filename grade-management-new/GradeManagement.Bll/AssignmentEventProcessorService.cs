@@ -48,7 +48,7 @@ public class AssignmentEventProcessorService
         var student = await _studentService.GetOrCreateStudentByGitHubIdAsync(studentGitHubId);
         var assignment = new Assignment()
         {
-            GithubRepoName = repositoryName, StudentId = student.Id, ExerciseId = exercise.Id
+            GithubRepoName = repositoryName, GithubRepoUrl = assignmentAccepted.GitHubRepositoryUrl, StudentId = student.Id, ExerciseId = exercise.Id
         };
         await _assignmentService.CreateAsync(assignment);
     }

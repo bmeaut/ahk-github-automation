@@ -44,6 +44,7 @@ public class AssignmentService : IQueryServiceBase<Assignment>
         {
             Id = requestDto.Id,
             GithubRepoName = requestDto.GithubRepoName,
+            GithubRepoUrl = requestDto.GithubRepoUrl,
             StudentId = requestDto.StudentId,
             ExerciseId = requestDto.ExerciseId
         };
