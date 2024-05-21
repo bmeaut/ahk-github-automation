@@ -2,7 +2,7 @@ using AutoMapper;
 
 using GradeManagement.Data.Models;
 
-namespace GradeManagement.Server.Profiles;
+namespace GradeManagement.Bll.Profiles;
 
 public class AutoMapperProfile : Profile
 {
