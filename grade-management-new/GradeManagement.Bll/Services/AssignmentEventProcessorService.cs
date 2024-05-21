@@ -49,6 +49,7 @@ public class AssignmentEventProcessorService
             GithubRepoName = repositoryName, GithubRepoUrl = assignmentAccepted.GitHubRepositoryUrl, StudentId = student.Id, ExerciseId = exercise.Id
         };
         await _assignmentService.CreateAsync(assignment);
+
     }
 
     public async Task ConsumePullRequestOpenedEventAsync(PullRequestOpened pullRequestOpened)

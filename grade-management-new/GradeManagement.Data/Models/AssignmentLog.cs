@@ -10,7 +10,7 @@ public class AssignmentLog : ISoftDelete
     public string Description { get; set; }
     public Assignment Assignment { get; set; }
     public long AssignmentId { get; set; }
-    public PullRequest PullRequest { get; set; }
-    public long PullRequestId { get; set; }
+    public PullRequest? PullRequest { get; set; }
+    public long? PullRequestId { get; set; }
     public bool IsDeleted { get; set; }
 }
