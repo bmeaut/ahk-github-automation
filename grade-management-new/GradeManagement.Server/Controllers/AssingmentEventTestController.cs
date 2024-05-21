@@ -8,7 +8,9 @@ namespace GradeManagement.Server.Controllers;
 
 [ApiController]
 [Route("api/testassignmentevents")]
-public class AssingmentEventTestController(AssignmentEventProcessorService assignmentEventProcessorService, IWebHostEnvironment environment)
+public class AssingmentEventTestController(
+    AssignmentEventProcessorService assignmentEventProcessorService,
+    IWebHostEnvironment environment)
     : ControllerBase
 {
     [HttpPost("assignmentaccepted")]
