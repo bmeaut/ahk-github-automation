@@ -60,7 +60,7 @@ public class AssignmentEventProcessorService
             StudentId = student.Id,
             ExerciseId = exercise.Id
         };
-        await _assignmentService.CreateAsync(assignment);
+        assignment = await _assignmentService.CreateAsync(assignment);
 
         var assignmentLog = new AssignmentLog()
         {
@@ -83,7 +83,7 @@ public class AssignmentEventProcessorService
             BranchName = pullRequestOpened.BranchName,
             AssignmentId = assignment.Id
         };
-        await _pullRequestService.CreateAsync(pullRequest);
+        pullRequest = await _pullRequestService.CreateAsync(pullRequest);
 
         var assignmentLog = new AssignmentLog()
         {
@@ -122,7 +122,8 @@ public class AssignmentEventProcessorService
         var assignmentLog = new AssignmentLog()
         {
             EventType = EventType.CiEvaluationCompleted,
-            Description = $"CI evaluation completed for assignment {assignment.GithubRepoUrl} with id {assignment.Id}",
+            Description =
+                $"CI evaluation completed for assignment {assignment.GithubRepoUrl} with id {assignment.Id}",
             AssignmentId = assignment.Id,
             PullRequestId = pullRequest.Id
         };
@@ -141,7 +142,8 @@ public class AssignmentEventProcessorService
         var assignmentLog = new AssignmentLog()
         {
             EventType = EventType.TeacherAssigned,
-            Description = $"Teacher {teacher.GithubId} assigned to pull request {pullRequest.Url} with id {pullRequest.Id}",
+            Description =
+                $"Teacher {teacher.GithubId} assigned to pull request {pullRequest.Url} with id {pullRequest.Id}",
             AssignmentId = assignment.Id,
             PullRequestId = pullRequest.Id
         };
@@ -177,7 +179,8 @@ public class AssignmentEventProcessorService
         var assignmentLog = new AssignmentLog()
         {
             EventType = EventType.AssignmentGradedByTeacher,
-            Description = $"Assignment {assignment.GithubRepoUrl} with id {assignment.Id} graded by teacher {teacher.GithubId}",
+            Description =
+                $"Assignment {assignment.GithubRepoUrl} with id {assignment.Id} graded by teacher {teacher.GithubId}",
             AssignmentId = assignment.Id,
             PullRequestId = pullRequest.Id
         };
@@ -193,7 +196,8 @@ public class AssignmentEventProcessorService
         var assignmentLog = new AssignmentLog()
         {
             EventType = EventType.PullRequestStatusChanged,
-            Description = $"Pull request {pullRequest.Url} with id {pullRequest.Id} status changed to {pullRequest.Status}",
+            Description =
+                $"Pull request {pullRequest.Url} with id {pullRequest.Id} status changed to {pullRequest.Status}",
             AssignmentId = pullRequest.AssignmentId,
             PullRequestId = pullRequest.Id
         };
