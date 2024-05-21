@@ -1,5 +1,8 @@
 using GradeManagement.Bll;
+using GradeManagement.Bll.Profiles;
 using GradeManagement.Bll.Services;
+using GradeManagement.Data;
+using GradeManagement.Data.Data;
 
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -13,26 +16,9 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        services.AddTransient<AssignmentService>();
-        services.AddTransient<AssignmentLogService>();
-        services.AddTransient<AssignmentEventProcessorService>();
-        services.AddTransient<CourseService>();
-        services.AddTransient<GroupService>();
-        services.AddTransient<LanguageService>();
-        services.AddTransient<PullRequestService>();
-        services.AddTransient<ScoreService>();
-        services.AddTransient<SemesterService>();
-        services.AddTransient<StudentService>();
-        services.AddTransient<SubjectService>();
-        services.AddTransient<ExerciseService>();
-        services.AddTransient<UserService>();
-        services.AddTransient<SubjectTeacherService>();
-        services.AddDbContext<GradeManagement.Data.Data.GradeManagementDbContext>(options =>
-        {
-            var connectionString = context.Configuration.GetConnectionString("DbConnection");
-            options.UseSqlServer(connectionString);
-        });
-        services.AddAutoMapper(typeof(GradeManagement.Server.Program).Assembly);
+        services.AddBllServices();
+        services.AddGradeManagementDbContext(context.Configuration, "DbConnection");
+        services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
     })
     .Build();
 

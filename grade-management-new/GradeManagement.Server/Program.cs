@@ -1,8 +1,9 @@
-
 using AutSoft.Common.Exceptions;
+
 using GradeManagement.Data.Data;
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
+using GradeManagement.Data;
 using GradeManagement.Server.ExceptionHandlers;
 
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,9 @@ namespace GradeManagement.Server
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
+
+            builder.Services.AddGradeManagementDbContext(builder.Configuration, "DbConnection");
 
             // Add services to the container.
 
