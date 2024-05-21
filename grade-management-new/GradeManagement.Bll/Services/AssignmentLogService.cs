@@ -1,6 +1,14 @@
-﻿namespace GradeManagement.Bll.Services;
+﻿using GradeManagement.Data;
+using GradeManagement.Data.Models;
 
-public class AssignmentLogService
+namespace GradeManagement.Bll.Services;
+
+public class AssignmentLogService(GradeManagementDbContext gradeManagementDbContext)
 {
-
+    public async Task<AssignmentLog> CreateAsync(AssignmentLog assignmentLog)
+    {
+        gradeManagementDbContext.Add(assignmentLog);
+        await gradeManagementDbContext.SaveChangesAsync();
+        return assignmentLog;
+    }
 }

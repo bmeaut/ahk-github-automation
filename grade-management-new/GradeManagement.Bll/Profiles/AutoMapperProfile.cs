@@ -9,7 +9,6 @@ public class AutoMapperProfile : Profile
     public AutoMapperProfile()
     {
         CreateMap<Assignment, Shared.Dtos.Assignment>();
-        CreateMap<AssignmentLog, Shared.Dtos.AssignmentLog>();
         CreateMap<Course, Shared.Dtos.Course>();
         CreateMap<Exercise, Shared.Dtos.Exercise>();
         CreateMap<Group, Shared.Dtos.Response.Group>();
