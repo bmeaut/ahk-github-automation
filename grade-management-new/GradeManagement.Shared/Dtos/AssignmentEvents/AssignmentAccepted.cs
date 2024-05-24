@@ -1,6 +1,3 @@
 ﻿namespace GradeManagement.Shared.Dtos.AssignmentEvents;
 
-public class AssignmentAccepted
-{
-    public string GitHubRepositoryUrl { get; set; }
-}
+public class AssignmentAccepted : AssignmentEventBase;

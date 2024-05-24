@@ -14,14 +14,6 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="AutSoft.Linq" Version="0.10.0" />
-    <PackageReference Include="CsvHelper" Version="32.0.1" />
-    <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.4" />
+    <PackageReference Include="CsvHelper" Version="32.0.3" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.AspNetCore.Mvc.Core">
-      <HintPath>..\..\..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.2\Microsoft.AspNetCore.Mvc.Core.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

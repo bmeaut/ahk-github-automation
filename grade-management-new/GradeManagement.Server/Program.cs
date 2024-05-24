@@ -1,9 +1,11 @@
+using AutSoft.Common.Exceptions;
 using GradeManagement.Data.Data;
 using GradeManagement.Bll;
+using GradeManagement.Bll.Profiles;
+using GradeManagement.Data;
 using GradeManagement.Server.ExceptionHandlers;
 using GradeManagement.Shared.Authorization.Handlers;
 using GradeManagement.Shared.Authorization.Policies;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
@@ -24,7 +26,9 @@ namespace GradeManagement.Server
                 .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
+
+            builder.Services.AddGradeManagementDbContext(builder.Configuration, "DbConnection");
 
             // Add services to the container.
 
@@ -34,23 +38,9 @@ namespace GradeManagement.Server
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
 
-            builder.Services.AddAutoMapper(typeof(Program).Assembly);
+            builder.Services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
 
-            builder.Services.AddTransient<AssignmentService>();
-            builder.Services.AddTransient<AssignmentLogService>();
-            builder.Services.AddTransient<AssingmentEventConsumerService>();
-            builder.Services.AddTransient<CourseService>();
-            builder.Services.AddTransient<GroupService>();
-            builder.Services.AddTransient<LanguageService>();
-            builder.Services.AddTransient<PullRequestService>();
-            builder.Services.AddTransient<ScoreService>();
-            builder.Services.AddTransient<SemesterService>();
-            builder.Services.AddTransient<StudentService>();
-            builder.Services.AddTransient<SubjectService>();
-            builder.Services.AddTransient<ExerciseService>();
-            builder.Services.AddTransient<UserService>();
-            builder.Services.AddTransient<GroupTeacherService>();
-            builder.Services.AddTransient<SubjectTeacherService>();
+            builder.Services.AddBllServices();
 
             builder.Services.AddExceptionHandler<EntityNotFoundExceptionHandler>();
             builder.Services.AddExceptionHandler<ValidationExceptionHandler>();

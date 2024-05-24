@@ -1,4 +1,4 @@
-﻿using GradeManagement.Bll.BaseServices;
+﻿using GradeManagement.Bll.Services.BaseServices;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +14,7 @@ public abstract class QueryControllerBase<TDto> : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IEnumerable<TDto>> GetAllAsync()
     {
         return await _queryService.GetAllAsync();

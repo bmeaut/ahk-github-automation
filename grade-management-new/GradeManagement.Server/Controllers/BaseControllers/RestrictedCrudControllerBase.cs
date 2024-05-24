@@ -1,4 +1,4 @@
-﻿using GradeManagement.Bll.BaseServices;
+﻿using GradeManagement.Bll.Services.BaseServices;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,12 +8,14 @@ public abstract class RestrictedCrudControllerBase<TDto>(IRestrictedCrudServiceB
     : QueryControllerBase<TDto>(restrictedCrudService)
 {
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<TDto> CreateAsync([FromBody] TDto requestDto)
     {
         return await restrictedCrudService.CreateAsync(requestDto);
     }
 
     [HttpDelete("{id:long}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult> DeleteAsync([FromRoute] long id)
     {
         await restrictedCrudService.DeleteAsync(id);

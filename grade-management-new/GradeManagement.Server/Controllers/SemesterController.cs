@@ -1,5 +1,5 @@
 using GradeManagement.Bll;
-using GradeManagement.Bll.BaseServices;
+using GradeManagement.Bll.Services;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 

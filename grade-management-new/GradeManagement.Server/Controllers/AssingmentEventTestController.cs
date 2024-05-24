@@ -1,4 +1,5 @@
 ﻿using GradeManagement.Bll;
+using GradeManagement.Bll.Services;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 
 using Microsoft.AspNetCore.Mvc;
@@ -7,48 +8,86 @@ namespace GradeManagement.Server.Controllers;
 
 [ApiController]
 [Route("api/testassignmentevents")]
-public class AssingmentEventTestController(AssingmentEventConsumerService assingmentEventConsumerService)
+public class AssingmentEventTestController(
+    AssignmentEventProcessorService assignmentEventProcessorService,
+    IWebHostEnvironment environment)
     : ControllerBase
 {
     [HttpPost("assignmentaccepted")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignmentAcceptedAsync(AssignmentAccepted assignmentAccepted)
     {
-        await assingmentEventConsumerService.ConsumeAssignmentAcceptedEventAsync(assignmentAccepted);
+        if (!environment.IsDevelopment())
+        {
+            return BadRequest("This endpoint is only available in Development environment.");
+        }
+
+        await assignmentEventProcessorService.ConsumeAssignmentAcceptedEventAsync(assignmentAccepted);
         return Ok();
     }
 
     [HttpPost("pullrequestopened")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PullRequestOpenedAsync(PullRequestOpened pullRequestOpened)
     {
-        await assingmentEventConsumerService.ConsumePullRequestOpenedEvent(pullRequestOpened);
+        if (!environment.IsDevelopment())
+        {
+            return BadRequest("This endpoint is only available in Development environment.");
+        }
+
+        await assignmentEventProcessorService.ConsumePullRequestOpenedEventAsync(pullRequestOpened);
         return Ok();
     }
 
     [HttpPost("cievaluationcompleted")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CiEvaluationCompletedAsync(CiEvaluationCompleted ciEvaluationCompleted)
     {
-        await assingmentEventConsumerService.ConsumeCiEvaluationCompletedEvent(ciEvaluationCompleted);
+        if (!environment.IsDevelopment())
+        {
+            return BadRequest("This endpoint is only available in Development environment.");
+        }
+
+        await assignmentEventProcessorService.ConsumeCiEvaluationCompletedEventAsync(ciEvaluationCompleted);
         return Ok();
     }
 
     [HttpPost("teacherassigned")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> TeacherAssignedAsync(TeacherAssigned teacherAssigned)
     {
-        await assingmentEventConsumerService.ConsumeTeacherAssignedEvent(teacherAssigned);
+        if (!environment.IsDevelopment())
+        {
+            return BadRequest("This endpoint is only available in Development environment.");
+        }
+
+        await assignmentEventProcessorService.ConsumeTeacherAssignedEventAsync(teacherAssigned);
         return Ok();
     }
 
     [HttpPost("assignmentgraded")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignmentGradedAsync(AssignmentGradedByTeacher assignmentGraded)
     {
-        await assingmentEventConsumerService.ConsumeAssignmentGradedByTeacherEvent(assignmentGraded);
+        if (!environment.IsDevelopment())
+        {
+            return BadRequest("This endpoint is only available in Development environment.");
+        }
+
+        await assignmentEventProcessorService.ConsumeAssignmentGradedByTeacherEventAsync(assignmentGraded);
         return Ok();
     }
 
     [HttpPost("pullrequestclosed")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PullRequestClosedAsync(PullRequestStatusChanged pullRequestStatusChanged)
     {
-        await assingmentEventConsumerService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
+        if (!environment.IsDevelopment())
+        {
+            return BadRequest("This endpoint is only available in Development environment.");
+        }
+
+        await assignmentEventProcessorService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
         return Ok();
     }
 }
