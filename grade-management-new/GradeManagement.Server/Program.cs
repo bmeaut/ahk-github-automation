@@ -1,8 +1,8 @@
 using GradeManagement.Data.Data;
 using GradeManagement.Bll;
-using GradeManagement.Server.Authorization.Handlers;
-using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.ExceptionHandlers;
+using GradeManagement.Shared.Authorization.Handlers;
+using GradeManagement.Shared.Authorization.Policies;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;

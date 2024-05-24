@@ -1,6 +1,6 @@
 using GradeManagement.Bll;
-using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.Controllers.BaseControllers;
+using GradeManagement.Shared.Authorization.Policies;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Request;
 

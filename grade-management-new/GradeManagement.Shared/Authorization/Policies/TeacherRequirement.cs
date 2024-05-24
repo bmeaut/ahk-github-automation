@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Client.Authorization.Policies;
+namespace GradeManagement.Shared.Authorization.Policies;
 
 public class TeacherRequirement : IAuthorizationRequirement
 {

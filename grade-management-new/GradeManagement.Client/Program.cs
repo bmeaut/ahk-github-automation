@@ -1,7 +1,7 @@
-using GradeManagement.Client.Authorization.Handlers;
-using GradeManagement.Client.Authorization.Policies;
 using GradeManagement.Client.Network;
 using GradeManagement.Client.Services;
+using GradeManagement.Shared.Authorization.Handlers;
+using GradeManagement.Shared.Authorization.Policies;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Web;
