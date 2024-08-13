@@ -23,7 +23,10 @@ namespace GradeManagement.Server
             // Add services to the container.
 
             builder.Services.AddControllersWithViews();
-            builder.Services.AddOpenApiDocument();
+            builder.Services.AddOpenApiDocument(config =>
+            {
+                config.Title = "AHK Grade Management API";
+            });
             builder.Services.AddRazorPages();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
