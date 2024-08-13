@@ -1,12 +1,14 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Ahk.GitHub.Monitor
 {
@@ -14,17 +16,18 @@ namespace Ahk.GitHub.Monitor
     {
         private readonly IEventDispatchService eventDispatchService;
         private readonly IOptions<GitHubMonitorConfig> config;
+        private readonly ILogger<GitHubMonitorFunction> logger;
 
-        public GitHubMonitorFunction(IEventDispatchService eventDispatchService, IOptions<GitHubMonitorConfig> config)
+        public GitHubMonitorFunction(IEventDispatchService eventDispatchService, IOptions<GitHubMonitorConfig> config, ILogger<GitHubMonitorFunction> logger)
         {
             this.eventDispatchService = eventDispatchService;
             this.config = config;
+            this.logger = logger;
         }
 
-        [FunctionName("github-webhook")]
+        [Function("github-webhook")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest request,
-            ILogger logger)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData  request)
         {
             if (string.IsNullOrEmpty(config.Value.GitHubWebhookSecret))
                 return new ObjectResult(new { error = "GitHub secret not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
@@ -32,9 +35,9 @@ namespace Ahk.GitHub.Monitor
             if (string.IsNullOrEmpty(config.Value.GitHubAppId) || string.IsNullOrEmpty(config.Value.GitHubAppPrivateKey))
                 return new ObjectResult(new { error = "GitHub App ID/Token not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
 
-            string eventName = request.Headers.GetValueOrDefault("X-GitHub-Event");
-            string deliveryId = request.Headers.GetValueOrDefault("X-GitHub-Delivery");
-            string receivedSignature = request.Headers.GetValueOrDefault("X-Hub-Signature-256");
+            string eventName = request.Headers.GetValues("X-GitHub-Event").FirstOrDefault();
+            string deliveryId = request.Headers.GetValues("X-GitHub-Delivery").FirstOrDefault();
+            string receivedSignature = request.Headers.GetValues("X-Hub-Signature-256").FirstOrDefault();
 
             logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
 
@@ -47,10 +50,10 @@ namespace Ahk.GitHub.Monitor
             if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature, config.Value.GitHubWebhookSecret))
                 return new BadRequestObjectResult(new { error = "Payload signature not valid" });
 
-            return await runCore(logger, eventName, deliveryId, requestBody);
+            return await runCore(eventName, deliveryId, requestBody);
         }
 
-        private async Task<IActionResult> runCore(ILogger logger, string eventName, string deliveryId, string requestBody)
+        private async Task<IActionResult> runCore(string eventName, string deliveryId, string requestBody)
         {
             logger.LogInformation("Webhook delivery accepted with Delivery id = '{DeliveryId}'", deliveryId);
             var webhookResult = new WebhookResult();
