@@ -11,12 +11,12 @@ namespace GradeManagement.Bll.Services;
 public class ScoreService
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
+    private readonly ScoreTypeService _scoreTypeService;
 
-    public ScoreService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
+    public ScoreService(GradeManagementDbContext gradeManagementDbContext, ScoreTypeService scoreTypeService)
     {
         _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
+        _scoreTypeService = scoreTypeService;
     }
 
     public async Task CreateScoreBasedOnEventScoreAsync(EventScore eventScore, long pullRequestId)
@@ -26,7 +26,7 @@ public class ScoreService
             Value = eventScore.Value,
             IsApproved = false,
             CreatedDate = eventScore.CreatedDate,
-            ScoreType = await GetOrCreateScoreTypeByTypeStringAsync(eventScore.ScoreType),
+            ScoreType = await _scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(eventScore.ScoreType),
             PullRequestId = pullRequestId
         };
         _gradeManagementDbContext.Score.Add(scoreEntity);
@@ -43,7 +43,7 @@ public class ScoreService
                 Value = eventScore.Value,
                 IsApproved = true,
                 CreatedDate = eventScore.CreatedDate,
-                ScoreType = await GetOrCreateScoreTypeByTypeStringAsync(eventScore.ScoreType),
+                ScoreType = await _scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(eventScore.ScoreType),
                 PullRequestId = pullRequestId,
                 TeacherId = teacherId
             };
@@ -57,22 +57,6 @@ public class ScoreService
 
 
         await _gradeManagementDbContext.SaveChangesAsync();
-    }
-
-    private async Task<ScoreType> GetOrCreateScoreTypeByTypeStringAsync(string eventScoreScoreType)
-    {
-        var scoreType = await _gradeManagementDbContext.ScoreType.SingleOrDefaultAsync(st => st.Type == eventScoreScoreType);
-        if (scoreType == null)
-        {
-            scoreType = new ScoreType
-            {
-                Type = eventScoreScoreType
-            };
-            _gradeManagementDbContext.ScoreType.Add(scoreType);
-            await _gradeManagementDbContext.SaveChangesAsync();
-        }
-
-        return scoreType;
     }
 
     public async Task<Score?> GetLatestModelByEventScoreAsync(EventScore eventScore)

@@ -2,6 +2,7 @@ using GradeManagement.Bll;
 using GradeManagement.Bll.Services;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
+using GradeManagement.Shared.Dtos.Request;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,7 @@ namespace GradeManagement.Server.Controllers;
 
 [Route("api/exercises")]
 [ApiController]
-public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<Exercise>(exerciseService)
+public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<Exercise, Shared.Dtos.Response.Exercise>(exerciseService)
 {
     [HttpGet("{id:long}/assignments")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -19,6 +20,14 @@ public class ExerciseController(ExerciseService exerciseService) : CrudControlle
     {
         return await exerciseService.GetAssignmentsByIdAsync(id);
     }
+
+    [HttpGet("{id:long}/scoreTypes")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IEnumerable<ScoreTypeExercise>> ScoreTypeExercises([FromRoute] long id)
+    {
+        return await exerciseService.GetScoreTypeExercisesByIdAsync(id);
+    }
+
 
     [HttpGet("{id:long}/export")]
     [ProducesResponseType(StatusCodes.Status200OK)]

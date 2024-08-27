@@ -12,5 +12,6 @@ public class Score : ISoftDelete
     public long PullRequestId { get; set; }
     public User? Teacher { get; set; }
     public long? TeacherId { get; set; }
+    public List<ScoreTypeExercise> ScoreTypeExercises { get; set; }
     public bool IsDeleted { get; set; }
 }
