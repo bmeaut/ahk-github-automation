@@ -20,6 +20,7 @@ public class GradeManagementDbContext : DbContext
     public DbSet<PullRequest> PullRequest { get; set; }
     public DbSet<Score> Score { get; set; }
     public DbSet<ScoreType> ScoreType { get; set; }
+    public DbSet<ScoreTypeExercise> ScoreTypeExercise { get; set; }
     public DbSet<Semester> Semester { get; set; }
     public DbSet<Student> Student { get; set; }
     public DbSet<Subject> Subject { get; set; }

@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<LanguageService>();
         services.AddTransient<PullRequestService>();
         services.AddTransient<ScoreService>();
+        services.AddTransient<ScoreTypeService>();
         services.AddTransient<SemesterService>();
         services.AddTransient<StudentService>();
         services.AddTransient<SubjectService>();

@@ -9,5 +9,6 @@ public class Exercise : ISoftDelete
     public Course Course { get; set; }
     public long CourseId { get; set; }
     public List<Assignment> Assignments { get; set; }
+    public List<ScoreTypeExercise> ScoreTypeExercises { get; set; }
     public bool IsDeleted { get; set; }
 }
