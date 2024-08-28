@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,8 +15,9 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         [TestMethod]
         public async Task NoAppConfigsReturnsError()
         {
+            var log = new Mock<ILogger<GitHubMonitorFunction>>();
             var eds = new Mock<Services.IEventDispatchService>();
-            var func = new GitHubMonitorFunction(eds.Object, Options.Create(new GitHubMonitorConfig()));
+            var func = new GitHubMonitorFunction(eds.Object, Options.Create(new GitHubMonitorConfig()), log.Object);
 
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(req => { });
 

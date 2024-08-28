@@ -1,23 +1,31 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
 {
     internal static class FunctionCallAssert
     {
-        public static Task<IActionResult> Invoke(this GitHubMonitorFunction function, Action<HttpRequest> configureRequest)
+        public static Task<IActionResult> Invoke(this GitHubMonitorFunction function, Action<MockHttpRequestData> configureRequest)
         {
-            var req = new DefaultHttpRequest(new DefaultHttpContext());
-            configureRequest(req);
+            // Create a mock function context (you might need to implement this based on your test framework)
+            var functionContext = new Mock<FunctionContext>(); // You may need to create or use a mocking framework
+            var request = new MockHttpRequestData(functionContext.Object, new MemoryStream());
 
-            return function.Run(req, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+            // Configure the request (e.g., add headers, set body, etc.)
+            configureRequest(request);
+
+            // Invoke the function with the configured request and a null logger
+            return function.Run(request);
         }
 
-        public static async Task<TResponse> InvokeAndGetResponseAs<TResponse>(this GitHubMonitorFunction function, Action<HttpRequest> configureRequest)
+        public static async Task<TResponse> InvokeAndGetResponseAs<TResponse>(this GitHubMonitorFunction function, Action<MockHttpRequestData> configureRequest)
             where TResponse : IActionResult
         {
             var result = await function.Invoke(configureRequest);
@@ -33,18 +41,21 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             return (TResponse)result;
         }
 
-        private static void configureRequest(HttpRequest req, SampleCallbackData data)
+        private static void configureRequest(MockHttpRequestData req, SampleCallbackData data)
         {
+            // Add headers
             req.Headers.Add("X-GitHub-Event", data.EventName);
             req.Headers.Add("X-Hub-Signature-256", data.Signature);
 
-            var memStream = new System.IO.MemoryStream();
-            using var writer = new System.IO.StreamWriter(memStream, leaveOpen: true);
+            // Write the body to the request stream
+            var memStream = new MemoryStream();
+            using var writer = new StreamWriter(memStream, leaveOpen: true);
             writer.Write(data.Body);
             writer.Flush();
 
             memStream.Position = 0;
-            req.Body = memStream;
+            req = new MockHttpRequestData(req.FunctionContext, memStream);
         }
+
     }
 }
