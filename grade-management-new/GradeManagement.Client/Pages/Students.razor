@@ -58,7 +58,8 @@
     private async Task DeleteItem(Student2 item)
     {
         //await StudentClient.DeleteAsync(item.Id);
-        SnackbarService.ShowError("Delete not implemented!");
+        //TODO: ppthez modositva
+        SnackbarService.ShowDeleteError();
         await loadingRef.StartLoading();
     }
 

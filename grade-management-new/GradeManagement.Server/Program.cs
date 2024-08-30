@@ -1,5 +1,3 @@
-using AutSoft.Common.Exceptions;
-using GradeManagement.Data.Data;
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;

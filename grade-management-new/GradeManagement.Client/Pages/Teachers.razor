@@ -10,6 +10,7 @@
 @inject UserClient UserClient
 
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
+    <MudText>Teachers</MudText>
     <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>

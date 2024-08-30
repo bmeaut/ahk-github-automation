@@ -6,6 +6,7 @@
 @inject CourseClient CourseClient
 @inject ExerciseClient ExerciseClient
 @inject AssignmentClient AssignmentClient
+@inject DashboardClient DashboardClient
 <PageTitle>AHK Review UI</PageTitle>
 
 <style>
@@ -29,35 +30,60 @@
 <LoadingComponent LongTask="@Loading" @ref="loadingRef">
 
     <MudStack Row="true" Class="mt-6">
-        <MudSelect T="Course" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged"
+        <MudSelect T="string" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged"
                    Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
                    TransformOrigin="Origin.TopCenter">
             @foreach (var course in _courses ?? [])
             {
-                <MudSelectItem Value="@course">@course.Name</MudSelectItem>
+                <MudSelectItem Value="@course">@course</MudSelectItem>
             }
         </MudSelect>
         <MudSpacer/>
-        <MudSelect T="Exercise" Label="Exercise" @bind-Value="_selectedTask" @bind-Value:after="ExerciseChanged"
+        <MudSelect T="string" Label="Exercise" @bind-Value="_selectedExercise" @bind-Value:after="ExerciseChanged"
                    Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
                    TransformOrigin="Origin.TopCenter">
             @foreach (var task in _tasks ?? [])
             {
-                <MudSelectItem Value="@task">@task.Name</MudSelectItem>
+                <MudSelectItem Value="@task">@task</MudSelectItem>
             }
         </MudSelect>
         <MudSpacer/>
 
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
     </MudStack>
-    <MudDataGrid Items="@_assignmentsData" T="Assignment" Class="custom-grid">
+    <MudDataGrid Items="@_filteredData" T="Dashboard" Class="custom-grid">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id"/>
-            <PropertyColumn Property="x => x.GithubRepoName" Title="Repository name"/>
-            @* <PropertyColumn Property="x => x.Student.NeptunCode" Title="Neptun"/> *@
-            @* <PropertyColumn Property="x => JoinPullRequests(x)" Title="PRs"/> *@
+            <PropertyColumn Property="x => x.GithubRepoUrl" Title="Repo URL"/>
+            <PropertyColumn Property="x => x.StudentNeptun" Title="Neptun"/>
+            <TemplateColumn Title="PRs">
+                <CellTemplate>
+                    <MudTooltip Text="@PrTooltip(context.Item)">
+                        @JoinPullRequests(context.Item)
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
             @* <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/> *@
-            @* <PropertyColumn Property="x => JoinScore(x)" Title="Pontok"/> *@
+            <PropertyColumn Property="x => JoinScore(x)" Title="Score"/>
+            <TemplateColumn Title="" T="Dashboard">
+                <CellTemplate>
+                    @if (MergedEntry(context.Item))
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success"/>
+                    }
+                    else if (CheckedEntry(context.Item))
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success"/>
+                    }
+                    else if (CiRunOnEntry(context.Item))
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning"/>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error"/>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
         </Columns>
         <PagerContent>
             <MudDataGridPager T="Assignment"/>
@@ -70,57 +96,84 @@
 
     #region Data Grid helpers
 
-// private string JoinPullRequests(Assignment data)
-// {
-//     //Kéne menteni a branch nevét is?
-//     return string.Join(", ", data.PullRequests.Select(x => x.Url));
-// }
-//
-// private string JoinCiWorkflows(Assignment data)
-// {
-//     var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
-//     var assignmentEvents = filtered as AssignmentEvent[] ?? filtered.ToArray();
-//     string run = assignmentEvents.Length == 1 ? "run" : "runs";
-//     return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
-// }
-//
-// private bool IsCicdWorkflow(AssignmentEvent data)
-// {
-//     return true;
-// }
-//
-// private string JoinScore(Assignment data)
-// {
-//     return string.Join(".", data.Scores.Select(x => x.Value));
-// }
+    private string JoinPullRequests(Dashboard data)
+    {
+        //Kéne menteni a branch nevét is?
+        return data.PullRequests?.FirstOrDefault()?.Url ?? "";
+    }
+
+    private string PrTooltip(Dashboard data)
+    {
+        return data.PullRequests?.FirstOrDefault()?.OpeningDate.ToString() ?? "";
+    }
+
+    private string JoinScore(Dashboard data)
+    {
+        return string.Join(", ", data.PullRequests?.FirstOrDefault()?.Scores.Select(x => x.Value) ?? []);
+    }
+
+    private bool MergedEntry(Dashboard data)
+    {
+        return data.PullRequests?.FirstOrDefault()?.Status == PullRequestStatus.Merged;
+    }
+
+    private bool CheckedEntry(Dashboard data)
+    {
+        var scores = data.PullRequests?.FirstOrDefault()?.Scores;
+        return scores?.Count > 0 && scores.All(x => x.IsApproved);
+    }
+
+    private bool CiRunOnEntry(Dashboard data)
+    {
+        return data.PullRequests?.FirstOrDefault()?.Scores.Count > 0;
+    }
 
     #endregion
+
     //Van e assignolt teacher?
     //Mikor pontoztak? Tooltip
     //PR status - closed szűrve
     private LoadingComponent loadingRef;
 
     private Subject? _selectedSubject = null;
-    private Course? _selectedCourse = null;
-    private Exercise? _selectedTask = null;
-    private IEnumerable<Course>? _courses = new List<Course>();
-    private IEnumerable<Exercise>? _tasks = new List<Exercise>();
-    private IEnumerable<Assignment> _assignmentsData = new List<Assignment>();
+    private string? _selectedCourse = null;
+    private string? _selectedExercise = null;
+    private IEnumerable<string>? _courses = new List<string>();
+    private IEnumerable<string>? _tasks = new List<string>();
+    private ICollection<Dashboard> _dashboardData = new List<Dashboard>();
+    private ICollection<Dashboard> _filteredData = new List<Dashboard>();
 
 
     private async Task Loading()
     {
         _selectedSubject = SubjectService.CurrentSubject;
-        _courses = await SubjectClient.GetAllCoursesByIdAsync(_selectedSubject.Id);
+        _dashboardData = await DashboardClient.GetDashboardAsync(_selectedSubject.Id);
+        _filteredData = _dashboardData.ToList();
+        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
+        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }
 
-    private async Task CourseChanged()
+    private void CourseChanged()
     {
-        _tasks = await CourseClient.GetAllExercisesByIdAsync(_selectedCourse.Id);
+        _filteredData = _dashboardData.Where(x => (_selectedCourse == null || x.CourseName == _selectedCourse) && (_selectedExercise == null || x.ExerciseName == _selectedExercise)).ToList();
+        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
+        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }
 
-    private async Task ExerciseChanged()
+    private void ExerciseChanged()
     {
-        _assignmentsData = await ExerciseClient.GetAssignmentsByIdAsync(_selectedTask.Id);
+        _filteredData = _dashboardData.Where(x => (_selectedCourse == null || x.CourseName == _selectedCourse) && (_selectedExercise == null || x.ExerciseName == _selectedExercise)).ToList();
+        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
+        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
+    }
+
+    private void OnSubjectChanged()
+    {
+        loadingRef.StartLoading();
+    }
+
+    protected override void OnInitialized()
+    {
+        SubjectService.OnChange += OnSubjectChanged;
     }
 }
