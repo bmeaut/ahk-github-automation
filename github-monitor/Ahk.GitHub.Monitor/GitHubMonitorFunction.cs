@@ -18,7 +18,8 @@ namespace Ahk.GitHub.Monitor
         private readonly IOptions<GitHubMonitorConfig> config;
         private readonly ILogger<GitHubMonitorFunction> logger;
 
-        public GitHubMonitorFunction(IEventDispatchService eventDispatchService, IOptions<GitHubMonitorConfig> config, ILogger<GitHubMonitorFunction> logger)
+        public GitHubMonitorFunction(IEventDispatchService eventDispatchService, IOptions<GitHubMonitorConfig> config,
+            ILogger<GitHubMonitorFunction> logger)
         {
             this.eventDispatchService = eventDispatchService;
             this.config = config;
@@ -27,19 +28,31 @@ namespace Ahk.GitHub.Monitor
 
         [Function("github-webhook")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData  request)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
+            HttpRequestData request)
         {
             if (string.IsNullOrEmpty(config.Value.GitHubWebhookSecret))
-                return new ObjectResult(new { error = "GitHub secret not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
+                return new ObjectResult(new { error = "GitHub secret not configured" })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
 
-            if (string.IsNullOrEmpty(config.Value.GitHubAppId) || string.IsNullOrEmpty(config.Value.GitHubAppPrivateKey))
-                return new ObjectResult(new { error = "GitHub App ID/Token not configured" }) { StatusCode = StatusCodes.Status500InternalServerError };
+            if (string.IsNullOrEmpty(config.Value.GitHubAppId) ||
+                string.IsNullOrEmpty(config.Value.GitHubAppPrivateKey))
+                return new ObjectResult(new { error = "GitHub App ID/Token not configured" })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
 
-            string eventName = request.Headers.GetValues("X-GitHub-Event").FirstOrDefault();
-            string deliveryId = request.Headers.GetValues("X-GitHub-Delivery").FirstOrDefault();
-            string receivedSignature = request.Headers.GetValues("X-Hub-Signature-256").FirstOrDefault();
+            request.Headers.TryGetValues("X-GitHub-Event", out var eventNameValues);
+            string eventName = eventNameValues?.FirstOrDefault();
+            request.Headers.TryGetValues("X-GitHub-Delivery", out var deliveryIdValues);
+            string deliveryId = deliveryIdValues?.FirstOrDefault();
+            request.Headers.TryGetValues("X-Hub-Signature-256", out var signatureValues);
+            string receivedSignature = signatureValues?.FirstOrDefault();
 
-            logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
+            logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'",
+                deliveryId, eventName);
 
             if (string.IsNullOrEmpty(eventName))
                 return new BadRequestObjectResult(new { error = "X-GitHub-Event header missing" });
@@ -47,7 +60,8 @@ namespace Ahk.GitHub.Monitor
                 return new BadRequestObjectResult(new { error = "X-Hub-Signature-256 header missing" });
 
             string requestBody = await request.ReadAsStringAsync();
-            if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature, config.Value.GitHubWebhookSecret))
+            if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature,
+                    config.Value.GitHubWebhookSecret))
                 return new BadRequestObjectResult(new { error = "Payload signature not valid" });
 
             return await runCore(eventName, deliveryId, requestBody);
@@ -60,7 +74,8 @@ namespace Ahk.GitHub.Monitor
             try
             {
                 await eventDispatchService.Process(eventName, requestBody, webhookResult, logger);
-                logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'", deliveryId);
+                logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'",
+                    deliveryId);
             }
             catch (Exception ex)
             {

@@ -15,15 +15,11 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             var host = new HostBuilder()
                 .ConfigureServices(services =>
                 {
-                    // Register any services that are needed for the test
                     services.AddSingleton<Services.IGitHubClientFactory, Services.GitHubClientFactory>();
-                    // Add more service registrations as needed
                 })
                 .Build();
 
             await host.StartAsync();
-
-            // Additional assertions or operations can be performed here
 
             await host.StopAsync();
         }
