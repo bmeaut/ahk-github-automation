@@ -32,17 +32,21 @@ namespace Ahk.GitHub.Monitor
             HttpRequestData request)
         {
             if (string.IsNullOrEmpty(config.Value.GitHubWebhookSecret))
+            {
                 return new ObjectResult(new { error = "GitHub secret not configured" })
                 {
-                    StatusCode = StatusCodes.Status500InternalServerError
+                    StatusCode = StatusCodes.Status500InternalServerError,
                 };
+            }
 
             if (string.IsNullOrEmpty(config.Value.GitHubAppId) ||
                 string.IsNullOrEmpty(config.Value.GitHubAppPrivateKey))
+            {
                 return new ObjectResult(new { error = "GitHub App ID/Token not configured" })
                 {
-                    StatusCode = StatusCodes.Status500InternalServerError
+                    StatusCode = StatusCodes.Status500InternalServerError,
                 };
+            }
 
             request.Headers.TryGetValues("X-GitHub-Event", out var eventNameValues);
             string eventName = eventNameValues?.FirstOrDefault();
@@ -51,7 +55,8 @@ namespace Ahk.GitHub.Monitor
             request.Headers.TryGetValues("X-Hub-Signature-256", out var signatureValues);
             string receivedSignature = signatureValues?.FirstOrDefault();
 
-            logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'",
+            logger.LogInformation(
+                "Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'",
                 deliveryId, eventName);
 
             if (string.IsNullOrEmpty(eventName))

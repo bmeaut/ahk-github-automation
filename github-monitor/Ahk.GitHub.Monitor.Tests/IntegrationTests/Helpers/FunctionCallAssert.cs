@@ -25,6 +25,19 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             return function.Run(request);
         }
 
+        public static Task<IActionResult> Invoke2(this GitHubMonitorFunction function, SampleCallbackData data)
+        {
+            // Create a mock function context (you might need to implement this based on your test framework)
+            var functionContext = new Mock<FunctionContext>(); // You may need to create or use a mocking framework
+            var request = new MockHttpRequestData(functionContext.Object, new MemoryStream());
+
+            // Configure the request (e.g., add headers, set body, etc.)
+            request = configureRequest(request, data);
+
+            // Invoke the function with the configured request and a null logger
+            return function.Run(request);
+        }
+
         public static async Task<TResponse> InvokeAndGetResponseAs<TResponse>(this GitHubMonitorFunction function, Action<MockHttpRequestData> configureRequest)
             where TResponse : IActionResult
         {
@@ -36,17 +49,13 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         public static async Task<TResponse> InvokeWithContentAndGetResponseAs<TResponse>(this GitHubMonitorFunction function, SampleCallbackData data)
             where TResponse : IActionResult
         {
-            var result = await function.Invoke(req => configureRequest(req, data));
+            var result = await function.Invoke2(data);
             Assert.IsInstanceOfType(result, typeof(TResponse));
             return (TResponse)result;
         }
 
-        private static void configureRequest(MockHttpRequestData req, SampleCallbackData data)
+        private static MockHttpRequestData configureRequest(MockHttpRequestData req, SampleCallbackData data)
         {
-            // Add headers
-            req.Headers.Add("X-GitHub-Event", data.EventName);
-            req.Headers.Add("X-Hub-Signature-256", data.Signature);
-
             // Write the body to the request stream
             var memStream = new MemoryStream();
             using var writer = new StreamWriter(memStream, leaveOpen: true);
@@ -55,6 +64,11 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
 
             memStream.Position = 0;
             req = new MockHttpRequestData(req.FunctionContext, memStream);
+
+            // Add headers
+            req.Headers.Add("X-GitHub-Event", data.EventName);
+            req.Headers.Add("X-Hub-Signature-256", data.Signature);
+            return req;
         }
 
     }
