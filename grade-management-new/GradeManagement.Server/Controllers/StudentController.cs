@@ -4,10 +4,12 @@ using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Response;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/students")]
 [ApiController]
 public class StudentController(StudentService studentService) : QueryControllerBase<Student>(studentService)

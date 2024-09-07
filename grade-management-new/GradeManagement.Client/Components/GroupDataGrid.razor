@@ -1,63 +1,36 @@
-﻿@using GradeManagement.Client.Pages
-@using GradeManagement.Shared.Dtos.Request
-@inject HttpClient Http
-@inject CrudSnackbarService SnackbarService
+﻿@inject CrudSnackbarService SnackbarService
+@inject GroupClient GroupClient
 
-<MudDataGrid T="Group" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
+<MudDataGrid T="Group2" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
         <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
-        <TemplateColumn Title="Actions">
-            <CellTemplate>
-                <MudStack Row>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+        <DataGridActions TItem="Group2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
     </Columns>
 </MudDataGrid>
 
 
 @code {
-    [Parameter] public List<Group> Values { get; set; }
+    [Parameter] public ICollection<Group2> Values { get; set; }
 
-    string BaseUrl = Endpoints.GROUPS;
-
-    private async Task StartEditing(CellContext<Group?> context)
+    private async Task StartEditing(CellContext<Group2?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
     }
 
-    private async Task CommittedItemChanges(Group items)
+    private async Task CommittedItemChanges(Group2 items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await GroupClient.UpdateAsync(items.Id, items);
+        SnackbarService.ShowEditSuccess();
+        StateHasChanged();
     }
 
-    private async Task DeleteItem(Group item)
+    private async Task DeleteItem(Group2 item)
     {
         Values.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
+        await GroupClient.DeleteAsync(item.Id);
+        SnackbarService.ShowDeleteSuccess();
         StateHasChanged();
     }
 

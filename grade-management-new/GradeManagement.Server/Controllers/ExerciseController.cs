@@ -4,12 +4,14 @@ using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Request;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using System.Text;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/exercises")]
 [ApiController]
 public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<Exercise, Shared.Dtos.Response.Exercise>(exerciseService)

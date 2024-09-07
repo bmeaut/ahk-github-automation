@@ -1,6 +1,4 @@
-﻿@using GradeManagement.Client.Pages
-@inject HttpClient Http
-@inject SubjectService SubjectService
+﻿@inject SemesterClient SemesterClient
 
 <MudSelect T="Semester" Value="@Value" ValueChanged="@((Semester value) => ValueChanged.InvokeAsync(value))" ToStringFunc="@semesterToString" Label="Semester">
     @foreach (var semester in _semesters)
@@ -13,12 +11,12 @@
     [Parameter] public Semester Value { get; set; }
     [Parameter] public EventCallback<Semester> ValueChanged { get; set; }
 
-    Func<Semester, string> semesterToString = p => p.Name;
-    private List<Semester> _semesters = new();
+    private Func<Semester, string> semesterToString = p => p.Name;
+    private ICollection<Semester> _semesters = new List<Semester>();
 
-    private async Task<List<Semester>> LoadSemesters()
+    private async Task<ICollection<Semester>> LoadSemesters()
     {
-        return await SubjectService.LoadSemesters();
+        return await SemesterClient.GetAllAsync();
     }
 
     protected override async Task OnInitializedAsync()

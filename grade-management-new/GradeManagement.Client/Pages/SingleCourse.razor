@@ -1,11 +1,15 @@
 ﻿@page "/courses/{Id:int}"
-@using GradeManagement.Shared.Dtos.Request
+@using System.Net
+@using GradeManagement.Client.Components.NewDialogs
+@layout AuthenticatedLayout
 
-@inject HttpClient Http
 @inject CrudSnackbarService SnackbarService
 @inject IDialogService DialogService
+@inject CourseClient CourseClient
+@inject ExerciseClient ExerciseClient
+@inject GroupClient GroupClient
 
-<LoadingComponent LongTask="@_loading">
+<LoadingComponent LongTask="@_loading" @ref="loadingRef">
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
@@ -34,7 +38,7 @@
                     <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
                         <MudText Typo="Typo.h6" Style="align-self: start">Groups:</MudText>
                         <GroupDataGrid Values="_groups"/>
-                        <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewGroupDialog">New Exercise</MudButton>
+                        <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewGroupDialog">New Group</MudButton>
                     </MudStack>
                 </MudItem>
             </MudGrid>
@@ -45,22 +49,23 @@
 @code {
     [Parameter] public int Id { get; set; }
     Course _course;
-    List<Exercise> _exercises;
-    List<Group> _groups;
+    ICollection<Exercise> _exercises;
+    ICollection<Group2> _groups;
+    private LoadingComponent loadingRef;
 
     private async Task<Course> _loadCourseAsync()
     {
-        return await Http.GetFromJsonAsync<Course>($"{Endpoints.COURSES}/{Id}");
+        return await CourseClient.GetByIdAsync(Id);
     }
 
-    private async Task<List<Exercise>> _loadExercisesAsync()
+    private async Task<ICollection<Exercise>> _loadExercisesAsync()
     {
-        return await Http.GetFromJsonAsync<List<Exercise>>($"{Endpoints.COURSES}/{Id}/exercises");
+        return await CourseClient.GetAllExercisesByIdAsync(Id);
     }
 
-    private async Task<List<Group>> _loadGroupsAsync()
+    private async Task<ICollection<Group2>> _loadGroupsAsync()
     {
-        return await Http.GetFromJsonAsync<List<Group>>($"{Endpoints.COURSES}/{Id}/groups");
+        return (await CourseClient.GetAllGroupsByIdAsync(Id)).Select(x => x.ToGroup2()).ToList();
     }
 
     private async Task _loading()
@@ -76,23 +81,11 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            var newExercise = result.Data as Exercise;
-            newExercise.CourseId = Id;
-            _exercises.Add(newExercise);
-            var response = await Http.PostAsJsonAsync(Endpoints.EXERCISES, newExercise);
-            if (response.IsSuccessStatusCode)
-            {
-                Exercise newObject = await response.Content.ReadFromJsonAsync<Exercise>();
-                _exercises.Remove(newExercise);
-                _exercises.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                //_exercises.Remove(newCourse);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            var exercise = result.Data as Exercise;
+            exercise.CourseId = Id;
+            await ExerciseClient.CreateAsync(exercise);
+            SnackbarService.ShowAddSuccess();
+            await loadingRef.StartLoading();
         }
     }
 
@@ -102,23 +95,11 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            var newGroup = result.Data as Group;
-            newGroup.CourseId = Id;
-            _groups.Add(newGroup);
-            var response = await Http.PostAsJsonAsync(Endpoints.GROUPS, newGroup);
-            if (response.IsSuccessStatusCode)
-            {
-                Group newObject = await response.Content.ReadFromJsonAsync<Group>();
-                _groups.Remove(newGroup);
-                _groups.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                //_exercises.Remove(newCourse);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            var group = result.Data as Group2;
+            group.CourseId = Id;
+            await GroupClient.CreateAsync(group);
+            SnackbarService.ShowAddSuccess();
+            await loadingRef.StartLoading();
         }
     }
 

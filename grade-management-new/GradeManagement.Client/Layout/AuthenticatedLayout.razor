@@ -1,0 +1,26 @@
+﻿@inherits LayoutComponentBase
+@inject SubjectService SubjectService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <AuthorizeView>
+        <Authorized>
+            <MainComponent>
+                @Body
+            </MainComponent>
+        </Authorized>
+        <NotAuthorized>
+            <RedirectToLogin/>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudLayout>
+
+@code {
+
+
+}

@@ -1,27 +1,28 @@
 ﻿@page "/students"
+@using GradeManagement.Client.Components.NewDialogs
+@layout AuthenticatedLayout
 
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject StudentClient StudentClient
 
-<LoadingComponent IsLoading="@_isLoading">
-    <MudDataGrid T="Student" Items="_students" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+<LoadingComponent LongTask="Loading" @ref="loadingRef">
+    <MudDataGrid T="Student2" Items="_students" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
-            <DataGridActions TItem="Student" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+            <DataGridActions TItem="Student2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
     <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {
-    private List<Student> _students = new();
-    private bool _isLoading = true;
-
-    readonly string BaseUrl = Endpoints.LANGUAGES;
+    private ICollection<Student2> _students = new List<Student2>();
+    private LoadingComponent loadingRef;
 
 
     private async Task OpenDialog()
@@ -30,66 +31,36 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _students.Add(result.Data as Student);
-            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
-            if (response.IsSuccessStatusCode)
-            {
-                Student newObject = await response.Content.ReadFromJsonAsync<Student>();
-                //Right now it needs Student list to be filled
-                _students.Remove(result.Data as Student);
-                _students.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                _students.Remove(result.Data as Student);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            await StudentClient.CreateAsync(result.Data as Student2);
+            SnackbarService.ShowAddSuccess();
+            await loadingRef.StartLoading();
         }
     }
 
-    private async Task StartEditing(CellContext<Student?> context)
+    private async Task StartEditing(CellContext<Student2?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    private async Task Loading()
     {
-        _students = await SubjectService.LoadStudents();
-        _isLoading = false;
+        _students = (await StudentClient.GetAllAsync()).Select(x => x.ToStudent2()).ToList();
     }
 
-    private async Task CommittedItemChanges(Student items)
+    private async Task CommittedItemChanges(Student2 items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        //await StudentClient.UpdateAsync(items);
+        SnackbarService.ShowError("Update not implemented!");
+        await loadingRef.StartLoading();
     }
 
-    private async Task DeleteItem(Student item)
+    private async Task DeleteItem(Student2 item)
     {
-        _students.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
-        StateHasChanged();
+        //await StudentClient.DeleteAsync(item.Id);
+        //TODO: ppthez modositva
+        SnackbarService.ShowDeleteError();
+        await loadingRef.StartLoading();
     }
 
 }

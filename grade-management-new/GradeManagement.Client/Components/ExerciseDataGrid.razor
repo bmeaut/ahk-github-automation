@@ -1,28 +1,17 @@
-﻿@using GradeManagement.Client.Pages
-@inject HttpClient Http
-@inject CrudSnackbarService SnackbarService
+﻿@inject ExerciseClient ExerciseClient
 
 <MudDataGrid T="Exercise" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
         <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
         <PropertyColumn Property="x => x.GithubPrefix" Title="Github Prefix"/>
-        <TemplateColumn Title="Actions">
-            <CellTemplate>
-                <MudStack Row>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+        <DataGridActions TItem="Exercise" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
     </Columns>
 </MudDataGrid>
 
 
 @code {
-    [Parameter] public List<Exercise> Values { get; set; }
-
-    string BaseUrl = Endpoints.EXERCISES;
+    [Parameter] public ICollection<Exercise> Values { get; set; }
 
     private async Task StartEditing(CellContext<Exercise?> context)
     {
@@ -32,32 +21,13 @@
 
     private async Task CommittedItemChanges(Exercise items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await ExerciseClient.UpdateAsync(items.Id, items);
     }
 
     private async Task DeleteItem(Exercise item)
     {
         Values.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
+        await ExerciseClient.DeleteAsync(item.Id);
         StateHasChanged();
     }
 

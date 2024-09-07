@@ -4,11 +4,13 @@ using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Response;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/users")]
 [ApiController]
 public class UserController(UserService userService) : CrudControllerBase<User>(userService)

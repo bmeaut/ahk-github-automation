@@ -1,264 +1,179 @@
-@inject HttpClient Http
-@inject ISnackbar Snackbar
-
 @page "/"
-@using GradeManagement.Shared.Dtos.Response
+@layout AuthenticatedLayout
+
+@inject SubjectService SubjectService
+@inject SubjectClient SubjectClient
+@inject CourseClient CourseClient
+@inject ExerciseClient ExerciseClient
+@inject AssignmentClient AssignmentClient
+@inject DashboardClient DashboardClient
 <PageTitle>AHK Review UI</PageTitle>
 
 <style>
-	.sort-direction-icon {
-		--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
-	}
+    .sort-direction-icon {
+        --path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+    }
 
-		.sort-direction-icon.mud-direction-asc {
-			--path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
-		}
+    .sort-direction-icon.mud-direction-asc {
+        --path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+    }
 
-		.sort-direction-icon.mud-direction-desc {
-			--path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
-		}
+    .sort-direction-icon.mud-direction-desc {
+        --path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+    }
 
-	.custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
-		d: path(var(--path-svg))
-	}
+    .custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
+        d: path(var(--path-svg))
+    }
 </style>
 
+<LoadingComponent LongTask="@Loading" @ref="loadingRef">
 
-@if (_isLoading)
-{
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Style="position:absolute; left:50vw; top:50vh;" Size="Size.Large"/>
-}
-else
-{
     <MudStack Row="true" Class="mt-6">
-        <MudSelect T="Subject" Label="Subject" @bind-Value="_selectedSubject" @bind-Value:after="SubjectChanged" Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
-            @foreach (var subject in _subjects ?? [])
+        <MudSelect T="string" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged"
+                   Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
+                   TransformOrigin="Origin.TopCenter">
+            @foreach (var course in _courses ?? [])
             {
-                <MudSelectItem Value="@subject">@subject.Name</MudSelectItem>
+                <MudSelectItem Value="@course">@course</MudSelectItem>
             }
         </MudSelect>
-
         <MudSpacer/>
+        <MudSelect T="string" Label="Exercise" @bind-Value="_selectedExercise" @bind-Value:after="ExerciseChanged"
+                   Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
+                   TransformOrigin="Origin.TopCenter">
+            @foreach (var task in _tasks ?? [])
+            {
+                <MudSelectItem Value="@task">@task</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSpacer/>
+
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
     </MudStack>
-    <MudDataGrid Items="@_assignmentsData" T="Assignment" Class="custom-grid">
+    <MudDataGrid Items="@_filteredData" T="Dashboard" Class="custom-grid">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id"/>
-            <PropertyColumn Property="x => x.GithubRepoName" Title="Repository name"/>
-            <PropertyColumn Property="x => x.Student.NeptunCode" Title="Neptun"/>
-            <PropertyColumn Property="x => JoinPullRequests(x)" Title="PRs"/>
-            <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/>
-            <PropertyColumn Property="x => JoinScore(x)" Title="Pontok"/>
+            <PropertyColumn Property="x => x.GithubRepoUrl" Title="Repo URL"/>
+            <PropertyColumn Property="x => x.StudentNeptun" Title="Neptun"/>
+            <TemplateColumn Title="PRs">
+                <CellTemplate>
+                    <MudTooltip Text="@PrTooltip(context.Item)">
+                        @JoinPullRequests(context.Item)
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
+            @* <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/> *@
+            <PropertyColumn Property="x => JoinScore(x)" Title="Score"/>
+            <TemplateColumn Title="" T="Dashboard">
+                <CellTemplate>
+                    @if (MergedEntry(context.Item))
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success"/>
+                    }
+                    else if (CheckedEntry(context.Item))
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success"/>
+                    }
+                    else if (CiRunOnEntry(context.Item))
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning"/>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error"/>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
         </Columns>
         <PagerContent>
             <MudDataGridPager T="Assignment"/>
         </PagerContent>
     </MudDataGrid>
-}
+</LoadingComponent>
 
 @code
 {
 
     #region Data Grid helpers
 
-    private string JoinPullRequests(Assignment data)
+    private string JoinPullRequests(Dashboard data)
     {
         //Kéne menteni a branch nevét is?
-        return string.Join(", ", data.PullRequests.Select(x => x.Url));
+        return data.PullRequests?.FirstOrDefault()?.Url ?? "";
     }
 
-    private string JoinCiWorkflows(Assignment data)
+    private string PrTooltip(Dashboard data)
     {
-        var filtered = data.AssignmentEvents?.Where(IsCicdWorkflow) ?? [];
-        var assignmentEvents = filtered as AssignmentLog[] ?? filtered.ToArray();
-        string run = assignmentEvents.Length == 1 ? "run" : "runs";
-        return $"{assignmentEvents.Length} {run}, last: {assignmentEvents.LastOrDefault()?.Description}";
+        return data.PullRequests?.FirstOrDefault()?.OpeningDate.ToString() ?? "";
     }
 
-    private bool IsCicdWorkflow(AssignmentLog data)
+    private string JoinScore(Dashboard data)
     {
-        return true;
+        return string.Join(", ", data.PullRequests?.FirstOrDefault()?.Scores.Select(x => x.Value) ?? []);
     }
 
-    private string JoinScore(Assignment data)
+    private bool MergedEntry(Dashboard data)
     {
-        return string.Join(".", data.Scores.Select(x => x.Value));
+        return data.PullRequests?.FirstOrDefault()?.Status == PullRequestStatus.Merged;
+    }
+
+    private bool CheckedEntry(Dashboard data)
+    {
+        var scores = data.PullRequests?.FirstOrDefault()?.Scores;
+        return scores?.Count > 0 && scores.All(x => x.IsApproved);
+    }
+
+    private bool CiRunOnEntry(Dashboard data)
+    {
+        return data.PullRequests?.FirstOrDefault()?.Scores.Count > 0;
     }
 
     #endregion
 
-    private const bool IsDemo = true;
+    //Van e assignolt teacher?
+    //Mikor pontoztak? Tooltip
+    //PR status - closed szűrve
+    private LoadingComponent loadingRef;
 
-    private bool _isLoading = true;
     private Subject? _selectedSubject = null;
-    private Course? _selectedCourse = null;
-    private Exercise? _selectedTask = null;
-    private IEnumerable<Subject>? _subjects;
-    private IEnumerable<Assignment> _assignmentsData = new List<Assignment>();
+    private string? _selectedCourse = null;
+    private string? _selectedExercise = null;
+    private IEnumerable<string>? _courses = new List<string>();
+    private IEnumerable<string>? _tasks = new List<string>();
+    private ICollection<Dashboard> _dashboardData = new List<Dashboard>();
+    private ICollection<Dashboard> _filteredData = new List<Dashboard>();
 
-    private void SubjectChanged()
+
+    private async Task Loading()
     {
-        _selectedCourse = null;
-        _selectedTask = null;
+        _selectedSubject = SubjectService.CurrentSubject;
+        _dashboardData = await DashboardClient.GetDashboardAsync(_selectedSubject.Id);
+        _filteredData = _dashboardData.ToList();
+        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
+        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }
 
     private void CourseChanged()
     {
-        _selectedTask = null;
+        _filteredData = _dashboardData.Where(x => (_selectedCourse == null || x.CourseName == _selectedCourse) && (_selectedExercise == null || x.ExerciseName == _selectedExercise)).ToList();
+        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
+        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }
 
-    private void TaskChanged()
+    private void ExerciseChanged()
     {
-        _assignmentsData = _selectedTask?.Assignments ?? [];
+        _filteredData = _dashboardData.Where(x => (_selectedCourse == null || x.CourseName == _selectedCourse) && (_selectedExercise == null || x.ExerciseName == _selectedExercise)).ToList();
+        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
+        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }
 
-    private async Task<IEnumerable<Subject>> GetSubjectsAsync()
+    private void OnSubjectChanged()
     {
-        if (!IsDemo)
-        {
-            return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
-        }
-
-        return new List<Subject>()
-        {
-            new()
-            {
-                Id = 1,
-                Name = "Mobweb",
-                NeptunCode = "Neptun",
-                /*Courses = new List<Course>()
-                {
-                    new()
-                    {
-                        Name = "L01",
-                        Id = 1,
-                        MoodleCourseId = "Moodle",
-                        Tasks = new List<Exercise>()
-                        {
-                            new()
-                            {
-                                Id = 1,
-                                Name = "Android init",
-                                GithubPrefix = "Hello there"
-                            },
-                            new()
-                            {
-                                Id = 2,
-                                Name = "Kotlin",
-                                GithubPrefix = "General Kenobi"
-                            }
-                        }
-                    },
-                    new Course()
-                    {
-                        Name = "LA",
-                        Id = 2,
-                        MoodleCourseId = "MoodleAngol",
-                        Tasks = new List<Exercise>()
-                        {
-                            new()
-                            {
-                                Id = 1,
-                                Name = "Demo angol",
-                                GithubPrefix = "Hello there",
-                                Assignments = new List<Assignment>()
-                                {
-                                    new()
-                                    {
-                                        Id = 1,
-                                        GithubRepoName = "Repo",
-                                        Student = new Student()
-                                        {
-                                            NeptunCode = "Neptun"
-                                        },
-                                        PullRequests = new List<PullRequest>()
-                                        {
-                                            new()
-                                            {
-                                                Url = "PR"
-                                            }
-                                        },
-                                        Scores = new List<Score>()
-                                        {
-                                            new()
-                                            {
-                                                Value = "5"
-                                            }
-                                        },
-                                        AssignmentEvents = new List<AssignmentEvent>()
-                                    }
-                                }
-                            },
-                            new()
-                            {
-                                Id = 2,
-                                Name = "Kotlin angol",
-                                GithubPrefix = "General Kenobi"
-                            }
-                        }
-                    }
-                }*/
-            }
-        };
+        loadingRef.StartLoading();
     }
 
-    private async Task<IEnumerable<Subject>> GetAssignmentsAsync()
+    protected override void OnInitialized()
     {
-        if (!IsDemo)
-        {
-            return await Http.GetFromJsonAsync<IEnumerable<Subject>>("api/subjects");
-        }
-
-        return new List<Subject>();
+        SubjectService.OnChange += OnSubjectChanged;
     }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _subjects = await GetSubjectsAsync();
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine(e.StackTrace);
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Add("Database error", Severity.Error);
-        }
-
-        _isLoading = false;
-    }
-
-    /*private IEnumerable<CourseDTO> courses = new List<CourseDTO>
-        {
-        new CourseDTO(){
-            Id=13,
-            Name="Hello there",
-            TaskDtos = new List<TaskDTO>()
-                {
-                new TaskDTO()
-                    {
-                    Id=1L,
-                    Name="General Kenobi"
-            }
-        },
-        },
-        new CourseDTO(){
-            Id=15L,
-            Name="Mobweb",
-            TaskDtos = new List<TaskDTO>()
-                {
-                new TaskDTO()
-                    {
-                    Id=1L,
-                    Name="Task 1"
-                },
-                new TaskDTO()
-                    {
-                    Id=2L,
-                    Name="Task 4"
-            }
-        }
-    },
-        };*/
-
 }

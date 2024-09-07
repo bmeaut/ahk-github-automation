@@ -1,13 +1,14 @@
 ﻿@page "/semesters"
+@using GradeManagement.Client.Components.NewDialogs
+@layout AuthenticatedLayout
 
-@inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
-@inject SubjectService SubjectService
+@inject SemesterClient SemesterClient
 
 <PageTitle>Semesters</PageTitle>
 
-<LoadingComponent IsLoading="@_isLoading">
+<LoadingComponent LongTask="@Loading" @ref="loadingRef">
     <MudDataGrid T="Semester" Items="_semesters" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
@@ -19,10 +20,8 @@
 </LoadingComponent>
 
 @code {
-    private List<Semester> _semesters = new();
-    private bool _isLoading = true;
-
-    readonly string BaseUrl = Endpoints.SEMESTERS;
+    private ICollection<Semester> _semesters = new List<Semester>();
+    private LoadingComponent loadingRef;
 
     private async Task OpenDialog()
     {
@@ -30,22 +29,9 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _semesters.Add(result.Data as Semester);
-            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
-            if (response.IsSuccessStatusCode)
-            {
-                Semester newObject = await response.Content.ReadFromJsonAsync<Semester>();
-                //Right now it needs Semester list to be filled
-                _semesters.Remove(result.Data as Semester);
-                _semesters.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                _semesters.Remove(result.Data as Semester);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            await SemesterClient.CreateAsync(result.Data as Semester);
+            SnackbarService.ShowAddSuccess();
+            await loadingRef.StartLoading();
         }
     }
 
@@ -55,39 +41,22 @@
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    private async Task Loading()
     {
-        _semesters = await SubjectService.LoadSemesters();
-        _isLoading = false;
+        _semesters = await SemesterClient.GetAllAsync();
     }
 
     private async Task CommittedItemChanges(Semester items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        //await SemesterClient.UpdateAsync(items);
+        SnackbarService.ShowError("Update not implemented.");
     }
 
     private async Task DeleteItem(Semester item)
     {
-        _semesters.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
+        await SemesterClient.DeleteAsync(item.Id);
+        SnackbarService.ShowDeleteSuccess();
+        await loadingRef.StartLoading();
         StateHasChanged();
     }
 

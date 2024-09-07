@@ -1,0 +1,30 @@
+﻿@if (Exception is not null)
+{
+    <MudContainer>
+        @if (Exception is ApiException)
+        {
+            <p>Custom message for ApiException.</p>
+        }
+        else
+        {
+            <p>An unexpected error has occurred. @Exception.GetType()</p>
+        }
+        <details>
+            <summary>Details</summary>
+            @Exception.Message
+            @Exception.StackTrace
+        </details>
+        <MudButton OnClick="onClick">Close</MudButton>
+    </MudContainer>
+}
+
+@code {
+    [Parameter] public Exception? Exception { get; set; }
+    [Parameter] public ErrorBoundary? ErrorBoundary { get; set; }
+
+    private void onClick()
+    {
+        ErrorBoundary?.Recover();
+    }
+
+}

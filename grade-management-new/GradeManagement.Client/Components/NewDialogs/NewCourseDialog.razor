@@ -1,7 +1,4 @@
-﻿@using GradeManagement.Client.Pages
-@inject HttpClient Http
-
-<MudDialog>
+﻿<MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h4">New Course</MudText>
     </TitleContent>
@@ -26,7 +23,7 @@
     private bool success;
     private string[] errors;
 
-    Course value = new Course();
+    private Course value = new Course();
 
     void Submit() => MudDialog.Close(DialogResult.Ok(value));
     void Cancel() => MudDialog.Cancel();

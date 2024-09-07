@@ -1,5 +1,4 @@
-﻿@using GradeManagement.Shared.Dtos.Request
-@inject SubjectService SubjectService
+﻿@inject UserClient UserClient
 
 <MudDialog>
     <TitleContent>
@@ -24,15 +23,15 @@
     private bool success;
     private string[] errors;
 
-    void Submit()
+    private void Submit()
     {
         value.Teachers = _selectedUsers.ToList();
         MudDialog.Close(DialogResult.Ok(value));
     }
 
-    void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog.Cancel();
 
-    async void OnSubmitClicked()
+    private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)
@@ -44,11 +43,11 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _availableUsers = await SubjectService.LoadTeachers();
+        _availableUsers = await UserClient.GetAllAsync();
     }
 
-    public Group value = new();
-    private List<User> _availableUsers = new();
+    public Group2 value = new();
+    private ICollection<User> _availableUsers = new List<User>();
     private IEnumerable<User> _selectedUsers = new List<User>();
 
     public async Task<IEnumerable<User>> SearchFunc(string search)

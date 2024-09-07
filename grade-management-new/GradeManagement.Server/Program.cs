@@ -1,11 +1,12 @@
-using AutSoft.Common.Exceptions;
-
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;
 using GradeManagement.Server.ExceptionHandlers;
-
+using GradeManagement.Shared.Authorization.Handlers;
+using GradeManagement.Shared.Authorization.Policies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Identity.Web;
 
 namespace GradeManagement.Server
 {
@@ -14,6 +15,13 @@ namespace GradeManagement.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+
+            builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+            builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
+
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
@@ -61,8 +69,6 @@ namespace GradeManagement.Server
 
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();
-
-            app.UseAuthorization();
 
             app.MapRazorPages();
             app.MapControllers();

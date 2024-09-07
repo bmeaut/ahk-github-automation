@@ -1,5 +1,4 @@
-﻿@using GradeManagement.Shared.Dtos.Request
-<MudDialog>
+﻿<MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h4">New Subject</MudText>
     </TitleContent>
@@ -7,6 +6,7 @@
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
             <MudTextField T="string" Label="Neptun Code" @bind-Value="value.NeptunCode" Required="true" Validation="@(new Func<string, IEnumerable<string>>(NeptunCodeValidator))"></MudTextField>
+            <MudTextField T="string" Label="Github Org" For="@(() => value.GitHubOrgName)" @bind-Value="value.GitHubOrgName" Required="true"></MudTextField>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -22,10 +22,10 @@
     private bool success;
     private string[] errors;
 
-    void Submit() => MudDialog.Close(DialogResult.Ok(value));
-    void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    private void Cancel() => MudDialog.Cancel();
 
-    async void OnSubmitClicked()
+    private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)
@@ -34,9 +34,9 @@
         }
     }
 
-    public Subject value = new()
+    public Subject2 value = new()
     {
-        Teachers = new List<User>()
+        Teachers = new List<User>() //TODO: add current user
     };
 
     private IEnumerable<string> NeptunCodeValidator(string pw)

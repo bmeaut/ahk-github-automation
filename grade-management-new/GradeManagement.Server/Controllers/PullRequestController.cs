@@ -2,10 +2,12 @@
 using GradeManagement.Bll.Services;
 using GradeManagement.Shared.Dtos;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
+[Authorize]
 [Route("api/pullrequests")]
 [ApiController]
 public class PullRequestController(PullRequestService pullRequestService) : ControllerBase

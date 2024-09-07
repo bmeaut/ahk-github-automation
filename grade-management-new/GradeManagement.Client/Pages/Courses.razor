@@ -1,17 +1,20 @@
 ﻿@page "/courses"
+@layout AuthenticatedLayout
 
+@using GradeManagement.Client.Components.NewDialogs
 @implements IDisposable
-@inject HttpClient Http
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject CourseClient CourseClient
+@inject SubjectClient SubjectClient
 @inject NavigationManager NavigationManager
 
 
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
     <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false" />
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.MoodleCourseId" Title="Moodle Course Id"/>
             <TemplateColumn Title="Semester">
@@ -37,11 +40,8 @@
 </LoadingComponent>
 
 @code {
-    private List<Course> _courses = new();
-    private LoadingComponent? loadingComponentRef;
-    private bool _isLoading = true;
-
-    readonly string BaseUrl = Endpoints.COURSES;
+    private ICollection<Course> _courses = new List<Course>();
+    private LoadingComponent loadingComponentRef;
 
     private void RowClickEvent(DataGridRowClickEventArgs<Course> args)
     {
@@ -51,7 +51,8 @@
 
     private async Task _loading()
     {
-        _courses = await SubjectService.LoadCourses();
+        _courses = await SubjectClient.GetAllCoursesByIdAsync(SubjectService.CurrentSubject.Id);
+        StateHasChanged();
     }
 
 
@@ -63,22 +64,8 @@
         {
             var newCourse = result.Data as Course;
             newCourse.SubjectId = SubjectService.CurrentSubject.Id;
-            _courses.Add(newCourse);
-            var response = await Http.PostAsJsonAsync(BaseUrl, newCourse);
-            if (response.IsSuccessStatusCode)
-            {
-                Course newObject = await response.Content.ReadFromJsonAsync<Course>();
-                //Right now it needs Course list to be filled
-                _courses.Remove(newCourse);
-                _courses.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                _courses.Remove(newCourse);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            await CourseClient.CreateAsync(newCourse);
+            await _loading();
         }
     }
 
@@ -90,38 +77,24 @@
 
     private async Task CommittedItemChanges(Course items)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await CourseClient.UpdateAsync(items.Id, items);
+        //StateHasChanged();
+        SnackbarService.ShowEditSuccess();
+        //await loadingComponentRef.StartLoading();
+        _courses = await SubjectClient.GetAllCoursesByIdAsync(SubjectService.CurrentSubject.Id);
     }
 
     private async Task DeleteItem(Course item)
     {
-        _courses.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-
+        await CourseClient.DeleteAsync(item.Id);
+        SnackbarService.ShowDeleteSuccess();
+        await loadingComponentRef.StartLoading();
         StateHasChanged();
     }
 
     private void OnSubjectChanged()
     {
-        loadingComponentRef?.StartLoading();
+        loadingComponentRef.StartLoading();
     }
 
     protected override void OnInitialized()

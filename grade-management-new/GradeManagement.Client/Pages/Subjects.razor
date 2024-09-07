@@ -1,34 +1,36 @@
 ﻿@page "/subjects"
-@using GradeManagement.Shared.Dtos.Response
-@inject HttpClient Http
+@using GradeManagement.Client.Components.NewDialogs
+@using GradeManagement.Shared.Authorization.Policies
+@layout AuthenticatedLayout
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
+@inject SubjectClient SubjectClient
 
 <PageTitle>Subjects</PageTitle>
 
-<LoadingComponent IsLoading="@_isLoading">
-    <MudDataGrid Items="_subjects" T="Subject" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
-        <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
-            <PropertyColumn Property="x => x.Name" Title="Name"/>
-            <PropertyColumn Property="x => x.NeptunCode" Title="Description"/>
-            <DataGridActions TItem="Subject" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
-        </Columns>
-    </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
-</LoadingComponent>
+<AuthorizeView Policy="@TeacherRequirement.PolicyName">
+    <Authorized>
+        <LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">
+            <MudDataGrid Items="_subjects" T="Subject2" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+                <Columns>
+                    <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+                    <PropertyColumn Property="x => x.Name" Title="Name"/>
+                    <PropertyColumn Property="x => x.NeptunCode" Title="Description"/>
+                    <DataGridActions TItem="Subject2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+                </Columns>
+            </MudDataGrid>
+            <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+        </LoadingComponent>
+    </Authorized>
+    <NotAuthorized>
+        <h1>Not authorized</h1>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
-    private List<Subject> _subjects = new();
-    private bool _isLoading = true;
-
-    readonly string BaseUrl = Endpoints.SUBJECTS;
-
-    /*private string[] EditableProperties =
-    [
-        "Name", "NeptunCode"
-    ];*/
+    private List<Subject2> _subjects = new();
+    private LoadingComponent loadingComponentRef;
 
     private async Task OpenDialog()
     {
@@ -36,65 +38,35 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            _subjects.Add(result.Data as Subject);
-            var response = await Http.PostAsJsonAsync(BaseUrl, result.Data);
-            if (response.IsSuccessStatusCode)
-            {
-                Subject newObject = await response.Content.ReadFromJsonAsync<Subject>();
-                //Right now it needs Course list to be filled
-                _subjects.Remove(result.Data as Subject);
-                _subjects.Add(newObject);
-                SnackbarService.ShowAddSuccess();
-            }
-            else
-            {
-                _subjects.Remove(result.Data as Subject);
-                await Console.Error.WriteLineAsync("Error");
-                SnackbarService.ShowAddError();
-            }
+            await SubjectClient.CreateAsync(result.Data as Subject2);
+            SnackbarService.ShowAddSuccess();
+            await loadingComponentRef.StartLoading();
+            SubjectService.CurrentSubject = _subjects.LastOrDefault(s => s.Name == (result.Data as Subject2).Name).ToSubject();
         }
     }
 
-    private async Task StartEditing(CellContext<Subject?> context)
+    private async Task StartEditing(CellContext<Subject2?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    private async Task LoadingAction()
     {
-        _subjects = await SubjectService.LoadSubjects();
-        _isLoading = false;
+        _subjects = (await SubjectService.LoadSubjects()).Select(subject => subject.ToSubject2()).ToList();
     }
 
-    private async Task CommittedItemChanges(Subject items)
+    private async Task CommittedItemChanges(Subject2 item)
     {
-        var response = await Http.PutAsJsonAsync($"{BaseUrl}/{items.Id}", items);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowEditError();
-        }
-        else
-        {
-            SnackbarService.ShowEditSuccess();
-        }
+        await SubjectClient.UpdateAsync(item.Id, item);
+        SnackbarService.ShowEditSuccess();
     }
 
-    private async Task DeleteItem(Subject item)
+    private async Task DeleteItem(Subject2 item)
     {
-        _subjects.Remove(item);
-        var response = await Http.DeleteAsync($"{BaseUrl}/{item.Id}");
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync("Error");
-            SnackbarService.ShowDeleteError();
-        }
-        else
-        {
-            SnackbarService.ShowDeleteSuccess();
-        }
-        StateHasChanged();
+        await SubjectClient.DeleteAsync(item.Id);
+        SnackbarService.ShowDeleteSuccess();
+        loadingComponentRef?.StartLoading();
     }
 
 }

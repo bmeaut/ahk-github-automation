@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "identityapp1": {
+      "connectionInfo": "App registration: AhkFrontend, Tenant: Budapesti Műszaki és Gazdaságtudományi Egyetem (m365.bme.hu - Microsoft Entra ID)",
+      "type": "identityapp.default"
+    }
+  }
+}
