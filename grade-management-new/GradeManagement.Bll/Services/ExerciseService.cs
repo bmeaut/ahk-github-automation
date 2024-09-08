@@ -15,7 +15,6 @@ using System.Globalization;
 
 using Assignment = GradeManagement.Shared.Dtos.Assignment;
 using Exercise = GradeManagement.Shared.Dtos.Request.Exercise;
-using ScoreType = GradeManagement.Shared.Dtos.ScoreType;
 using ValidationException = AutSoft.Common.Exceptions.ValidationException;
 
 namespace GradeManagement.Bll.Services;
@@ -56,21 +55,31 @@ public class ExerciseService : ICrudServiceBase<Exercise, Shared.Dtos.Response.E
 
     public async Task<Shared.Dtos.Response.Exercise> CreateAsync(Exercise requestDto)
     {
-        var exerciseEntity = new Data.Models.Exercise()
+        await using var transaction = await _gradeManagementDbContext.Database.BeginTransactionAsync();
+        try
         {
-            Name = requestDto.Name,
-            GithubPrefix = requestDto.GithubPrefix,
-            dueDate = requestDto.dueDate,
-            CourseId = requestDto.CourseId
-        };
-        _gradeManagementDbContext.Exercise.Add(exerciseEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
-        exerciseEntity = await _gradeManagementDbContext.Exercise
-            .SingleEntityAsync(e => e.Id == exerciseEntity.Id, exerciseEntity.Id);
-        exerciseEntity.ScoreTypeExercises =
-            await GetScoreTypeExercisesByTypeAndOrderAsync(requestDto.ScoreTypes, exerciseEntity.Id);
-        await _gradeManagementDbContext.SaveChangesAsync();
-        return await GetByIdAsync(exerciseEntity.Id);
+            var exerciseEntity = new Data.Models.Exercise()
+            {
+                Name = requestDto.Name,
+                GithubPrefix = requestDto.GithubPrefix,
+                dueDate = requestDto.dueDate,
+                CourseId = requestDto.CourseId
+            };
+            _gradeManagementDbContext.Exercise.Add(exerciseEntity);
+            await _gradeManagementDbContext.SaveChangesAsync();
+            exerciseEntity = await _gradeManagementDbContext.Exercise
+                .SingleEntityAsync(e => e.Id == exerciseEntity.Id, exerciseEntity.Id);
+            exerciseEntity.ScoreTypeExercises =
+                await GetScoreTypeExercisesByTypeAndOrderAsync(requestDto.ScoreTypes, exerciseEntity.Id);
+            await _gradeManagementDbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return await GetByIdAsync(exerciseEntity.Id);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<Shared.Dtos.Response.Exercise> UpdateAsync(long id, Exercise requestDto)
@@ -121,16 +130,27 @@ public class ExerciseService : ICrudServiceBase<Exercise, Shared.Dtos.Response.E
     public async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderAsync(
         Dictionary<int, string> scoreTypes, long _ExerciseId)
     {
-        foreach (var (order, type) in scoreTypes)
+        await using var transaction = await _gradeManagementDbContext.Database.BeginTransactionAsync();
+        try
         {
-            var scoreType = await _scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(type);
-            _gradeManagementDbContext.ScoreTypeExercise.Add(new ScoreTypeExercise
+            foreach (var (order, type) in scoreTypes)
             {
-                ScoreTypeId = scoreType.Id, ExerciseId = _ExerciseId, Order = order
-            });
-        }
+                var scoreType = await _scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(type);
+                _gradeManagementDbContext.ScoreTypeExercise.Add(new ScoreTypeExercise
+                {
+                    ScoreTypeId = scoreType.Id, ExerciseId = _ExerciseId, Order = order
+                });
+            }
 
-        await _gradeManagementDbContext.SaveChangesAsync();
+            await _gradeManagementDbContext.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return _gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == _ExerciseId).ToList();
     }
@@ -199,7 +219,7 @@ public class ExerciseService : ICrudServiceBase<Exercise, Shared.Dtos.Response.E
         return await _gradeManagementDbContext.ScoreTypeExercise
             .Where(ste => ste.ExerciseId == id)
             .OrderBy(ste => ste.Order)
-            .Include(ste=>ste.ScoreType)
+            .Include(ste => ste.ScoreType)
             .ProjectTo<Shared.Dtos.ScoreTypeExercise>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
