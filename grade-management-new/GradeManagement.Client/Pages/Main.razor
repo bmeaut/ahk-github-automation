@@ -7,6 +7,7 @@
 @inject ExerciseClient ExerciseClient
 @inject AssignmentClient AssignmentClient
 @inject DashboardClient DashboardClient
+@inject CrudSnackbarService SnackbarService
 
 <style>
     .sort-direction-icon {
@@ -148,6 +149,12 @@
     private async Task Loading()
     {
         _selectedSubject = SubjectService.CurrentSubject;
+        if (_selectedSubject == null)
+        {
+            SnackbarService.ShowMessage("New subject wizard is not implemented yet!");
+            return;
+        }
+
         _dashboardData = await DashboardClient.GetDashboardAsync(_selectedSubject.Id);
         _filteredData = _dashboardData.ToList();
         _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
