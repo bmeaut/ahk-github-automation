@@ -18,7 +18,14 @@
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
             <PropertyColumn Property="x => x.GithubId" Title="Github Id"/>
             <PropertyColumn Property="x => x.BmeEmail" Title="Bme Email"/>
-            <PropertyColumn Property="x => x.Type" Title="Type"/>
+            <TemplateColumn Title="Type">
+                <CellTemplate>
+                    @context.Item.Type
+                </CellTemplate>
+                <EditTemplate>
+                    <SelectUserType @bind-Value="@context.Item.Type"/>
+                </EditTemplate>
+            </TemplateColumn>
             <DataGridActions TItem="User" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
@@ -38,7 +45,7 @@
         {
             var user = result.Data as User;
             user = await UserClient.CreateAsync(user);
-            SnackbarService.ShowMessage("user id:" + user.Id);
+            //SnackbarService.ShowMessage("user id:" + user.Id);
             var subject = SubjectService.CurrentSubject;
             //await SubjectClient.AddTeacherToSubjectAsync(subject.Id, user.Id);
             _teachers.Add(user);
@@ -71,7 +78,12 @@
     {
         await UserClient.UpdateAsync(items.Id, items);
         SnackbarService.ShowEditSuccess();
-        await loadingComponentRef.StartLoading();
+        // Run the StartLoading method asynchronously after a short delay
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(1); // Delay for 100 milliseconds
+            await loadingComponentRef.StartLoading();
+        });
     }
 
     private async Task DeleteItem(User item)
