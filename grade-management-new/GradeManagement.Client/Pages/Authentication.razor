@@ -1,7 +1,19 @@
 @page "/authentication/{action}"
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject NavigationManager Navigation
+
 <RemoteAuthenticatorView Action="@Action"/>
 
 @code{
     [Parameter] public string? Action { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Action == "login-callback")
+        {
+            // Call backend for user data
+            Navigation.NavigateTo("/");
+        }
+    }
+
 }
