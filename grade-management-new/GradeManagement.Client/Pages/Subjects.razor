@@ -9,6 +9,8 @@
 
 <PageTitle>Subjects</PageTitle>
 
+<MudText Typo="Typo.h4" Class="mt-4">Subjects</MudText>
+<MudDivider Class="mb-4"/>
 <AuthorizeView Policy="@TeacherRequirement.PolicyName">
     <Authorized>
         <LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">

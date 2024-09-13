@@ -9,8 +9,11 @@
 @inject SubjectClient SubjectClient
 @inject UserClient UserClient
 
+<PageTitle>Teachers</PageTitle>
+
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
-    <MudText>Teachers</MudText>
+    <MudText Typo="Typo.h4" Class="mt-4">Teachers</MudText>
+    <MudDivider Class="mb-4"/>
     <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>

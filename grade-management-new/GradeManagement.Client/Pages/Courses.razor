@@ -23,7 +23,11 @@
     }
 </style>
 
+<PageTitle>Courses</PageTitle>
+
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
+    <MudText Typo="Typo.h4" Class="mt-4">Courses</MudText>
+    <MudDivider Class="mb-4"/>
     <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent" Class="clickable-rows">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false" />

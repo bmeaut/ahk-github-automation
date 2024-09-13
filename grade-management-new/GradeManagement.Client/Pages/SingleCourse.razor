@@ -10,6 +10,7 @@
 @inject GroupClient GroupClient
 
 <LoadingComponent LongTask="@_loading" @ref="loadingRef">
+    <PageTitle>Course @_course.Name</PageTitle>
     <MudText Typo="Typo.h4" Class="mt-4">@_course.Name</MudText>
     <MudDivider Class="mb-4"/>
     <MudGrid>
