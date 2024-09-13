@@ -78,12 +78,7 @@
     {
         await UserClient.UpdateAsync(items.Id, items);
         SnackbarService.ShowEditSuccess();
-        // Run the StartLoading method asynchronously after a short delay
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(1); // Delay for 100 milliseconds
-            await loadingComponentRef.StartLoading();
-        });
+        await loadingComponentRef.StartLoading();
     }
 
     private async Task DeleteItem(User item)

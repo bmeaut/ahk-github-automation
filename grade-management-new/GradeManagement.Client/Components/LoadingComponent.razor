@@ -24,14 +24,18 @@ else
 
     public async Task StartLoading()
     {
-        if (LongTask != null)
+        _ = Task.Run(async () =>
         {
-            IsLoading = true;
-            StateHasChanged();
-            await LongTask();
-            IsLoading = false;
-            StateHasChanged();
-        }
+            await Task.Delay(1); // Delay for 100 milliseconds
+            if (LongTask != null)
+            {
+                IsLoading = true;
+                StateHasChanged();
+                await LongTask();
+                IsLoading = false;
+                StateHasChanged();
+            }
+        });
     }
 
 }
