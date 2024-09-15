@@ -1,7 +1,6 @@
-using GradeManagement.Bll;
 using GradeManagement.Bll.Services;
+using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.Controllers.BaseControllers;
-using GradeManagement.Shared.Authorization.Policies;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Request;
 
@@ -45,7 +44,8 @@ public class SubjectController(SubjectService subjectService)
 
     [HttpDelete("{subjectId:long}/teachers/{teacherId:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId, [FromRoute] long teacherId)
+    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId,
+        [FromRoute] long teacherId)
     {
         await subjectService.DeleteTeacherFromSubjectByIdAsync(subjectId, teacherId);
         return NoContent();

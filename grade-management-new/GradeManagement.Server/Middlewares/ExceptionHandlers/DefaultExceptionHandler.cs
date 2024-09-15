@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.ExceptionHandlers;
+namespace GradeManagement.Server.Middlewares.ExceptionHandlers;
 
 public class DefaultExceptionHandler : IExceptionHandler
 {

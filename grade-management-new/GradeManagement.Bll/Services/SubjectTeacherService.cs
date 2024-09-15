@@ -1,5 +1,8 @@
-﻿using GradeManagement.Data;
+﻿using AutSoft.Linq.Queryable;
+
+using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +17,13 @@ public class SubjectTeacherService
         _gradeManagementDbContext = gradeManagementDbContext;
     }
 
+    public async Task<UserRoleOnSubject?> GetRoleIfConnectionExistsAsync(long teacherId, long subjectId)
+    {
+        return await _gradeManagementDbContext.SubjectTeacher
+            .Where(st => st.SubjectId == subjectId && st.UserId == teacherId)
+            .Select(st => st.Role)
+            .FirstOrDefaultAsync();
+    }
 
     public async Task<List<SubjectTeacher>> UpdateForSingleSubjectAsync(long subjectId, List<User> teachers)
     {

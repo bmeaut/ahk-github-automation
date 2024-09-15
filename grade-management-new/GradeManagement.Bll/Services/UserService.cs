@@ -8,6 +8,7 @@ using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Response;
+using GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -138,5 +139,22 @@ public class UserService : ICrudServiceBase<User>
     {
         return await _gradeManagementDbContext.User
             .SingleEntityAsync(u => u.GithubId == githubId, 0);
+    }
+
+    public async Task<Data.Models.User> GetOrCreateUserByEmailAsync(string email)
+    {
+        var user = await _gradeManagementDbContext.User.Where(u => u.BmeEmail == email).FirstOrDefaultAsync();
+        if (user != null) return user;
+        user = new Data.Models.User
+        {
+            Name = "Auto Generated from email: " + email,
+            NeptunCode = "",
+            GithubId = "",
+            BmeEmail = email,
+            Type = UserType.User
+        };
+        _gradeManagementDbContext.User.Add(user);
+        await _gradeManagementDbContext.SaveChangesAsync();
+        return user;
     }
 }

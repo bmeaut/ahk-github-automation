@@ -1,5 +1,6 @@
 using GradeManagement.Data.Interceptors;
 using GradeManagement.Data.Models;
+using GradeManagement.Data.Models.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -7,8 +8,11 @@ using System.Linq.Expressions;
 
 namespace GradeManagement.Data;
 
-public class GradeManagementDbContext : DbContext
+public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext> options)
+    : DbContext(options)
 {
+    //Add Migration: dotnet ef migrations add <MigrationName> --project GradeManagement.Data --startup-project GradeManagement.Server
+
     public DbSet<Assignment> Assignment { get; set; }
     public DbSet<AssignmentLog> AssignmentLog { get; set; }
     public DbSet<Course> Course { get; set; }
@@ -27,10 +31,7 @@ public class GradeManagementDbContext : DbContext
     public DbSet<SubjectTeacher> SubjectTeacher { get; set; }
     public DbSet<User> User { get; set; }
 
-    //Add Migration: dotnet ef migrations add <MigrationName> --project GradeManagement.Data --startup-project GradeManagement.Server
-    public GradeManagementDbContext(DbContextOptions<GradeManagementDbContext> options) : base(options)
-    {
-    }
+    public long SubjectIdValue { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.AddInterceptors(new SoftDeleteInterceptor());
@@ -63,6 +64,20 @@ public class GradeManagementDbContext : DbContext
             var lambda = Expression.Lambda(compareExpression, parameter);
 
             modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+        }
+    }
+
+    private void RegisterTenantQueryFilters(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (!typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
+
+            var param = Expression.Parameter(entityType.ClrType, "e");
+            var property = Expression.Property(param, nameof(ITenant.SubjectId));
+            var filter = Expression.Lambda(Expression.Equal(property, Expression.Constant(SubjectIdValue)), param);
+
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
         }
     }
 }
