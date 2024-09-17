@@ -1,15 +1,37 @@
-﻿<MudSelect T="Subject" Value="@Value" ValueChanged="@((Subject value) => { Value = value; ValueChanged.InvokeAsync(value); })" ToStringFunc="@subjectToString" Label="Subject" Style="background-color: white;" Dense="true" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+﻿<style>
+    .white-select .mud-input-label.mud-input-label-inputcontrol {
+        color: white !important;
+        background: var(--mud-palette-appbar-background);
+    }
+
+    .white-select .mud-input-outlined-border {
+        border-color: white !important;
+    }
+
+    .white-select .mud-input-slot {
+        color: white !important;
+    }
+    .white-select .mud-input-adornment .mud-icon-root {
+        color: white !important;
+    }
+
+</style>
+
+<MudSelect T="Subject" Value="@Value"
+           ValueChanged="@((Subject value) => { Value = value; ValueChanged.InvokeAsync(value); })"
+           ToStringFunc="@subjectToString" Label="Subject" Class="white-select" Dense="true" Variant="Variant.Outlined"
+           AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
     @foreach (var semester in PossibleValues)
     {
-        <MudSelectItem Value="@semester"/>
+    <MudSelectItem Value="@semester"/>
     }
 </MudSelect>
 
 @code {
-    [Parameter] public Subject Value { get; set; }
-    [Parameter] public List<Subject> PossibleValues { get; set; }
-    [Parameter] public EventCallback<Subject> ValueChanged { get; set; }
+[Parameter] public Subject Value { get; set; }
+[Parameter] public List<Subject> PossibleValues { get; set; }
+[Parameter] public EventCallback<Subject> ValueChanged { get; set; }
 
-    private Func<Subject, string> subjectToString = p => p.Name;
+private Func<Subject, string> subjectToString = p => p.Name;
 
 }

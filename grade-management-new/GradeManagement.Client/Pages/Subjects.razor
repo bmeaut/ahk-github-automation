@@ -9,6 +9,8 @@
 
 <PageTitle>Subjects</PageTitle>
 
+<MudText Typo="Typo.h4" Class="mt-4">Subjects</MudText>
+<MudDivider Class="mb-4"/>
 <AuthorizeView Policy="@TeacherRequirement.PolicyName">
     <Authorized>
         <LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">
@@ -16,7 +18,8 @@
                 <Columns>
                     <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
                     <PropertyColumn Property="x => x.Name" Title="Name"/>
-                    <PropertyColumn Property="x => x.NeptunCode" Title="Description"/>
+                    <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
+                    <PropertyColumn Property="x => x.GitHubOrgName" Title="Github Org Name"/>
                     <DataGridActions TItem="Subject2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
                 </Columns>
             </MudDataGrid>
