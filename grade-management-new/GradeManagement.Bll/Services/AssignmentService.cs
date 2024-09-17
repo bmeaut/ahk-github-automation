@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class AssignmentService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, ExerciseService exerciseService)
+public class AssignmentService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper/*, ExerciseService exerciseService*/)
     : IQueryServiceBase<Assignment>
 {
     public async Task<IEnumerable<Assignment>> GetAllAsync()
@@ -32,7 +32,7 @@ public class AssignmentService(GradeManagementDbContext gradeManagementDbContext
 
     public async Task<Assignment> CreateAsync(Assignment requestDto)
     {
-        await exerciseService.GetByIdAsync(requestDto.ExerciseId); // Check if the exercise exists and user has access to it
+        //await exerciseService.GetByIdAsync(requestDto.ExerciseId); // Check if the exercise exists and user has access to it
         var assignmentEntity = new Data.Models.Assignment()
         {
             Id = requestDto.Id,

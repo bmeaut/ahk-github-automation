@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class PullRequestService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, AssignmentService assignmentService)
+public class PullRequestService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
 {
     public async Task<PullRequest> GetByIdAsync(long id)
     {
@@ -28,7 +28,7 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
 
     public async Task<PullRequest> CreateAsync(PullRequest pullRequest)
     {
-        await assignmentService.GetByIdAsync(pullRequest.AssignmentId);
+        //await assignmentService.GetByIdAsync(pullRequest.AssignmentId);
         var pullRequestEntity = new Data.Models.PullRequest()
         {
             Url = pullRequest.Url,

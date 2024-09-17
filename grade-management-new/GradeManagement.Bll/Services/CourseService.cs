@@ -17,7 +17,7 @@ using System.Security.Claims;
 
 namespace GradeManagement.Bll.Services;
 
-public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, AuthorizationService authorizationService)
+public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     : ICrudServiceBase<Course>
 {
     public async Task<IEnumerable<Course>> GetAllAsync()

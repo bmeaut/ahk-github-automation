@@ -28,7 +28,7 @@ public class SubjectController(SubjectService subjectService)
         return await subjectService.GetAllTeachersByIdAsync(id);
     }
 
-    [Authorize(Policy = TeacherRequirement.PolicyName)]
+    //TODO[Authorize(Policy = TeacherRequirement.PolicyName)]
     [HttpPost]
     public override async Task<Shared.Dtos.Response.Subject> CreateAsync([FromBody] Subject requestDto)
     {
