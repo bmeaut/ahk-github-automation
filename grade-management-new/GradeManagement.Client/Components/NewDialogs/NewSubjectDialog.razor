@@ -41,8 +41,8 @@
 
     private IEnumerable<string> NeptunCodeValidator(string pw)
     {
-        if (pw.Length != 11)
-            yield return "Neptun code should be exactly 11 characters long.";
+        if (pw.Length < 20)
+            yield return "Neptun code should be less than 20 characters long.";
     }
 
 }
