@@ -27,6 +27,7 @@ public class SubjectService(SubjectClient client)
     public async Task<List<Subject>> LoadSubjects()
     {
         Subjects = (await client.GetAllAsync()).ToList();
+        //Subjects = [];
         if (_currentSubject is null && Subjects.Count > 0)
         {
             _currentSubject = Subjects[0];

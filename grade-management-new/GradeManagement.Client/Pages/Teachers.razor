@@ -9,8 +9,11 @@
 @inject SubjectClient SubjectClient
 @inject UserClient UserClient
 
+<PageTitle>Teachers</PageTitle>
+
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
-    <MudText>Teachers</MudText>
+    <MudText Typo="Typo.h4" Class="mt-4">Teachers</MudText>
+    <MudDivider Class="mb-4"/>
     <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
@@ -18,7 +21,14 @@
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
             <PropertyColumn Property="x => x.GithubId" Title="Github Id"/>
             <PropertyColumn Property="x => x.BmeEmail" Title="Bme Email"/>
-            <PropertyColumn Property="x => x.Type" Title="Type"/>
+            <TemplateColumn Title="Type">
+                <CellTemplate>
+                    @context.Item.Type
+                </CellTemplate>
+                <EditTemplate>
+                    <SelectUserType @bind-Value="@context.Item.Type"/>
+                </EditTemplate>
+            </TemplateColumn>
             <DataGridActions TItem="User" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
@@ -38,7 +48,7 @@
         {
             var user = result.Data as User;
             user = await UserClient.CreateAsync(user);
-            SnackbarService.ShowMessage("user id:" + user.Id);
+            //SnackbarService.ShowMessage("user id:" + user.Id);
             var subject = SubjectService.CurrentSubject;
             //await SubjectClient.AddTeacherToSubjectAsync(subject.Id, user.Id);
             _teachers.Add(user);

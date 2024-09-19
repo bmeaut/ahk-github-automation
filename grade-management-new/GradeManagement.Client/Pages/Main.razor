@@ -7,7 +7,7 @@
 @inject ExerciseClient ExerciseClient
 @inject AssignmentClient AssignmentClient
 @inject DashboardClient DashboardClient
-<PageTitle>AHK Review UI</PageTitle>
+@inject CrudSnackbarService SnackbarService
 
 <style>
     .sort-direction-icon {
@@ -28,6 +28,8 @@
 </style>
 
 <LoadingComponent LongTask="@Loading" @ref="loadingRef">
+    <MudText Typo="Typo.h4" Class="mt-4">Dashboard</MudText>
+    <MudDivider Class="mb-4"/>
 
     <MudStack Row="true" Class="mt-6">
         <MudSelect T="string" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged"
@@ -147,6 +149,12 @@
     private async Task Loading()
     {
         _selectedSubject = SubjectService.CurrentSubject;
+        if (_selectedSubject == null)
+        {
+            SnackbarService.ShowMessage("New subject wizard is not implemented yet!");
+            return;
+        }
+
         _dashboardData = await DashboardClient.GetDashboardAsync(_selectedSubject.Id);
         _filteredData = _dashboardData.ToList();
         _courses = _dashboardData?.Select(x => x.CourseName).Distinct();

@@ -9,6 +9,8 @@
 <PageTitle>Languages</PageTitle>
 
 <LoadingComponent @ref="loadingRef" LongTask="@Loading">
+    <MudText Typo="Typo.h4" Class="mt-4">Languages</MudText>
+    <MudDivider Class="mb-4"/>
     <MudDataGrid T="Language" Items="_languages" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>

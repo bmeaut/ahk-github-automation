@@ -5,7 +5,7 @@
     <DialogContent>
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
-            <MudTextField T="string" Label="Neptun Code" @bind-Value="@value.MoodleCourseId" Required="true"></MudTextField>
+            <MudTextField T="string" Label="Moodle Course Id" @bind-Value="@value.MoodleCourseId" Required="true"></MudTextField>
             <SelectSemester @bind-Value="@value.Semester"/>
             <SelectLanguage @bind-Value="@value.Language"/>
         </MudForm>
