@@ -1,9 +1,11 @@
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;
-using GradeManagement.Server.ExceptionHandlers;
-using GradeManagement.Shared.Authorization.Handlers;
-using GradeManagement.Shared.Authorization.Policies;
+using GradeManagement.Server.Authorization.Handlers;
+using GradeManagement.Server.Authorization.Policies;
+using GradeManagement.Server.Middlewares;
+using GradeManagement.Server.Middlewares.ExceptionHandlers;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
@@ -18,10 +20,26 @@ namespace GradeManagement.Server
 
 
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+            /*builder.Services.AddSingleton<IAuthorizationHandler, AdminRequirementHandler>();
+            builder.Services.AddSingleton<IAuthorizationHandler, DemonstratorOnSubjectRequirementHandler>();
+            builder.Services.AddSingleton<IAuthorizationHandler, TeacherOnSubjectRequirementHandler>();
             builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
+            builder.Services.AddSingleton<IAuthorizationHandler, UserRequirementHandler>();*/
 
+            /*builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(AdminRequirement.PolicyName, policy => policy.Requirements.Add(new AdminRequirement()));
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(DemonstratorOnSubjectRequirement.PolicyName,
+                    policy => policy.Requirements.Add(new DemonstratorOnSubjectRequirement()));
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(TeacherOnSubjectRequirement.PolicyName,
+                    policy => policy.Requirements.Add(new TeacherOnSubjectRequirement()));
             builder.Services.AddAuthorizationBuilder()
                 .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(UserRequirement.PolicyName, policy => policy.Requirements.Add(new UserRequirement()));*/
+
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
@@ -66,6 +84,7 @@ namespace GradeManagement.Server
             app.UseHttpsRedirection();
 
             app.UseExceptionHandler();
+            app.UseMiddleware<HeaderMiddleware>();
 
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();

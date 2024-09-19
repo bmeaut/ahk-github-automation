@@ -1,7 +1,6 @@
-using GradeManagement.Bll;
 using GradeManagement.Bll.Services;
+using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.Controllers.BaseControllers;
-using GradeManagement.Shared.Authorization.Policies;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Request;
 
@@ -29,7 +28,7 @@ public class SubjectController(SubjectService subjectService)
         return await subjectService.GetAllTeachersByIdAsync(id);
     }
 
-    [Authorize(Policy = TeacherRequirement.PolicyName)]
+    //TODO[Authorize(Policy = TeacherRequirement.PolicyName)]
     [HttpPost]
     public override async Task<Shared.Dtos.Response.Subject> CreateAsync([FromBody] Subject requestDto)
     {
@@ -45,7 +44,8 @@ public class SubjectController(SubjectService subjectService)
 
     [HttpDelete("{subjectId:long}/teachers/{teacherId:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId, [FromRoute] long teacherId)
+    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId,
+        [FromRoute] long teacherId)
     {
         await subjectService.DeleteTeacherFromSubjectByIdAsync(subjectId, teacherId);
         return NoContent();

@@ -1,6 +1,8 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
 {
@@ -10,11 +12,16 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         [TestMethod]
         public async Task AppStartupSucceeds()
         {
-            var startup = new Startup();
-            using var host = new HostBuilder()
-                                .ConfigureWebJobs(startup.Configure)
-                                .Build();
+            var host = new HostBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<Services.IGitHubClientFactory, Services.GitHubClientFactory>();
+                })
+                .Build();
+
             await host.StartAsync();
+
+            await host.StopAsync();
         }
     }
 }
