@@ -8,26 +8,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class SubjectTeacherService
+public class SubjectTeacherService(GradeManagementDbContext gradeManagementDbContext)
 {
-    private readonly GradeManagementDbContext _gradeManagementDbContext;
-
-    public SubjectTeacherService(GradeManagementDbContext gradeManagementDbContext)
-    {
-        _gradeManagementDbContext = gradeManagementDbContext;
-    }
-
     public async Task<UserRoleOnSubject?> GetRoleIfConnectionExistsAsync(long teacherId, long subjectId)
     {
-        return await _gradeManagementDbContext.SubjectTeacher
+        return await gradeManagementDbContext.SubjectTeacher
             .Where(st => st.SubjectId == subjectId && st.UserId == teacherId)
             .Select(st => st.Role)
             .FirstOrDefaultAsync();
     }
 
+    public async Task<Dictionary<long, UserRoleOnSubject>> GetAllSubjectsWithRolesForTeacherAsync(long teacherId)
+    {
+        var subjectForTeacher =  await gradeManagementDbContext.SubjectTeacher
+            .Where(st => st.UserId == teacherId)
+            .ToListAsync();
+
+        return subjectForTeacher.ToDictionary(subject => subject.SubjectId, subject => subject.Role);
+    }
+
     public async Task<List<SubjectTeacher>> UpdateForSingleSubjectAsync(long subjectId, List<User> teachers)
     {
-        var subjectTeachersForSubject = await _gradeManagementDbContext.SubjectTeacher
+        var subjectTeachersForSubject = await gradeManagementDbContext.SubjectTeacher
             .Where(st => st.SubjectId == subjectId)
             .ToListAsync();
 
@@ -38,12 +40,12 @@ public class SubjectTeacherService
         var teachersToRemove = subjectTeachersForSubject
             .Where(st => !teachers.Select(t => t.Id).Contains(st.UserId));
 
-        _gradeManagementDbContext.SubjectTeacher.AddRange(teachersToAdd);
-        _gradeManagementDbContext.SubjectTeacher.RemoveRange(teachersToRemove);
+        gradeManagementDbContext.SubjectTeacher.AddRange(teachersToAdd);
+        gradeManagementDbContext.SubjectTeacher.RemoveRange(teachersToRemove);
 
-        await _gradeManagementDbContext.SaveChangesAsync();
+        await gradeManagementDbContext.SaveChangesAsync();
 
-        return await _gradeManagementDbContext.SubjectTeacher
+        return await gradeManagementDbContext.SubjectTeacher
             .Where(st => st.SubjectId == subjectId)
             .ToListAsync();
     }
