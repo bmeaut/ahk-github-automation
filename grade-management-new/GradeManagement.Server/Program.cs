@@ -2,14 +2,10 @@ using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;
 using GradeManagement.Server.Authorization;
-using GradeManagement.Server.Authorization.Handlers;
-using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Server.Middlewares;
 using GradeManagement.Server.Middlewares.ExceptionHandlers;
 
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 
 namespace GradeManagement.Server
