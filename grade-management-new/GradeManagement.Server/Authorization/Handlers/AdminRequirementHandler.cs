@@ -12,19 +12,15 @@ namespace GradeManagement.Server.Authorization.Handlers;
 public class AdminRequirementHandler(UserService userService) : AuthorizationHandler<AdminRequirement>
 {
 
-    protected override async Task HandleRequirementAsync(
+    protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context, AdminRequirement requirement)
     {
-        var emailAddress = context.User.FindFirst(ClaimTypes.Email)?.Value ?? context.User.FindFirst("email")?.Value;
-        var user = await userService.GetOrCreateUserByEmailAsync(emailAddress ?? throw new InvalidOperationException("Email address was null"));
-
-        if (user.Type is UserType.Admin)
+        if (AdminRoleChecker.CheckAdminRole(context, requirement))
         {
             context.Succeed(requirement);
+            return Task.CompletedTask;
         }
-        else
-        {
-            context.Fail();
-        }
+        context.Fail();
+        return Task.CompletedTask;
     }
 }

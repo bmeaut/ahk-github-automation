@@ -9,36 +9,41 @@ using System.Security.Claims;
 
 namespace GradeManagement.Server.Authorization.Handlers;
 
-public class TeacherOnSubjectRequirementHandler(UserService userService, SubjectTeacherService subjectTeacherService, HttpContextAccessor httpContextAccessor) : AuthorizationHandler<TeacherOnSubjectRequirement>
+public class TeacherOnSubjectRequirementHandler(UserService userService, HttpContextAccessor httpContextAccessor) : AuthorizationHandler<TeacherOnSubjectRequirement>
 {
 
-    protected override async Task HandleRequirementAsync(
+    protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context, TeacherOnSubjectRequirement requirement)
     {
         var httpContext = httpContextAccessor.HttpContext;
         if (httpContext == null)
         {
             context.Fail();
-            return;
+            return Task.CompletedTask;
         }
 
-        if (!httpContext.Request.RouteValues.TryGetValue("id", out var routeId) || !long.TryParse(routeId?.ToString(), out var subjectId))
-        {
-            context.Fail();
-            return;
-        }
-
-        var emailAddress = context.User.FindFirst(ClaimTypes.Email)?.Value ?? context.User.FindFirst("email")?.Value;
-        var user = await userService.GetOrCreateUserByEmailAsync(emailAddress ?? throw new InvalidOperationException("Email address was null"));
-        var role = await subjectTeacherService.GetRoleIfConnectionExistsAsync(user.Id, subjectId);
-
-        if (role is UserRoleOnSubject.Teacher || user.Type == UserType.Admin)
+        if (AdminRoleChecker.CheckAdminRole(context, requirement))
         {
             context.Succeed(requirement);
+            return Task.CompletedTask;
         }
-        else
+
+        if (httpContext.Request.Headers.TryGetValue("X-Subject-Id-Value", out var subjectIdHeader))
         {
-            context.Fail();
+            if (long.TryParse(subjectIdHeader, out var subjectId))
+            {
+                var subjectAccessClaims = context.User.FindAll(CustomClaimTypes.SubjectAccess).Select(c => c.Value).ToList();
+                var roleOnSubjectClaim = context.User.FindFirst($"{CustomClaimTypes.AccessLevel}_{subjectId}");
+                if (subjectAccessClaims.Contains(subjectId.ToString()) && roleOnSubjectClaim != null && roleOnSubjectClaim.Value == UserRoleOnSubject.Teacher.ToString())
+                {
+                    context.Succeed(requirement);
+                    return Task.CompletedTask;
+                }
+            }
         }
+
+        context.Fail();
+        return Task.CompletedTask;
     }
+
 }

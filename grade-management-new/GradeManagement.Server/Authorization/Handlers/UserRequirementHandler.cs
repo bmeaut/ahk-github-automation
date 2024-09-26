@@ -9,22 +9,31 @@ using System.Security.Claims;
 
 namespace GradeManagement.Server.Authorization.Handlers;
 
-public class UserRequirementHandler(UserService userService) : AuthorizationHandler<UserRequirement>
+public class UserRequirementHandler : AuthorizationHandler<UserRequirement>
 {
-
-    protected override async Task HandleRequirementAsync(
+    protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context, UserRequirement requirement)
     {
-        var emailAddress = context.User.FindFirst(ClaimTypes.Email)?.Value ?? context.User.FindFirst("email")?.Value;
-        var user = await userService.GetOrCreateUserByEmailAsync(emailAddress ?? throw new InvalidOperationException("Email address was null"));
-
-        if (user.Type is UserType.User or UserType.Teacher or UserType.Admin)
+        if (AdminRoleChecker.CheckAdminRole(context, requirement))
         {
             context.Succeed(requirement);
+            return Task.CompletedTask;
         }
-        else
+
+        var roleClaim = context.User.FindFirst(CustomClaimTypes.SubjectAccess);
+        if (roleClaim == null)
         {
             context.Fail();
+            return Task.CompletedTask;
         }
+
+        if (roleClaim.Value == UserType.Teacher.ToString() || roleClaim.Value == UserType.User.ToString())
+        {
+            context.Succeed(requirement);
+            return Task.CompletedTask;
+        }
+
+        context.Fail();
+        return Task.CompletedTask;
     }
 }
