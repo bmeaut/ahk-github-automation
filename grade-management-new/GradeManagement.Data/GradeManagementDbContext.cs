@@ -46,6 +46,7 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
         }
 
         RegisterSoftDeleteQueryFilters(modelBuilder);
+        RegisterTenantQueryFilters(modelBuilder);
     }
 
     private void RegisterSoftDeleteQueryFilters(ModelBuilder modelBuilder)
