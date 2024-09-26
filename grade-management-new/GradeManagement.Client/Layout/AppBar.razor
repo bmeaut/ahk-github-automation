@@ -1,4 +1,6 @@
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject SubjectService SubjectService
+@inject NavigationManager Navigation
 
 <MudAppBar Elevation="5" Class="pb-1">
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
@@ -6,10 +8,26 @@
     <MudSpacer/>
     <SelectSubject @bind-Value="@SubjectService.CurrentSubject" PossibleValues="@SubjectService.Subjects"/>
     <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/>
+
+    <!-- Profile Dropdown Menu -->
+    <MudMenu>
+        <ActivatorContent>
+            <MudAvatar Size="Size.Medium" ImageUrl="@UserProfilePictureUrl"/>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem>
+                <MudText Typo="Typo.subtitle1">@UserName</MudText>
+            </MudMenuItem>
+            <MudMenuItem OnClick="@SignOut">
+                <MudText Typo="Typo.subtitle1">Sign Out</MudText>
+            </MudMenuItem>
+        </ChildContent>
+    </MudMenu>
 </MudAppBar>
 
 @code{
-
+    private string UserProfilePictureUrl { get; set; } = "https://via.placeholder.com/40"; // Default placeholder
+    private string UserName { get; set; } = "Loading...";
     [Parameter] public Action DrawerToggle { get; set; }
     [Parameter] public bool DrawerOpened { get; set; }
 
@@ -18,6 +36,11 @@
     {
         await SubjectService.LoadSubjects();
         SubjectService.OnChange += StateHasChanged;
+    }
+
+    private void SignOut()
+    {
+        Navigation.NavigateToLogout("authentication/logout");
     }
 
 }
