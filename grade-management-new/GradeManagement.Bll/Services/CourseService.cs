@@ -61,7 +61,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
     {
         if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
         {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException("Current subject does not match the subject of the course!");
         }
 
         var courseEntityToBeCreated = new Data.Models.Course
@@ -71,7 +71,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
             MoodleCourseId = requestDto.MoodleCourseId,
             SubjectId = requestDto.SubjectId,
             SemesterId = requestDto.Semester.Id,
-            LanguageId = requestDto.Language.Id
+            LanguageId = requestDto.Language.Id,
         };
         gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
         await gradeManagementDbContext.SaveChangesAsync();

@@ -8,6 +8,7 @@ using CsvHelper;
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Data.Utils;
 using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 
@@ -25,8 +26,7 @@ public class ExerciseService(
     IMapper mapper,
     PullRequestService pullRequestService,
     AssignmentService assignmentService,
-    ScoreTypeService scoreTypeService,
-    CourseService courseService)
+    ScoreTypeService scoreTypeService)
     : ICrudServiceBase<ExerciseRequest, ExerciseResponse>
 {
     public async Task<IEnumerable<ExerciseResponse>> GetAllAsync()
@@ -50,7 +50,6 @@ public class ExerciseService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            await courseService.GetByIdAsync(requestDto.CourseId); // Check if the course exists and user has access
             var exerciseEntity = new Exercise()
             {
                 Name = requestDto.Name,
@@ -113,9 +112,10 @@ public class ExerciseService(
             .ToListAsync();
     }
 
-    public async Task<Exercise> GetExerciseModelByGitHubRepoNameAsync(string githubRepoName)
+    public async Task<Exercise> GetExerciseModelByGitHubRepoNameWithoutQfAsync(string githubRepoName)
     {
         return await gradeManagementDbContext.Exercise
+            .IgnoreQueryFiltersButNotIsDeleted()
             .Include(e => e.Course)
             .Include(e => e.Assignments)
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);

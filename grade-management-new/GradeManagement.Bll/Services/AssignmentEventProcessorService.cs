@@ -18,9 +18,10 @@ public class AssignmentEventProcessorService(
     StudentService studentService,
     PullRequestService pullRequestService,
     ScoreService scoreService,
-    UserService userService)
+    UserService userService,
+    SubjectService subjectService)
 {
-    public string GetRepositoryNameFromUrl(string url)
+    private string GetRepositoryNameFromUrl(string url)
     {
         var uri = new Uri(url);
         var segments = uri.AbsolutePath.Split('/');
@@ -36,7 +37,7 @@ public class AssignmentEventProcessorService(
         try
         {
             var repositoryName = GetRepositoryNameFromUrl(assignmentAccepted.GitHubRepositoryUrl);
-            var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameAsync(repositoryName);
+            var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var studentGitHubId = repositoryName.Remove(0, (exercise.GithubPrefix + "-").Length);
             var student = await studentService.GetOrCreateStudentByGitHubIdAsync(studentGitHubId);
             var assignment = new Assignment()
@@ -46,7 +47,7 @@ public class AssignmentEventProcessorService(
                 StudentId = student.Id,
                 ExerciseId = exercise.Id
             };
-            assignment = await assignmentService.CreateAsync(assignment);
+            assignment = await assignmentService.CreateAsync(assignment, exercise.SubjectId);
 
             var assignmentLog = new AssignmentLog()
             {
@@ -71,7 +72,7 @@ public class AssignmentEventProcessorService(
         try
         {
             var repositoryName = GetRepositoryNameFromUrl(pullRequestOpened.GitHubRepositoryUrl);
-            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameAsync(repositoryName);
+            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var pullRequest = new PullRequest()
             {
                 Url = pullRequestOpened.PullRequestUrl,
@@ -80,7 +81,7 @@ public class AssignmentEventProcessorService(
                 BranchName = pullRequestOpened.BranchName,
                 AssignmentId = assignment.Id
             };
-            pullRequest = await pullRequestService.CreateAsync(pullRequest);
+            pullRequest = await pullRequestService.CreateAsync(pullRequest, assignment.SubjectId);
 
             var assignmentLog = new AssignmentLog()
             {
@@ -106,20 +107,25 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var pullRequest = await pullRequestService.GetModelByUrlAsync(ciEvaluationCompleted.PullRequestUrl);
-
+            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(ciEvaluationCompleted.PullRequestUrl);
             var repositoryName = GetRepositoryNameFromUrl(ciEvaluationCompleted.GitHubRepositoryUrl);
-            var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameAsync(repositoryName);
+            var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var studentGitHubId = repositoryName.Remove(0, (exercise.GithubPrefix + "-").Length);
             var student = await studentService.GetStudentModelByGitHubIdAsync(studentGitHubId);
-            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameAsync(repositoryName);
+            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
+            var subject = await subjectService.GetModelByIdWithoutQfAsync(exercise.SubjectId);
+
+            if(ciEvaluationCompleted.CiApiKey != subject.CiApiKey)
+            {
+                throw new SecurityTokenException("Invalid API key");
+            }
 
             if (student.NeptunCode.IsNullOrEmpty())
             {
                 var newStudent =
                     await studentService.GetStudentModelByNeptunAsync(ciEvaluationCompleted.StudentNeptun);
                 newStudent.GithubId = studentGitHubId;
-                await assignmentService.ChangeStudentIdOnAllAssignmentsAsync(student.Id, newStudent.Id);
+                await assignmentService.ChangeStudentIdOnAllAssignmentsWithoutQfAsync(student.Id, newStudent.Id);
                 await gradeManagementDbContext.SaveChangesAsync();
                 await studentService.DeleteAsync(student.Id);
                 student = newStudent;
@@ -127,7 +133,7 @@ public class AssignmentEventProcessorService(
 
             foreach (var scoreEvent in ciEvaluationCompleted.Scores)
             {
-                await scoreService.CreateScoreBasedOnEventScoreAsync(scoreEvent, pullRequest.Id);
+                await scoreService.CreateScoreBasedOnEventScoreAsync(scoreEvent, pullRequest.Id, pullRequest.SubjectId);
             }
 
             var assignmentLog = new AssignmentLog()
@@ -155,9 +161,9 @@ public class AssignmentEventProcessorService(
         try
         {
             var repositoryName = GetRepositoryNameFromUrl(teacherAssigned.GitHubRepositoryUrl);
-            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameAsync(repositoryName);
+            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var teacher = await userService.GetModelByGitHubIdAsync(teacherAssigned.TeacherGitHubId);
-            var pullRequest = await pullRequestService.GetModelByUrlAsync(teacherAssigned.PullRequestUrl);
+            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(teacherAssigned.PullRequestUrl);
             pullRequest.TeacherId = teacher.Id;
             await gradeManagementDbContext.SaveChangesAsync();
 
@@ -186,13 +192,13 @@ public class AssignmentEventProcessorService(
         try
         {
             var repositoryName = GetRepositoryNameFromUrl(assignmentGradedByTeacher.GitHubRepositoryUrl);
-            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameAsync(repositoryName);
+            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var teacher = await userService.GetModelByGitHubIdAsync(assignmentGradedByTeacher.TeacherGitHubId);
-            var pullRequest = await pullRequestService.GetModelByUrlAsync(assignmentGradedByTeacher.PullRequestUrl);
+            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(assignmentGradedByTeacher.PullRequestUrl);
 
             if (assignmentGradedByTeacher.Scores.IsNullOrEmpty())
             {
-                var latestScores = await pullRequestService.GetLatestUnapprovedScoremodelsByIdAsync(pullRequest.Id);
+                var latestScores = await pullRequestService.GetLatestUnapprovedScoreModelsWithoutQfByIdAsync(pullRequest.Id);
                 foreach (var scoreEntity in latestScores)
                 {
                     scoreEntity.IsApproved = true;
@@ -205,7 +211,7 @@ public class AssignmentEventProcessorService(
             {
                 foreach (var eventScore in assignmentGradedByTeacher.Scores)
                 {
-                    await scoreService.CreateOrApprovePointsFromTeacherInput(eventScore, pullRequest.Id, teacher.Id);
+                    await scoreService.CreateOrApprovePointsFromTeacherInputWithoutQfAsync(eventScore, pullRequest.Id, teacher.Id, pullRequest.SubjectId);
                 }
             }
 
@@ -233,7 +239,7 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var pullRequest = await pullRequestService.GetModelByUrlAsync(pullRequestStatusChanged.PullRequestUrl);
+            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestStatusChanged.PullRequestUrl);
             pullRequest.Status = pullRequestStatusChanged.pullRequestStatus;
             await gradeManagementDbContext.SaveChangesAsync();
 

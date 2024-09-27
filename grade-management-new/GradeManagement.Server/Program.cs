@@ -1,6 +1,7 @@
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;
+using GradeManagement.Data.Utils;
 using GradeManagement.Server.Authorization;
 using GradeManagement.Server.Middlewares;
 using GradeManagement.Server.Middlewares.ExceptionHandlers;

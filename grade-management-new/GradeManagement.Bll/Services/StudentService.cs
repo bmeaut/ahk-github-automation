@@ -7,6 +7,7 @@ using AutSoft.Linq.Queryable;
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Data.Utils;
 using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 

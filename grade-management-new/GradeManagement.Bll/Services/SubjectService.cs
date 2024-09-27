@@ -2,11 +2,13 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
+using AutSoft.Linq.Enumerable;
 using AutSoft.Linq.Queryable;
 
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Data.Utils;
 using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 
@@ -154,5 +156,12 @@ public class SubjectService(
             .SingleEntityAsync(st => st.SubjectId == subjectId && st.UserId == teacherId, keyValues);
         gradeManagementDbContext.SubjectTeacher.Remove(subjectTeacherEntity);
         await gradeManagementDbContext.SaveChangesAsync();
+    }
+
+    public async Task<Subject> GetModelByIdWithoutQfAsync(long id)
+    {
+        return await gradeManagementDbContext.Subject
+            .IgnoreQueryFiltersButNotIsDeleted()
+            .SingleEntityAsync(s => s.Id == id, id);
     }
 }
