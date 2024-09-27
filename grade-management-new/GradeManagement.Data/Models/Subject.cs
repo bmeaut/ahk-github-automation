@@ -1,5 +1,7 @@
 using GradeManagement.Data.Models.Interfaces;
 
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace GradeManagement.Data.Models;
 
 public class Subject : ISoftDelete, ITenant
@@ -12,6 +14,7 @@ public class Subject : ISoftDelete, ITenant
     public List<SubjectTeacher> SubjectTeachers { get; set; }
     public bool IsDeleted { get; set; }
 
+    [NotMapped]
     public long SubjectId
     {
         get => Id;
