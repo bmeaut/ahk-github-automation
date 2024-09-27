@@ -2,7 +2,6 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
-using AutSoft.Linq.Enumerable;
 using AutSoft.Linq.Queryable;
 
 using GradeManagement.Bll.Services.BaseServices;
@@ -13,8 +12,6 @@ using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.EntityFrameworkCore;
-
-using System.Diagnostics;
 
 using Course = GradeManagement.Shared.Dtos.Course;
 using Task = System.Threading.Tasks.Task;
@@ -57,17 +54,20 @@ public class SubjectService(
         subjectEntity.NeptunCode = requestDto.NeptunCode;
         subjectEntity.GitHubOrgName = requestDto.GitHubOrgName;
 
-        var teachers = await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
-        var oldSubjectTeachers = await gradeManagementDbContext.SubjectTeacher
-            .Where(st => st.SubjectId == subjectEntity.Id)
-            .ToListAsync();
-        gradeManagementDbContext.SubjectTeacher.RemoveRange(oldSubjectTeachers);
-        foreach (var teacher in teachers)
+        if (requestDto.Teachers != null)
         {
-            gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
+            var teachers = await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
+            var oldSubjectTeachers = await gradeManagementDbContext.SubjectTeacher
+                .Where(st => st.SubjectId == subjectEntity.Id)
+                .ToListAsync();
+            gradeManagementDbContext.SubjectTeacher.RemoveRange(oldSubjectTeachers);
+            foreach (var teacher in teachers)
             {
-                SubjectId = subjectEntity.Id, UserId = teacher.Id
-            });
+                gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
+                {
+                    SubjectId = subjectEntity.Id, UserId = teacher.Id
+                });
+            }
         }
 
         await gradeManagementDbContext.SaveChangesAsync();
@@ -88,7 +88,9 @@ public class SubjectService(
         gradeManagementDbContext.Subject.Add(subjectEntity);
         await gradeManagementDbContext.SaveChangesAsync();
 
-        var teachers = await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
+        var teachers =
+            requestDto.Teachers == null ? []
+            : await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
         foreach (var teacher in teachers)
         {
             gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
