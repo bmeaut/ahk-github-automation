@@ -45,28 +45,6 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
         return await GetByIdAsync(pullRequestEntity.Id);
     }
 
-    public async Task<PullRequest> UpdateAsync(long id, PullRequest pullRequest)
-    {
-        if (pullRequest.Id != id)
-        {
-            throw new ValidationException("ID", id.ToString(),
-                "The Id from the query and the Id of the DTO do not match!");
-        }
-
-        var pullRequestEntity = await gradeManagementDbContext.PullRequest
-            .SingleEntityAsync(p => p.Id == id, id);
-
-        pullRequestEntity.Url = pullRequest.Url;
-        pullRequestEntity.OpeningDate = pullRequest.OpeningDate;
-        pullRequestEntity.Status = pullRequest.Status;
-        pullRequestEntity.BranchName = pullRequest.BranchName;
-        pullRequestEntity.AssignmentId = pullRequest.AssignmentId;
-
-        await gradeManagementDbContext.SaveChangesAsync();
-
-        return await GetByIdAsync(pullRequestEntity.Id);
-    }
-
     public async Task<IEnumerable<Score>> GetAllScoresByIdSortedByDateDescendingAsync(long id)
     {
         return await gradeManagementDbContext.Score

@@ -1,10 +1,6 @@
 ﻿using AutSoft.Linq.Queryable;
 
 using GradeManagement.Data;
-using GradeManagement.Shared.Enums;
-using GradeManagement.Shared.Exceptions;
-
-using Microsoft.EntityFrameworkCore;
 
 using System.Security.Claims;
 

@@ -121,8 +121,8 @@ public class ExerciseService(
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);
     }
 
-    public async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderAsync(
-        Dictionary<int, string> scoreTypes, long _ExerciseId)
+    private async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderAsync(
+        Dictionary<int, string> scoreTypes, long exerciseId)
     {
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
@@ -132,7 +132,7 @@ public class ExerciseService(
                 var scoreType = await scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(type);
                 gradeManagementDbContext.ScoreTypeExercise.Add(new ScoreTypeExercise
                 {
-                    ScoreTypeId = scoreType.Id, ExerciseId = _ExerciseId, Order = order
+                    ScoreTypeId = scoreType.Id, ExerciseId = exerciseId, Order = order
                 });
             }
 
@@ -146,7 +146,7 @@ public class ExerciseService(
             throw;
         }
 
-        return gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == _ExerciseId).ToList();
+        return gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToList();
     }
 
     public async Task<string> GetCsvByExerciseId(long exerciseId)
