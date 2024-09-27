@@ -12,6 +12,8 @@ using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.EntityFrameworkCore;
 
+using System.Diagnostics;
+
 using Course = GradeManagement.Shared.Dtos.Course;
 using Task = System.Threading.Tasks.Task;
 using User = GradeManagement.Shared.Dtos.User;
@@ -78,7 +80,8 @@ public class SubjectService(
             Name = requestDto.Name,
             NeptunCode = requestDto.NeptunCode,
             GitHubOrgName = requestDto.GitHubOrgName,
-            Courses = []
+            Courses = [],
+            CiApiKey = requestDto.CiApiKey
         };
         gradeManagementDbContext.Subject.Add(subjectEntity);
         await gradeManagementDbContext.SaveChangesAsync();

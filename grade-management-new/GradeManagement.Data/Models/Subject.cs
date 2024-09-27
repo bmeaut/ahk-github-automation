@@ -13,6 +13,7 @@ public class Subject : ISoftDelete, ITenant
     public List<Course> Courses { get; set; }
     public List<SubjectTeacher> SubjectTeachers { get; set; }
     public bool IsDeleted { get; set; }
+    public string CiApiKey { get; set; }
 
     [NotMapped]
     public long SubjectId
