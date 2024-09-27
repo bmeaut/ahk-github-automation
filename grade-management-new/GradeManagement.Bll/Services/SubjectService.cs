@@ -7,17 +7,18 @@ using AutSoft.Linq.Queryable;
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Shared.Dtos.Request;
+using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.EntityFrameworkCore;
 
 using Course = GradeManagement.Shared.Dtos.Course;
-using Subject = GradeManagement.Shared.Dtos.Request.Subject;
 using Task = System.Threading.Tasks.Task;
 using User = GradeManagement.Shared.Dtos.User;
 
 namespace GradeManagement.Bll.Services;
 
-public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Subject>
+public class SubjectService : ICrudServiceBase<SubjectRequest, SubjectResponse>
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly IMapper _mapper;
@@ -31,21 +32,21 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
         _userService = userService;
     }
 
-    public async Task<IEnumerable<Shared.Dtos.Response.Subject>> GetAllAsync()
+    public async Task<IEnumerable<SubjectResponse>> GetAllAsync()
     {
         return await _gradeManagementDbContext.Subject
-            .ProjectTo<Shared.Dtos.Response.Subject>(_mapper.ConfigurationProvider)
+            .ProjectTo<SubjectResponse>(_mapper.ConfigurationProvider)
             .OrderBy(s => s.Id).ToListAsync();
     }
 
-    public async Task<Shared.Dtos.Response.Subject> GetByIdAsync(long id)
+    public async Task<SubjectResponse> GetByIdAsync(long id)
     {
         return await _gradeManagementDbContext.Subject
-            .ProjectTo<Shared.Dtos.Response.Subject>(_mapper.ConfigurationProvider)
+            .ProjectTo<SubjectResponse>(_mapper.ConfigurationProvider)
             .SingleEntityAsync(s => s.Id == id, id);
     }
 
-    public async Task<Shared.Dtos.Response.Subject> UpdateAsync(long id, Subject requestDto)
+    public async Task<SubjectResponse> UpdateAsync(long id, SubjectRequest requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -75,12 +76,12 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
 
         await _gradeManagementDbContext.SaveChangesAsync();
 
-        return _mapper.Map<Shared.Dtos.Response.Subject>(subjectEntity);
+        return _mapper.Map<SubjectResponse>(subjectEntity);
     }
 
-    public async Task<Shared.Dtos.Response.Subject> CreateAsync(Subject requestDto)
+    public async Task<SubjectResponse> CreateAsync(SubjectRequest requestDto)
     {
-        var subjectEntity = new Data.Models.Subject
+        var subjectEntity = new Subject
         {
             Name = requestDto.Name,
             NeptunCode = requestDto.NeptunCode,
@@ -101,7 +102,7 @@ public class SubjectService : ICrudServiceBase<Subject, Shared.Dtos.Response.Sub
 
         await _gradeManagementDbContext.SaveChangesAsync();
 
-        return _mapper.Map<Shared.Dtos.Response.Subject>(subjectEntity);
+        return _mapper.Map<SubjectResponse>(subjectEntity);
     }
 
     public async Task DeleteAsync(long id)

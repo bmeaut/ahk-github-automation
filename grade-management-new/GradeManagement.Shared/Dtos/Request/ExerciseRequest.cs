@@ -1,6 +1,6 @@
 ﻿namespace GradeManagement.Shared.Dtos.Request;
 
-public class Exercise
+public class ExerciseRequest
 {
     public long Id { get; set; }
     public string Name { get; set; }

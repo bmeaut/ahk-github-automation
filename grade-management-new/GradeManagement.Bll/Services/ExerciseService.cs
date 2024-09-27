@@ -8,13 +8,14 @@ using CsvHelper;
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Shared.Dtos.Request;
+using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.EntityFrameworkCore;
 
 using System.Globalization;
 
 using Assignment = GradeManagement.Shared.Dtos.Assignment;
-using Exercise = GradeManagement.Shared.Dtos.Request.Exercise;
 using ValidationException = AutSoft.Common.Exceptions.ValidationException;
 
 namespace GradeManagement.Bll.Services;
@@ -26,31 +27,31 @@ public class ExerciseService(
     AssignmentService assignmentService,
     ScoreTypeService scoreTypeService,
     CourseService courseService)
-    : ICrudServiceBase<Exercise, Shared.Dtos.Response.Exercise>
+    : ICrudServiceBase<ExerciseRequest, ExerciseResponse>
 {
-    public async Task<IEnumerable<Shared.Dtos.Response.Exercise>> GetAllAsync()
+    public async Task<IEnumerable<ExerciseResponse>> GetAllAsync()
     {
         return await gradeManagementDbContext.Exercise
             .Include(e => e.ScoreTypeExercises)
-            .ProjectTo<Shared.Dtos.Response.Exercise>(mapper.ConfigurationProvider)
+            .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<Shared.Dtos.Response.Exercise> GetByIdAsync(long id)
+    public async Task<ExerciseResponse> GetByIdAsync(long id)
     {
         return await gradeManagementDbContext.Exercise
             .Include(e => e.ScoreTypeExercises)
-            .ProjectTo<Shared.Dtos.Response.Exercise>(mapper.ConfigurationProvider)
+            .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .SingleEntityAsync(e => e.Id == id, id);
     }
 
-    public async Task<Shared.Dtos.Response.Exercise> CreateAsync(Exercise requestDto)
+    public async Task<ExerciseResponse> CreateAsync(ExerciseRequest requestDto)
     {
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
             await courseService.GetByIdAsync(requestDto.CourseId); // Check if the course exists and user has access
-            var exerciseEntity = new Data.Models.Exercise()
+            var exerciseEntity = new Exercise()
             {
                 Name = requestDto.Name,
                 GithubPrefix = requestDto.GithubPrefix,
@@ -75,7 +76,7 @@ public class ExerciseService(
         }
     }
 
-    public async Task<Shared.Dtos.Response.Exercise> UpdateAsync(long id, Exercise requestDto)
+    public async Task<ExerciseResponse> UpdateAsync(long id, ExerciseRequest requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -112,7 +113,7 @@ public class ExerciseService(
             .ToListAsync();
     }
 
-    public async Task<Data.Models.Exercise> GetExerciseModelByGitHubRepoNameAsync(string githubRepoName)
+    public async Task<Exercise> GetExerciseModelByGitHubRepoNameAsync(string githubRepoName)
     {
         return await gradeManagementDbContext.Exercise
             .Include(e => e.Course)

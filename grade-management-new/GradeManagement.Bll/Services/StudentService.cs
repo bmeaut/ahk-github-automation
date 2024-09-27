@@ -7,17 +7,17 @@ using AutSoft.Linq.Queryable;
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Data.Models;
+using GradeManagement.Shared.Dtos.Request;
+using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Assignment = GradeManagement.Shared.Dtos.Assignment;
-using Group = GradeManagement.Shared.Dtos.Response.Group;
-using Student = GradeManagement.Shared.Dtos.Request.Student;
 
 namespace GradeManagement.Bll.Services;
 
-public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Student>
+public class StudentService : ICrudServiceBase<StudentRequest, StudentResponse>
 {
     private readonly GradeManagementDbContext _gradeManagementDbContext;
     private readonly IMapper _mapper;
@@ -28,24 +28,24 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Shared.Dtos.Response.Student>> GetAllAsync()
+    public async Task<IEnumerable<StudentResponse>> GetAllAsync()
     {
         return await _gradeManagementDbContext.Student
-            .ProjectTo<Shared.Dtos.Response.Student>(_mapper.ConfigurationProvider)
+            .ProjectTo<StudentResponse>(_mapper.ConfigurationProvider)
             .OrderBy(s => s.Id)
             .ToListAsync();
     }
 
-    public async Task<Shared.Dtos.Response.Student> GetByIdAsync(long id)
+    public async Task<StudentResponse> GetByIdAsync(long id)
     {
         return await _gradeManagementDbContext.Student
-            .ProjectTo<Shared.Dtos.Response.Student>(_mapper.ConfigurationProvider)
+            .ProjectTo<StudentResponse>(_mapper.ConfigurationProvider)
             .SingleEntityAsync(s => s.Id == id, id);
     }
 
-    public async Task<Shared.Dtos.Response.Student> CreateAsync(Student requestDto)
+    public async Task<StudentResponse> CreateAsync(StudentRequest requestDto)
     {
-        var studentEntity = new Data.Models.Student()
+        var studentEntity = new Student()
         {
             Name = requestDto.Name, NeptunCode = requestDto.NeptunCode, GithubId = requestDto.GithubId
         };
@@ -68,7 +68,7 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
         return await GetByIdAsync(studentEntity.Id);
     }
 
-    public async Task<Shared.Dtos.Response.Student> UpdateAsync(long id, Student requestDto)
+    public async Task<StudentResponse> UpdateAsync(long id, StudentRequest requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -107,13 +107,13 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
         await _gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<List<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<List<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
         return await _gradeManagementDbContext.Student
             .Where(s => s.Id == id)
             .SelectMany(s => s.GroupStudents)
             .Select(gt => gt.Group)
-            .ProjectTo<Group>(_mapper.ConfigurationProvider)
+            .ProjectTo<GroupResponse>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
@@ -125,13 +125,13 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
             .ToListAsync();
     }
 
-    public async Task<Data.Models.Student> GetOrCreateStudentByGitHubIdAsync(string studentGitHubId)
+    public async Task<Student> GetOrCreateStudentByGitHubIdAsync(string studentGitHubId)
     {
         var student = await _gradeManagementDbContext.Student
             .SingleOrDefaultAsync(s => s.GithubId == studentGitHubId);
         if (student == null)
         {
-            student = new Data.Models.Student
+            student = new Student
             {
                 Name = "Auto created from GitHub ID: " + studentGitHubId, GithubId = studentGitHubId
             };
@@ -142,18 +142,19 @@ public class StudentService : ICrudServiceBase<Student, Shared.Dtos.Response.Stu
         return student;
     }
 
-    public async Task<Data.Models.Student> GetStudentModelByGitHubIdAsync(string studentGitHubId)
+    public async Task<Student> GetStudentModelByGitHubIdAsync(string studentGitHubId)
     {
         return await _gradeManagementDbContext.Student.SingleEntityAsync(s => s.GithubId == studentGitHubId, 0);
     }
 
-    public async Task<Data.Models.Student> GetStudentModelByNeptunAsync(string studentNeptun)
+    public async Task<Student> GetStudentModelByNeptunAsync(string studentNeptun)
     {
         var student = await _gradeManagementDbContext.Student.SingleOrDefaultAsync(s => s.NeptunCode == studentNeptun);
         if (student == null)
         {
             //TODO: Send message to student through GitHub that the entered Neptun code is not valid
-            throw new ValidationException("NeptunCode", studentNeptun, "Student not found with this Neptun code!");
+            throw new ValidationException("NeptunCode", studentNeptun,
+                "StudentRequest not found with this Neptun code!");
         }
 
         return student;

@@ -88,23 +88,23 @@ public class UserService : ICrudServiceBase<User>
         return _mapper.Map<User>(userEntity);
     }
 
-    public async Task<List<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<List<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
         return await _gradeManagementDbContext.User
             .Where(u => u.Id == id)
             .SelectMany(u => u.GroupTeachers)
             .Select(gt => gt.Group)
-            .ProjectTo<Group>(_mapper.ConfigurationProvider)
+            .ProjectTo<GroupResponse>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<List<Subject>> GetAllSubjectsByIdAsync(long id)
+    public async Task<List<SubjectResponse>> GetAllSubjectsByIdAsync(long id)
     {
         return await _gradeManagementDbContext.User
             .Where(u => u.Id == id)
             .SelectMany(u => u.SubjectTeachers)
             .Select(st => st.Subject)
-            .ProjectTo<Subject>(_mapper.ConfigurationProvider)
+            .ProjectTo<SubjectResponse>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 

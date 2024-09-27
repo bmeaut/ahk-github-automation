@@ -43,7 +43,7 @@ public class CourseController(CourseService courseService) : CrudControllerBase<
     [HttpGet("{id:long}/exercises")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
-    public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync([FromRoute] long id)
+    public async Task<IEnumerable<ExerciseResponse>> GetAllExercisesByIdAsync([FromRoute] long id)
     {
         return await courseService.GetAllExercisesByIdAsync(id);
     }
@@ -51,7 +51,7 @@ public class CourseController(CourseService courseService) : CrudControllerBase<
     [HttpGet("{id:long}/groups")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
-    public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync([FromRoute] long id)
+    public async Task<IEnumerable<GroupResponse>> GetAllGroupsByIdAsync([FromRoute] long id)
     {
         return await courseService.GetAllGroupsByIdAsync(id);
     }

@@ -87,19 +87,19 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync(long id)
+    public async Task<IEnumerable<ExerciseResponse>> GetAllExercisesByIdAsync(long id)
     {
         return await gradeManagementDbContext.Exercise
             .Where(e => e.CourseId == id)
-            .ProjectTo<Exercise>(mapper.ConfigurationProvider)
+            .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<IEnumerable<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
         return await gradeManagementDbContext.Group
             .Where(g => g.CourseId == id)
-            .ProjectTo<Group>(mapper.ConfigurationProvider)
+            .ProjectTo<GroupResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 }

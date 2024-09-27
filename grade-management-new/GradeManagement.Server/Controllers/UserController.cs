@@ -1,4 +1,3 @@
-using GradeManagement.Bll;
 using GradeManagement.Bll.Services;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
@@ -6,7 +5,6 @@ using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 
 namespace GradeManagement.Server.Controllers;
 
@@ -17,14 +15,14 @@ public class UserController(UserService userService) : CrudControllerBase<User>(
 {
     [HttpGet("{id:long}/groups")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<Group>> GetAllGroupsByIdAsync([FromRoute] long id)
+    public async Task<List<GroupResponse>> GetAllGroupsByIdAsync([FromRoute] long id)
     {
         return await userService.GetAllGroupsByIdAsync(id);
     }
 
     [HttpGet("{id:long}/subjects")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<Subject>> GetAllSubjectsByIdAsync([FromRoute] long id)
+    public async Task<List<SubjectResponse>> GetAllSubjectsByIdAsync([FromRoute] long id)
     {
         return await userService.GetAllSubjectsByIdAsync(id);
     }

@@ -1,7 +1,7 @@
-using GradeManagement.Bll;
 using GradeManagement.Bll.Services;
 using GradeManagement.Server.Controllers.BaseControllers;
 using GradeManagement.Shared.Dtos;
+using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.AspNetCore.Authorization;
@@ -12,11 +12,11 @@ namespace GradeManagement.Server.Controllers;
 [Authorize]
 [Route("api/students")]
 [ApiController]
-public class StudentController(StudentService studentService) : QueryControllerBase<Student>(studentService)
+public class StudentController(StudentService studentService) : QueryControllerBase<StudentResponse>(studentService)
 {
     [HttpGet("{id:long}/groups")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<List<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
         return await studentService.GetAllGroupsByIdAsync(id);
     }
@@ -30,7 +30,7 @@ public class StudentController(StudentService studentService) : QueryControllerB
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<Student> CreateAsync([FromBody] Shared.Dtos.Request.Student requestDto)
+    public async Task<StudentResponse> CreateAsync([FromBody] StudentRequest requestDto)
     {
         return await studentService.CreateAsync(requestDto);
     }
