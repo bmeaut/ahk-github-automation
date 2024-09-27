@@ -13,6 +13,16 @@ namespace GradeManagement.Server.Controllers;
 [ApiController]
 public class UserController(UserService userService) : CrudControllerBase<User>(userService)
 {
+    public override async Task<User> UpdateAsync(long id, User requestDto) => await base.UpdateAsync(id, requestDto);
+
+    public override async Task<User> CreateAsync(User requestDto) => await base.CreateAsync(requestDto);
+
+    public override async Task<ActionResult> DeleteAsync(long id) => await base.DeleteAsync(id);
+
+    public override async Task<IEnumerable<User>> GetAllAsync() => await base.GetAllAsync();
+
+    public override async Task<User> GetByIdAsync(long id) => await base.GetByIdAsync(id);
+
     [HttpGet("{id:long}/groups")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<List<GroupResponse>> GetAllGroupsByIdAsync([FromRoute] long id)
