@@ -6,14 +6,11 @@ using AutSoft.Linq.Queryable;
 
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
-using GradeManagement.Server.Authorization;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Response;
 using GradeManagement.Shared.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
-
-using System.Security.Claims;
 
 namespace GradeManagement.Bll.Services;
 
@@ -66,6 +63,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
         {
             throw new UnauthorizedException();
         }
+
         var courseEntityToBeCreated = new Data.Models.Course
         {
             Id = requestDto.Id,
