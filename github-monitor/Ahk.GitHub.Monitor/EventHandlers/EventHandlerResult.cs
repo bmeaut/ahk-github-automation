@@ -1,11 +1,8 @@
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class EventHandlerResult
+    public class EventHandlerResult(string result)
     {
-        public EventHandlerResult(string result)
-            => this.Result = result;
-
-        public string Result { get; }
+        public string Result { get; } = result;
 
         public static EventHandlerResult PayloadError(string message) => new EventHandlerResult($"payload error: {message}");
         public static EventHandlerResult NoActionNeeded(string message) => new EventHandlerResult($"no action needed: {message}");

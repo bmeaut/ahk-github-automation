@@ -8,16 +8,13 @@ using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class PullRequestStatusTrackingHandler : RepositoryEventBase<PullRequestEventPayload>
+    public class PullRequestStatusTrackingHandler(
+        IGitHubClientFactory gitHubClientFactory,
+        IStatusTrackingStore statusTrackingStore,
+        IMemoryCache cache,
+        ILogger logger) : RepositoryEventBase<PullRequestEventPayload>(gitHubClientFactory, cache, logger)
     {
         public const string GitHubWebhookEventName = "pull_request";
-        private readonly IStatusTrackingStore statusTrackingStore;
-
-        public PullRequestStatusTrackingHandler(IGitHubClientFactory gitHubClientFactory, IStatusTrackingStore statusTrackingStore, IMemoryCache cache, ILogger logger)
-            : base(gitHubClientFactory, cache, logger)
-        {
-            this.statusTrackingStore = statusTrackingStore;
-        }
 
         protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
         {

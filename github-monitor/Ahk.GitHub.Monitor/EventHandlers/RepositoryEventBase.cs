@@ -8,20 +8,14 @@ using Octokit.Internal;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public abstract class RepositoryEventBase<TPayload> : IGitHubEventHandler
+    public abstract class RepositoryEventBase<TPayload>(
+        IGitHubClientFactory gitHubClientFactory,
+        IMemoryCache cache,
+        ILogger logger)
+        : IGitHubEventHandler
         where TPayload : ActivityPayload
     {
-        protected readonly ILogger Logger;
-
-        private readonly IGitHubClientFactory gitHubClientFactory;
-        private readonly IMemoryCache cache;
-
-        protected RepositoryEventBase(IGitHubClientFactory gitHubClientFactory, IMemoryCache cache, ILogger logger)
-        {
-            this.gitHubClientFactory = gitHubClientFactory;
-            this.cache = cache;
-            this.Logger = logger;
-        }
+        protected readonly ILogger Logger = logger;
 
         protected IGitHubClient GitHubClient { get; private set; }
 
