@@ -12,30 +12,24 @@ using GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
+using System.Security.Claims;
+
 namespace GradeManagement.Bll.Services;
 
-public class UserService : ICrudServiceBase<User>
+public class UserService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, AuthorizationService authorizationService)
+    : ICrudServiceBase<User>
 {
-    private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
-
-    public UserService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    {
-        _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
-    }
-
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        return await _gradeManagementDbContext.User
-            .ProjectTo<User>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.User
+            .ProjectTo<User>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
     public async Task<User> GetByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.User
-            .ProjectTo<User>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.User
+            .ProjectTo<User>(mapper.ConfigurationProvider)
             .SingleEntityAsync(u => u.Id == id, id);
     }
 
@@ -49,24 +43,24 @@ public class UserService : ICrudServiceBase<User>
             BmeEmail = requestDto.BmeEmail,
             Type = requestDto.Type
         };
-        _gradeManagementDbContext.User.Add(userEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<User>(userEntity);
+        gradeManagementDbContext.User.Add(userEntity);
+        await gradeManagementDbContext.SaveChangesAsync();
+        return mapper.Map<User>(userEntity);
     }
 
     public async Task DeleteAsync(long id)
     {
-        var userEntity = await _gradeManagementDbContext.User.SingleEntityAsync(u => u.Id == id, id);
-        var groupTeachers = await _gradeManagementDbContext.GroupTeacher
+        var userEntity = await gradeManagementDbContext.User.SingleEntityAsync(u => u.Id == id, id);
+        var groupTeachers = await gradeManagementDbContext.GroupTeacher
             .Where(gt => gt.UserId == id)
             .ToListAsync();
-        var subjectTeachers = await _gradeManagementDbContext.SubjectTeacher
+        var subjectTeachers = await gradeManagementDbContext.SubjectTeacher
             .Where(st => st.UserId == id)
             .ToListAsync();
-        _gradeManagementDbContext.SubjectTeacher.RemoveRange(subjectTeachers);
-        _gradeManagementDbContext.GroupTeacher.RemoveRange(groupTeachers);
-        _gradeManagementDbContext.User.Remove(userEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
+        gradeManagementDbContext.SubjectTeacher.RemoveRange(subjectTeachers);
+        gradeManagementDbContext.GroupTeacher.RemoveRange(groupTeachers);
+        gradeManagementDbContext.User.Remove(userEntity);
+        await gradeManagementDbContext.SaveChangesAsync();
     }
 
     public async Task<User> UpdateAsync(long id, User requestDto)
@@ -77,40 +71,40 @@ public class UserService : ICrudServiceBase<User>
                 "The Id from the query and the Id of the DTO do not match!");
         }
 
-        var userEntity = await _gradeManagementDbContext.User.SingleEntityAsync(u => u.Id == id, id);
+        var userEntity = await gradeManagementDbContext.User.SingleEntityAsync(u => u.Id == id, id);
         userEntity.Name = requestDto.Name;
         userEntity.NeptunCode = requestDto.NeptunCode;
         userEntity.GithubId = requestDto.GithubId;
         userEntity.BmeEmail = requestDto.BmeEmail;
         userEntity.Type = requestDto.Type;
 
-        await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<User>(userEntity);
+        await gradeManagementDbContext.SaveChangesAsync();
+        return mapper.Map<User>(userEntity);
     }
 
-    public async Task<List<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<List<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.User
+        return await gradeManagementDbContext.User
             .Where(u => u.Id == id)
             .SelectMany(u => u.GroupTeachers)
             .Select(gt => gt.Group)
-            .ProjectTo<Group>(_mapper.ConfigurationProvider)
+            .ProjectTo<GroupResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<List<Subject>> GetAllSubjectsByIdAsync(long id)
+    public async Task<List<SubjectResponse>> GetAllSubjectsByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.User
+        return await gradeManagementDbContext.User
             .Where(u => u.Id == id)
             .SelectMany(u => u.SubjectTeachers)
             .Select(st => st.Subject)
-            .ProjectTo<Subject>(_mapper.ConfigurationProvider)
+            .ProjectTo<SubjectResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
     public async Task<List<Data.Models.User>> GetAllUserEntitiesFromDtoListAsync(List<User> users)
     {
-        var userEntities = await _gradeManagementDbContext.User
+        var userEntities = await gradeManagementDbContext.User
             .Where(t => users.Select(rqT => rqT.Id).Contains(t.Id))
             .ToListAsync();
         if (userEntities.Count != users.Count)
@@ -129,21 +123,21 @@ public class UserService : ICrudServiceBase<User>
 
     public async Task<List<PullRequest>> GetAllPullRequestsByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.PullRequest
+        return await gradeManagementDbContext.PullRequest
             .Where(pr => pr.TeacherId == id)
-            .ProjectTo<PullRequest>(_mapper.ConfigurationProvider)
+            .ProjectTo<PullRequest>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
     public async Task<Data.Models.User> GetModelByGitHubIdAsync(string githubId)
     {
-        return await _gradeManagementDbContext.User
+        return await gradeManagementDbContext.User
             .SingleEntityAsync(u => u.GithubId == githubId, 0);
     }
 
     public async Task<Data.Models.User> GetOrCreateUserByEmailAsync(string email)
     {
-        var user = await _gradeManagementDbContext.User.Where(u => u.BmeEmail == email).FirstOrDefaultAsync();
+        var user = await gradeManagementDbContext.User.Where(u => u.BmeEmail == email).FirstOrDefaultAsync();
         if (user != null) return user;
         user = new Data.Models.User
         {
@@ -153,8 +147,14 @@ public class UserService : ICrudServiceBase<User>
             BmeEmail = email,
             Type = UserType.User
         };
-        _gradeManagementDbContext.User.Add(user);
-        await _gradeManagementDbContext.SaveChangesAsync();
+        gradeManagementDbContext.User.Add(user);
+        await gradeManagementDbContext.SaveChangesAsync();
         return user;
+    }
+
+    public async Task<User> GetCurrentUserAsync(ClaimsPrincipal httpContextUser)
+    {
+        var currentUser = await authorizationService.GetCurrentUserAsync(httpContextUser);
+        return mapper.Map<User>(currentUser);
     }
 }

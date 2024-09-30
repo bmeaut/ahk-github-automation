@@ -2,11 +2,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GradeManagement.Data;
+namespace GradeManagement.Data.Utils;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddGradeManagementDbContext(this IServiceCollection services, IConfiguration configuration, string connectionStringName)
+    public static IServiceCollection AddGradeManagementDbContext(this IServiceCollection services,
+        IConfiguration configuration, string connectionStringName)
     {
         services.AddDbContext<GradeManagementDbContext>(options =>
         {

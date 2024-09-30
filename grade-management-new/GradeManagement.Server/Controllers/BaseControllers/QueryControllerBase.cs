@@ -4,26 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers.BaseControllers;
 
-public abstract class QueryControllerBase<TDto> : ControllerBase
+public abstract class QueryControllerBase<TDto>(IQueryServiceBase<TDto> queryService) : ControllerBase
 {
-    private readonly IQueryServiceBase<TDto> _queryService;
-
-    protected QueryControllerBase(IQueryServiceBase<TDto> queryService)
-    {
-        _queryService = queryService;
-    }
-
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IEnumerable<TDto>> GetAllAsync()
+    public virtual async Task<IEnumerable<TDto>> GetAllAsync()
     {
-        return await _queryService.GetAllAsync();
+        return await queryService.GetAllAsync();
     }
 
     [HttpGet("{id:long}")]
-    public async Task<TDto> GetByIdAsync([FromRoute] long id)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public virtual async Task<TDto> GetByIdAsync([FromRoute] long id)
     {
-        return await _queryService.GetByIdAsync(id);
+        return await queryService.GetByIdAsync(id);
     }
 
 }

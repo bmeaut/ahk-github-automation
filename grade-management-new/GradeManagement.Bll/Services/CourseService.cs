@@ -6,14 +6,11 @@ using AutSoft.Linq.Queryable;
 
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
-using GradeManagement.Server.Authorization;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Response;
 using GradeManagement.Shared.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
-
-using System.Security.Claims;
 
 namespace GradeManagement.Bll.Services;
 
@@ -64,8 +61,9 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
     {
         if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
         {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException("Current subject does not match the subject of the course!");
         }
+
         var courseEntityToBeCreated = new Data.Models.Course
         {
             Id = requestDto.Id,
@@ -73,7 +71,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
             MoodleCourseId = requestDto.MoodleCourseId,
             SubjectId = requestDto.SubjectId,
             SemesterId = requestDto.Semester.Id,
-            LanguageId = requestDto.Language.Id
+            LanguageId = requestDto.Language.Id,
         };
         gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
         await gradeManagementDbContext.SaveChangesAsync();
@@ -87,19 +85,19 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync(long id)
+    public async Task<IEnumerable<ExerciseResponse>> GetAllExercisesByIdAsync(long id)
     {
         return await gradeManagementDbContext.Exercise
             .Where(e => e.CourseId == id)
-            .ProjectTo<Exercise>(mapper.ConfigurationProvider)
+            .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<IEnumerable<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
         return await gradeManagementDbContext.Group
             .Where(g => g.CourseId == id)
-            .ProjectTo<Group>(mapper.ConfigurationProvider)
+            .ProjectTo<GroupResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 }
