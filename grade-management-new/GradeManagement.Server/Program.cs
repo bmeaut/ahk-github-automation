@@ -54,8 +54,6 @@ namespace GradeManagement.Server
             builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
             builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
             builder.Services.AddProblemDetails();
-            builder.Services.AddMudServices();
-            builder.Services.AddMudExtensions();
 
             var app = builder.Build();
 
