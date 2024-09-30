@@ -50,7 +50,7 @@
     private ICollection<User> _availableUsers = new List<User>();
     private IEnumerable<User> _selectedUsers = new List<User>();
 
-    public async Task<IEnumerable<User>> SearchFunc(string search)
+    public async Task<IEnumerable<User>> SearchFunc(string search, CancellationToken token)
     {
         if (string.IsNullOrEmpty(search))
         {

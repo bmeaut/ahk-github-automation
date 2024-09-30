@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 using MudBlazor.Services;
 
+using MudExtensions.Services;
+
 using AuthorizationMessageHandler = GradeManagement.Client.Network.AuthorizationMessageHandler;
 
 namespace GradeManagement.Client
@@ -88,6 +90,7 @@ namespace GradeManagement.Client
 
 
             builder.Services.AddMudServices();
+            builder.Services.AddMudExtensions();
 
             await builder.Build().RunAsync();
         }

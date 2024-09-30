@@ -30,7 +30,7 @@
     <MudDivider Class="mb-4"/>
     <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent" Class="clickable-rows">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false" />
+            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false" />
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.MoodleCourseId" Title="Moodle Course Id"/>
             <TemplateColumn Title="Semester">

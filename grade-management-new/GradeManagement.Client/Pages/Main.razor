@@ -1,4 +1,5 @@
 @page "/"
+@using GradeManagement.Client.Components.NewDialogs
 @layout AuthenticatedLayout
 
 @inject SubjectService SubjectService
@@ -8,6 +9,8 @@
 @inject AssignmentClient AssignmentClient
 @inject DashboardClient DashboardClient
 @inject CrudSnackbarService SnackbarService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
 
 <style>
     .sort-direction-icon {
@@ -149,9 +152,25 @@
     private async Task Loading()
     {
         _selectedSubject = SubjectService.CurrentSubject;
+        _selectedSubject = null;
         if (_selectedSubject == null)
         {
-            SnackbarService.ShowMessage("New subject wizard is not implemented yet!");
+            var parameters = new DialogParameters();
+            parameters.Add("ContentText", "Nincs kiválasztott tantárgy. Szeretnél a varázsló oldalra navigálni?");
+            parameters.Add("ButtonText", "Igen");
+            parameters.Add("Color", Color.Primary);
+
+            var options = new DialogOptions() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+
+            var dialog = await DialogService.ShowAsync<ConfirmDialog>("Figyelmeztetés", parameters, options);
+            var result = await dialog.Result;
+
+            if (result is not null && !result.Canceled)
+            {
+                NavigationManager.NavigateTo("/wizard");
+                return;
+            }
+
             return;
         }
 

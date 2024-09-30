@@ -13,7 +13,7 @@
         <LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">
             <MudDataGrid Items="_subjects" T="Subject2" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
                 <Columns>
-                    <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+                    <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
                     <PropertyColumn Property="x => x.Name" Title="Name"/>
                     <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
                     <PropertyColumn Property="x => x.GitHubOrgName" Title="Github Org Name"/>

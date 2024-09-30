@@ -10,6 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 
+using MudBlazor.Services;
+
+using MudExtensions.Services;
+
 namespace GradeManagement.Server
 {
     public class Program
@@ -65,6 +69,8 @@ namespace GradeManagement.Server
             builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
             builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
             builder.Services.AddProblemDetails();
+            builder.Services.AddMudServices();
+            builder.Services.AddMudExtensions();
 
             var app = builder.Build();
 

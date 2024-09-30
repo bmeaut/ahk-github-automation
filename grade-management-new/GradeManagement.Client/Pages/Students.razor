@@ -15,7 +15,7 @@
     <MudDivider Class="mb-4"/>
     <MudDataGrid T="Student2" Items="_students" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
             <DataGridActions TItem="Student2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>

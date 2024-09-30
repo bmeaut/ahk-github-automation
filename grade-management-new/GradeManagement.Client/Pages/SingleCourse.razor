@@ -26,7 +26,7 @@
         <MudItem xs="12">
             <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
                 <MudText Typo="Typo.h6" Style="align-self: start">Exercises:</MudText>
-                <ExerciseDataGrid Values="_exercises"/>
+                @* <ExerciseDataGrid Values="_exercises"/> *@
                 <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewExerciseDialog">New Exercise</MudButton>
             </MudStack>
         </MudItem>
@@ -75,7 +75,7 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            var exercise = result.Data as Exercise;
+            var exercise = result.Data as Exercise2;
             exercise.CourseId = Id;
             await ExerciseClient.CreateAsync(exercise);
             SnackbarService.ShowAddSuccess();
