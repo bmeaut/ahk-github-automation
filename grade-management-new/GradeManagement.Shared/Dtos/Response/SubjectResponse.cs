@@ -1,6 +1,6 @@
 namespace GradeManagement.Shared.Dtos.Response;
 
-public class Subject
+public class SubjectResponse
 {
     public long Id { get; set; }
     public string Name { get; set; }

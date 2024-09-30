@@ -3,7 +3,7 @@
 
 <MudDataGrid T="Group2" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
-        <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+        <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
         <DataGridActions TItem="Group2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
     </Columns>

@@ -1,6 +1,8 @@
+using GradeManagement.Data.Models.Interfaces;
+
 namespace GradeManagement.Data.Models;
 
-public class Group : ISoftDelete
+public class Group : ISoftDelete, ITenant
 {
     public long Id { get; set; }
     public string Name { get; set; }
@@ -9,4 +11,5 @@ public class Group : ISoftDelete
     public List<GroupStudent> GroupStudents { get; set; }
     public List<GroupTeacher> GroupTeachers { get; set; }
     public bool IsDeleted { get; set; }
+    public long SubjectId { get; set; }
 }

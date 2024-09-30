@@ -1,8 +1,9 @@
+using GradeManagement.Data.Models.Interfaces;
 using GradeManagement.Shared.Enums;
 
 namespace GradeManagement.Data.Models;
 
-public class PullRequest : ISoftDelete
+public class PullRequest : ISoftDelete, ITenant
 {
     public long Id { get; set; }
     public string Url { get; set; }
@@ -16,4 +17,5 @@ public class PullRequest : ISoftDelete
     public List<AssignmentLog> AssignmentLogs { get; set; }
     public List<Score> Scores { get; set; }
     public bool IsDeleted { get; set; }
+    public long SubjectId { get; set; }
 }

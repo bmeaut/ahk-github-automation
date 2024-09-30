@@ -1,4 +1,6 @@
-﻿namespace GradeManagement.Data.Models;
+﻿using GradeManagement.Shared.Enums;
+
+namespace GradeManagement.Data.Models;
 
 public class SubjectTeacher : ISoftDelete
 {
@@ -7,5 +9,6 @@ public class SubjectTeacher : ISoftDelete
     public long SubjectId { get; set; }
     public User User { get; set; }
     public long UserId { get; set; }
+    public UserRoleOnSubject Role { get; set; }
     public bool IsDeleted { get; set; }
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+﻿using GradeManagement.Client.Services;
+
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 namespace GradeManagement.Client.Network;
 

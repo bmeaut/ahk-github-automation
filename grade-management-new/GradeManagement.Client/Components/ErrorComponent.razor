@@ -1,4 +1,6 @@
-﻿@if (Exception is not null)
+﻿@inject NavigationManager NavigationManager
+
+@if (Exception is not null)
 {
     <MudContainer>
         @if (Exception is ApiException)
@@ -25,6 +27,7 @@
     private void onClick()
     {
         ErrorBoundary?.Recover();
+        NavigationManager.NavigateTo("/");
     }
 
 }

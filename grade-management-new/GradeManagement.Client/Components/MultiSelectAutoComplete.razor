@@ -8,10 +8,10 @@
                      Variant="Variant.Outlined" CoerceValue="true"
                      ToStringFunc="@GetNameFunc"/>
 
-    <MudChipSet AllClosable=true OnClose="RemoveValue">
+    <MudChipSet T="T" AllClosable=true OnClose="RemoveValue">
         @foreach (var val in selectedValues)
         {
-            <MudChip Size=Size.Small @key="@GetIDFunc(val)" Text="@GetNameFunc(val)"/>
+            <MudChip T="T" Size=Size.Small @key="@GetIDFunc(val)" Text="@GetNameFunc(val)"/>
         }
     </MudChipSet>
 </div>
@@ -24,7 +24,7 @@
 
     [Parameter] public string Label { get; set; }
 
-    [Parameter, EditorRequired] public Func<string, Task<IEnumerable<T>>> SearchFunc { get; set; }
+    [Parameter, EditorRequired] public Func<string, CancellationToken, Task<IEnumerable<T>>> SearchFunc { get; set; }
 
     [Parameter, EditorRequired] public Func<T, string> GetNameFunc { get; set; }
 
@@ -54,7 +54,7 @@
         StateHasChanged();
     }
 
-    private void RemoveValue(MudChip chip)
+    private void RemoveValue(MudChip<T> chip)
     {
         if (selectedValues.RemoveWhere(x => GetNameFunc(x) == chip.Text) > 0)
             RefreshBinding();

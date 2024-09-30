@@ -5,7 +5,7 @@ namespace Ahk.GitHub.Monitor.Tests
 {
     internal static class SampleData
     {
-        public static readonly SampleCallbackData BranchCreate = new SampleCallbackData(getTextFromResource("branch_create.json"), "sha256=42197ad6cad74be8674363735038df64ca2ae8e8bdf027da60164adfbc561f4b", "create");
+        public static readonly SampleCallbackData BranchCreate = new(getTextFromResource("branch_create.json"), "sha256=42197ad6cad74be8674363735038df64ca2ae8e8bdf027da60164adfbc561f4b", "create");
         public static string CommentDelete = getTextFromResource("comment_delete.json");
         public static string CommentEdit = getTextFromResource("comment_edit.json");
         public static string CommentCommand = getTextFromResource("comment_command.json");

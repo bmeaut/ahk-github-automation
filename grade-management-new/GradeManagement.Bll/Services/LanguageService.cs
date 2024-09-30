@@ -11,28 +11,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class LanguageService : IRestrictedCrudServiceBase<Language>
+public class LanguageService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
+    : IRestrictedCrudServiceBase<Language>
 {
-    private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
-
-    public LanguageService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    {
-        _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
-    }
-
     public async Task<IEnumerable<Language>> GetAllAsync()
     {
-        return await _gradeManagementDbContext.Language
-            .ProjectTo<Language>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.Language
+            .ProjectTo<Language>(mapper.ConfigurationProvider)
             .OrderBy(l => l.Id).ToListAsync();
     }
 
     public async Task<Language> GetByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.Language
-            .ProjectTo<Language>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.Language
+            .ProjectTo<Language>(mapper.ConfigurationProvider)
             .SingleEntityAsync(l => l.Id == id, id);
     }
 
@@ -41,16 +33,16 @@ public class LanguageService : IRestrictedCrudServiceBase<Language>
         var languageEntity = new Data.Models.Language();
         languageEntity.Name = requestDto.Name;
 
-        _gradeManagementDbContext.Language.Add(languageEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
+        gradeManagementDbContext.Language.Add(languageEntity);
+        await gradeManagementDbContext.SaveChangesAsync();
 
-        return _mapper.Map<Language>(languageEntity);
+        return mapper.Map<Language>(languageEntity);
     }
 
     public async Task DeleteAsync(long id)
     {
-        var languageEntity = await _gradeManagementDbContext.Language.SingleEntityAsync(l => l.Id == id, id);
-        _gradeManagementDbContext.Language.Remove(languageEntity);
-        _gradeManagementDbContext.SaveChanges();
+        var languageEntity = await gradeManagementDbContext.Language.SingleEntityAsync(l => l.Id == id, id);
+        gradeManagementDbContext.Language.Remove(languageEntity);
+        gradeManagementDbContext.SaveChanges();
     }
 }

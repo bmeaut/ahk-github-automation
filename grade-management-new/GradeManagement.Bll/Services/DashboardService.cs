@@ -7,24 +7,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class DashboardService
+public class DashboardService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
 {
-    private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
-
-    public DashboardService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    {
-        _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
-    }
-
     public async Task<IEnumerable<Dashboard>> GetAllDashboardDtosForSubjectAsync(long subjectId)
     {
-        var assignments = _gradeManagementDbContext.Assignment
+        var assignments = await gradeManagementDbContext.Assignment
             .Include(a => a.Student)
             .Include(a => a.Exercise).ThenInclude(e => e.Course)
             .Include(a => a.PullRequests).ThenInclude(pr => pr.Scores).ThenInclude(s => s.ScoreType)
-            .Where(a => a.Exercise.Course.SubjectId == subjectId);
+            .Where(a => a.Exercise.Course.SubjectId == subjectId).ToListAsync();
         var dashboardDtos = new List<Dashboard>();
         foreach (var assignment in assignments)
         {
@@ -34,11 +25,12 @@ public class DashboardService
                 GithubRepoUrl = assignment.GithubRepoUrl,
                 ExerciseName = assignment.Exercise.Name,
                 CourseName = assignment.Exercise.Course.Name,
-                PullRequests = _mapper.Map<List<PullRequestForDashboard>>(assignment.PullRequests),
+                PullRequests = mapper.Map<List<PullRequestForDashboard>>(assignment.PullRequests),
                 StudentNeptun = assignment.Student.NeptunCode
             };
             dashboardDtos.Add(dashboardDto);
         }
+
         return dashboardDtos;
     }
 }

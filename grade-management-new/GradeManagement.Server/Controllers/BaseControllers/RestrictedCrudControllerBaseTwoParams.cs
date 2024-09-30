@@ -17,7 +17,7 @@ public abstract class RestrictedCrudControllerBase<TRequestDto, TResponseDto>(
 
     [HttpDelete("{id:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult> DeleteAsync([FromRoute] long id)
+    public virtual async Task<ActionResult> DeleteAsync([FromRoute] long id)
     {
         await restrictedCrudService.DeleteAsync(id);
         return NoContent();

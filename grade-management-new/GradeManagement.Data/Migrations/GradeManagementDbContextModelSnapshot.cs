@@ -47,6 +47,9 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long>("StudentId")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("SubjectId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ExerciseId");
@@ -153,6 +156,9 @@ namespace GradeManagement.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<long>("SubjectId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset>("dueDate")
                         .HasColumnType("datetimeoffset");
 
@@ -180,6 +186,9 @@ namespace GradeManagement.Data.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("SubjectId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -284,6 +293,9 @@ namespace GradeManagement.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<long>("SubjectId")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("TeacherId")
                         .HasColumnType("bigint");
 
@@ -323,6 +335,9 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long>("ScoreTypeId")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("SubjectId")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("TeacherId")
                         .HasColumnType("bigint");
 
@@ -358,6 +373,40 @@ namespace GradeManagement.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ScoreType");
+                });
+
+            modelBuilder.Entity("GradeManagement.Data.Models.ScoreTypeExercise", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ExerciseId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("ScoreId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ScoreTypeId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("ScoreId");
+
+                    b.HasIndex("ScoreTypeId");
+
+                    b.ToTable("ScoreTypeExercise");
                 });
 
             modelBuilder.Entity("GradeManagement.Data.Models.Semester", b =>
@@ -444,6 +493,9 @@ namespace GradeManagement.Data.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.Property<long>("SubjectId")
                         .HasColumnType("bigint");
@@ -663,6 +715,30 @@ namespace GradeManagement.Data.Migrations
                     b.Navigation("Teacher");
                 });
 
+            modelBuilder.Entity("GradeManagement.Data.Models.ScoreTypeExercise", b =>
+                {
+                    b.HasOne("GradeManagement.Data.Models.Exercise", "Exercise")
+                        .WithMany("ScoreTypeExercises")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GradeManagement.Data.Models.Score", null)
+                        .WithMany("ScoreTypeExercises")
+                        .HasForeignKey("ScoreId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("GradeManagement.Data.Models.ScoreType", "ScoreType")
+                        .WithMany()
+                        .HasForeignKey("ScoreTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("ScoreType");
+                });
+
             modelBuilder.Entity("GradeManagement.Data.Models.SubjectTeacher", b =>
                 {
                     b.HasOne("GradeManagement.Data.Models.Subject", "Subject")
@@ -699,6 +775,8 @@ namespace GradeManagement.Data.Migrations
             modelBuilder.Entity("GradeManagement.Data.Models.Exercise", b =>
                 {
                     b.Navigation("Assignments");
+
+                    b.Navigation("ScoreTypeExercises");
                 });
 
             modelBuilder.Entity("GradeManagement.Data.Models.Group", b =>
@@ -718,6 +796,11 @@ namespace GradeManagement.Data.Migrations
                     b.Navigation("AssignmentLogs");
 
                     b.Navigation("Scores");
+                });
+
+            modelBuilder.Entity("GradeManagement.Data.Models.Score", b =>
+                {
+                    b.Navigation("ScoreTypeExercises");
                 });
 
             modelBuilder.Entity("GradeManagement.Data.Models.ScoreType", b =>

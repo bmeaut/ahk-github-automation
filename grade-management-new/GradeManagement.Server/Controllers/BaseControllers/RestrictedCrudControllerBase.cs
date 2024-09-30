@@ -9,14 +9,14 @@ public abstract class RestrictedCrudControllerBase<TDto>(IRestrictedCrudServiceB
 {
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<TDto> CreateAsync([FromBody] TDto requestDto)
+    public virtual async Task<TDto> CreateAsync([FromBody] TDto requestDto)
     {
         return await restrictedCrudService.CreateAsync(requestDto);
     }
 
     [HttpDelete("{id:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult> DeleteAsync([FromRoute] long id)
+    public virtual async Task<ActionResult> DeleteAsync([FromRoute] long id)
     {
         await restrictedCrudService.DeleteAsync(id);
         return NoContent();

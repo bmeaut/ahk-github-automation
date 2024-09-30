@@ -1,6 +1,8 @@
+using GradeManagement.Data.Models.Interfaces;
+
 namespace GradeManagement.Data.Models;
 
-public class Assignment : ISoftDelete
+public class Assignment : ISoftDelete, ITenant
 {
     public long Id { get; set; }
     public string GithubRepoName { get; set; }
@@ -12,4 +14,5 @@ public class Assignment : ISoftDelete
     public List<PullRequest> PullRequests { get; set; }
     public List<AssignmentLog> AssignmentLogs { get; set; }
     public bool IsDeleted { get; set; }
+    public long SubjectId { get; set; }
 }

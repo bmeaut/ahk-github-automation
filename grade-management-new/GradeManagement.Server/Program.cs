@@ -1,12 +1,17 @@
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;
-using GradeManagement.Server.ExceptionHandlers;
-using GradeManagement.Shared.Authorization.Handlers;
-using GradeManagement.Shared.Authorization.Policies;
+using GradeManagement.Data.Utils;
+using GradeManagement.Server.Authorization;
+using GradeManagement.Server.Middlewares;
+using GradeManagement.Server.Middlewares.ExceptionHandlers;
+
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
+
+using MudBlazor.Services;
+
+using MudExtensions.Services;
 
 namespace GradeManagement.Server
 {
@@ -18,10 +23,12 @@ namespace GradeManagement.Server
 
 
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
-            builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
 
-            builder.Services.AddAuthorizationBuilder()
-                .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
+            builder.Services.AddClaimsTransformation();
+            builder.Services.AddPolicies();
+            builder.Services.AddRequirementHandlers();
+
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
@@ -66,6 +73,7 @@ namespace GradeManagement.Server
             app.UseHttpsRedirection();
 
             app.UseExceptionHandler();
+            app.UseMiddleware<HeaderMiddleware>();
 
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();
