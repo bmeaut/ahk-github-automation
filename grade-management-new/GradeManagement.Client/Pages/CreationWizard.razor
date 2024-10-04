@@ -1,123 +1,163 @@
 ﻿@page "/wizard"
 @layout AuthenticatedLayout
-@inject ISnackbar Snackbar
+@inject CrudSnackbarService SnackbarService
+@inject IDialogService DialogService
+@inject SubjectClient SubjectClient
+@inject SubjectService SubjectService
+@inject LanguageClient LanguageClient
+@inject SemesterClient SemesterClient
+@inject CourseClient CourseClient
+@inject NavigationManager NavigationManager
+
+@using GradeManagement.Client.Components.NewDialogs
 @using MudExtensions
 @using MudBlazor.Extensions
 @using MudExtensions.Utilities
 
-<MudGrid Class="cursor-default">
-    <MudItem xs="12" sm="8" Class="d-flex align-center">
-        <MudStepperExtended Class="mud-width-full" ContentStyle="min-height: 400px" Linear="_linear" Vertical="_vertical" Color="_color" Variant="_variant"
-                            Animation="_animation" ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton"
-                            ShowSkipButton="_showSkipButton" ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
-                            HeaderTextView="HeaderTextView.All" LocalizedStrings="GetLocalizedStrings()" IconActionButtons="_iconActionButtons" HeaderSize="_headerSize"
-                            StepperActionsJustify="StepperActionsJustify.SpaceBetween">
-            <StaticContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudAvatar Color="_color">ST</MudAvatar>
-                    <MudText>This is a static content which shows with each step.</MudText>
-                </MudStack>
-            </StaticContent>
+<MudStepperExtended @ref="_stepper" Class="mud-width-full" ContentStyle="min-height: 400px" Variant="_variant"
+                    ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton" ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
+                    HeaderTextView="HeaderTextView.All" HeaderSize="_headerSize"
+                    StepperActionsJustify="StepperActionsJustify.SpaceBetween">
+    <StaticContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudAvatar Color="_color">ST</MudAvatar>
+            <MudText>This is a static content which shows with each step.</MudText>
+        </MudStack>
+    </StaticContent>
+    <ChildContent>
+        <MudStepExtended Icon="@Icons.Material.Filled.Approval" Title="New Subject" StatusChanged="StatusChanged">
             <ChildContent>
-                <MudStepExtended Icon="@Icons.Material.Filled.Approval" Title="Customer Info" StatusChanged="StatusChanged">
-                    <ChildContent>
-                        <MudForm @ref="_form">
-                            <MudStack>
-                                <MudTextField T="string" Label="Name" Variant="_variant" Required="true"/>
-                                <MudTextField T="string" Label="Last Name" Variant="_variant"/>
-                                <MudTextField T="string" Label="Adress" Variant="_variant"/>
-                            </MudStack>
-                        </MudForm>
-                    </ChildContent>
-                </MudStepExtended>
-                <MudStepExtended Title="Booking Spec." Icon="@Icons.Material.Filled.MoreVert" Optional="true">
-                    <ChildContent>
-                        <MudCheckBox T="bool" Label="Early Check-in" Color="_color"/>
-                        <MudCheckBox T="bool" Label="Late Check-out" Color="_color"/>
-                        <MudCheckBox T="bool" Label="Twin Bed" Color="_color"/>
-                    </ChildContent>
-                </MudStepExtended>
-                <MudStepExtended Icon="@Icons.Material.Filled.Money" Title="Payment">
-                    <ChildContent>
-                        <MudForm @ref="_form2">
-                            <MudStack>
-                                <MudTextField T="string" Label="Card Number" Variant="_variant" Required="true"/>
-                                <MudStack Row="true">
-                                    <MudTextField T="string" Label="Expire Date" Variant="_variant" Required="true"/>
-                                    <MudTextField T="string" Label="CVC" Variant="_variant" Required="true"/>
-                                </MudStack>
-                            </MudStack>
-                        </MudForm>
-                    </ChildContent>
-                </MudStepExtended>
-
-                @if (_addResultStep)
-                {
-                    <MudStepExtended Icon="@Icons.Material.Filled.Alarm" Title="Result Step" IsResultStep="true">
-                        <ChildContent>
-                            <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                                <MudIconButton Icon="@Icons.Material.Filled.DoneAll" Size="Size.Large" Variant="Variant.Filled" Color="Color.Success"/>
-                                <MudText>Your reservation successfully completed.</MudText>
-                            </div>
-                        </ChildContent>
-                    </MudStepExtended>
-                }
+                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSubjectDialog">Add New Subject</MudButton>
+                </div>
             </ChildContent>
-            <ActionContent>
-                @* <MudSpacer /> *@
-            </ActionContent>
-        </MudStepperExtended>
-    </MudItem>
-</MudGrid>
+        </MudStepExtended>
+        <MudStepExtended Icon="@Icons.Material.Filled.MoreVert" Title="New Language" Optional="true">
+            <ChildContent>
+                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewLanguageDialog">Add New Language</MudButton>
+                </div>
+            </ChildContent>
+        </MudStepExtended>
+        <MudStepExtended Icon="@Icons.Material.Filled.MoreVert" Title="New Semester" Optional="true">
+            <ChildContent>
+                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSemesterDialog">Add New Semester</MudButton>
+                </div>
+            </ChildContent>
+        </MudStepExtended>
+        <MudStepExtended Icon="@Icons.Material.Filled.MoreVert" Title="New Course" Optional="true">
+            <ChildContent>
+                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">Add New Course</MudButton>
+                </div>
+            </ChildContent>
+        </MudStepExtended>
+
+        <MudStepExtended Icon="@Icons.Material.Filled.Alarm" Title="Result Step" IsResultStep="true">
+            <ChildContent>
+                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                    <MudText>For additional steps view Course.</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NavigateToCourse">Course view</MudButton>
+                </div>
+            </ChildContent>
+        </MudStepExtended>
+    </ChildContent>
+</MudStepperExtended>
 
 @code {
-    MudForm? _form = new();
-    MudForm? _form2 = new();
-    bool _checkValidationBeforeComplete = false;
-    bool _linear;
-    bool _mobileView;
-    bool _iconActionButtons;
+    MudStepperExtended _stepper;
     Variant _variant = Variant.Filled;
-    bool _animation = true;
     bool _showPreviousButton = true;
     bool _showNextButton = true;
-    bool _showSkipButton = true;
     bool _showStepResultIndicator = true;
     bool _addResultStep = true;
-    bool _customLocalization = false;
     Color _color = Color.Primary;
-    int _activeIndex = 0;
-    bool _loading;
-    bool _showStaticContent = false;
-    bool _showCustomButton = false;
-    bool _vertical = false;
     Size _headerSize = Size.Medium;
 
+    Course? _course;
 
-    private void StatusChanged(StepStatus status)
+    private async Task ShowNewSubjectDialog()
     {
-        Snackbar.Add($"First step {status.ToDescriptionString()}.", Severity.Info);
+        var dialog = await DialogService.ShowAsync<NewSubjectDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+            Subject ret = await SubjectClient.CreateAsync(result.Data as Subject2);
+            SnackbarService.ShowAddSuccess();
+            SubjectService.CurrentSubject = ret;
+            await _stepper.CompleteStep(0);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Subject creation failed.");
+        }
     }
 
-    private StepperLocalizedStrings GetLocalizedStrings()
+    private async Task ShowNewLanguageDialog()
     {
-        if (_customLocalization == false)
+        var dialog = await DialogService.ShowAsync<NewLanguageDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
         {
-            return new StepperLocalizedStrings();
+            Language ret = await LanguageClient.CreateAsync(result.Data as Language);
+            SnackbarService.ShowAddSuccess();
+            await _stepper.CompleteStep(1);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Language creation failed.");
+        }
+    }
+
+    private async Task ShowNewSemesterDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewSemesterDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+            Semester ret = await SemesterClient.CreateAsync(result.Data as Semester);
+            SnackbarService.ShowAddSuccess();
+            await _stepper.CompleteStep(2);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Semester creation failed.");
+        }
+    }
+
+    private async Task ShowNewCourseDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewCourseDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+            var newCourse = result.Data as Course;
+            newCourse.SubjectId = SubjectService.CurrentSubject.Id;
+            _course = await CourseClient.CreateAsync(newCourse);
+            await _stepper.CompleteStep(3);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Course creation failed.");
+        }
+    }
+
+    private void NavigateToCourse()
+    {
+        if (_course != null)
+        {
+            NavigationManager.NavigateTo($"/courses/{_course.Id}");
         }
         else
         {
-            return new StepperLocalizedStrings()
-            {
-                Completed = "Abgeschlossen",
-                Finish = "Fertig",
-                Next = "Nächste",
-                Optional = "Optional",
-                Previous = "Früher",
-                Skip = "überspringen",
-                Skipped = "übersprungen",
-            };
+            SnackbarService.ShowError("Course not created.");
         }
+    }
+
+    private void StatusChanged(StepStatus status)
+    {
+        //Snackbar.Add($"First step {status.ToDescriptionString()}.", Severity.Info);
     }
 
 }
