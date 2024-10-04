@@ -15,10 +15,10 @@
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
-            <DataGridActions TItem="Language" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+            <DataGridActions TItem="Language" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem" AddEdit="false"/>
         </Columns>
     </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {

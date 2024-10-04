@@ -2,8 +2,14 @@
 <TemplateColumn Title="Actions" T="TItem">
     <CellTemplate>
         <MudStack Row>
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+            @if (AddEdit)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
+            }
+            @if (AddDelete)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
+            }
         </MudStack>
     </CellTemplate>
 </TemplateColumn>
@@ -13,6 +19,9 @@
 
     [Parameter] public Func<CellContext<TItem>, Task>? OnEditItem { get; set; }
     [Parameter] public Func<TItem, Task>? OnDeleteItem { get; set; }
+    [Parameter] public bool AddEdit { get; set; } = true;
+    [Parameter] public bool AddDelete { get; set; } = true;
+
 
     private async Task StartEditing(CellContext<TItem> context)
     {

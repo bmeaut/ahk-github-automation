@@ -11,7 +11,6 @@
 @inject NavigationManager NavigationManager
 
 
-
 <style>
     .clickable-rows .mud-table-body .mud-table-row {
         cursor: pointer;
@@ -30,7 +29,7 @@
     <MudDivider Class="mb-4"/>
     <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent" Class="clickable-rows">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false" />
+            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.MoodleCourseId" Title="Moodle Course Id"/>
             <TemplateColumn Title="Semester">
@@ -52,7 +51,7 @@
             <DataGridActions TItem="Course" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {
@@ -75,7 +74,7 @@
     private async Task OpenDialog()
     {
         var dialog = await DialogService.ShowAsync<NewCourseDialog>("Hello");
-        var result = await dialog.Result;
+        var result = await dialog.Result ?? DialogResult.Cancel();
         if (!result.Canceled && result.Data != null)
         {
             var newCourse = result.Data as Course;

@@ -64,8 +64,9 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
     {
         if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
         {
-            throw new UnauthorizedException();
+            //throw new UnauthorizedException();
         }
+
         var courseEntityToBeCreated = new Data.Models.Course
         {
             Id = requestDto.Id,
