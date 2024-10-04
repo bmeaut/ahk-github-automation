@@ -16,7 +16,7 @@ using System.Security.Claims;
 
 namespace GradeManagement.Bll.Services;
 
-public class UserService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, AuthorizationService authorizationService)
+public class UserService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     : ICrudServiceBase<User>
 {
     public async Task<IEnumerable<User>> GetAllAsync()
@@ -154,7 +154,10 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
 
     public async Task<User> GetCurrentUserAsync(ClaimsPrincipal httpContextUser)
     {
-        var currentUser = await authorizationService.GetCurrentUserAsync(httpContextUser);
-        return mapper.Map<User>(currentUser);
+        var email = AuthorizationHelper.GetCurrentUserEmail(httpContextUser);
+        var currentUser = await gradeManagementDbContext.User
+            .ProjectTo<User>(mapper.ConfigurationProvider)
+            .SingleEntityAsync(u => u.BmeEmail == email, 0);
+        return currentUser;
     }
 }

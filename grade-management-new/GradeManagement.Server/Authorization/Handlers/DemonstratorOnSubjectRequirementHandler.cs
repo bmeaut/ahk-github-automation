@@ -1,15 +1,11 @@
-﻿using GradeManagement.Bll.Services;
-using GradeManagement.Data;
-using GradeManagement.Server.Authorization.Policies;
+﻿using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 
-using System.Security.Claims;
-
 namespace GradeManagement.Server.Authorization.Handlers;
 
-public class DemonstratorOnSubjectRequirementHandler(HttpContextAccessor httpContextAccessor, UserService userService)
+public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpContextAccessor)
     : AuthorizationHandler<DemonstratorOnSubjectRequirement>
 {
     protected override Task HandleRequirementAsync(

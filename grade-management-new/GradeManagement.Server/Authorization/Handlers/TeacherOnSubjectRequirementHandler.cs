@@ -9,9 +9,9 @@ using System.Security.Claims;
 
 namespace GradeManagement.Server.Authorization.Handlers;
 
-public class TeacherOnSubjectRequirementHandler(UserService userService, HttpContextAccessor httpContextAccessor) : AuthorizationHandler<TeacherOnSubjectRequirement>
+public class TeacherOnSubjectRequirementHandler(IHttpContextAccessor httpContextAccessor)
+    : AuthorizationHandler<TeacherOnSubjectRequirement>
 {
-
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context, TeacherOnSubjectRequirement requirement)
     {
@@ -32,9 +32,11 @@ public class TeacherOnSubjectRequirementHandler(UserService userService, HttpCon
         {
             if (long.TryParse(subjectIdHeader, out var subjectId))
             {
-                var subjectAccessClaims = context.User.FindAll(CustomClaimTypes.SubjectAccess).Select(c => c.Value).ToList();
+                var subjectAccessClaims =
+                    context.User.FindAll(CustomClaimTypes.SubjectAccess).Select(c => c.Value).ToList();
                 var roleOnSubjectClaim = context.User.FindFirst($"{CustomClaimTypes.AccessLevel}_{subjectId}");
-                if (subjectAccessClaims.Contains(subjectId.ToString()) && roleOnSubjectClaim != null && roleOnSubjectClaim.Value == UserRoleOnSubject.Teacher.ToString())
+                if (subjectAccessClaims.Contains(subjectId.ToString()) && roleOnSubjectClaim != null &&
+                    roleOnSubjectClaim.Value == UserRoleOnSubject.Teacher.ToString())
                 {
                     context.Succeed(requirement);
                     return Task.CompletedTask;
@@ -45,5 +47,4 @@ public class TeacherOnSubjectRequirementHandler(UserService userService, HttpCon
         context.Fail();
         return Task.CompletedTask;
     }
-
 }

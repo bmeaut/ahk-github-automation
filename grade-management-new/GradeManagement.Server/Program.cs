@@ -17,14 +17,13 @@ namespace GradeManagement.Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
 
             builder.Services.AddClaimsTransformation();
             builder.Services.AddPolicies();
             builder.Services.AddRequirementHandlers();
-
-            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDbContext<GradeManagementDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));

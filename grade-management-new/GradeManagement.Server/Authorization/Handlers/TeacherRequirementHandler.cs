@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace GradeManagement.Server.Authorization.Handlers;
 
-public class TeacherRequirementHandler(UserService userService) : AuthorizationHandler<TeacherRequirement>
+public class TeacherRequirementHandler : AuthorizationHandler<TeacherRequirement>
 {
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context, TeacherRequirement requirement)
