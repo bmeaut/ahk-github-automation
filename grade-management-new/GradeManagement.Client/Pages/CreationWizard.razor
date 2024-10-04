@@ -14,56 +14,60 @@
 @using MudBlazor.Extensions
 @using MudExtensions.Utilities
 
-<MudStepperExtended @ref="_stepper" Class="mud-width-full" ContentStyle="min-height: 400px" Variant="_variant"
-                    ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton" ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
-                    HeaderTextView="HeaderTextView.All" HeaderSize="_headerSize"
-                    StepperActionsJustify="StepperActionsJustify.SpaceBetween">
-    <StaticContent>
-        <MudStack Row="true" AlignItems="AlignItems.Center">
-            <MudAvatar Color="_color">ST</MudAvatar>
-            <MudText>This is a static content which shows with each step.</MudText>
-        </MudStack>
-    </StaticContent>
-    <ChildContent>
-        <MudStepExtended Icon="@Icons.Material.Filled.Approval" Title="New Subject" StatusChanged="StatusChanged">
+<MudCard Class="d-flex align-center justify-center mt-5 mx-2">
+    <MudCardContent Style="width: 100%">
+        <MudStepperExtended @ref="_stepper" Class="mud-width-full" Variant="_variant"
+                            ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton" ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
+                            HeaderTextView="HeaderTextView.All" HeaderSize="_headerSize"
+                            StepperActionsJustify="StepperActionsJustify.SpaceBetween">
+            @* <StaticContent> *@
+            @*     <MudStack Row="true" AlignItems="AlignItems.Center"> *@
+            @*         <MudAvatar Color="_color">ST</MudAvatar> *@
+            @*         <MudText>This is a static content which shows with each step.</MudText> *@
+            @*     </MudStack> *@
+            @* </StaticContent> *@
             <ChildContent>
-                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSubjectDialog">Add New Subject</MudButton>
-                </div>
-            </ChildContent>
-        </MudStepExtended>
-        <MudStepExtended Icon="@Icons.Material.Filled.MoreVert" Title="New Language" Optional="true">
-            <ChildContent>
-                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewLanguageDialog">Add New Language</MudButton>
-                </div>
-            </ChildContent>
-        </MudStepExtended>
-        <MudStepExtended Icon="@Icons.Material.Filled.MoreVert" Title="New Semester" Optional="true">
-            <ChildContent>
-                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSemesterDialog">Add New Semester</MudButton>
-                </div>
-            </ChildContent>
-        </MudStepExtended>
-        <MudStepExtended Icon="@Icons.Material.Filled.MoreVert" Title="New Course" Optional="true">
-            <ChildContent>
-                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">Add New Course</MudButton>
-                </div>
-            </ChildContent>
-        </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.Book" Title="New Subject" StatusChanged="StatusChanged">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSubjectDialog">Add New Subject</MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.Language" Title="New Language" Optional="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewLanguageDialog">Add New Language</MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.CalendarToday" Title="New Semester" Optional="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSemesterDialog">Add New Semester</MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.School" Title="New Course" Optional="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">Add New Course</MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
 
-        <MudStepExtended Icon="@Icons.Material.Filled.Alarm" Title="Result Step" IsResultStep="true">
-            <ChildContent>
-                <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                    <MudText>For additional steps view Course.</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NavigateToCourse">Course view</MudButton>
-                </div>
+                <MudStepExtended Icon="@Icons.Material.Filled.Assessment" Title="Result Step" IsResultStep="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudText>For additional steps view Course.</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NavigateToCourse">Course view</MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
             </ChildContent>
-        </MudStepExtended>
-    </ChildContent>
-</MudStepperExtended>
+        </MudStepperExtended>
+    </MudCardContent>
+</MudCard>
 
 @code {
     MudStepperExtended _stepper;
