@@ -21,7 +21,7 @@ public class AssignmentGradedByTeacherEventFunction
 
     [Function(nameof(AssignmentGradedByTeacherEventFunction))]
     public async Task Run(
-        [QueueTrigger("assignment-graded-by-teacher", Connection = "AHK_EventsQueueConnectionString")]
+        [QueueTrigger("ahkstatustracking-assignment-graded-by-teacher", Connection = "AHK_EventsQueueConnectionString")]
         AssignmentGradedByTeacher assignmentGradedByTeacher)
     {
         _logger.LogInformation(

@@ -7,27 +7,19 @@ using Microsoft.Extensions.Logging;
 
 namespace GradeManagement.QueueFunction.Functions;
 
-public class TeacherAssignedEventFunction
+public class TeacherAssignedEventFunction(
+    ILogger<TeacherAssignedEventFunction> logger,
+    AssignmentEventProcessorService assignmentEventProcessorService)
 {
-    private readonly ILogger<TeacherAssignedEventFunction> _logger;
-    private readonly AssignmentEventProcessorService _assignmentEventProcessorService;
-
-    public TeacherAssignedEventFunction(ILogger<TeacherAssignedEventFunction> logger,
-        AssignmentEventProcessorService assignmentEventProcessorService)
-    {
-        _logger = logger;
-        _assignmentEventProcessorService = assignmentEventProcessorService;
-    }
-
     [Function(nameof(TeacherAssignedEventFunction))]
     public async Task Run(
-        [QueueTrigger("teacher-assigned", Connection = "AHK_EventsQueueConnectionString")]
+        [QueueTrigger("ahkstatustracking-teacher-assigned", Connection = "AHK_EventsQueueConnectionString")]
         TeacherAssigned teacherAssigned)
     {
-        _logger.LogInformation(
+        logger.LogInformation(
             $"Teacher assigned event function triggered for repo url: {teacherAssigned.GitHubRepositoryUrl}");
-        await _assignmentEventProcessorService.ConsumeTeacherAssignedEventAsync(teacherAssigned);
-        _logger.LogInformation(
+        await assignmentEventProcessorService.ConsumeTeacherAssignedEventAsync(teacherAssigned);
+        logger.LogInformation(
             $"Teacher assigned event consumed for repo url: {teacherAssigned.GitHubRepositoryUrl}");
     }
 }

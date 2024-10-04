@@ -1,4 +1,6 @@
-﻿using GradeManagement.Data;
+﻿using AutSoft.Common.Exceptions;
+
+using GradeManagement.Data;
 using GradeManagement.Data.Models;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 using GradeManagement.Shared.Enums;
@@ -160,24 +162,37 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var repositoryName = GetRepositoryNameFromUrl(teacherAssigned.GitHubRepositoryUrl);
-            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
-            var teacher = await userService.GetModelByGitHubIdAsync(teacherAssigned.TeacherGitHubId);
-            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(teacherAssigned.PullRequestUrl);
-            pullRequest.TeacherId = teacher.Id;
-            await gradeManagementDbContext.SaveChangesAsync();
-
-            var assignmentLog = new AssignmentLog()
+            foreach (var teacherGithubId in teacherAssigned.TeacherGitHubIds)
             {
-                EventType = EventType.TeacherAssigned,
-                Description =
-                    $"Teacher {teacher.GithubId} assigned to pull request {pullRequest.Url} with id {pullRequest.Id}",
-                AssignmentId = assignment.Id,
-                PullRequestId = pullRequest.Id
-            };
-            await assignmentLogService.CreateAsync(assignmentLog);
+                User teacherModel;
+                try
+                {
+                    teacherModel = await userService.GetModelByGitHubIdAsync(teacherGithubId);
+                }
+                catch (EntityNotFoundException)
+                {
+                    continue; // Skip if teacher not found, maybe faulty assignment
+                }
 
-            await transaction.CommitAsync();
+                var repositoryName = GetRepositoryNameFromUrl(teacherAssigned.GitHubRepositoryUrl);
+                var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
+                var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(teacherAssigned.PullRequestUrl);
+                pullRequest.TeacherId = teacherModel.Id;
+                await gradeManagementDbContext.SaveChangesAsync();
+
+                var assignmentLog = new AssignmentLog()
+                {
+                    EventType = EventType.TeacherAssigned,
+                    Description =
+                        $"Teacher {teacherModel.GithubId} assigned to pull request {pullRequest.Url} with id {pullRequest.Id}",
+                    AssignmentId = assignment.Id,
+                    PullRequestId = pullRequest.Id
+                };
+                await assignmentLogService.CreateAsync(assignmentLog);
+
+                await transaction.CommitAsync();
+            }
+
         }
         catch
         {
