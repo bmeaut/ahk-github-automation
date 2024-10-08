@@ -92,6 +92,7 @@ namespace GradeManagement.Client
             builder.Services.AddMudServices();
             builder.Services.AddMudExtensions();
 
+
             await builder.Build().RunAsync();
         }
     }

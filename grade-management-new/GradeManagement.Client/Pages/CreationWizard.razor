@@ -14,12 +14,21 @@
 @using MudBlazor.Extensions
 @using MudExtensions.Utilities
 
+<style>
+    .selected-item {
+        background-color: #e0e0e0; /* Light grey background */
+        font-weight: bold !important;
+    }
+</style>
+
 <MudCard Class="d-flex align-center justify-center mt-5 mx-2">
     <MudCardContent Style="width: 100%">
         <MudStepperExtended @ref="_stepper" Class="mud-width-full" Variant="_variant"
-                            ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton" ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
+                            ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton"
+                            ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
                             HeaderTextView="HeaderTextView.All" HeaderSize="_headerSize"
-                            StepperActionsJustify="StepperActionsJustify.SpaceBetween">
+                            StepperActionsJustify="StepperActionsJustify.SpaceBetween"
+                            ActiveStepChanged="ActiveStepChanged">
             @* <StaticContent> *@
             @*     <MudStack Row="true" AlignItems="AlignItems.Center"> *@
             @*         <MudAvatar Color="_color">ST</MudAvatar> *@
@@ -27,31 +36,89 @@
             @*     </MudStack> *@
             @* </StaticContent> *@
             <ChildContent>
-                <MudStepExtended Icon="@Icons.Material.Filled.Book" Title="New Subject" StatusChanged="StatusChanged">
+                <MudStepExtended Icon="@Icons.Material.Filled.Book" Title="New Subject">
                     <ChildContent>
                         <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSubjectDialog">Add New Subject</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSubjectDialog">
+                                Add
+                                New Subject
+                            </MudButton>
                         </div>
                     </ChildContent>
                 </MudStepExtended>
                 <MudStepExtended Icon="@Icons.Material.Filled.Language" Title="New Language" Optional="true">
                     <ChildContent>
-                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewLanguageDialog">Add New Language</MudButton>
-                        </div>
+                        <LoadingComponent @ref="loadingLangRef" LongTask="@LoadingLanguages">
+                            <div class="d-flex flex-column align-center justify-center" style="width: 100%;">
+                                <MudPaper Class="p-4" Elevation="4" Style="width: 300px;">
+                                    <MudList T="Language">
+                                        @foreach (var language in _languages)
+                                        {
+                                            <MudListItem OnClick="@(() => SelectLanguage(language))"
+                                                         Class="@GetLanguageClass(language)">
+                                                <MudGrid>
+                                                    <MudItem xs="10">
+                                                        @language.Name
+                                                    </MudItem>
+                                                    <MudItem xs="2" Class="d-flex align-center justify-center">
+                                                        @if (IsSelectedLanguage(language))
+                                                        {
+                                                            <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Primary"/>
+                                                        }
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                </MudPaper>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           OnClick="ShowNewLanguageDialog" Class="mt-4">
+                                    Add New Language
+                                </MudButton>
+                            </div>
+                        </LoadingComponent>
                     </ChildContent>
                 </MudStepExtended>
                 <MudStepExtended Icon="@Icons.Material.Filled.CalendarToday" Title="New Semester" Optional="true">
                     <ChildContent>
-                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSemesterDialog">Add New Semester</MudButton>
-                        </div>
+                        <LoadingComponent @ref="loadingSemRef" LongTask="@LoadingSemesters">
+                            <div class="d-flex flex-column align-center justify-center" style="width: 100%;">
+                                <MudPaper Class="p-4" Elevation="4" Style="width: 300px;">
+                                    <MudList T="Semester">
+                                        @foreach (var semester in _semesters)
+                                        {
+                                            <MudListItem OnClick="@(() => SelectSemester(semester))"
+                                                         Class="@GetSemesterClass(semester)">
+                                                <MudGrid>
+                                                    <MudItem xs="10">
+                                                        @semester.Name
+                                                    </MudItem>
+                                                    <MudItem xs="2" Class="d-flex align-center justify-center">
+                                                        @if (IsSelectedSemester(semester))
+                                                        {
+                                                            <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Primary"/>
+                                                        }
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                </MudPaper>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           OnClick="ShowNewSemesterDialog" Class="mt-4">
+                                    Add New Semester
+                                </MudButton>
+                            </div>
+                        </LoadingComponent>
                     </ChildContent>
                 </MudStepExtended>
                 <MudStepExtended Icon="@Icons.Material.Filled.School" Title="New Course" Optional="true">
                     <ChildContent>
                         <div class="d-flex flex-column align-center justify-center" style="height: 200px">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">Add New Course</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">
+                                Add
+                                New Course
+                            </MudButton>
                         </div>
                     </ChildContent>
                 </MudStepExtended>
@@ -60,7 +127,10 @@
                     <ChildContent>
                         <div class="d-flex flex-column align-center justify-center" style="height: 200px">
                             <MudText>For additional steps view Course.</MudText>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NavigateToCourse">Course view</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NavigateToCourse">
+                                Course
+                                view
+                            </MudButton>
                         </div>
                     </ChildContent>
                 </MudStepExtended>
@@ -80,6 +150,75 @@
     Size _headerSize = Size.Medium;
 
     Course? _course;
+    List<Language> _languages = new List<Language>();
+    List<Semester> _semesters = new List<Semester>();
+
+    Language? _selectedLanguage;
+    Semester? _selectedSemester;
+
+    LoadingComponent loadingLangRef;
+    LoadingComponent loadingSemRef;
+
+    private async Task ActiveStepChanged(int step)
+    {
+        switch (step)
+        {
+            case 1:
+                await loadingLangRef.StartLoading();
+                break;
+            case 2:
+                await loadingSemRef.StartLoading();
+                break;
+        }
+
+        while (step > 0)
+        {
+            step--;
+            _stepper.Steps[step].Status = _stepper.Steps[step].Status == StepStatus.Completed ? StepStatus.Completed : StepStatus.Skipped;
+        }
+    }
+
+    private bool IsSelectedLanguage(Language language)
+    {
+        return language.Id == _selectedLanguage?.Id;
+    }
+
+    private string GetLanguageClass(Language language)
+    {
+        return IsSelectedLanguage(language) ? "selected-item" : string.Empty;
+    }
+
+    private async Task LoadingLanguages()
+    {
+        _languages = (await LanguageClient.GetAllAsync()).ToList();
+    }
+
+    private void SelectLanguage(Language language)
+    {
+        _selectedLanguage = language;
+        _stepper.CompleteStep(1);
+    }
+
+    private bool IsSelectedSemester(Semester semester)
+    {
+        return semester.Id == _selectedSemester?.Id;
+    }
+
+    private string GetSemesterClass(Semester semester)
+    {
+        return IsSelectedSemester(semester) ? "selected-item" : string.Empty;
+    }
+
+    private async Task LoadingSemesters()
+    {
+        _semesters = (await SemesterClient.GetAllAsync()).ToList();
+    }
+
+    private void SelectSemester(Semester semester)
+    {
+        _selectedSemester = semester;
+        _stepper.CompleteStep(2);
+    }
 
     private async Task ShowNewSubjectDialog()
     {
@@ -106,6 +245,7 @@
         {
             Language ret = await LanguageClient.CreateAsync(result.Data as Language);
             SnackbarService.ShowAddSuccess();
+            _selectedLanguage = ret;
             await _stepper.CompleteStep(1);
         }
         else if (!result.Canceled)
@@ -122,6 +262,7 @@
         {
             Semester ret = await SemesterClient.CreateAsync(result.Data as Semester);
             SnackbarService.ShowAddSuccess();
+            _selectedSemester = ret;
             await _stepper.CompleteStep(2);
         }
         else if (!result.Canceled)
@@ -132,7 +273,13 @@
 
     private async Task ShowNewCourseDialog()
     {
-        var dialog = await DialogService.ShowAsync<NewCourseDialog>("Hello");
+        //Fill the Value parameter with a Course object
+        var param = new Course()
+        {
+            Language = _selectedLanguage,
+            Semester = _selectedSemester
+        };
+        var dialog = await DialogService.ShowAsync<NewCourseDialog>("Hello", new DialogParameters { ["Value"] = param });
         var result = await dialog.Result ?? DialogResult.Cancel();
         if (!result.Canceled && result.Data != null)
         {
@@ -159,9 +306,9 @@
         }
     }
 
-    private void StatusChanged(StepStatus status)
+    private async void StatusChanged(StepStatus status)
     {
-        //Snackbar.Add($"First step {status.ToDescriptionString()}.", Severity.Info);
+        SnackbarService.ShowMessage($"First step {status.ToDescriptionString()}.", Severity.Info);
     }
 
 }

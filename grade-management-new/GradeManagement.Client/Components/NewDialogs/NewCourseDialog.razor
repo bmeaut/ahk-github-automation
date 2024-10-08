@@ -3,11 +3,11 @@
         <MudText Typo="Typo.h4">New Course</MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
-            <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
-            <MudTextField T="string" Label="Moodle Course Id" @bind-Value="@value.MoodleCourseId" Required="true"></MudTextField>
-            <SelectSemester @bind-Value="@value.Semester"/>
-            <SelectLanguage @bind-Value="@value.Language"/>
+        <MudForm @ref="form" Model="@Value" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudTextField T="string" Label="Name" For="@(() => Value.Name)" @bind-Value="Value.Name" Required="true"></MudTextField>
+            <MudTextField T="string" Label="Moodle Course Id" @bind-Value="@Value.MoodleCourseId" Required="true"></MudTextField>
+            <SelectSemester @bind-Value="@Value.Semester"/>
+            <SelectLanguage @bind-Value="@Value.Language"/>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -23,9 +23,9 @@
     private bool success;
     private string[] errors;
 
-    private Course value = new Course();
+    [Parameter] public Course Value { get; set; } = new Course();
 
-    void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    void Submit() => MudDialog.Close(DialogResult.Ok(Value));
     void Cancel() => MudDialog.Cancel();
 
     async void OnSubmitClicked()

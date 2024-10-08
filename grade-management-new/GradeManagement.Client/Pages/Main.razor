@@ -58,17 +58,33 @@
     </MudStack>
     <MudDataGrid Items="@_filteredData" T="Dashboard" Class="custom-grid">
         <Columns>
-            <PropertyColumn Property="x => x.GithubRepoUrl" Title="Repo URL"/>
+            <PropertyColumn Property="x => x.CourseName" Title="Course"/>
+            <PropertyColumn Property="x => x.ExerciseName" Title="Exercise"/>
+            <TemplateColumn Title="Repo URL">
+                <CellTemplate>
+                    <MudLink Href="@context.Item.GithubRepoUrl">
+                        @context.Item.GithubRepoUrl
+                    </MudLink>
+                </CellTemplate>
+            </TemplateColumn>
             <PropertyColumn Property="x => x.StudentNeptun" Title="Neptun"/>
             <TemplateColumn Title="PRs">
                 <CellTemplate>
                     <MudTooltip Text="@PrTooltip(context.Item)">
-                        @JoinPullRequests(context.Item)
+                        <MudLink Href="@JoinPullRequests(context.Item)">
+                            @JoinPullRequests(context.Item)
+                        </MudLink>
                     </MudTooltip>
                 </CellTemplate>
             </TemplateColumn>
             @* <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/> *@
-            <PropertyColumn Property="x => JoinScore(x)" Title="Score"/>
+            <TemplateColumn Title="Score">
+                <CellTemplate>
+                    <MudTooltip Text="@ScoreTooltip(context.Item)">
+                        @JoinScore(context.Item)
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
             <TemplateColumn Title="" T="Dashboard">
                 <CellTemplate>
                     @if (MergedEntry(context.Item))
@@ -131,6 +147,11 @@
     private bool CiRunOnEntry(Dashboard data)
     {
         return data.PullRequests?.FirstOrDefault()?.Scores.Count > 0;
+    }
+
+    private string ScoreTooltip(Dashboard data)
+    {
+        return string.Join(", ", data?.PullRequests?.FirstOrDefault()?.Scores.Select(x => $"{x.ScoreType.Type}: {x.Value}") ?? []);
     }
 
     #endregion
