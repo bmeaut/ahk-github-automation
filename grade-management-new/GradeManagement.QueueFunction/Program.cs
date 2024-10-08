@@ -1,11 +1,8 @@
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
-using GradeManagement.Bll.Services;
-using GradeManagement.Data;
+using GradeManagement.Data.Utils;
 
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

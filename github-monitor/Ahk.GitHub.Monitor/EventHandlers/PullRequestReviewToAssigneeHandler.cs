@@ -5,14 +5,13 @@ using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class PullRequestReviewToAssigneeHandler : RepositoryEventBase<PullRequestEventPayload>
+    public class PullRequestReviewToAssigneeHandler(
+        Services.IGitHubClientFactory gitHubClientFactory,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache cache,
+        Microsoft.Extensions.Logging.ILogger logger)
+        : RepositoryEventBase<PullRequestEventPayload>(gitHubClientFactory, cache, logger)
     {
         public const string GitHubWebhookEventName = "pull_request";
-
-        public PullRequestReviewToAssigneeHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
-            : base(gitHubClientFactory, cache, logger)
-        {
-        }
 
         protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
         {
@@ -25,15 +24,14 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 {
                     return EventHandlerResult.PayloadError("no requested reviewer in webhook payload");
                 }
-                else if (!isPrAssignedToReviewer(webhookPayload))
+
+                if (!isPrAssignedToReviewer(webhookPayload))
                 {
-                    await GitHubClient.Issue.Assignee.AddAssignees(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.PullRequest.Number, getUsersToAssign(webhookPayload));
+                    await this.GitHubClient.Issue.Assignee.AddAssignees(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.PullRequest.Number, getUsersToAssign(webhookPayload));
                     return EventHandlerResult.ActionPerformed("pull request review_requested handled, assignee set");
                 }
-                else
-                {
-                    return EventHandlerResult.NoActionNeeded("pull request review_requested is ok, assignee is present");
-                }
+
+                return EventHandlerResult.NoActionNeeded("pull request review_requested is ok, assignee is present");
             }
 
             return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);

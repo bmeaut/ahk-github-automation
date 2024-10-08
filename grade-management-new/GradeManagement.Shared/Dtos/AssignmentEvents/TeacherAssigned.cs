@@ -3,5 +3,5 @@
 public class TeacherAssigned : AssignmentEventBase
 {
     public string PullRequestUrl { get; set; }
-    public string TeacherGitHubId { get; set; }
+    public IReadOnlyCollection<string> TeacherGitHubIds { get; set; }
 }

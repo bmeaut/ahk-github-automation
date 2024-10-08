@@ -6,7 +6,7 @@ public class HeaderMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context, GradeManagementDbContext gradeManagementDbContext)
     {
-        if (context.Request.Headers.TryGetValue("Subject-Id-Value", out var subjectIdHeader))
+        if (context.Request.Headers.TryGetValue("X-Subject-Id-Value", out var subjectIdHeader))
         {
             if (long.TryParse(subjectIdHeader, out var subjectId))
             {

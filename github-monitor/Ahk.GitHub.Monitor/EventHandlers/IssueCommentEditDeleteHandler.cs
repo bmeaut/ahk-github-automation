@@ -4,15 +4,14 @@ using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
-    public class IssueCommentEditDeleteHandler : RepositoryEventBase<IssueCommentPayload>
+    public class IssueCommentEditDeleteHandler(
+        Services.IGitHubClientFactory gitHubClientFactory,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache cache,
+        Microsoft.Extensions.Logging.ILogger logger)
+        : RepositoryEventBase<IssueCommentPayload>(gitHubClientFactory, cache, logger)
     {
         public const string GitHubWebhookEventName = "issue_comment";
         private const string WarningText = ":exclamation: **An issue comment was deleted / edited. Egy megjegyzes torolve vagy modositva lett.**";
-
-        public IssueCommentEditDeleteHandler(Services.IGitHubClientFactory gitHubClientFactory, Microsoft.Extensions.Caching.Memory.IMemoryCache cache, Microsoft.Extensions.Logging.ILogger logger)
-            : base(gitHubClientFactory, cache, logger)
-        {
-        }
 
         protected override async Task<EventHandlerResult> executeCore(IssueCommentPayload webhookPayload)
         {
@@ -25,11 +24,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 {
                     return EventHandlerResult.NoActionNeeded($"comment action {webhookPayload.Action} by {webhookPayload.Sender.Login} allowed, referencing own comment");
                 }
-                else
-                {
-                    await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, WarningText);
-                    return EventHandlerResult.ActionPerformed("comment action resulting in warning");
-                }
+
+                await this.GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.Issue.Number, WarningText);
+                return EventHandlerResult.ActionPerformed("comment action resulting in warning");
             }
 
             return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
