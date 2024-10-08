@@ -226,7 +226,8 @@
         var result = await dialog.Result ?? DialogResult.Cancel();
         if (!result.Canceled && result.Data != null)
         {
-            Subject ret = await SubjectClient.CreateAsync(result.Data as Subject2);
+
+            SubjectResponse ret = await SubjectClient.CreateAsync(result.Data as SubjectRequest);
             SnackbarService.ShowAddSuccess();
             SubjectService.CurrentSubject = ret;
             await _stepper.CompleteStep(0);

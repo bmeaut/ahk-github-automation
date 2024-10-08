@@ -48,19 +48,7 @@
         {
             var user = result.Data as User;
             user = await UserClient.CreateAsync(user);
-            //SnackbarService.ShowMessage("user id:" + user.Id);
-            var subject = SubjectService.CurrentSubject;
-            //await SubjectClient.AddTeacherToSubjectAsync(subject.Id, user.Id);
-            _teachers.Add(user);
-            var subject2 = new Subject2
-            {
-                Id = subject.Id,
-                Teachers = _teachers,
-                GitHubOrgName = subject.GitHubOrgName,
-                Name = subject.Name,
-                NeptunCode = subject.NeptunCode,
-            };
-            await SubjectClient.UpdateAsync(subject2.Id, subject2);
+            await SubjectClient.AddTeacherToSubjectByIdAsync(SubjectService.CurrentSubject.Id, user.Id);
             SnackbarService.ShowAddSuccess();
             await loadingComponentRef.StartLoading();
         }
@@ -86,18 +74,8 @@
 
     private async Task DeleteItem(User item)
     {
+        await SubjectClient.DeleteTeacherFromSubjectByIdAsync(SubjectService.CurrentSubject.Id, item.Id);
         await UserClient.DeleteAsync(item.Id);
-        _teachers.Remove(item);
-        var subject = SubjectService.CurrentSubject;
-        var subject2 = new Subject2
-        {
-            Id = subject.Id,
-            Teachers = _teachers,
-            GitHubOrgName = subject.GitHubOrgName,
-            Name = subject.Name,
-            NeptunCode = subject.NeptunCode,
-        };
-        await SubjectClient.UpdateAsync(subject2.Id, subject2);
         SnackbarService.ShowDeleteSuccess();
         await loadingComponentRef.StartLoading();
     }

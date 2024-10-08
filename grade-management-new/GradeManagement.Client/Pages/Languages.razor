@@ -15,7 +15,7 @@
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
-            <DataGridActions TItem="Language" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem" AddEdit="false"/>
+            <DataGridActions TItem="Language" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem" ShowEdit="false"/>
         </Columns>
     </MudDataGrid>
     <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>

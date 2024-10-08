@@ -31,7 +31,7 @@ public class LanguageController(LanguageService languageService)
     [Authorize(Policy = UserRequirement.PolicyName)]
     public override async Task<IEnumerable<Language>> GetAllAsync() => await base.GetAllAsync();
 
-    [HttpGet]
+    [HttpGet("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = UserRequirement.PolicyName)]
     public override async Task<Language> GetByIdAsync(long id) => await base.GetByIdAsync(id);

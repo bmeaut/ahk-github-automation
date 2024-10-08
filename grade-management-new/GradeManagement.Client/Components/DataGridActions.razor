@@ -2,11 +2,11 @@
 <TemplateColumn Title="Actions" T="TItem">
     <CellTemplate>
         <MudStack Row>
-            @if (AddEdit)
+            @if (ShowEdit)
             {
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEditing(context))"/>
             }
-            @if (AddDelete)
+            @if (ShowDelete)
             {
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteItem(context.Item))"/>
             }
@@ -19,8 +19,8 @@
 
     [Parameter] public Func<CellContext<TItem>, Task>? OnEditItem { get; set; }
     [Parameter] public Func<TItem, Task>? OnDeleteItem { get; set; }
-    [Parameter] public bool AddEdit { get; set; } = true;
-    [Parameter] public bool AddDelete { get; set; } = true;
+    [Parameter] public bool ShowEdit { get; set; } = true;
+    [Parameter] public bool ShowDelete { get; set; } = true;
 
 
     private async Task StartEditing(CellContext<TItem> context)

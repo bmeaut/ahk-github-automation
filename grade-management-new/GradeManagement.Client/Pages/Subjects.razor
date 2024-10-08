@@ -11,20 +11,20 @@
 <MudText Typo="Typo.h4" Class="mt-4">Subjects</MudText>
 <MudDivider Class="mb-4"/>
 <LoadingComponent LongTask="@LoadingAction" @ref="loadingComponentRef">
-    <MudDataGrid Items="_subjects" T="Subject2" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+    <MudDataGrid Items="_subjects" T="SubjectResponse" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
             <PropertyColumn Property="x => x.GitHubOrgName" Title="Github Org Name"/>
-            <DataGridActions TItem="Subject2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+            <DataGridActions TItem="SubjectResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
     <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {
-    private List<Subject2> _subjects = new();
+    private List<SubjectResponse> _subjects = new();
     private LoadingComponent loadingComponentRef;
 
     private async Task OpenDialog()
@@ -33,14 +33,14 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            Subject ret = await SubjectClient.CreateAsync(result.Data as Subject2);
+            SubjectResponse ret = await SubjectClient.CreateAsync(result.Data as SubjectRequest);
             SnackbarService.ShowAddSuccess();
             await loadingComponentRef.StartLoading();
             SubjectService.CurrentSubject = ret;
         }
     }
 
-    private async Task StartEditing(CellContext<Subject2?> context)
+    private async Task StartEditing(CellContext<SubjectResponse?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
@@ -48,21 +48,21 @@
 
     private async Task LoadingAction()
     {
-        _subjects = (await SubjectService.LoadSubjects()).Select(subject => subject.ToSubject2()).ToList();
+        _subjects = await SubjectService.LoadSubjects();
     }
 
-    private async Task CommittedItemChanges(Subject2 item)
+    private async Task CommittedItemChanges(SubjectResponse item)
     {
-        await SubjectClient.UpdateAsync(item.Id, item);
+        await SubjectClient.UpdateAsync(item.Id, item.ToRequest());
         SnackbarService.ShowEditSuccess();
     }
 
-    private async Task DeleteItem(Subject2 item)
+    private async Task DeleteItem(SubjectResponse item)
     {
         await SubjectClient.DeleteAsync(item.Id);
         if (SubjectService.CurrentSubject?.Id == item.Id)
         {
-            SubjectService.CurrentSubject = _subjects.FirstOrDefault()?.ToSubject() ?? null;
+            SubjectService.CurrentSubject = _subjects.FirstOrDefault() ?? null;
         }
 
         SnackbarService.ShowDeleteSuccess();

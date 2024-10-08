@@ -1,32 +1,32 @@
 ﻿@inject CrudSnackbarService SnackbarService
 @inject GroupClient GroupClient
 
-<MudDataGrid T="Group2" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
+<MudDataGrid T="GroupResponse" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
         <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
-        <DataGridActions TItem="Group2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+        <DataGridActions TItem="GroupResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
     </Columns>
 </MudDataGrid>
 
 
 @code {
-    [Parameter] public ICollection<Group2> Values { get; set; }
+    [Parameter] public ICollection<GroupResponse> Values { get; set; }
 
-    private async Task StartEditing(CellContext<Group2?> context)
+    private async Task StartEditing(CellContext<GroupResponse?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
     }
 
-    private async Task CommittedItemChanges(Group2 items)
+    private async Task CommittedItemChanges(GroupResponse items)
     {
-        await GroupClient.UpdateAsync(items.Id, items);
+        await GroupClient.UpdateAsync(items.Id, items.ToRequest());
         SnackbarService.ShowEditSuccess();
         StateHasChanged();
     }
 
-    private async Task DeleteItem(Group2 item)
+    private async Task DeleteItem(GroupResponse item)
     {
         Values.Remove(item);
         await GroupClient.DeleteAsync(item.Id);
