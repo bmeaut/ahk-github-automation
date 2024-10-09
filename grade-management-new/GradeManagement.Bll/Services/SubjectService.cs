@@ -28,6 +28,7 @@ public class SubjectService(
     public async Task<IEnumerable<SubjectResponse>> GetAllAsync()
     {
         return await gradeManagementDbContext.Subject
+            .IgnoreQueryFiltersButNotIsDeleted()
             .ProjectTo<SubjectResponse>(mapper.ConfigurationProvider)
             .OrderBy(s => s.Id).ToListAsync();
     }
@@ -35,6 +36,7 @@ public class SubjectService(
     public async Task<SubjectResponse> GetByIdAsync(long id)
     {
         return await gradeManagementDbContext.Subject
+            .IgnoreQueryFiltersButNotIsDeleted()
             .ProjectTo<SubjectResponse>(mapper.ConfigurationProvider)
             .SingleEntityAsync(s => s.Id == id, id);
     }
@@ -48,6 +50,7 @@ public class SubjectService(
         }
 
         var subjectEntity = await gradeManagementDbContext.Subject
+            .IgnoreQueryFiltersButNotIsDeleted()
             .SingleEntityAsync(s => s.Id == id, id);
 
         subjectEntity.Name = requestDto.Name;
@@ -106,7 +109,9 @@ public class SubjectService(
 
     public async Task DeleteAsync(long id)
     {
-        var subject = await gradeManagementDbContext.Subject.SingleEntityAsync(s => s.Id == id, id);
+        var subject = await gradeManagementDbContext.Subject
+            .IgnoreQueryFiltersButNotIsDeleted()
+            .SingleEntityAsync(s => s.Id == id, id);
         var subjectTeachers = await gradeManagementDbContext.SubjectTeacher
             .Where(st => st.SubjectId == id)
             .ToListAsync();
