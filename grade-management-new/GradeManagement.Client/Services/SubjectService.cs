@@ -3,9 +3,15 @@
 
 namespace GradeManagement.Client.Services;
 
-public class SubjectService(SubjectClient client)
+public class SubjectService
 {
+    private readonly SubjectClient client;
     private SubjectResponse _currentSubject;
+
+    public SubjectService(IServiceProvider serviceProvider)
+    {
+        client = serviceProvider.GetRequiredService<SubjectClient>();
+    }
 
     public SubjectResponse CurrentSubject
     {

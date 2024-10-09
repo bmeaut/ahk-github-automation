@@ -42,7 +42,6 @@ namespace GradeManagement.Client
             //         policy => policy.Requirements.Add(new TeacherRequirement())));
             // builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
 
-            builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<CrudSnackbarService>();
 
             builder.Services.AddTransient(sp =>
@@ -58,6 +57,11 @@ namespace GradeManagement.Client
 
             builder.Services.AddScoped<SubjectClient>(sp =>
                 new SubjectClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(SubjectApi)));
+            builder.Services.AddSingleton<SubjectService>(sp =>
+            {
+                var serviceProvider = sp.CreateScope().ServiceProvider;
+                return new SubjectService(serviceProvider);
+            });
 
             builder.Services.AddTransient(sp => new SubjectHeaderHandler(sp.GetRequiredService<SubjectService>()));
 
