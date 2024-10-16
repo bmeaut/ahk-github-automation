@@ -1,4 +1,5 @@
 @page "/"
+@using GradeManagement.Client.Components.NewDialogs
 @layout AuthenticatedLayout
 
 @inject SubjectService SubjectService
@@ -8,6 +9,8 @@
 @inject AssignmentClient AssignmentClient
 @inject DashboardClient DashboardClient
 @inject CrudSnackbarService SnackbarService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
 
 <style>
     .sort-direction-icon {
@@ -55,17 +58,33 @@
     </MudStack>
     <MudDataGrid Items="@_filteredData" T="Dashboard" Class="custom-grid">
         <Columns>
-            <PropertyColumn Property="x => x.GithubRepoUrl" Title="Repo URL"/>
+            <PropertyColumn Property="x => x.CourseName" Title="Course"/>
+            <PropertyColumn Property="x => x.ExerciseName" Title="Exercise"/>
+            <TemplateColumn Title="Repo URL">
+                <CellTemplate>
+                    <MudLink Href="@context.Item.GithubRepoUrl">
+                        @context.Item.GithubRepoUrl
+                    </MudLink>
+                </CellTemplate>
+            </TemplateColumn>
             <PropertyColumn Property="x => x.StudentNeptun" Title="Neptun"/>
             <TemplateColumn Title="PRs">
                 <CellTemplate>
                     <MudTooltip Text="@PrTooltip(context.Item)">
-                        @JoinPullRequests(context.Item)
+                        <MudLink Href="@JoinPullRequests(context.Item)">
+                            @JoinPullRequests(context.Item)
+                        </MudLink>
                     </MudTooltip>
                 </CellTemplate>
             </TemplateColumn>
             @* <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/> *@
-            <PropertyColumn Property="x => JoinScore(x)" Title="Score"/>
+            <TemplateColumn Title="Score">
+                <CellTemplate>
+                    <MudTooltip Text="@ScoreTooltip(context.Item)">
+                        @JoinScore(context.Item)
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
             <TemplateColumn Title="" T="Dashboard">
                 <CellTemplate>
                     @if (MergedEntry(context.Item))
@@ -88,7 +107,7 @@
             </TemplateColumn>
         </Columns>
         <PagerContent>
-            <MudDataGridPager T="Assignment"/>
+            <MudDataGridPager T="Dashboard"/>
         </PagerContent>
     </MudDataGrid>
 </LoadingComponent>
@@ -130,6 +149,11 @@
         return data.PullRequests?.FirstOrDefault()?.Scores.Count > 0;
     }
 
+    private string ScoreTooltip(Dashboard data)
+    {
+        return string.Join(", ", data?.PullRequests?.FirstOrDefault()?.Scores.Select(x => $"{x.ScoreType.Type}: {x.Value}") ?? []);
+    }
+
     #endregion
 
     //Van e assignolt teacher?
@@ -137,7 +161,7 @@
     //PR status - closed szűrve
     private LoadingComponent loadingRef;
 
-    private Subject? _selectedSubject = null;
+    private SubjectResponse? _selectedSubject = null;
     private string? _selectedCourse = null;
     private string? _selectedExercise = null;
     private IEnumerable<string>? _courses = new List<string>();
@@ -149,9 +173,25 @@
     private async Task Loading()
     {
         _selectedSubject = SubjectService.CurrentSubject;
+        //_selectedSubject = null;
         if (_selectedSubject == null)
         {
-            SnackbarService.ShowMessage("New subject wizard is not implemented yet!");
+            var parameters = new DialogParameters();
+            parameters.Add("ContentText", "Nincs kiválasztott tantárgy. Szeretnél a varázsló oldalra navigálni?");
+            parameters.Add("ButtonText", "Igen");
+            parameters.Add("Color", Color.Primary);
+
+            var options = new DialogOptions() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+
+            var dialog = await DialogService.ShowAsync<ConfirmDialog>("Figyelmeztetés", parameters, options);
+            var result = await dialog.Result;
+
+            if (result is not null && !result.Canceled)
+            {
+                NavigationManager.NavigateTo("/wizard");
+                return;
+            }
+
             return;
         }
 

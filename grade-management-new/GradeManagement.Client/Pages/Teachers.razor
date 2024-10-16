@@ -16,7 +16,7 @@
     <MudDivider Class="mb-4"/>
     <MudDataGrid T="User" Items="_teachers" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
             <PropertyColumn Property="x => x.GithubId" Title="Github Id"/>
@@ -32,7 +32,7 @@
             <DataGridActions TItem="User" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {
@@ -48,19 +48,7 @@
         {
             var user = result.Data as User;
             user = await UserClient.CreateAsync(user);
-            //SnackbarService.ShowMessage("user id:" + user.Id);
-            var subject = SubjectService.CurrentSubject;
-            //await SubjectClient.AddTeacherToSubjectAsync(subject.Id, user.Id);
-            _teachers.Add(user);
-            var subject2 = new Subject2
-            {
-                Id = subject.Id,
-                Teachers = _teachers,
-                GitHubOrgName = subject.GitHubOrgName,
-                Name = subject.Name,
-                NeptunCode = subject.NeptunCode,
-            };
-            await SubjectClient.UpdateAsync(subject2.Id, subject2);
+            await SubjectClient.AddTeacherToSubjectByIdAsync(SubjectService.CurrentSubject.Id, user.Id);
             SnackbarService.ShowAddSuccess();
             await loadingComponentRef.StartLoading();
         }
@@ -86,18 +74,8 @@
 
     private async Task DeleteItem(User item)
     {
+        await SubjectClient.DeleteTeacherFromSubjectByIdAsync(SubjectService.CurrentSubject.Id, item.Id);
         await UserClient.DeleteAsync(item.Id);
-        _teachers.Remove(item);
-        var subject = SubjectService.CurrentSubject;
-        var subject2 = new Subject2
-        {
-            Id = subject.Id,
-            Teachers = _teachers,
-            GitHubOrgName = subject.GitHubOrgName,
-            Name = subject.Name,
-            NeptunCode = subject.NeptunCode,
-        };
-        await SubjectClient.UpdateAsync(subject2.Id, subject2);
         SnackbarService.ShowDeleteSuccess();
         await loadingComponentRef.StartLoading();
     }

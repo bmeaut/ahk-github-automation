@@ -4,56 +4,83 @@ namespace GradeManagement.Client.Components.Helpers;
 
 public static class Extensions
 {
-    public static Subject2 ToSubject2(this Subject subject, ICollection<User>? teachers = null)
+    public static SubjectRequest ToRequest(this SubjectResponse subject, ICollection<User>? teachers = null)
     {
-        return new Subject2
+        return new SubjectRequest
         {
             Id = subject.Id,
             Name = subject.Name,
             NeptunCode = subject.NeptunCode,
             GitHubOrgName = subject.GitHubOrgName,
-            Teachers = teachers
+            Teachers = teachers,
         };
     }
 
-    public static Subject ToSubject(this Subject2 subject)
+    public static SubjectResponse ToResponse(this SubjectRequest subject)
     {
-        return new Subject
+        return new SubjectResponse
         {
             Id = subject.Id,
             Name = subject.Name,
             NeptunCode = subject.NeptunCode,
-            GitHubOrgName = subject.GitHubOrgName
+            GitHubOrgName = subject.GitHubOrgName,
         };
     }
 
-    public static Group2 ToGroup2(this Group group, ICollection<User>? teachers = null)
+    public static GroupRequest ToRequest(this GroupResponse group, ICollection<User>? teachers = null)
     {
-        return new Group2 { Id = group.Id, Name = group.Name, CourseId = group.CourseId, Teachers = teachers };
+        return new GroupRequest { Id = group.Id, Name = group.Name, CourseId = group.CourseId, Teachers = teachers };
     }
 
-    public static Group ToGroup(this Group2 group)
+    public static GroupResponse ToResponse(this GroupRequest group)
     {
-        return new Group { Id = group.Id, Name = group.Name, CourseId = group.CourseId };
+        return new GroupResponse { Id = group.Id, Name = group.Name, CourseId = group.CourseId };
     }
 
-    public static Student2 ToStudent2(this Student student, ICollection<long>? groupIds = null)
+    public static ExerciseRequest ToRequest(this ExerciseResponse exercise)
     {
-        return new Student2
+        return new ExerciseRequest
+        {
+            Id = exercise.Id,
+            CourseId = exercise.CourseId,
+            Name = exercise.Name,
+            DueDate = exercise.DueDate,
+            GithubPrefix = exercise.GithubPrefix,
+            ScoreTypes = exercise.ScoreTypes
+        };
+    }
+
+    public static ExerciseResponse ToResponse(this ExerciseRequest exercise)
+    {
+        return new ExerciseResponse
+        {
+            Id = exercise.Id,
+            CourseId = exercise.CourseId,
+            Name = exercise.Name,
+            DueDate = exercise.DueDate,
+            GithubPrefix = exercise.GithubPrefix,
+            ScoreTypes = exercise.ScoreTypes
+        };
+    }
+
+
+    public static StudentRequest ToRequest(this StudentResponse student, ICollection<long>? groupIds = null)
+    {
+        return new StudentRequest
         {
             Id = student.Id,
             Name = student.Name,
             NeptunCode = student.NeptunCode,
             GithubId = student.GithubId,
-            GroupIds = groupIds
+            GroupIds = groupIds,
         };
     }
 
-    public static Student ToStudent(this Student2 student)
+    public static StudentResponse ToResponse(this StudentRequest student)
     {
-        return new Student
+        return new StudentResponse
         {
-            Id = student.Id, Name = student.Name, NeptunCode = student.NeptunCode, GithubId = student.GithubId
+            Id = student.Id, Name = student.Name, NeptunCode = student.NeptunCode, GithubId = student.GithubId,
         };
     }
 }

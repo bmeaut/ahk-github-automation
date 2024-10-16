@@ -4,17 +4,16 @@ using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 namespace GradeManagement.Client.Network;
 
-public class AuthorizationMessageHandler(IAccessTokenProvider tokenProvider) : DelegatingHandler
+public class SubjectHeaderHandler(SubjectService SubjectService) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var accessTokenResult = await tokenProvider.RequestAccessToken();
-
-        if (accessTokenResult.TryGetToken(out var accessToken))
+        Console.WriteLine("SubjectHeaderHandler");
+        var subjectId = SubjectService.CurrentSubject?.Id;
+        if (subjectId is not null)
         {
-            request.Headers.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken.Value);
+            request.Headers.Add("X-Subject-Id-Value", subjectId.ToString());
         }
 
         return await base.SendAsync(request, cancellationToken);

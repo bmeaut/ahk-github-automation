@@ -43,8 +43,8 @@
 @code {
     [Parameter] public int Id { get; set; }
     Course _course;
-    ICollection<Exercise> _exercises;
-    ICollection<Group2> _groups;
+    ICollection<ExerciseResponse> _exercises;
+    ICollection<GroupResponse> _groups;
     private LoadingComponent loadingRef;
 
     private async Task<Course> _loadCourseAsync()
@@ -52,14 +52,14 @@
         return await CourseClient.GetByIdAsync(Id);
     }
 
-    private async Task<ICollection<Exercise>> _loadExercisesAsync()
+    private async Task<ICollection<ExerciseResponse>> _loadExercisesAsync()
     {
         return await CourseClient.GetAllExercisesByIdAsync(Id);
     }
 
-    private async Task<ICollection<Group2>> _loadGroupsAsync()
+    private async Task<ICollection<GroupResponse>> _loadGroupsAsync()
     {
-        return (await CourseClient.GetAllGroupsByIdAsync(Id)).Select(x => x.ToGroup2()).ToList();
+        return await CourseClient.GetAllGroupsByIdAsync(Id);
     }
 
     private async Task _loading()
@@ -75,7 +75,7 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            var exercise = result.Data as Exercise;
+            var exercise = result.Data as ExerciseRequest;
             exercise.CourseId = Id;
             await ExerciseClient.CreateAsync(exercise);
             SnackbarService.ShowAddSuccess();
@@ -89,7 +89,7 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            var group = result.Data as Group2;
+            var group = result.Data as GroupRequest;
             group.CourseId = Id;
             await GroupClient.CreateAsync(group);
             SnackbarService.ShowAddSuccess();

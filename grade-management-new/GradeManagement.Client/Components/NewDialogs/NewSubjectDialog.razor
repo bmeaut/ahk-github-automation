@@ -34,14 +34,14 @@
         }
     }
 
-    public Subject2 value = new()
+    public SubjectRequest value = new()
     {
         Teachers = new List<User>() //TODO: add current user
     };
 
     private IEnumerable<string> NeptunCodeValidator(string pw)
     {
-        if (pw.Length < 20)
+        if (pw.Length > 20)
             yield return "Neptun code should be less than 20 characters long.";
     }
 

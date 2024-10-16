@@ -3,11 +3,17 @@
 
 namespace GradeManagement.Client.Services;
 
-public class SubjectService(SubjectClient client)
+public class SubjectService
 {
-    private Subject _currentSubject;
+    private readonly SubjectClient client;
+    private SubjectResponse _currentSubject;
 
-    public Subject CurrentSubject
+    public SubjectService(IServiceProvider serviceProvider)
+    {
+        client = serviceProvider.GetRequiredService<SubjectClient>();
+    }
+
+    public SubjectResponse CurrentSubject
     {
         get => _currentSubject;
         set
@@ -18,13 +24,13 @@ public class SubjectService(SubjectClient client)
         }
     }
 
-    public List<Subject> Subjects { get; private set; }
+    public List<SubjectResponse> Subjects { get; private set; }
 
     public event Action OnChange;
 
     private void NotifyStateChanged() => OnChange?.Invoke();
 
-    public async Task<List<Subject>> LoadSubjects()
+    public async Task<List<SubjectResponse>> LoadSubjects()
     {
         Subjects = (await client.GetAllAsync()).ToList();
         //Subjects = [];

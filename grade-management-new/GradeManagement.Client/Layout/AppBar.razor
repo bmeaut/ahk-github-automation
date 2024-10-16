@@ -1,23 +1,75 @@
+@using System.IdentityModel.Tokens.Jwt
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject SubjectService SubjectService
+@inject NavigationManager Navigation
+@inject IAccessTokenProvider TokenProvider
 
 <MudAppBar Elevation="5" Class="pb-1">
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
-    <MudText Typo="Typo.h3" Class="ml-3">AHK Review UI</MudText>
+    <MudText Typo="Typo.h3" Class="ml-3" Style="cursor: pointer" @onclick="NavigateHome">AHK Review UI</MudText>
     <MudSpacer/>
     <SelectSubject @bind-Value="@SubjectService.CurrentSubject" PossibleValues="@SubjectService.Subjects"/>
-    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/>
+    @* <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/> *@
+
+    <!-- Profile Dropdown Menu -->
+    <MudMenu Class="ms-4">
+        <ActivatorContent>
+            <MudAvatar Size="Size.Medium">
+                <MudImage Src="@UserProfilePictureUrl"></MudImage>
+            </MudAvatar>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem Disabled="true">
+                <MudText Typo="Typo.subtitle1">@UserName</MudText>
+            </MudMenuItem>
+            <MudMenuItem Disabled="true">
+                <MudText Typo="Typo.subtitle1">@EmailAddress</MudText>
+            </MudMenuItem>
+            <MudDivider/>
+            <MudMenuItem OnClick="@SignOut">
+                <MudText Typo="Typo.subtitle1">Sign Out</MudText>
+            </MudMenuItem>
+        </ChildContent>
+    </MudMenu>
 </MudAppBar>
 
 @code{
-
+    private string UserName { get; set; } = "Loading...";
+    private string EmailAddress { get; set; } = "Loading...";
+    private string UserProfilePictureUrl { get; set; } = @"https://ui-avatars.com/api/?rounded=true&name=John+Doe"; // Default placeholder
     [Parameter] public Action DrawerToggle { get; set; }
     [Parameter] public bool DrawerOpened { get; set; }
 
+
+    private string ImageLinkGenerator(string name) => $"https://ui-avatars.com/api/?rounded=true&name={name}";
 
     protected override async Task OnInitializedAsync()
     {
         await SubjectService.LoadSubjects();
         SubjectService.OnChange += StateHasChanged;
+
+        var result = await TokenProvider.RequestAccessToken();
+        if (result.TryGetToken(out var token))
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token.Value);
+
+            // Extract user information from the token
+            UserName = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "Unknown User";
+            EmailAddress = jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? "Unknown Email";
+            UserProfilePictureUrl = ImageLinkGenerator(UserName);
+            StateHasChanged();
+        }
+    }
+
+    private void SignOut()
+    {
+        Navigation.NavigateToLogout("authentication/logout");
+    }
+
+    private void NavigateHome()
+    {
+        Navigation.NavigateTo("/");
     }
 
 }
