@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GradeManagement.Data.Migrations
 {
     [DbContext(typeof(GradeManagementDbContext))]
-    [Migration("20241008221413_mig12")]
-    partial class mig12
+    [Migration("20241016180816_createDb")]
+    partial class createDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -344,8 +344,8 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long?>("TeacherId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Value")
-                        .HasColumnType("bigint");
+                    b.Property<double>("Value")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 

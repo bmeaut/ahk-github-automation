@@ -341,8 +341,8 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long?>("TeacherId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Value")
-                        .HasColumnType("bigint");
+                    b.Property<double>("Value")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -457,11 +457,11 @@ namespace GradeManagement.Data.Migrations
 
             modelBuilder.Entity("GradeManagement.Data.Models.Subject", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<long>("SubjectId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("SubjectId"));
 
                     b.Property<string>("CiApiKey")
                         .IsRequired()
@@ -482,7 +482,7 @@ namespace GradeManagement.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("SubjectId");
 
                     b.ToTable("Subject");
                 });

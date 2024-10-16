@@ -74,11 +74,25 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
         {
             if (!typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
 
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildTenantFilter(entityType.ClrType));
+
+            /*
             var param = Expression.Parameter(entityType.ClrType, "e");
             var property = Expression.Property(param, nameof(ITenant.SubjectId));
             var filter = Expression.Lambda(Expression.Equal(property, Expression.Constant(SubjectIdValue)), param);
 
-            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);*/
         }
+    }
+
+    private LambdaExpression BuildTenantFilter(Type type)
+    {
+        // e => ((ITenant)e).TenantId == CurrentTenantId
+        var param = Expression.Parameter(type, "e");
+        var tenantProperty = Expression.Property(param, nameof(ITenant.SubjectId));
+        var tenantIdProperty = Expression.Property(Expression.Constant(this), nameof(SubjectIdValue));
+
+        var filterBody = Expression.Equal(tenantProperty, tenantIdProperty);
+        return Expression.Lambda(filterBody, param);
     }
 }

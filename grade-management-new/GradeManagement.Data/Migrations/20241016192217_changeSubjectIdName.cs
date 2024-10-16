@@ -5,25 +5,24 @@
 namespace GradeManagement.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class mig12 : Migration
+    public partial class changeSubjectIdName : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "CiApiKey",
+            migrationBuilder.RenameColumn(
+                name: "Id",
                 table: "Subject",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
+                newName: "SubjectId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CiApiKey",
-                table: "Subject");
+            migrationBuilder.RenameColumn(
+                name: "SubjectId",
+                table: "Subject",
+                newName: "Id");
         }
     }
 }

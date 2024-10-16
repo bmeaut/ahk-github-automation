@@ -10,8 +10,11 @@ using GradeManagement.Data.Models;
 using GradeManagement.Data.Utils;
 using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
+using GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
+
+using System.Security.Claims;
 
 using Course = GradeManagement.Shared.Dtos.Course;
 using Task = System.Threading.Tasks.Task;
@@ -33,6 +36,46 @@ public class SubjectService(
             .OrderBy(s => s.Id).ToListAsync();
     }
 
+    public async Task<IEnumerable<SubjectResponse>> GetAllAsyncForUserWithoutQf(ClaimsPrincipal httpContextUser)
+    {
+        var roleClaim = AuthorizationHelper.GetCurrentUserRole(httpContextUser);
+        if (roleClaim != null && roleClaim == UserType.Admin.ToString())
+        {
+            return await GetAllAsync();
+        }
+
+        var user = await userService.GetCurrentUserAsync(httpContextUser);
+        return await gradeManagementDbContext.SubjectTeacher
+            .IgnoreQueryFiltersButNotIsDeleted()
+            .Where(su => su.UserId == user.Id)
+            .Select(su => su.Subject)
+            .ProjectTo<SubjectResponse>(mapper.ConfigurationProvider)
+            .OrderBy(s => s.Id).ToListAsync();
+    }
+
+    public async Task<SubjectResponse> GetByIdForUserWithoutQfAsync(long id, ClaimsPrincipal httpContextUser)
+    {
+        var roleClaim = AuthorizationHelper.GetCurrentUserRole(httpContextUser);
+        if (roleClaim != null && roleClaim == UserType.Admin.ToString())
+        {
+            return await GetByIdAsync(id);
+        }
+
+        var subjectsForUser = await GetAllAsyncForUserWithoutQf(httpContextUser);
+
+        var subject = await gradeManagementDbContext.Subject
+            .IgnoreQueryFiltersButNotIsDeleted()
+            .ProjectTo<SubjectResponse>(mapper.ConfigurationProvider)
+            .SingleEntityAsync(s => s.Id == id, id);
+
+        if (subjectsForUser.Any(s => s.Id == id))
+        {
+            return subject;
+        }
+
+        throw new ValidationException("Id", id.ToString(), "The user does not have access to this subject!");
+    }
+
     public async Task<SubjectResponse> GetByIdAsync(long id)
     {
         return await gradeManagementDbContext.Subject
@@ -51,7 +94,7 @@ public class SubjectService(
 
         var subjectEntity = await gradeManagementDbContext.Subject
             .IgnoreQueryFiltersButNotIsDeleted()
-            .SingleEntityAsync(s => s.Id == id, id);
+            .SingleEntityAsync(s => s.SubjectId == id, id);
 
         subjectEntity.Name = requestDto.Name;
         subjectEntity.NeptunCode = requestDto.NeptunCode;
@@ -61,14 +104,14 @@ public class SubjectService(
         {
             var teachers = await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
             var oldSubjectTeachers = await gradeManagementDbContext.SubjectTeacher
-                .Where(st => st.SubjectId == subjectEntity.Id)
+                .Where(st => st.SubjectId == subjectEntity.SubjectId)
                 .ToListAsync();
             gradeManagementDbContext.SubjectTeacher.RemoveRange(oldSubjectTeachers);
             foreach (var teacher in teachers)
             {
                 gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
                 {
-                    SubjectId = subjectEntity.Id, UserId = teacher.Id
+                    SubjectId = subjectEntity.SubjectId, UserId = teacher.Id
                 });
             }
         }
@@ -92,13 +135,14 @@ public class SubjectService(
         await gradeManagementDbContext.SaveChangesAsync();
 
         var teachers =
-            requestDto.Teachers == null ? []
-            : await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
+            requestDto.Teachers == null
+                ? []
+                : await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
         foreach (var teacher in teachers)
         {
             gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
             {
-                SubjectId = subjectEntity.Id, UserId = teacher.Id
+                SubjectId = subjectEntity.SubjectId, UserId = teacher.Id
             });
         }
 
@@ -111,7 +155,7 @@ public class SubjectService(
     {
         var subject = await gradeManagementDbContext.Subject
             .IgnoreQueryFiltersButNotIsDeleted()
-            .SingleEntityAsync(s => s.Id == id, id);
+            .SingleEntityAsync(s => s.SubjectId == id, id);
         var subjectTeachers = await gradeManagementDbContext.SubjectTeacher
             .Where(st => st.SubjectId == id)
             .ToListAsync();
@@ -132,23 +176,22 @@ public class SubjectService(
 
     public async Task<List<User>> GetAllTeachersByIdAsync(long id)
     {
-        var selctedSubjectEntity = await gradeManagementDbContext.Subject
+        var subjectEntity = await gradeManagementDbContext.Subject
             .Include(s => s.SubjectTeachers).ThenInclude(st => st.User)
-            .Select(s => new { Id = s.Id, SubjectTeachers = s.SubjectTeachers })
-            .SingleEntityAsync(s => s.Id == id, id);
-        return mapper.Map<List<User>>(selctedSubjectEntity.SubjectTeachers.Select(st => st.User));
+            .SingleEntityAsync(s => s.SubjectId == id, id);
+        return mapper.Map<List<User>>(subjectEntity.SubjectTeachers.Select(st => st.User));
     }
 
     public async Task<List<User>> AddTeacherToSubjectByIdAsync(long subjectId, long teacherId)
     {
         var subjectEntity = await gradeManagementDbContext.Subject
-            .SingleEntityAsync(s => s.Id == subjectId, subjectId);
+            .SingleEntityAsync(s => s.SubjectId == subjectId, subjectId);
         var teacherEntity = await gradeManagementDbContext.User
             .SingleEntityAsync(u => u.Id == teacherId, teacherId);
 
         gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
         {
-            SubjectId = subjectEntity.Id, UserId = teacherEntity.Id
+            SubjectId = subjectEntity.SubjectId, UserId = teacherEntity.Id
         });
 
         await gradeManagementDbContext.SaveChangesAsync();
@@ -169,6 +212,6 @@ public class SubjectService(
     {
         return await gradeManagementDbContext.Subject
             .IgnoreQueryFiltersButNotIsDeleted()
-            .SingleEntityAsync(s => s.Id == id, id);
+            .SingleEntityAsync(s => s.SubjectId == id, id);
     }
 }

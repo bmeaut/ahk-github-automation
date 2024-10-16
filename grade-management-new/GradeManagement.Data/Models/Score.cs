@@ -5,7 +5,7 @@ namespace GradeManagement.Data.Models;
 public class Score : ISoftDelete, ITenant
 {
     public long Id { get; set; }
-    public long Value { get; set; }
+    public double Value { get; set; }
     public bool IsApproved { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
     public ScoreType ScoreType { get; set; }

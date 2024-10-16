@@ -149,6 +149,14 @@ public class ExerciseService(
         return gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToList();
     }
 
+    public async Task<ScoreType> GetScoreTypeByOrderAndExerciseIdAsync(int order, long exerciseId)
+    {
+        var scoreTypeExercise =  await gradeManagementDbContext.ScoreTypeExercise
+            .Include(ste => ste.ScoreType)
+            .SingleEntityAsync(ste => ste.ExerciseId == exerciseId && ste.Order == order, 0);
+        return scoreTypeExercise.ScoreType;
+    }
+
     public async Task<string> GetCsvByExerciseId(long exerciseId)
     {
         var assignments = await gradeManagementDbContext.Assignment

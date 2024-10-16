@@ -20,7 +20,7 @@ public class TeacherRequirementHandler : AuthorizationHandler<TeacherRequirement
             return Task.CompletedTask;
         }
 
-        var roleClaim = context.User.FindFirst(CustomClaimTypes.SubjectAccess);
+        var roleClaim = context.User.FindFirst(CustomClaimTypes.UserRole);
         if (roleClaim == null)
         {
             context.Fail();

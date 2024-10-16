@@ -135,7 +135,7 @@ public class AssignmentEventProcessorService(
 
             foreach (var scoreEvent in ciEvaluationCompleted.Scores)
             {
-                await scoreService.CreateScoreBasedOnEventScoreAsync(scoreEvent, pullRequest.Id, pullRequest.SubjectId);
+                await scoreService.CreateScoreBasedOnOrderAsync(scoreEvent.Key, scoreEvent.Value, pullRequest.Id, pullRequest.SubjectId, exercise.Id);
             }
 
             var assignmentLog = new AssignmentLog()
@@ -208,6 +208,7 @@ public class AssignmentEventProcessorService(
         {
             var repositoryName = GetRepositoryNameFromUrl(assignmentGradedByTeacher.GitHubRepositoryUrl);
             var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
+            var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var teacher = await userService.GetModelByGitHubIdAsync(assignmentGradedByTeacher.TeacherGitHubId);
             var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(assignmentGradedByTeacher.PullRequestUrl);
 
@@ -226,7 +227,7 @@ public class AssignmentEventProcessorService(
             {
                 foreach (var eventScore in assignmentGradedByTeacher.Scores)
                 {
-                    await scoreService.CreateOrApprovePointsFromTeacherInputWithoutQfAsync(eventScore, pullRequest.Id, teacher.Id, pullRequest.SubjectId);
+                    await scoreService.CreateOrApprovePointsFromTeacherInputWithoutQfAsync(eventScore.Key, eventScore.Value, pullRequest.Id, teacher.Id, pullRequest.SubjectId, exercise.Id);
                 }
             }
 

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GradeManagement.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class createDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -60,8 +60,8 @@ namespace GradeManagement.Data.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    NeptunCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    GithubId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NeptunCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GithubId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -78,7 +78,8 @@ namespace GradeManagement.Data.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     NeptunCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GitHubOrgName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CiApiKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -124,19 +125,19 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.LanguageId,
                         principalTable: "Language",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Course_Semester_SemesterId",
                         column: x => x.SemesterId,
                         principalTable: "Semester",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Course_Subject_SubjectId",
                         column: x => x.SubjectId,
                         principalTable: "Subject",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -147,6 +148,7 @@ namespace GradeManagement.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SubjectId = table.Column<long>(type: "bigint", nullable: false),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -157,13 +159,13 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.SubjectId,
                         principalTable: "Subject",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_SubjectTeacher_User_UserId",
                         column: x => x.UserId,
                         principalTable: "User",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -176,7 +178,8 @@ namespace GradeManagement.Data.Migrations
                     GithubPrefix = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     dueDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CourseId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    SubjectId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -186,7 +189,7 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.CourseId,
                         principalTable: "Course",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -197,7 +200,8 @@ namespace GradeManagement.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CourseId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    SubjectId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -207,7 +211,7 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.CourseId,
                         principalTable: "Course",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -217,9 +221,11 @@ namespace GradeManagement.Data.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     GithubRepoName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GithubRepoUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StudentId = table.Column<long>(type: "bigint", nullable: false),
                     ExerciseId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    SubjectId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -229,13 +235,13 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.ExerciseId,
                         principalTable: "Exercise",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Assignment_Student_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Student",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -256,13 +262,13 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.GroupId,
                         principalTable: "Group",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_GroupStudent_Student_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Student",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -289,7 +295,7 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.UserId,
                         principalTable: "User",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -300,11 +306,12 @@ namespace GradeManagement.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OpeningDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    IsClosed = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     BranchName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AssignmentId = table.Column<long>(type: "bigint", nullable: false),
-                    TeacherId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    TeacherId = table.Column<long>(type: "bigint", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    SubjectId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -314,13 +321,13 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.AssignmentId,
                         principalTable: "Assignment",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_PullRequest_User_TeacherId",
                         column: x => x.TeacherId,
                         principalTable: "User",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -333,7 +340,7 @@ namespace GradeManagement.Data.Migrations
                     EventType = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AssignmentId = table.Column<long>(type: "bigint", nullable: false),
-                    PullRequestId = table.Column<long>(type: "bigint", nullable: false),
+                    PullRequestId = table.Column<long>(type: "bigint", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -350,7 +357,7 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.PullRequestId,
                         principalTable: "PullRequest",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -359,13 +366,14 @@ namespace GradeManagement.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Value = table.Column<double>(type: "float", nullable: false),
                     IsApproved = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     ScoreTypeId = table.Column<long>(type: "bigint", nullable: false),
                     PullRequestId = table.Column<long>(type: "bigint", nullable: false),
-                    TeacherId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    TeacherId = table.Column<long>(type: "bigint", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    SubjectId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -375,17 +383,52 @@ namespace GradeManagement.Data.Migrations
                         column: x => x.PullRequestId,
                         principalTable: "PullRequest",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Score_ScoreType_ScoreTypeId",
                         column: x => x.ScoreTypeId,
                         principalTable: "ScoreType",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Score_User_TeacherId",
                         column: x => x.TeacherId,
                         principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ScoreTypeExercise",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ExerciseId = table.Column<long>(type: "bigint", nullable: false),
+                    ScoreTypeId = table.Column<long>(type: "bigint", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    ScoreId = table.Column<long>(type: "bigint", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ScoreTypeExercise", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ScoreTypeExercise_Exercise_ExerciseId",
+                        column: x => x.ExerciseId,
+                        principalTable: "Exercise",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ScoreTypeExercise_ScoreType_ScoreTypeId",
+                        column: x => x.ScoreTypeId,
+                        principalTable: "ScoreType",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ScoreTypeExercise_Score_ScoreId",
+                        column: x => x.ScoreId,
+                        principalTable: "Score",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -481,6 +524,21 @@ namespace GradeManagement.Data.Migrations
                 column: "TeacherId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ScoreTypeExercise_ExerciseId",
+                table: "ScoreTypeExercise",
+                column: "ExerciseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScoreTypeExercise_ScoreId",
+                table: "ScoreTypeExercise",
+                column: "ScoreId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScoreTypeExercise_ScoreTypeId",
+                table: "ScoreTypeExercise",
+                column: "ScoreTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SubjectTeacher_SubjectId",
                 table: "SubjectTeacher",
                 column: "SubjectId");
@@ -504,13 +562,16 @@ namespace GradeManagement.Data.Migrations
                 name: "GroupTeacher");
 
             migrationBuilder.DropTable(
-                name: "Score");
+                name: "ScoreTypeExercise");
 
             migrationBuilder.DropTable(
                 name: "SubjectTeacher");
 
             migrationBuilder.DropTable(
                 name: "Group");
+
+            migrationBuilder.DropTable(
+                name: "Score");
 
             migrationBuilder.DropTable(
                 name: "PullRequest");

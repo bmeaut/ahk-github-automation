@@ -7,34 +7,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class ScoreService(GradeManagementDbContext gradeManagementDbContext, ScoreTypeService scoreTypeService)
+public class ScoreService(GradeManagementDbContext gradeManagementDbContext, ScoreTypeService scoreTypeService, ExerciseService exerciseService)
 {
-    public async Task CreateScoreBasedOnEventScoreAsync(EventScore eventScore, long pullRequestId, long subjectId)
+    public async Task CreateScoreBasedOnOrderAsync(int order, double score, long pullRequestId, long subjectId, long exerciseId)
     {
         var scoreEntity = new Score
         {
-            Value = eventScore.Value,
+            Value = score,
             IsApproved = false,
-            CreatedDate = eventScore.CreatedDate,
-            ScoreType = await scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(eventScore.ScoreType),
-            PullRequestId = pullRequestId
+            CreatedDate = DateTimeOffset.Now,
+            ScoreType = await exerciseService.GetScoreTypeByOrderAndExerciseIdAsync(order, exerciseId),
+            PullRequestId = pullRequestId,
+            SubjectId = subjectId
         };
         gradeManagementDbContext.Score.Add(scoreEntity);
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
     public async Task CreateOrApprovePointsFromTeacherInputWithoutQfAsync(
-        EventScore eventScore, long pullRequestId, long teacherId, long subjectId)
+        int order, double score, long pullRequestId, long teacherId, long subjectId, long exerciseId)
     {
-        var scoreEntity = await GetLatestModelByEventScoreWithoutQfAsync(eventScore);
+        var scoreType = await exerciseService.GetScoreTypeByOrderAndExerciseIdAsync(order, exerciseId);
+        var scoreEntity = await GetLatestModelByScoreValueAndTypeWithoutQfAsync(score, scoreType);
         if (scoreEntity == null)
         {
             scoreEntity = new Score
             {
-                Value = eventScore.Value,
+                Value = score,
                 IsApproved = true,
-                CreatedDate = eventScore.CreatedDate,
-                ScoreType = await scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(eventScore.ScoreType),
+                CreatedDate = DateTimeOffset.Now,
+                ScoreType = scoreType,
                 PullRequestId = pullRequestId,
                 TeacherId = teacherId,
                 SubjectId = subjectId
@@ -51,12 +53,12 @@ public class ScoreService(GradeManagementDbContext gradeManagementDbContext, Sco
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    private async Task<Score?> GetLatestModelByEventScoreWithoutQfAsync(EventScore eventScore)
+    private async Task<Score?> GetLatestModelByScoreValueAndTypeWithoutQfAsync(double score, ScoreType scoreType)
     {
         return await gradeManagementDbContext.Score
             .IgnoreQueryFiltersButNotIsDeleted()
             .Include(s => s.ScoreType)
             .OrderByDescending(s => s.CreatedDate)
-            .FirstOrDefaultAsync(s => s.Value == eventScore.Value && s.ScoreType.Type == eventScore.ScoreType);
+            .FirstOrDefaultAsync(s => Math.Abs(s.Value - score) < 0.001 && s.ScoreType.Id == scoreType.Id);
     }
 }

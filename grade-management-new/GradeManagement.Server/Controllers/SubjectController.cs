@@ -12,7 +12,7 @@ namespace GradeManagement.Server.Controllers;
 
 [Route("api/subjects")]
 [ApiController]
-public class SubjectController(SubjectService subjectService)
+public class SubjectController(SubjectService subjectService, IHttpContextAccessor httpContextAccessor)
     : CrudControllerBase<SubjectRequest, SubjectResponse>(subjectService)
 {
     [HttpPut("{id:long}")]
@@ -35,7 +35,7 @@ public class SubjectController(SubjectService subjectService)
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public override async Task<IEnumerable<SubjectResponse>> GetAllAsync() =>
-        await base.GetAllAsync();
+        await subjectService.GetAllAsyncForUserWithoutQf(HttpContext.User);
 
     [HttpGet("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
