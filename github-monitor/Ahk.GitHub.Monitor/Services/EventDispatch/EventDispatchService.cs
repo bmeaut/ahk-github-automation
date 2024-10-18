@@ -29,7 +29,7 @@ namespace Ahk.GitHub.Monitor.Services
 
         public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult, ILogger logger)
         {
-            if (!this.handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
+            if (!handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
             {
                 webhookResult.LogInfo($"Event {gitHubEventName} is not of interest");
                 logger.LogInformation($"Event {gitHubEventName} is not of interest");

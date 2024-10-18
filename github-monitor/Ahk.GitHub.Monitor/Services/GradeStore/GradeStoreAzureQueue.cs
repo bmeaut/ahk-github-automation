@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services.AzureQueues;
+using Ahk.GitHub.Monitor.Services.GradeStore.Dto;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
@@ -9,8 +10,8 @@ namespace Ahk.GitHub.Monitor.Services
 {
     internal class GradeStoreAzureQueue : IGradeStore
     {
-        public const string QueueNameSetGrade = "ahksetgrade";
-        public const string QueueNameConfirmAutoGrade = "ahkconfirmautograde";
+        private const string QueueNameSetGrade = "ahksetgrade";
+        private const string QueueNameConfirmAutoGrade = "ahkconfirmautograde";
 
         private readonly QueueWithCreateIfNotExists queueSetGrade;
         private readonly QueueWithCreateIfNotExists queueConfirmAutoGrade;
@@ -18,19 +19,19 @@ namespace Ahk.GitHub.Monitor.Services
         public GradeStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
         {
             var queueService = clientFactory.CreateClient(QueueClientName.Name);
-            this.queueSetGrade = new QueueWithCreateIfNotExists(queueService, QueueNameSetGrade);
-            this.queueConfirmAutoGrade = new QueueWithCreateIfNotExists(queueService, QueueNameConfirmAutoGrade);
+            queueSetGrade = new QueueWithCreateIfNotExists(queueService, QueueNameSetGrade);
+            queueConfirmAutoGrade = new QueueWithCreateIfNotExists(queueService, QueueNameConfirmAutoGrade);
         }
 
-        public Task StoreGrade(string neptun, string repository, int prNumber, string prUrl, string actor, string origin, IReadOnlyCollection<double> results)
+        public Task StoreGrade(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results)
         {
-            var e = new SetGradeEvent(neptun, repository, prNumber, prUrl, actor, origin, results.ToArray());
+            var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, results, System.DateTimeOffset.UtcNow);
             return queueSetGrade.Send(e);
         }
 
-        public Task ConfirmAutoGrade(string neptun, string repository, int prNumber, string prUrl, string actor, string origin)
+        public Task ConfirmAutoGrade(string repositoryUrl, string prUrl, string actor)
         {
-            var e = new ConfirmAutoGradeEvent(neptun, repository, prNumber, prUrl, actor, origin);
+            var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, [], System.DateTimeOffset.UtcNow);
             return queueConfirmAutoGrade.Send(e);
         }
     }

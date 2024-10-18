@@ -9,6 +9,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         public Repository Repository { get; }
         public int PullRequestNumber { get; }
+        public string PullRequestUrl { get; }
         public string CommentingUser { get; }
         string CommentHtmlUrl { get; }
         string CommentBody { get; }

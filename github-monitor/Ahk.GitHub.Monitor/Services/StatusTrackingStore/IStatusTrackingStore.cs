@@ -1,12 +1,13 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
 namespace Ahk.GitHub.Monitor.Services
 {
     public interface IStatusTrackingStore
     {
         Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent);
-        Task StoreEvent(BranchCreateEvent branchCreateEvent);
-        Task StoreEvent(WorkflowRunEvent workflowRunEvent);
-        Task StoreEvent(PullRequestEvent pullRequestEvent);
+        Task StoreEvent(PullRequestOpenedEvent pullRequestOpenedEvent);
+        Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent);
+        Task StoreEvent(PullRequestStatusChanged pullRequestStatusChangedű);
     }
 }

@@ -16,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Helpers
             if (string.IsNullOrEmpty(value))
             {
                 this.IsMatch = false;
-                this.Grades = Array.Empty<double>();
+                this.GradesWithOrder = [];
                 return;
             }
 
@@ -27,19 +27,26 @@ namespace Ahk.GitHub.Monitor.Helpers
                 if (m.Success)
                 {
                     this.IsMatch = true;
-                    this.Grades = getGrades(m.Value);
+                    this.GradesWithOrder = getGrades(m.Value);
                 }
             }
         }
 
         public bool IsMatch { get; }
-        public IReadOnlyCollection<double> Grades { get; }
-        public bool HasGrades => IsMatch && Grades.Count > 0;
+        public Dictionary<int, double> GradesWithOrder { get; }
+        public bool HasGrades => this.IsMatch && this.GradesWithOrder.Count > 0;
 
-        private static IReadOnlyCollection<double> getGrades(string value)
+        private static Dictionary<int, double> getGrades(string value)
         {
             var gradesMatch = GradesRegex.Matches(value);
-            return gradesMatch.Select(m => parseNum(m.Value)).ToArray();
+            var gradeList = gradesMatch.Select(m => parseNum(m.Value)).ToArray();
+            var grades = new Dictionary<int, double>();
+            for (var i = 0; i < gradeList.Length; i++)
+            {
+                grades.Add(i + 1, gradeList[i]);
+            }
+
+            return grades;
         }
 
         private static double parseNum(string value)

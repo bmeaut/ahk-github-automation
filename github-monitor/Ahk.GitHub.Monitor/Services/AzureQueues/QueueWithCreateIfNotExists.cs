@@ -3,13 +3,10 @@ using Azure.Storage.Queues;
 
 namespace Ahk.GitHub.Monitor.Services.AzureQueues
 {
-    internal class QueueWithCreateIfNotExists
+    internal class QueueWithCreateIfNotExists(QueueServiceClient queueService, string queueName)
     {
-        private readonly QueueClient queue;
-        private volatile bool queueCreated = false;
-
-        public QueueWithCreateIfNotExists(QueueServiceClient queueService, string queueName)
-            => queue = queueService.GetQueueClient(queueName);
+        private readonly QueueClient queue = queueService.GetQueueClient(queueName);
+        private volatile bool queueCreated;
 
         public async Task Send<T>(T value)
         {

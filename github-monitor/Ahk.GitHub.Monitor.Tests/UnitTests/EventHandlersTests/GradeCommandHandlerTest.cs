@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -17,11 +18,17 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         public async Task IssueCommentNoIssueInPayloadIgnored()
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
+            var prStatusTrackingStoreMock = new Mock<PullRequestStatusTrackingHandler>(
+                gitHubMock.CreateFactory(),
+                new StatusTrackingStoreNoop(),
+                MemoryCacheMockFactory.Instance,
+                NullLogger.Instance
+            );
 
             var payload = SampleData.CommentEdit
                 .Replace("\"issue\": {", "\"aaaaa\": {", System.StringComparison.InvariantCultureIgnoreCase);
 
-            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
+            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance, prStatusTrackingStoreMock.Object);
             var result = await eh.Execute(payload);
 
             Assert.IsTrue(result.Result.Contains("no issue information", System.StringComparison.InvariantCultureIgnoreCase));
@@ -34,8 +41,15 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
         public async Task IssueCommentActionIsNotCreated()
         {
             var gitHubMock = GitHubClientMockFactory.CreateDefault();
+            var prStatusTrackingStoreMock = new Mock<PullRequestStatusTrackingHandler>(
+                gitHubMock.CreateFactory(),
+                new StatusTrackingStoreNoop(),
+                MemoryCacheMockFactory.Instance,
+                NullLogger.Instance
+            );
 
-            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance);
+
+            var eh = new GradeCommandIssueCommentHandler(gitHubMock.CreateFactory(), GradeStoreMockFactory.Default, MemoryCacheMockFactory.Instance, NullLogger.Instance, prStatusTrackingStoreMock.Object);
             var result = await eh.Execute(SampleData.CommentDelete);
 
             Assert.IsTrue(result.Result.Contains("not of interest", System.StringComparison.InvariantCultureIgnoreCase));
@@ -203,10 +217,10 @@ namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests
                        .Replace("xxx-comment-creator-user-xxx", user, System.StringComparison.InvariantCultureIgnoreCase);
         }
 
-        private static IGitHubEventHandler createHandler(CommentType commentType, IGitHubClientFactory gitHubClientFactory, IGradeStore gradeStore)
+        private static IGitHubEventHandler createHandler(CommentType commentType, IGitHubClientFactory gitHubClientFactory, IGradeStore gradeStore, PullRequestStatusTrackingHandler prStatusTrackingHandler)
             => commentType switch
             {
-                CommentType.IssueComment => new GradeCommandIssueCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance, NullLogger.Instance),
+                CommentType.IssueComment => new GradeCommandIssueCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance, NullLogger.Instance, prStatusTrackingHandler),
                 CommentType.ReviewComment => new GradeCommandReviewCommentHandler(gitHubClientFactory, gradeStore, MemoryCacheMockFactory.Instance, NullLogger.Instance),
                 _ => throw new System.NotImplementedException(),
             };
