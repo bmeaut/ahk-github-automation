@@ -61,7 +61,7 @@ public static class ArgReader
         resultsFile ??= "result.json";
 
         var ahkAppUrl = Environment.GetEnvironmentVariable("INPUT_AHK_APPURL");
-        ahkAppUrl ??= "https://ahk-grade-management.azurewebsites.net/api/evaluation-result";
+        ahkAppUrl ??= "";
 
         var ahkAppToken = Environment.GetEnvironmentVariable("INPUT_AHK_APPTOKEN");
         ahkAppToken ??= "";

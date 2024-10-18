@@ -1,5 +1,5 @@
+using System.Net.Http.Json;
 using System.Text.Json;
-
 using PublishResult.AppArgs;
 using PublishResult.Processing;
 
@@ -13,7 +13,7 @@ public static class ApiPublisher
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public static void PublishToApi(AppArgs.AppArgs appArgs, AhkProcessResult result)
+    public static async Task<bool> PublishToApiAsync(AppArgs.AppArgs appArgs, AhkProcessResult result)
     {
         var githubRepositoryUrl = $"https://github.com/{appArgs.GitHubRepoFullName}";
         var pullrequestUrl = $"https://github.com/{appArgs.GitHubRepoOwner}/{appArgs.GitHubRepoName}/pull/{appArgs.GitHubPullRequestNum}";
@@ -46,6 +46,12 @@ public static class ApiPublisher
 
         var json = JsonSerializer.Serialize(resultToApi, writeOptions);
 
-        // TODO: send json to backend
+        using HttpClient client = new HttpClient();
+        var apiResult = await client.PostAsJsonAsync(appArgs.AhkAppUrl, json);
+
+        if (apiResult.StatusCode == System.Net.HttpStatusCode.OK)
+            return true;
+
+        return false;
     }
 }

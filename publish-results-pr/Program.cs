@@ -1,10 +1,11 @@
-﻿using PublishResult.AppArgs;
+using PublishResult.AppArgs;
 using PublishResult.Processing;
+using PublishResult.PublishToApi;
 using PublishResult.PublishToPr;
 
 namespace PublishResult;
 
-public class Program
+public static class Program
 {
     public static async Task Main()
     {
@@ -26,17 +27,19 @@ public class Program
         await PrPublisher.PublishToPrAsync(appArgs, result);
         Console.WriteLine("Publishing results to PR... done.\n");
 
-        // TODO: Uncomment if backend is ready
-
-        //if (appArgs.AhkAppUrl != "" && appArgs.AhkAppToken != "" && appArgs.AhkAppSecret != "")
-        //{
-        //    Console.WriteLine("Sending result to Ahk Api...");
-        //    var apiPublisher = new ApiPublisher();
-        //    apiPublisher.PublishToApi(appArgs, result);
-        //    Console.WriteLine("Sending result to Ahk Api... done.\n");
-        //}
-        //else
-        //    Console.WriteLine("Sending result to Ahk Api disabled.\n");
+        if (string.IsNullOrEmpty(appArgs.AhkAppUrl))
+            Console.WriteLine("Sending result to Ahk Api not requested(AHK_APPURL not defined).\n");
+        else if (!string.IsNullOrEmpty(appArgs.AhkAppToken) && !string.IsNullOrEmpty(appArgs.AhkAppSecret))
+        {
+            Console.WriteLine("Sending result to Ahk Api...");
+            var apiResult = await ApiPublisher.PublishToApiAsync(appArgs, result);
+            if (apiResult)
+                Console.WriteLine("Sending result to Ahk Api... done.\n");
+            else
+                Console.WriteLine("Sending result to Ahk Api was not successful.\n");
+        }
+        else
+            Console.WriteLine("Sending result to Ahk Api disabled.\n");
 
         Console.WriteLine("Finished. Bye.");
     }
