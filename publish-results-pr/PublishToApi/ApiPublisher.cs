@@ -46,7 +46,7 @@ public static class ApiPublisher
 
         var json = JsonSerializer.Serialize(resultToApi, writeOptions);
 
-        using HttpClient client = new HttpClient();
+        using var client = new HttpClient();
         var apiResult = await client.PostAsJsonAsync(appArgs.AhkAppUrl, json);
 
         if (apiResult.StatusCode == System.Net.HttpStatusCode.OK)

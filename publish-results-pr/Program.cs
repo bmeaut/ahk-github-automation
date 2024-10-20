@@ -13,7 +13,6 @@ public static class Program
 
         Console.WriteLine("Reading args...");
         var appArgs = ArgReader.GetArgs();
-        //Console.WriteLine(appArgs);
         Console.WriteLine("Reading args... done.\n");
 
         var dir = Directory.GetCurrentDirectory();
