@@ -1,10 +1,17 @@
-FROM golang:1.17-alpine AS build
+# Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /app
 
-WORKDIR /src
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -extldflags "-static"' -o /bin/ahkpublishresultpr
+# Copy files, restore, publish
+COPY ./PublishResult.csproj ./
+RUN dotnet restore PublishResult.csproj
+COPY ./. ./
+RUN dotnet publish PublishResult.csproj -c Release -o out
 
-FROM scratch
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /bin/ahkpublishresultpr /bin/ahkpublishresultpr
-ENTRYPOINT ["/bin/ahkpublishresultpr"]
+# Runtime
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+WORKDIR /app
+
+# Copy the published output
+COPY --from=build /app/out /src
+CMD ["dotnet", "/src/PublishResult.dll"]
