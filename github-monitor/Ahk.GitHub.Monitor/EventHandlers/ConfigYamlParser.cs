@@ -5,7 +5,9 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 {
     internal static class ConfigYamlParser
     {
-        private static readonly Regex EnabledRegex = new Regex(@"^enabled:?\s*(?<value>\w+)?", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Multiline);
+        private static readonly Regex EnabledRegex = new Regex(
+            @"^enabled:?\s*(?<value>\w+)?",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Multiline);
 
         public static bool IsEnabled(string fileContent)
         {
@@ -26,8 +28,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
             // "enabled: ..." must match either of the following
             return value.Value.Equals("true", StringComparison.OrdinalIgnoreCase)
-                || value.Value.Equals("yes", StringComparison.OrdinalIgnoreCase)
-                || value.Value.Equals("1", StringComparison.OrdinalIgnoreCase);
+                   || value.Value.Equals("yes", StringComparison.OrdinalIgnoreCase)
+                   || value.Value.Equals("1", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

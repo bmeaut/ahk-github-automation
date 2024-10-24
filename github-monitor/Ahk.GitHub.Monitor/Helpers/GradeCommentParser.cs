@@ -8,8 +8,11 @@ namespace Ahk.GitHub.Monitor.Helpers
 {
     internal class GradeCommentParser
     {
-        private static readonly Regex CommandRegex = new Regex(@"^/ahk ok($|(\s.*))", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
-        private static readonly Regex GradesRegex = new Regex(@"[0-9]+([,\.][0-9]{1,3})?", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex CommandRegex = new Regex(@"^/ahk ok($|(\s.*))",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+
+        private static readonly Regex GradesRegex = new Regex(@"[0-9]+([,\.][0-9]{1,3})?",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
 
         public GradeCommentParser(string value)
         {
@@ -56,7 +59,8 @@ namespace Ahk.GitHub.Monitor.Helpers
                 return d1;
 
             // replace commas with decimal point
-            if (double.TryParse(value.Replace(",", ".", StringComparison.OrdinalIgnoreCase), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var d2))
+            if (double.TryParse(value.Replace(",", ".", StringComparison.OrdinalIgnoreCase),
+                    NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var d2))
                 return d2;
 
             return double.NaN;

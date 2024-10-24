@@ -11,11 +11,13 @@ namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory
     {
         private readonly AsyncRetryPolicy<HttpResponseMessage> policy =
             Policy.HandleResult<HttpResponseMessage>(m => m.StatusCode == System.Net.HttpStatusCode.InternalServerError)
-                    .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: getExponentialBackoffSleep);
+                .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: getExponentialBackoffSleep);
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
             => policy.ExecuteAsync(async () => await base.SendAsync(request, cancellationToken));
 
-        private static TimeSpan getExponentialBackoffSleep(int retryAttempt) => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
+        private static TimeSpan getExponentialBackoffSleep(int retryAttempt) =>
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
     }
 }

@@ -33,16 +33,18 @@ namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory
                 });
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var httpHandler = new Octokit.Internal.HttpClientAdapter(() => new ResponseLoggerHandler(new RetryOnServerErrorHandler(Octokit.Internal.HttpMessageHandlerFactory.CreateDefault()), logger));
+            var httpHandler = new Octokit.Internal.HttpClientAdapter(() =>
+                new ResponseLoggerHandler(
+                    new RetryOnServerErrorHandler(Octokit.Internal.HttpMessageHandlerFactory.CreateDefault()), logger));
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             // Connection creation based on what the GitHubClient ctor does
             var githubConnection = new Connection(
-                                        new Octokit.ProductHeaderValue("Ahk"),
-                                        GitHubClient.GitHubApiUrl,
-                                        new Octokit.Internal.InMemoryCredentialStore(new Credentials(token)),
-                                        httpHandler,
-                                        new Octokit.Internal.SimpleJsonSerializer());
+                new Octokit.ProductHeaderValue("Ahk"),
+                GitHubClient.GitHubApiUrl,
+                new Octokit.Internal.InMemoryCredentialStore(new Credentials(token)),
+                httpHandler,
+                new Octokit.Internal.SimpleJsonSerializer());
 
             var gitHubClient = new GitHubClient(githubConnection);
             gitHubClient.SetRequestTimeout(TimeSpan.FromSeconds(15));
@@ -54,16 +56,19 @@ namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory
         {
             var applicationToken = this.getApplicationToken();
             using var client = new HttpClient();
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/app/installations/{installationId}/access_tokens");
+            using var request = new HttpRequestMessage(HttpMethod.Post,
+                $"https://api.github.com/app/installations/{installationId}/access_tokens");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", applicationToken);
             request.Headers.UserAgent.Add(ProductInfoHeaderValue.Parse("Ahk"));
-            request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json"));
+            request.Headers.Accept.Add(
+                MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json"));
 
             using var response = await client.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-                logger.LogError($"Failed to get access token for installation {installationId}, response payload is: {json}");
+                logger.LogError(
+                    $"Failed to get access token for installation {installationId}, response payload is: {json}");
 
             response.EnsureSuccessStatusCode();
 
@@ -80,8 +85,11 @@ namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory
             var token = new JwtSecurityToken(
                 claims:
                 [
-                    new Claim("iat", now.ToUnixTimeStamp().ToString(System.Globalization.CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
-                    new Claim("exp", now.AddMinutes(10).ToUnixTimeStamp().ToString(System.Globalization.CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
+                    new Claim("iat", now.ToUnixTimeStamp().ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ClaimValueTypes.Integer),
+                    new Claim("exp",
+                        now.AddMinutes(10).ToUnixTimeStamp()
+                            .ToString(System.Globalization.CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
                     new Claim("iss", config.Value.GitHubAppId, ClaimValueTypes.Integer)
                 ],
                 signingCredentials: creds);

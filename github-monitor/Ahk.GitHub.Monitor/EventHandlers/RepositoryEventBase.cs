@@ -120,7 +120,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
             try
             {
-                var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id, ".github/ahk-monitor.yml", webhookPayload.Repository.DefaultBranch);
+                var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(webhookPayload.Repository.Id,
+                    ".github/ahk-monitor.yml", webhookPayload.Repository.DefaultBranch);
                 if (contents.Count == 0)
                     return false;
                 var contentAsString = contents[0].Content;

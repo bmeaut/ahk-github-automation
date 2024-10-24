@@ -27,7 +27,8 @@ namespace Ahk.GitHub.Monitor.Services.EventDispatch
             handlers = handlersList;
         }
 
-        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult, ILogger logger)
+        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult,
+            ILogger logger)
         {
             if (!handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
             {
@@ -44,11 +45,14 @@ namespace Ahk.GitHub.Monitor.Services.EventDispatch
             }
         }
 
-        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType, ILogger logger)
+        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType,
+            ILogger logger)
         {
             try
             {
-                var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType) as EventHandlers.IGitHubEventHandler;
+                var handler =
+                    ActivatorUtilities.CreateInstance(
+                        serviceProvider, handlerType) as EventHandlers.IGitHubEventHandler;
                 var handlerResult = await handler.Execute(requestBody);
 
                 logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");

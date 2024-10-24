@@ -135,7 +135,7 @@ csharp_style_conditional_delegate_call = true:suggestion
 
 # Modifier preferences
 csharp_prefer_static_local_function = true:suggestion
-csharp_preferred_modifier_order = public,private,protected,internal,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,volatile,async:silent
+csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async:silent
 
 # Code-block preferences
 csharp_prefer_braces = true:silent
@@ -191,7 +191,7 @@ dotnet_naming_symbols.non_field_members.required_modifiers =
 
 dotnet_naming_symbols.private_method.applicable_kinds = method
 dotnet_naming_symbols.private_method.applicable_accessibilities = private
-dotnet_naming_symbols.private_method.required_modifiers = 
+dotnet_naming_symbols.private_method.required_modifiers =
 
 # Naming styles
 
@@ -205,9 +205,9 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-dotnet_naming_style.camelcase.required_prefix = 
-dotnet_naming_style.camelcase.required_suffix = 
-dotnet_naming_style.camelcase.word_separator = 
+dotnet_naming_style.camelcase.required_prefix =
+dotnet_naming_style.camelcase.required_suffix =
+dotnet_naming_style.camelcase.word_separator =
 dotnet_naming_style.camelcase.capitalization = camel_case
 
 
@@ -414,7 +414,7 @@ dotnet_diagnostic.CA1703.severity = warning
 
 dotnet_diagnostic.CA1704.severity = warning
 
-dotnet_diagnostic.CA1707.severity =suggestion
+dotnet_diagnostic.CA1707.severity = suggestion
 
 dotnet_diagnostic.CA1708.severity = warning
 
@@ -737,4 +737,4 @@ dotnet_diagnostic.SA1642.severity = none
 dotnet_diagnostic.SA1643.severity = none
 
 dotnet_diagnostic.SA1652.severity = none
-dotnet_diagnostic.CA2007.severity=silent
+dotnet_diagnostic.CA2007.severity = silent
