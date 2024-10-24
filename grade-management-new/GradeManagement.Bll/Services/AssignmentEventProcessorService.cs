@@ -75,15 +75,29 @@ public class AssignmentEventProcessorService(
         {
             var repositoryName = GetRepositoryNameFromUrl(pullRequestOpened.GitHubRepositoryUrl);
             var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
-            var pullRequest = new PullRequest()
+            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestOpened.PullRequestUrl);
+
+            if (pullRequest != null)
             {
-                Url = pullRequestOpened.PullRequestUrl,
-                OpeningDate = pullRequestOpened.OpeningDate,
-                Status = PullRequestStatus.Open,
-                BranchName = pullRequestOpened.BranchName,
-                AssignmentId = assignment.Id
-            };
-            pullRequest = await pullRequestService.CreateAsync(pullRequest, assignment.SubjectId);
+                pullRequest.OpeningDate = pullRequestOpened.OpeningDate;
+                pullRequest.BranchName = pullRequestOpened.BranchName;
+                await gradeManagementDbContext.SaveChangesAsync();
+            }
+            else
+            {
+                var pullRequestToCreate = new PullRequest()
+                {
+                    Url = pullRequestOpened.PullRequestUrl,
+                    OpeningDate = pullRequestOpened.OpeningDate,
+                    Status = PullRequestStatus.Open,
+                    BranchName = pullRequestOpened.BranchName,
+                    AssignmentId = assignment.Id
+                };
+                pullRequestToCreate = await pullRequestService.CreateWithoutQfAsync(pullRequestToCreate, assignment.SubjectId);
+                pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestOpened.PullRequestUrl);
+            }
+
+
 
             var assignmentLog = new AssignmentLog()
             {
@@ -122,7 +136,7 @@ public class AssignmentEventProcessorService(
                 throw new SecurityTokenException("Invalid API key");
             }
 
-            if (student.NeptunCode.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(student.NeptunCode))
             {
                 var newStudent =
                     await studentService.GetStudentModelByNeptunAsync(ciEvaluationCompleted.StudentNeptun);
@@ -162,6 +176,32 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
+            var repositoryName = GetRepositoryNameFromUrl(teacherAssigned.GitHubRepositoryUrl);
+            var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
+            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(teacherAssigned.PullRequestUrl);
+
+            if (pullRequest == null)
+            {
+                pullRequest = new Data.Models.PullRequest()
+                {
+                    Url = teacherAssigned.PullRequestUrl,
+                    OpeningDate = DateTime.UtcNow,
+                    Status = PullRequestStatus.Open,
+                    BranchName = "",
+                    AssignmentId = assignment.Id,
+                    SubjectId = assignment.SubjectId
+                };
+            }
+
+            pullRequest.TeacherId = null; // Unassign previous teacher
+            await gradeManagementDbContext.SaveChangesAsync();
+
+            if(teacherAssigned.TeacherGitHubIds == null || teacherAssigned.TeacherGitHubIds.Count == 0)
+            {
+                await transaction.CommitAsync();
+                return;
+            }
+
             foreach (var teacherGithubId in teacherAssigned.TeacherGitHubIds)
             {
                 User teacherModel;
@@ -174,9 +214,6 @@ public class AssignmentEventProcessorService(
                     continue; // Skip if teacher not found, maybe faulty assignment
                 }
 
-                var repositoryName = GetRepositoryNameFromUrl(teacherAssigned.GitHubRepositoryUrl);
-                var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
-                var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(teacherAssigned.PullRequestUrl);
                 pullRequest.TeacherId = teacherModel.Id;
                 await gradeManagementDbContext.SaveChangesAsync();
 
