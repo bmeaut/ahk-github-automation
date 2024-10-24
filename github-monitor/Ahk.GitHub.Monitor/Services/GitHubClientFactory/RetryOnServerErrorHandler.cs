@@ -5,18 +5,13 @@ using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory
 {
-    internal class RetryOnServerErrorHandler : DelegatingHandler
+    internal class RetryOnServerErrorHandler(HttpMessageHandler innerHandler) : DelegatingHandler(innerHandler)
     {
         private readonly AsyncRetryPolicy<HttpResponseMessage> policy =
             Policy.HandleResult<HttpResponseMessage>(m => m.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                     .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: getExponentialBackoffSleep);
-
-        public RetryOnServerErrorHandler(HttpMessageHandler innerHandler)
-            : base(innerHandler)
-        {
-        }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             => policy.ExecuteAsync(async () => await base.SendAsync(request, cancellationToken));

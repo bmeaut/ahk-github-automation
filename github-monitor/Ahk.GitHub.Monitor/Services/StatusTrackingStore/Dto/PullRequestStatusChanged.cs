@@ -1,6 +1,4 @@
-﻿using GradeManagement.Shared.Enums;
-
-namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
+﻿namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
 public class PullRequestStatusChanged(
     string gitHubRepositoryUrl,

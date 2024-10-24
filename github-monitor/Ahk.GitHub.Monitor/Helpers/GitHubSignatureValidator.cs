@@ -2,7 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Ahk.GitHub.Monitor
+namespace Ahk.GitHub.Monitor.Helpers
 {
     public static class GitHubSignatureValidator
     {

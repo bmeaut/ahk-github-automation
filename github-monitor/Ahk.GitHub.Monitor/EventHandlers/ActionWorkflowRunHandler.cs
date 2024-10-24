@@ -1,19 +1,23 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers
 {
     public class ActionWorkflowRunHandler(
-        Services.IGitHubClientFactory gitHubClientFactory,
-        Microsoft.Extensions.Caching.Memory.IMemoryCache cache,
-        Microsoft.Extensions.Logging.ILogger logger)
-        : RepositoryEventBase<WorkflowRunEventPayload>(gitHubClientFactory, cache, logger)
+        IGitHubClientFactory gitHubClientFactory,
+        IMemoryCache cache,
+        IServiceProvider serviceProvider)
+        : RepositoryEventBase<WorkflowRunEventPayload>(gitHubClientFactory, cache, serviceProvider)
     {
         public const int WorkflowRunThreshold = 5;
         public const string GitHubWebhookEventName = "workflow_run";
-        private const string WarningText = ":exclamation: **You triggered too many automated evaluations; extra evaluations are penalized. Túl sok automata értékelést futtattál; az extra futtatások pontlevonással járnak.** ";
+
+        private const string WarningText =
+            ":exclamation: **You triggered too many automated evaluations; extra evaluations are penalized. Túl sok automata értékelést futtattál; az extra futtatások pontlevonással járnak.** ";
 
         protected override async Task<EventHandlerResult> executeCore(WorkflowRunEventPayload webhookPayload)
         {
@@ -25,7 +29,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 if (await isUserOrganizationMember(webhookPayload, webhookPayload.Sender.Login))
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, not triggered by student");
 
-                var workflowRuns = await GitHubClient.CountWorkflowRunsInRepository(webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
+                var workflowRuns = await GitHubClient.CountWorkflowRunsInRepository(
+                    webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
                 if (workflowRuns <= WorkflowRunThreshold)
                     return EventHandlerResult.NoActionNeeded("workflow_run ok, has less then threshold");
 
@@ -40,7 +45,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task<int?> getMostRecentPullRequest(WorkflowRunEventPayload webhookPayload)
         {
-            var list = await GitHubClient.PullRequest.GetAllForRepository(webhookPayload.Repository.Id, new PullRequestRequest() { State = ItemStateFilter.All });
+            var list = await GitHubClient.PullRequest.GetAllForRepository(webhookPayload.Repository.Id,
+                new PullRequestRequest() { State = ItemStateFilter.All });
             return list.OrderByDescending(p => p.UpdatedAt).FirstOrDefault()?.Number;
         }
     }

@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -13,7 +14,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         [TestMethod]
         public async Task InvalidGitHubSignatureHeaderReturnError()
         {
-            var eds = new Mock<Services.IEventDispatchService>();
+            var eds = new Mock<IEventDispatchService>();
             var func = FunctionBuilder.Create(eds.Object);
 
             var wrongSignature = new SampleCallbackData(SampleData.BranchCreate.Body, "wrongsignature", SampleData.BranchCreate.EventName);
@@ -26,7 +27,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         [TestMethod]
         public async Task ValidGitHubSignatureAcceptedAndDispatched()
         {
-            var eds = new Mock<Services.IEventDispatchService>();
+            var eds = new Mock<IEventDispatchService>();
             eds.Setup(s => s.Process(SampleData.BranchCreate.EventName, It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance)).Returns(Task.CompletedTask);
 
             var ctx = FunctionBuilder.Create(eds.Object);

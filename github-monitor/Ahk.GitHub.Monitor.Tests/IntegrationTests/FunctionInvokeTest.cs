@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         public async Task NoAppConfigsReturnsError()
         {
             var log = new Mock<ILogger<GitHubMonitorFunction>>();
-            var eds = new Mock<Services.IEventDispatchService>();
+            var eds = new Mock<IEventDispatchService>();
             var func = new GitHubMonitorFunction(eds.Object, Options.Create(new GitHubMonitorConfig()), log.Object);
 
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(req => { });
@@ -28,7 +29,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         [TestMethod]
         public async Task MissingGitHubEventHeaderReturnsError()
         {
-            var eds = new Mock<Services.IEventDispatchService>();
+            var eds = new Mock<IEventDispatchService>();
             var func = FunctionBuilder.Create(eds.Object);
 
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(req => req.Headers.Add("X-Hub-Signature-256", "dummy"));
@@ -40,7 +41,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
         [TestMethod]
         public async Task MissingGitHubSignatureHeaderReturnsError()
         {
-            var eds = new Mock<Services.IEventDispatchService>();
+            var eds = new Mock<IEventDispatchService>();
             var func = FunctionBuilder.Create(eds.Object);
 
             var resp = await func.InvokeAndGetResponseAs<ObjectResult>(req => req.Headers.Add("X-GitHub-Event", "dummy"));

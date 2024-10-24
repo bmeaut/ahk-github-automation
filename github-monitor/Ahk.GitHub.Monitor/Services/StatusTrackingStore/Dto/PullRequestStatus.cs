@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Shared.Enums;
+﻿namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
 public enum PullRequestStatus
 {

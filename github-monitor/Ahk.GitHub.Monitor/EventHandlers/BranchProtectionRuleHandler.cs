@@ -10,8 +10,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class BranchProtectionRuleHandler(
         IGitHubClientFactory gitHubClientFactory,
         IMemoryCache cache,
-        ILogger logger)
-        : RepositoryEventBase<CreateEventPayload>(gitHubClientFactory, cache, logger)
+        IServiceProvider serviceProvider)
+        : RepositoryEventBase<CreateEventPayload>(gitHubClientFactory, cache, serviceProvider)
     {
         public const string GitHubWebhookEventName = "create";
 

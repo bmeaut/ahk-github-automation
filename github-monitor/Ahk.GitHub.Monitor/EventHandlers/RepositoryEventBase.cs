@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using Octokit.Internal;
@@ -11,11 +12,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public abstract class RepositoryEventBase<TPayload>(
         IGitHubClientFactory gitHubClientFactory,
         IMemoryCache cache,
-        ILogger logger)
+        IServiceProvider serviceProvider)
         : IGitHubEventHandler
         where TPayload : ActivityPayload
     {
-        protected readonly ILogger Logger = logger;
+        protected readonly ILogger Logger = serviceProvider.GetRequiredService<ILogger<GitHubMonitorFunction>>();
 
         protected IGitHubClient GitHubClient { get; private set; }
 
@@ -74,32 +75,6 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
             errorResult = null;
             return true;
-        }
-
-        protected Task<string> getNeptun(long repositoryId, string branchName)
-            => cache.GetOrCreateAsync(
-                key: $"neptuntxtfile{repositoryId}{branchName}",
-                factory: async cacheEntry =>
-                {
-                    var value = await getNeptunTxtFileContent(repositoryId, branchName);
-                    cacheEntry.SetValue(value);
-                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(12));
-                    return value;
-                });
-
-        protected async Task<string> getNeptunTxtFileContent(long repositoryId, string branchName)
-        {
-            try
-            {
-                var contents = await GitHubClient.Repository.Content.GetAllContentsByRef(repositoryId, "neptun.txt", branchName);
-                if (contents.Count == 0)
-                    return null;
-                return contents[0].Content?.Trim();
-            }
-            catch (NotFoundException)
-            {
-                return null;
-            }
         }
 
         protected Task<bool> isUserOrganizationMember(TPayload webhookPayload, string username)

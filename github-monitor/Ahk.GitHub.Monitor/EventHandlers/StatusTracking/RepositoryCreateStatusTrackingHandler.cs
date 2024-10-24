@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -12,8 +13,8 @@ public class RepositoryCreateStatusTrackingHandler(
     IGitHubClientFactory gitHubClientFactory,
     IStatusTrackingStore statusTrackingStore,
     IMemoryCache cache,
-    ILogger logger)
-    : RepositoryEventBase<CreateEventPayload>(gitHubClientFactory, cache, logger)
+    IServiceProvider serviceProvider)
+    : RepositoryEventBase<CreateEventPayload>(gitHubClientFactory, cache, serviceProvider)
 {
     public const string GitHubWebhookEventName = "repository";
 

@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -11,20 +13,11 @@ using Microsoft.Extensions.Options;
 
 namespace Ahk.GitHub.Monitor
 {
-    public class GitHubMonitorFunction
+    public class GitHubMonitorFunction(
+        IEventDispatchService eventDispatchService,
+        IOptions<GitHubMonitorConfig> config,
+        ILogger<GitHubMonitorFunction> logger)
     {
-        private readonly IEventDispatchService eventDispatchService;
-        private readonly IOptions<GitHubMonitorConfig> config;
-        private readonly ILogger<GitHubMonitorFunction> logger;
-
-        public GitHubMonitorFunction(IEventDispatchService eventDispatchService, IOptions<GitHubMonitorConfig> config,
-            ILogger<GitHubMonitorFunction> logger)
-        {
-            this.eventDispatchService = eventDispatchService;
-            this.config = config;
-            this.logger = logger;
-        }
-
         [Function("github-webhook")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
@@ -68,7 +61,7 @@ namespace Ahk.GitHub.Monitor
                     config.Value.GitHubWebhookSecret))
                 return new BadRequestObjectResult(new { error = "Payload signature not valid" });
 
-            return await runCore(eventName, deliveryId, requestBody);
+            return await this.runCore(eventName, deliveryId, requestBody);
         }
 
         private async Task<IActionResult> runCore(string eventName, string deliveryId, string requestBody)
@@ -78,8 +71,7 @@ namespace Ahk.GitHub.Monitor
             try
             {
                 await eventDispatchService.Process(eventName, requestBody, webhookResult, logger);
-                logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'",
-                    deliveryId);
+                logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'", deliveryId);
             }
             catch (Exception ex)
             {

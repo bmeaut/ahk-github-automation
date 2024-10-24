@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.EventHandlers.GradeComment;
 using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.GradeStore;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;

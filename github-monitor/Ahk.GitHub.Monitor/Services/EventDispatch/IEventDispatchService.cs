@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.EventDispatch
 {
     public interface IEventDispatchService
     {

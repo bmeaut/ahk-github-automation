@@ -1,3 +1,4 @@
+using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -12,7 +13,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             GitHubWebhookSecret = "webhooksecret",
         };
 
-        public static GitHubMonitorFunction Create(Services.IEventDispatchService dispatchService = null)
-            => new GitHubMonitorFunction(dispatchService ?? new Mock<Services.IEventDispatchService>().Object, Options.Create(AppConfig), new Mock<Microsoft.Extensions.Logging.ILogger<GitHubMonitorFunction>>().Object);
+        public static GitHubMonitorFunction Create(IEventDispatchService dispatchService = null)
+            => new GitHubMonitorFunction(dispatchService ?? new Mock<IEventDispatchService>().Object, Options.Create(AppConfig), new Mock<Microsoft.Extensions.Logging.ILogger<GitHubMonitorFunction>>().Object);
     }
 }

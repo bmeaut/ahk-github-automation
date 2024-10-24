@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore
 {
     public interface IStatusTrackingStore
     {

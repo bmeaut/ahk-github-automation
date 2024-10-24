@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.GradeStore
 {
     public interface IGradeStore
     {

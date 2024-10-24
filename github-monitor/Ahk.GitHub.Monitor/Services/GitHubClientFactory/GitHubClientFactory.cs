@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Extensions;
 using Ahk.GitHub.Monitor.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -12,29 +13,20 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory
 {
     /// <summary>
     /// Based on https://thomaslevesque.com/2018/03/30/writing-a-github-webhook-as-an-azure-function/.
     /// </summary>
-    public class GitHubClientFactory : IGitHubClientFactory
+    public class GitHubClientFactory(IMemoryCache cache, IOptions<GitHubMonitorConfig> config) : IGitHubClientFactory
     {
-        private readonly IMemoryCache cache;
-        private readonly IOptions<GitHubMonitorConfig> config;
-
-        public GitHubClientFactory(IMemoryCache cache, IOptions<GitHubMonitorConfig> config)
-        {
-            this.cache = cache;
-            this.config = config;
-        }
-
         public async Task<IGitHubClient> CreateGitHubClient(long installationId, ILogger logger)
         {
             var token = await cache.GetOrCreateAsync(
                 $"githubtokenforinstallation_{installationId}",
                 async cacheEntry =>
                 {
-                    var token = await getInstallationToken(installationId, logger);
+                    var token = await this.getInstallationToken(installationId, logger);
                     cacheEntry.SetValue(token);
                     cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
                     return token;
@@ -60,32 +52,23 @@ namespace Ahk.GitHub.Monitor.Services
 
         private async Task<string> getInstallationToken(long installationId, ILogger logger)
         {
-            var applicationToken = getApplicationToken();
-            using (var client = new HttpClient())
-            {
-                using var request = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/app/installations/{installationId}/access_tokens")
-                {
-                    Headers =
-                    {
-                        Authorization = new AuthenticationHeaderValue("Bearer", applicationToken),
-                        UserAgent = { ProductInfoHeaderValue.Parse("Ahk") },
-                        Accept = { MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json") },
-                    },
-                };
+            var applicationToken = this.getApplicationToken();
+            using var client = new HttpClient();
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/app/installations/{installationId}/access_tokens");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", applicationToken);
+            request.Headers.UserAgent.Add(ProductInfoHeaderValue.Parse("Ahk"));
+            request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json"));
 
-                using (var response = await client.SendAsync(request))
-                {
-                    var json = await response.Content.ReadAsStringAsync();
+            using var response = await client.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
 
-                    if (!response.IsSuccessStatusCode)
-                        logger.LogError($"Failed to get access token for installation {installationId}, response payload is: {json}");
+            if (!response.IsSuccessStatusCode)
+                logger.LogError($"Failed to get access token for installation {installationId}, response payload is: {json}");
 
-                    response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-                    var obj = JObject.Parse(json);
-                    return obj["token"]?.Value<string>();
-                }
-            }
+            var obj = JObject.Parse(json);
+            return obj["token"]?.Value<string>();
         }
 
         private string getApplicationToken()
@@ -95,12 +78,12 @@ namespace Ahk.GitHub.Monitor.Services
             var creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
             var now = DateTime.UtcNow;
             var token = new JwtSecurityToken(
-                claims: new[]
-                {
+                claims:
+                [
                     new Claim("iat", now.ToUnixTimeStamp().ToString(System.Globalization.CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
                     new Claim("exp", now.AddMinutes(10).ToUnixTimeStamp().ToString(System.Globalization.CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
-                    new Claim("iss", config.Value.GitHubAppId, ClaimValueTypes.Integer),
-                },
+                    new Claim("iss", config.Value.GitHubAppId, ClaimValueTypes.Integer)
+                ],
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.GradeStore;
 using Moq;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests

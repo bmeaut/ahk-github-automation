@@ -10,8 +10,8 @@ namespace Ahk.GitHub.Monitor.EventHandlers
     public class IssueCommentEditDeleteHandler(
         IGitHubClientFactory gitHubClientFactory,
         IMemoryCache cache,
-        ILogger logger)
-        : RepositoryEventBase<IssueCommentPayload>(gitHubClientFactory, cache, logger)
+        IServiceProvider serviceProvider)
+        : RepositoryEventBase<IssueCommentPayload>(gitHubClientFactory, cache, serviceProvider)
     {
         public const string GitHubWebhookEventName = "issue_comment";
 

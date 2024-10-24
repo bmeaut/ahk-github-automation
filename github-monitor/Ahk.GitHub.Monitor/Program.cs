@@ -2,9 +2,14 @@
 using System;
 using Ahk.GitHub.Monitor;
 using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.EventHandlers.GradeComment;
 using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
 using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.AzureQueues;
+using Ahk.GitHub.Monitor.Services.EventDispatch;
+using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
+using Ahk.GitHub.Monitor.Services.GradeStore;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Azure.Core;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
@@ -39,7 +44,7 @@ var host = new HostBuilder()
             .AddSingleton<IGitHubClientFactory,
                 GitHubClientFactory>();
 
-        registerEventHandlers(services);
+        RegisterEventHandlers(services);
         services
             .AddSingleton<IEventDispatchService,
                 EventDispatchService>();
@@ -48,13 +53,13 @@ var host = new HostBuilder()
         services.Configure<GitHubMonitorConfig>(configuration);
 
         // Add Azure Queue integration based on configuration
-        addAzureQueueIntegration(services, configuration);
+        AddAzureQueueIntegration(services, configuration);
     })
     .Build();
 
 host.Run();
 
-void registerEventHandlers(IServiceCollection services)
+void RegisterEventHandlers(IServiceCollection services)
 {
     var builder = new EventDispatchConfigBuilder(services)
         .Add<BranchProtectionRuleHandler>(BranchProtectionRuleHandler.GitHubWebhookEventName)
@@ -70,7 +75,7 @@ void registerEventHandlers(IServiceCollection services)
     services.AddSingleton(config);
 }
 
-void addAzureQueueIntegration(IServiceCollection services, IConfiguration configuration)
+void AddAzureQueueIntegration(IServiceCollection services, IConfiguration configuration)
 {
     var config = configuration.Get<GitHubMonitorConfig>();
 

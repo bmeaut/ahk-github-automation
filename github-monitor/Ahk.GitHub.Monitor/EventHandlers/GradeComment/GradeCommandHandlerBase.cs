@@ -1,22 +1,24 @@
 using System;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers.GradeComment.Payload;
 using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
 using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services;
-using GradeManagement.Shared.Enums;
+using Ahk.GitHub.Monitor.Services.GradeStore;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.EventHandlers
+namespace Ahk.GitHub.Monitor.EventHandlers.GradeComment
 {
     public abstract class GradeCommandHandlerBase<T>(
         IGitHubClientFactory gitHubClientFactory,
         IGradeStore gradeStore,
         IMemoryCache cache,
-        ILogger logger,
+        IServiceProvider serviceProvider,
         PullRequestStatusTrackingHandler pullRequestStatusTrackingHandler)
-        : RepositoryEventBase<T>(gitHubClientFactory, cache, logger)
+        : RepositoryEventBase<T>(gitHubClientFactory, cache, serviceProvider)
         where T : ActivityPayload
     {
         private const string WarningText =
@@ -29,33 +31,31 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             var gradeCommand = new GradeCommentParser(webhookPayload.CommentBody);
             if (gradeCommand.IsMatch)
             {
-                if (!await isAllowed(webhookPayload))
-                    return await handleUserNotAllowed(webhookPayload);
+                if (!await this.isAllowed(webhookPayload))
+                    return await this.handleUserNotAllowed(webhookPayload);
 
-                var pr = await getPullRequest(webhookPayload);
+                var pr = await this.getPullRequest(webhookPayload);
                 if (pr == null)
-                    return await handleNotPr(webhookPayload);
+                    return await this.handleNotPr(webhookPayload);
 
-                await handleApprove(webhookPayload, pr);
-                await handleStoreGrade(webhookPayload, gradeCommand, pr);
+                await this.handleApprove(webhookPayload, pr);
+                await this.handleStoreGrade(webhookPayload, gradeCommand, pr);
 
-                await handleReaction(webhookPayload, ReactionType.Plus1);
+                await this.handleReaction(webhookPayload, ReactionType.Plus1);
                 return EventHandlerResult.ActionPerformed(
                     $"comment operation to grade done; grades: {string.Join(" ", gradeCommand.GradesWithOrder.Values)}");
             }
-            else
-            {
-                return EventHandlerResult.NoActionNeeded("not recognized as command");
-            }
+
+            return EventHandlerResult.NoActionNeeded("not recognized as command");
         }
 
         protected abstract Task handleReaction(ICommentPayload<T> webhookPayload, ReactionType reactionType);
 
-        protected async Task<PullRequest> getPullRequest(ICommentPayload<T> webhookPayload)
+        private async Task<PullRequest> getPullRequest(ICommentPayload<T> webhookPayload)
         {
             try
             {
-                return await GitHubClient.PullRequest.Get(webhookPayload.Repository.Id,
+                return await this.GitHubClient.PullRequest.Get(webhookPayload.Repository.Id,
                     webhookPayload.PullRequestNumber);
             }
             catch (NotFoundException)
@@ -67,8 +67,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         private async Task handleStoreGrade(ICommentPayload<T> webhookPayload, GradeCommentParser gradeCommand,
             PullRequest pr)
         {
-            var neptun = await getNeptun(webhookPayload.Repository.Id, pr.Head.Ref);
-            Logger.LogInformation($"storing grades for {neptun}");
+            Logger.LogInformation($"storing grades for {webhookPayload.Repository.FullName}");
             if (gradeCommand.HasGrades)
             {
                 await gradeStore.StoreGrade(
@@ -92,12 +91,14 @@ namespace Ahk.GitHub.Monitor.EventHandlers
             if (shouldMergePr)
             {
                 Logger.LogInformation("PR is being merged");
-                await GitHubClient.PullRequest.Review.Create(webhookPayload.Repository.Id,
+                await this.GitHubClient.PullRequest.Review.Create(webhookPayload.Repository.Id,
                     webhookPayload.PullRequestNumber,
                     new PullRequestReviewCreate() { Event = PullRequestReviewEvent.Approve });
-                await GitHubClient.PullRequest.Merge(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber,
+                await this.GitHubClient.PullRequest.Merge(webhookPayload.Repository.Id,
+                    webhookPayload.PullRequestNumber,
                     new MergePullRequest());
-                await pullRequestStatusTrackingHandler.PrStatusChanged(webhookPayload.Repository.Url, webhookPayload.PullRequestUrl, PullRequestStatus.Merged);
+                await pullRequestStatusTrackingHandler.PrStatusChanged(webhookPayload.Repository.Url,
+                    webhookPayload.PullRequestUrl, PullRequestStatus.Merged);
             }
             else
             {
@@ -107,16 +108,16 @@ namespace Ahk.GitHub.Monitor.EventHandlers
 
         private async Task<EventHandlerResult> handleNotPr(ICommentPayload<T> webhookPayload)
         {
-            await handleReaction(webhookPayload, ReactionType.Confused);
+            await this.handleReaction(webhookPayload, ReactionType.Confused);
             return EventHandlerResult.ActionPerformed("comment operation to grade not called for PR");
         }
 
         private async Task<EventHandlerResult> handleUserNotAllowed(ICommentPayload<T> webhookPayload)
         {
-            await handleReaction(webhookPayload, ReactionType.Confused);
+            await this.handleReaction(webhookPayload, ReactionType.Confused);
 
             var comment = WarningText.Replace("{}", webhookPayload.CommentingUser, StringComparison.OrdinalIgnoreCase);
-            await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber,
+            await this.GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber,
                 comment);
 
             return EventHandlerResult.ActionPerformed("comment operation to grade not allowed for user");
@@ -131,7 +132,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
                 key: $"githubisorgmember{webhookPayload.Repository.Owner.Login}{webhookPayload.CommentingUser}",
                 factory: async cacheEntry =>
                 {
-                    var isMember = await getIsUserOrgMember(webhookPayload.Repository.Owner.Login,
+                    var isMember = await this.getIsUserOrgMember(webhookPayload.Repository.Owner.Login,
                         webhookPayload.CommentingUser);
                     cacheEntry.SetValue(isMember);
                     cacheEntry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
@@ -143,7 +144,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers
         {
             try
             {
-                return await GitHubClient.Organization.Member.CheckMember(org, user);
+                return await this.GitHubClient.Organization.Member.CheckMember(org, user);
             }
             catch (NotFoundException)
             {

@@ -4,7 +4,7 @@ using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore
 {
     internal class StatusTrackingStoreAzureQueue : IStatusTrackingStore
     {

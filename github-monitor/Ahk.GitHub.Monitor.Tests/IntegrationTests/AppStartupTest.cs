@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Azure.Functions.Worker;
@@ -15,7 +16,7 @@ namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
             var host = new HostBuilder()
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton<Services.IGitHubClientFactory, Services.GitHubClientFactory>();
+                    services.AddSingleton<Services.IGitHubClientFactory, GitHubClientFactory>();
                 })
                 .Build();
 

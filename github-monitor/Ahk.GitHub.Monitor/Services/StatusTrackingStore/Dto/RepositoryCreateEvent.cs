@@ -1,5 +1,3 @@
-using System;
-
 namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
 // AssignmentAcceptedEvent

@@ -1,6 +1,6 @@
 using System;
 
-namespace Ahk.GitHub.Monitor
+namespace Ahk.GitHub.Monitor.Extensions
 {
     internal static class DateTimeExtensions
     {

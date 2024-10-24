@@ -2,10 +2,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
-using GradeManagement.Shared.Enums;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
@@ -14,11 +13,13 @@ public class PullRequestStatusTrackingHandler(
     IGitHubClientFactory gitHubClientFactory,
     IStatusTrackingStore statusTrackingStore,
     IMemoryCache cache,
-    ILogger logger) : RepositoryEventBase<PullRequestEventPayload>(gitHubClientFactory, cache, logger)
+    IServiceProvider serviceProvider)
+    : RepositoryEventBase<PullRequestEventPayload>(gitHubClientFactory, cache, serviceProvider)
 {
     public const string GitHubWebhookEventName = "pull_request";
 
-    public async Task<EventHandlerResult> PrStatusChanged(string gitHubRepositoryUrl, string pullRequestUrl, PullRequestStatus pullRequestStatus)
+    public async Task<EventHandlerResult> PrStatusChanged(string gitHubRepositoryUrl, string pullRequestUrl,
+        PullRequestStatus pullRequestStatus)
     {
         await statusTrackingStore.StoreEvent(new PullRequestStatusChanged(
             gitHubRepositoryUrl: gitHubRepositoryUrl,
@@ -38,19 +39,21 @@ public class PullRequestStatusTrackingHandler(
             return await this.processPullRequestOpenedEvent(webhookPayload);
         }
 
-        if (webhookPayload.Action.Equals("assigned", StringComparison.OrdinalIgnoreCase) || webhookPayload.Action.Equals("unassigned", StringComparison.OrdinalIgnoreCase))
+        if (webhookPayload.Action.Equals("assigned", StringComparison.OrdinalIgnoreCase) ||
+            webhookPayload.Action.Equals("unassigned", StringComparison.OrdinalIgnoreCase))
         {
             return await this.teacherAssignedEvent(webhookPayload);
         }
 
-        /*if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
+        if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
         {
-
-        }*/
+            return await this.teacherAssignedAsReviewerEvent(webhookPayload);
+        }
 
         if (webhookPayload.Action.Equals("closed", StringComparison.OrdinalIgnoreCase))
         {
-            return await this.PrStatusChanged(webhookPayload.Repository.HtmlUrl, webhookPayload.PullRequest.HtmlUrl, PullRequestStatus.Closed);
+            return await this.PrStatusChanged(webhookPayload.Repository.HtmlUrl, webhookPayload.PullRequest.HtmlUrl,
+                PullRequestStatus.Closed);
         }
 
         return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
@@ -77,5 +80,17 @@ public class PullRequestStatusTrackingHandler(
             teacherGithubIds: assignees));
 
         return EventHandlerResult.ActionPerformed("pull request assigned lifecycle handled");
+    }
+
+    private async Task<EventHandlerResult> teacherAssignedAsReviewerEvent(PullRequestEventPayload webhookPayload)
+    {
+        var assignees = webhookPayload.PullRequest.RequestedReviewers?.Select(u => u.Login)?.ToArray();
+
+        await statusTrackingStore.StoreEvent(new TeacherAssignedEvent(
+            gitHubRepositoryUrl: webhookPayload.Repository.HtmlUrl,
+            pullRequestUrl: webhookPayload.PullRequest.HtmlUrl,
+            teacherGithubIds: assignees));
+
+        return EventHandlerResult.ActionPerformed("pull request assigned as reviewer lifecycle handled");
     }
 }

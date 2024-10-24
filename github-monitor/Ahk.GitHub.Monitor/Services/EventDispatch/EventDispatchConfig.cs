@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.EventDispatch
 {
-    internal class EventDispatchConfig
+    internal class EventDispatchConfig(List<(string GitHubEventName, Type HandlerType)> handlers)
     {
-        public EventDispatchConfig(List<(string GitHubEventName, Type HandlerType)> handlers)
-            => this.Handlers = handlers;
-
-        public IReadOnlyCollection<(string GitHubEventName, Type HandlerType)> Handlers { get; }
+        public IReadOnlyCollection<(string GitHubEventName, Type HandlerType)> Handlers { get; } = handlers;
     }
 }

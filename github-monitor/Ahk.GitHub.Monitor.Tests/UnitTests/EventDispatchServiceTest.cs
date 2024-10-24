@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.EventDispatch
 {
     internal class EventDispatchService : IEventDispatchService
     {
@@ -15,16 +15,16 @@ namespace Ahk.GitHub.Monitor.Services
         {
             this.serviceProvider = serviceProvider;
 
-            var handlers = new Dictionary<string, List<Type>>(StringComparer.OrdinalIgnoreCase);
+            var handlersList = new Dictionary<string, List<Type>>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in handlersConfig.Handlers)
             {
-                if (handlers.TryGetValue(item.GitHubEventName, out var l))
+                if (handlersList.TryGetValue(item.GitHubEventName, out var l))
                     l.Add(item.HandlerType);
                 else
-                    handlers[item.GitHubEventName] = new List<Type>() { item.HandlerType };
+                    handlersList[item.GitHubEventName] = [item.HandlerType];
             }
 
-            this.handlers = handlers;
+            handlers = handlersList;
         }
 
         public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult, ILogger logger)
@@ -39,7 +39,7 @@ namespace Ahk.GitHub.Monitor.Services
                 foreach (var handlerType in handlersForEvent)
                 {
                     logger.LogInformation($"Event {gitHubEventName} being handled by {handlerType}");
-                    await executeHandler(requestBody, webhookResult, handlerType, logger);
+                    await this.executeHandler(requestBody, webhookResult, handlerType, logger);
                 }
             }
         }
@@ -48,7 +48,7 @@ namespace Ahk.GitHub.Monitor.Services
         {
             try
             {
-                var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType, logger) as EventHandlers.IGitHubEventHandler;
+                var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType) as EventHandlers.IGitHubEventHandler;
                 var handlerResult = await handler.Execute(requestBody);
 
                 logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");

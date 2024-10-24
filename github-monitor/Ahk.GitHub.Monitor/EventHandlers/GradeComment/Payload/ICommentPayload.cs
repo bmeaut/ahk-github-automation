@@ -1,6 +1,6 @@
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.EventHandlers
+namespace Ahk.GitHub.Monitor.EventHandlers.GradeComment.Payload
 {
     public interface ICommentPayload<T>
         where T : ActivityPayload
