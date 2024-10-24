@@ -8,5 +8,5 @@ public class StatusTrackingStoreNoop : IStatusTrackingStore
     public Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent) => Task.CompletedTask;
     public Task StoreEvent(PullRequestOpenedEvent pullRequestOpenedEvent) => Task.CompletedTask;
     public Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent) => Task.CompletedTask;
-    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChangedű) => Task.CompletedTask;
+    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChanged) => Task.CompletedTask;
 }

@@ -2,77 +2,77 @@ using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
+using Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Ahk.GitHub.Monitor.Tests.UnitTests
+namespace Ahk.GitHub.Monitor.Tests.UnitTests;
+
+[TestClass]
+public class EventDispatchServiceTest
 {
-    [TestClass]
-    public class EventDispatchServiceTest
+    [TestMethod]
+    public async Task DispatcherCallsAllEventHandlers()
     {
-        [TestMethod]
-        public async Task DispatcherCallsAllEventHandlers()
+        var services = new ServiceCollection();
+        EventDispatchConfig config = new EventDispatchConfigBuilder(services)
+            .Add<EventHandler1A>("event1")
+            .Add<EventHandler1B>("event1")
+            .Add<EventHandler2>("event2")
+            .Build();
+
+        var service = new EventDispatchService(services.BuildServiceProvider(), config);
+        await service.Process("event1", "dummy request", new WebhookResult(), NullLogger.Instance);
+
+        Assert.IsTrue(EventHandler1A.Invoked);
+        Assert.IsTrue(EventHandler1B.Invoked);
+        Assert.IsFalse(EventHandler2.Invoked);
+    }
+
+    private class EventHandler1A : IGitHubEventHandler
+    {
+        public static bool Invoked { get; private set; }
+
+        public EventHandler1A()
         {
-            var services = new ServiceCollection();
-            var config = new EventDispatchConfigBuilder(services)
-                .Add<EventHandler1A>("event1")
-                .Add<EventHandler1B>("event1")
-                .Add<EventHandler2>("event2")
-                .Build();
-
-            var service = new EventDispatchService(services.BuildServiceProvider(), config);
-            await service.Process("event1", "dummy request", new WebhookResult(), NullLogger.Instance);
-
-            Assert.IsTrue(EventHandler1A.Invoked);
-            Assert.IsTrue(EventHandler1A.Invoked);
-            Assert.IsFalse(EventHandler2.Invoked);
         }
 
-        private class EventHandler1A : IGitHubEventHandler
+        public Task<EventHandlerResult> Execute(string requestBody)
         {
-            public static bool Invoked { get; private set; }
+            Invoked = true;
+            return Task.FromResult(new EventHandlerResult(string.Empty));
+        }
+    }
 
-            public EventHandler1A(ILogger logger)
-            {
-            }
+    private class EventHandler1B : IGitHubEventHandler
+    {
+        public static bool Invoked { get; private set; }
 
-            public Task<EventHandlerResult> Execute(string requestBody)
-            {
-                Invoked = true;
-                return Task.FromResult(new EventHandlerResult(string.Empty));
-            }
+        public EventHandler1B()
+        {
         }
 
-        private class EventHandler1B : IGitHubEventHandler
+        public Task<EventHandlerResult> Execute(string requestBody)
         {
-            public static bool Invoked { get; private set; }
+            Invoked = true;
+            return Task.FromResult(new EventHandlerResult(string.Empty));
+        }
+    }
 
-            public EventHandler1B(ILogger logger)
-            {
-            }
+    private class EventHandler2 : IGitHubEventHandler
+    {
+        public static bool Invoked { get; private set; }
 
-            public Task<EventHandlerResult> Execute(string requestBody)
-            {
-                Invoked = true;
-                return Task.FromResult(new EventHandlerResult(string.Empty));
-            }
+        public EventHandler2()
+        {
         }
 
-        private class EventHandler2 : IGitHubEventHandler
+        public Task<EventHandlerResult> Execute(string requestBody)
         {
-            public static bool Invoked { get; private set; }
-
-            public EventHandler2(ILogger logger)
-            {
-            }
-
-            public Task<EventHandlerResult> Execute(string requestBody)
-            {
-                Invoked = true;
-                return Task.FromResult(new EventHandlerResult(string.Empty));
-            }
+            Invoked = true;
+            return Task.FromResult(new EventHandlerResult(string.Empty));
         }
     }
 }

@@ -75,7 +75,7 @@ public abstract class GradeCommandHandlerBase<T>(
         if (gradeCommand.HasGrades)
         {
             await gradeStore.StoreGrade(
-                webhookPayload.Repository.FullName,
+                webhookPayload.Repository.HtmlUrl,
                 pr.HtmlUrl,
                 webhookPayload.CommentingUser,
                 gradeCommand.GradesWithOrder);
@@ -83,7 +83,7 @@ public abstract class GradeCommandHandlerBase<T>(
         else
         {
             await gradeStore.ConfirmAutoGrade(
-                webhookPayload.Repository.Url,
+                webhookPayload.Repository.HtmlUrl,
                 pr.HtmlUrl,
                 webhookPayload.CommentingUser);
         }

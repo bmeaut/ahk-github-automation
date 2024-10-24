@@ -10,8 +10,8 @@ public class MockHttpResponseData : HttpResponseData
 {
     public MockHttpResponseData(FunctionContext functionContext) : base(functionContext)
     {
-        Headers = new HttpHeadersCollection();
-        Body = new MemoryStream();
+        this.Headers = new HttpHeadersCollection();
+        this.Body = new MemoryStream();
     }
 
     public override HttpStatusCode StatusCode { get; set; }
