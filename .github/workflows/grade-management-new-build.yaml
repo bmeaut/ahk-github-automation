@@ -21,7 +21,7 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: "Run dotnet build"
-        working-directory: grade-management
+        working-directory: grade-management-new
         run: |
           dotnet build
           dotnet test
