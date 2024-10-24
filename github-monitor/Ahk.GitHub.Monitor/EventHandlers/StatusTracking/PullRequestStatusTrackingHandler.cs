@@ -22,9 +22,9 @@ public class PullRequestStatusTrackingHandler(
         PullRequestStatus pullRequestStatus)
     {
         await statusTrackingStore.StoreEvent(new PullRequestStatusChanged(
-            gitHubRepositoryUrl: gitHubRepositoryUrl,
-            pullRequestUrl: pullRequestUrl,
-            pullRequestStatus: pullRequestStatus));
+            gitHubRepositoryUrl,
+            pullRequestUrl,
+            pullRequestStatus));
 
         return EventHandlerResult.ActionPerformed("pull request status changed lifecycle handled");
     }
@@ -32,7 +32,9 @@ public class PullRequestStatusTrackingHandler(
     protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
     {
         if (webhookPayload.PullRequest == null)
+        {
             return EventHandlerResult.PayloadError("no pull request information in webhook payload");
+        }
 
         if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
         {
@@ -62,10 +64,10 @@ public class PullRequestStatusTrackingHandler(
     private async Task<EventHandlerResult> processPullRequestOpenedEvent(PullRequestEventPayload webhookPayload)
     {
         await statusTrackingStore.StoreEvent(new PullRequestOpenedEvent(
-            gitHubRepositoryUrl: webhookPayload.Repository.HtmlUrl,
-            timestamp: DateTimeOffset.UtcNow,
-            branchName: webhookPayload.PullRequest.Head.Ref,
-            pullRequestUrl: webhookPayload.PullRequest.HtmlUrl));
+            webhookPayload.Repository.HtmlUrl,
+            DateTimeOffset.UtcNow,
+            webhookPayload.PullRequest.Head.Ref,
+            webhookPayload.PullRequest.HtmlUrl));
 
         return EventHandlerResult.ActionPerformed("pull request opened lifecycle handled");
     }
@@ -75,9 +77,9 @@ public class PullRequestStatusTrackingHandler(
         var assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
 
         await statusTrackingStore.StoreEvent(new TeacherAssignedEvent(
-            gitHubRepositoryUrl: webhookPayload.Repository.HtmlUrl,
-            pullRequestUrl: webhookPayload.PullRequest.HtmlUrl,
-            teacherGithubIds: assignees));
+            webhookPayload.Repository.HtmlUrl,
+            webhookPayload.PullRequest.HtmlUrl,
+            assignees));
 
         return EventHandlerResult.ActionPerformed("pull request assigned lifecycle handled");
     }
@@ -87,9 +89,9 @@ public class PullRequestStatusTrackingHandler(
         var assignees = webhookPayload.PullRequest.RequestedReviewers?.Select(u => u.Login)?.ToArray();
 
         await statusTrackingStore.StoreEvent(new TeacherAssignedEvent(
-            gitHubRepositoryUrl: webhookPayload.Repository.HtmlUrl,
-            pullRequestUrl: webhookPayload.PullRequest.HtmlUrl,
-            teacherGithubIds: assignees));
+            webhookPayload.Repository.HtmlUrl,
+            webhookPayload.PullRequest.HtmlUrl,
+            assignees));
 
         return EventHandlerResult.ActionPerformed("pull request assigned as reviewer lifecycle handled");
     }

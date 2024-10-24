@@ -1,7 +1,6 @@
-namespace Octokit
+namespace Octokit;
+
+public class WorkflowRunEventPayload : ActivityPayload
 {
-    public class WorkflowRunEventPayload : ActivityPayload
-    {
-        public string Action { get; set; }
-    }
+    public string Action { get; set; }
 }

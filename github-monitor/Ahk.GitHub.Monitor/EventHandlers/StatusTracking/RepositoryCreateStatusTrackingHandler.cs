@@ -18,10 +18,8 @@ public class RepositoryCreateStatusTrackingHandler(
 {
     public const string GitHubWebhookEventName = "repository";
 
-    protected override async Task<EventHandlerResult> executeCore(CreateEventPayload webhookPayload)
-    {
-        return await this.processRepositoryCreateEvent(webhookPayload);
-    }
+    protected override async Task<EventHandlerResult> executeCore(CreateEventPayload webhookPayload) =>
+        await this.processRepositoryCreateEvent(webhookPayload);
 
 
     private async Task<EventHandlerResult> processRepositoryCreateEvent(CreateEventPayload webhookPayload)
@@ -29,7 +27,7 @@ public class RepositoryCreateStatusTrackingHandler(
         var repositoryUrl = webhookPayload.Repository.HtmlUrl;
 
         await statusTrackingStore.StoreEvent(new RepositoryCreateEvent(
-            gitHubRepositoryUrl: repositoryUrl));
+            repositoryUrl));
 
         return EventHandlerResult.ActionPerformed("repository create lifecycle handled");
     }

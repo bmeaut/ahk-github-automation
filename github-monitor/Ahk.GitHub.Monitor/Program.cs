@@ -18,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var host = new HostBuilder()
+IHost host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices((context, services) =>
     {
@@ -27,7 +27,7 @@ var host = new HostBuilder()
         services.ConfigureFunctionsApplicationInsights();
 
         // Load configuration from environment variables with the prefix "AHK_"
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables("AHK_")
             .Build();
 
@@ -61,7 +61,7 @@ host.Run();
 
 void RegisterEventHandlers(IServiceCollection services)
 {
-    var builder = new EventDispatchConfigBuilder(services)
+    EventDispatchConfigBuilder builder = new EventDispatchConfigBuilder(services)
         .Add<BranchProtectionRuleHandler>(BranchProtectionRuleHandler.GitHubWebhookEventName)
         .Add<IssueCommentEditDeleteHandler>(IssueCommentEditDeleteHandler.GitHubWebhookEventName)
         .Add<PullRequestOpenDuplicateHandler>(PullRequestOpenDuplicateHandler.GitHubWebhookEventName)
@@ -71,13 +71,13 @@ void RegisterEventHandlers(IServiceCollection services)
         .Add<ActionWorkflowRunHandler>(ActionWorkflowRunHandler.GitHubWebhookEventName)
         .Add<RepositoryCreateStatusTrackingHandler>(RepositoryCreateStatusTrackingHandler.GitHubWebhookEventName)
         .Add<PullRequestStatusTrackingHandler>(PullRequestStatusTrackingHandler.GitHubWebhookEventName);
-    var config = builder.Build();
+    EventDispatchConfig config = builder.Build();
     services.AddSingleton(config);
 }
 
 void AddAzureQueueIntegration(IServiceCollection services, IConfiguration configuration)
 {
-    var config = configuration.Get<GitHubMonitorConfig>();
+    GitHubMonitorConfig config = configuration.Get<GitHubMonitorConfig>();
 
     if (!string.IsNullOrEmpty(config?.EventsQueueConnectionString))
     {

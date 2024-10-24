@@ -5,30 +5,29 @@ using Ahk.GitHub.Monitor.Services.GradeStore.Dto;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
-namespace Ahk.GitHub.Monitor.Services.GradeStore
+namespace Ahk.GitHub.Monitor.Services.GradeStore;
+
+internal class GradeStoreAzureQueue : IGradeStore
 {
-    internal class GradeStoreAzureQueue : IGradeStore
+    private const string QueueName = "ahkstatustracking-assignment-graded-by-teacher";
+
+    private readonly QueueWithCreateIfNotExists queue;
+
+    public GradeStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
     {
-        private const string QueueName = "ahkstatustracking-assignment-graded-by-teacher";
+        QueueServiceClient queueService = clientFactory.CreateClient(QueueClientName.Name);
+        queue = new QueueWithCreateIfNotExists(queueService, QueueName);
+    }
 
-        private readonly QueueWithCreateIfNotExists queue;
+    public Task StoreGrade(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results)
+    {
+        var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, results, System.DateTimeOffset.UtcNow);
+        return queue.Send(e);
+    }
 
-        public GradeStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
-        {
-            var queueService = clientFactory.CreateClient(QueueClientName.Name);
-            queue = new QueueWithCreateIfNotExists(queueService, QueueName);
-        }
-
-        public Task StoreGrade(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results)
-        {
-            var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, results, System.DateTimeOffset.UtcNow);
-            return queue.Send(e);
-        }
-
-        public Task ConfirmAutoGrade(string repositoryUrl, string prUrl, string actor)
-        {
-            var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, [], System.DateTimeOffset.UtcNow);
-            return queue.Send(e);
-        }
+    public Task ConfirmAutoGrade(string repositoryUrl, string prUrl, string actor)
+    {
+        var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, [], System.DateTimeOffset.UtcNow);
+        return queue.Send(e);
     }
 }
