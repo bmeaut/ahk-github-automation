@@ -1,4 +1,7 @@
-﻿<MudDialog>
+﻿@inject CrudSnackbarService SnackbarService
+@inject CurrentUserService CurrentUserService
+
+<MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h4">New Subject</MudText>
     </TitleContent>
@@ -7,6 +10,10 @@
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
             <MudTextField T="string" Label="Neptun Code" @bind-Value="value.NeptunCode" Required="true" Validation="@(new Func<string, IEnumerable<string>>(NeptunCodeValidator))"></MudTextField>
             <MudTextField T="string" Label="Github Org" For="@(() => value.GitHubOrgName)" @bind-Value="value.GitHubOrgName" Required="true"></MudTextField>
+            <div class="d-flex align-center">
+                <MudTextField T="string" Label="API Key" For="@(() => value.CiApiKey)" @bind-Value="value.CiApiKey" Required="true" Class="flex-grow-1 me-2"></MudTextField>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="GenerateApiKey" Size="Size.Small"/>
+            </div>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -25,11 +32,18 @@
     private void Submit() => MudDialog.Close(DialogResult.Ok(value));
     private void Cancel() => MudDialog.Cancel();
 
+    private void GenerateApiKey()
+    {
+        value.CiApiKey = Guid.NewGuid().ToString();
+        SnackbarService.ShowMessage("Current user: " + CurrentUserService.User.Name);
+    }
+
     private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)
         {
+            value.Teachers.Add(CurrentUserService.User);
             Submit();
         }
     }

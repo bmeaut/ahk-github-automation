@@ -6,6 +6,8 @@
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
             <MudTextField T="string" Label="Github Prefix" For="@(() => value.GithubPrefix)" @bind-Value="value.GithubPrefix" Required="true"></MudTextField>
+            @* <MudTextField T="string" Label="Github Prefix" For="@(() => value.DueDate)" @bind-Value="value.DueDate" Required="true"></MudTextField> *@
+            @* <MudTextField T="string" Label="Github Prefix" For="@(() => value.ScoreTypes)" @bind-Value="value.ScoreTypes" Required="true"></MudTextField> *@
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -33,6 +35,10 @@
         }
     }
 
-    public ExerciseRequest value = new();
+    public ExerciseRequest value = new()
+    {
+        DueDate = DateTime.Now,
+        ScoreTypes = new Dictionary<string, string>()
+    };
 
 }

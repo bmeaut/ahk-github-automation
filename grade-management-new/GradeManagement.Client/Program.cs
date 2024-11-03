@@ -49,21 +49,10 @@ namespace GradeManagement.Client
             builder.Services.AddTransient(sp =>
                 new ExceptionMessageHandler(sp.GetRequiredService<CrudSnackbarService>()));
 
-            // Registering HttpClient that uses our custom handler
-            builder.Services.AddHttpClient(SubjectApi,
-                    client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
-                .AddHttpMessageHandler<ExceptionMessageHandler>()
-                .AddHttpMessageHandler<AuthorizationMessageHandler>();
+            builder.Services.AddSingleton<SelectedSubjectService>();
+            builder.Services.AddSingleton<CurrentUserService>();
 
-            builder.Services.AddScoped<SubjectClient>(sp =>
-                new SubjectClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(SubjectApi)));
-            builder.Services.AddSingleton<SubjectService>(sp =>
-            {
-                var serviceProvider = sp.CreateScope().ServiceProvider;
-                return new SubjectService(serviceProvider);
-            });
-
-            builder.Services.AddTransient(sp => new SubjectHeaderHandler(sp.GetRequiredService<SubjectService>()));
+            builder.Services.AddTransient(sp => new SubjectHeaderHandler(sp.GetRequiredService<SelectedSubjectService>()));
 
             // Registering HttpClient that uses our custom handler
             builder.Services.AddHttpClient(ServerApi,
@@ -73,6 +62,9 @@ namespace GradeManagement.Client
                 .AddHttpMessageHandler<SubjectHeaderHandler>();
 
 
+            builder.Services.AddScoped<SubjectClient>(sp =>
+                new SubjectClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
+            builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<CourseClient>(sp =>
                 new CourseClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
             builder.Services.AddScoped<SemesterClient>(sp =>

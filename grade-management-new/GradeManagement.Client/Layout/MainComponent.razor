@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject SubjectService SubjectService
+@inject UserClient UserClient
+@inject CurrentUserService CurrentUserService
 
 <LoadingComponent LongTask="@Init">
     <ErrorBoundary @ref="errorBoundary">
@@ -36,6 +38,10 @@
     {
         Console.WriteLine("MainComponent Init");
         await SubjectService.LoadSubjects();
+        if (CurrentUserService.User == null)
+        {
+            CurrentUserService.User = await UserClient.GetCurrentUserAsync();
+        }
     }
 
 }

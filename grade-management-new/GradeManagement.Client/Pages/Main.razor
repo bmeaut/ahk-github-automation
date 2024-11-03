@@ -1,5 +1,6 @@
 @page "/"
 @using GradeManagement.Client.Components.NewDialogs
+@using MudExtensions
 @layout AuthenticatedLayout
 
 @inject SubjectService SubjectService
@@ -14,18 +15,18 @@
 
 <style>
     .sort-direction-icon {
-        --path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
-    }
-
-    .sort-direction-icon.mud-direction-asc {
-        --path-svg: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
-    }
-
-    .sort-direction-icon.mud-direction-desc {
         --path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
     }
 
-    .custom-grid .mud-table-cell .column-header .column-options .sort-direction-icon path {
+    .sort-direction-icon.mud-direction-desc {
+        --path-svg: 'M4.82 19 3.41 17.59l12-12L21 11.18l-1.42 1.41-4.17-4.17Z';
+    }
+
+    .sort-direction-icon.mud-direction-asc {
+        --path-svg: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+    }
+
+    .custom-grid .mud-table-cell.pipa .column-header .column-options .sort-direction-icon path {
         d: path(var(--path-svg))
     }
 </style>
@@ -35,23 +36,19 @@
     <MudDivider Class="mb-4"/>
 
     <MudStack Row="true" Class="mt-6">
-        <MudSelect T="string" Label="Course" @bind-Value="_selectedCourse" @bind-Value:after="CourseChanged"
-                   Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
-                   TransformOrigin="Origin.TopCenter">
-            @foreach (var course in _courses ?? [])
+        <MudSelectExtended ItemCollection="_courses?.ToList()" SearchBox="true" SelectAllPosition="SelectAllPosition.AfterSearchBox" SelectAll="true" MultiSelection="true" @bind-SelectedValues="_selectedCourse" @bind-SelectedValues:after="FilterChanged" T="string" Label="Course" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined">
+            @foreach (var course in _courses)
             {
-                <MudSelectItem Value="@course">@course</MudSelectItem>
+                <MudSelectItemExtended T="string" Value="@course" Text="@course"/>
             }
-        </MudSelect>
+        </MudSelectExtended>
         <MudSpacer/>
-        <MudSelect T="string" Label="Exercise" @bind-Value="_selectedExercise" @bind-Value:after="ExerciseChanged"
-                   Dense="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
-                   TransformOrigin="Origin.TopCenter">
-            @foreach (var task in _tasks ?? [])
+        <MudSelectExtended ItemCollection="_tasks?.ToList()" SearchBox="true" SelectAllPosition="SelectAllPosition.AfterSearchBox" SelectAll="true" MultiSelection="true" @bind-SelectedValues="_selectedExercise" @bind-SelectedValues:after="FilterChanged" T="string" Label="Exercise" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined">
+            @foreach (var task in _tasks)
             {
-                <MudSelectItem Value="@task">@task</MudSelectItem>
+                <MudSelectItemExtended T="string" Value="@task" Text="@task"/>
             }
-        </MudSelect>
+        </MudSelectExtended>
         <MudSpacer/>
 
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
@@ -60,7 +57,7 @@
         <Columns>
             <PropertyColumn Property="x => x.CourseName" Title="Course"/>
             <PropertyColumn Property="x => x.ExerciseName" Title="Exercise"/>
-            <TemplateColumn Title="Repo URL">
+            <TemplateColumn Title="Repo URL" Sortable="true" SortBy="dashboard => dashboard.GithubRepoUrl">
                 <CellTemplate>
                     <MudLink Href="@context.Item.GithubRepoUrl">
                         @context.Item.GithubRepoUrl
@@ -68,7 +65,7 @@
                 </CellTemplate>
             </TemplateColumn>
             <PropertyColumn Property="x => x.StudentNeptun" Title="Neptun"/>
-            <TemplateColumn Title="PRs">
+            <TemplateColumn T="Dashboard" Title="PRs" Class="pipa" Sortable="true" SortBy="@SortByPr">
                 <CellTemplate>
                     <MudTooltip Text="@PrTooltip(context.Item)">
                         <MudLink Href="@JoinPullRequests(context.Item)">
@@ -78,30 +75,38 @@
                 </CellTemplate>
             </TemplateColumn>
             @* <PropertyColumn Property="x => JoinCiWorkflows(x)" Title="Workflows"/> *@
-            <TemplateColumn Title="Score">
+            <TemplateColumn T="Dashboard" Title="Score" Class="pipa" Sortable="true" SortBy="@SortByScore">
                 <CellTemplate>
                     <MudTooltip Text="@ScoreTooltip(context.Item)">
                         @JoinScore(context.Item)
                     </MudTooltip>
                 </CellTemplate>
             </TemplateColumn>
-            <TemplateColumn Title="" T="Dashboard">
+            <TemplateColumn Title="" T="Dashboard" Class="pipa" Sortable="true" SortBy="@SortByState">
                 <CellTemplate>
                     @if (MergedEntry(context.Item))
                     {
-                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success"/>
+                        <MudTooltip Text="Merged" Placement="Placement.Top">
+                            <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success"/>
+                        </MudTooltip>
                     }
                     else if (CheckedEntry(context.Item))
                     {
-                        <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success"/>
+                        <MudTooltip Text="Teacher Checked" Placement="Placement.Top">
+                            <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success"/>
+                        </MudTooltip>
                     }
                     else if (CiRunOnEntry(context.Item))
                     {
-                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning"/>
+                        <MudTooltip Text="CI Flow ran" Placement="Placement.Top">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning"/>
+                        </MudTooltip>
                     }
                     else
                     {
-                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error"/>
+                        <MudTooltip Text="CI did not ran" Placement="Placement.Top">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error"/>
+                        </MudTooltip>
                     }
                 </CellTemplate>
             </TemplateColumn>
@@ -125,7 +130,7 @@
 
     private string PrTooltip(Dashboard data)
     {
-        return data.PullRequests?.FirstOrDefault()?.OpeningDate.ToString() ?? "";
+        return data.PullRequests?.FirstOrDefault()?.OpeningDate.ToLocalTime().ToString() ?? "";
     }
 
     private string JoinScore(Dashboard data)
@@ -154,6 +159,37 @@
         return string.Join(", ", data?.PullRequests?.FirstOrDefault()?.Scores.Select(x => $"{x.ScoreType.Type}: {x.Value}") ?? []);
     }
 
+    private object SortByState(Dashboard d)
+    {
+        if (MergedEntry(d))
+        {
+            return 4;
+        }
+        else if (CheckedEntry(d))
+        {
+            return 3;
+        }
+        else if (CiRunOnEntry(d))
+        {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    private object SortByScore(Dashboard d)
+    {
+        // The first element is the most important, than the second, and so on, sum the values, but before that, multiply the value with 10^x, where x is the position of the element in the list
+        return d.PullRequests?.FirstOrDefault()?.Scores.Aggregate(0L, (currentSum, number) => (currentSum * 10) + number.Value) ?? 0;
+    }
+
+    private object SortByPr(Dashboard d)
+    {
+        return d.PullRequests?.FirstOrDefault()?.Url ?? "";
+    }
+
     #endregion
 
     //Van e assignolt teacher?
@@ -162,8 +198,8 @@
     private LoadingComponent loadingRef;
 
     private SubjectResponse? _selectedSubject = null;
-    private string? _selectedCourse = null;
-    private string? _selectedExercise = null;
+    private IEnumerable<string> _selectedCourse = new List<string>();
+    private IEnumerable<string> _selectedExercise = new List<string>();
     private IEnumerable<string>? _courses = new List<string>();
     private IEnumerable<string>? _tasks = new List<string>();
     private ICollection<Dashboard> _dashboardData = new List<Dashboard>();
@@ -199,18 +235,13 @@
         _filteredData = _dashboardData.ToList();
         _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
         _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
+        _selectedCourse = _courses?.ToList();
+        _selectedExercise = _tasks?.ToList();
     }
 
-    private void CourseChanged()
+    private void FilterChanged()
     {
-        _filteredData = _dashboardData.Where(x => (_selectedCourse == null || x.CourseName == _selectedCourse) && (_selectedExercise == null || x.ExerciseName == _selectedExercise)).ToList();
-        _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
-        _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
-    }
-
-    private void ExerciseChanged()
-    {
-        _filteredData = _dashboardData.Where(x => (_selectedCourse == null || x.CourseName == _selectedCourse) && (_selectedExercise == null || x.ExerciseName == _selectedExercise)).ToList();
+        _filteredData = _dashboardData.Where(x => (_selectedCourse.Contains(x.CourseName)) && ( _selectedExercise.Contains(x.ExerciseName))).ToList();
         _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
         _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }

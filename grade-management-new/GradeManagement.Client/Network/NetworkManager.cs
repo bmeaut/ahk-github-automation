@@ -1712,6 +1712,10 @@ namespace GradeManagement.Client.Network
                             throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        throw new ApiException(ex.Message, 400, "responseData_", null, null);
+                    }
                     finally
                     {
                         if (disposeResponse_)
@@ -7108,24 +7112,10 @@ namespace GradeManagement.Client.Network
         public string StudentNeptun { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scores", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<EventScore> Scores { get; set; }
+        public System.Collections.Generic.IDictionary<string, double> Scores { get; set; }
 
         [Newtonsoft.Json.JsonProperty("ciApiKey", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string CiApiKey { get; set; }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.0.7.0 (NJsonSchema v11.0.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class EventScore
-    {
-        [Newtonsoft.Json.JsonProperty("value", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public long Value { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("createdDate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset CreatedDate { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("scoreType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ScoreType { get; set; }
 
     }
 
@@ -7150,7 +7140,7 @@ namespace GradeManagement.Client.Network
         public string TeacherGitHubId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scores", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<EventScore> Scores { get; set; }
+        public System.Collections.Generic.IDictionary<string, double> Scores { get; set; }
 
         [Newtonsoft.Json.JsonProperty("dateOfGrading", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.DateTimeOffset DateOfGrading { get; set; }

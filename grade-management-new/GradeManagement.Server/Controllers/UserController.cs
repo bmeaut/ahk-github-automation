@@ -14,7 +14,7 @@ namespace GradeManagement.Server.Controllers;
 [Authorize]
 [Route("api/users")]
 [ApiController]
-public class UserController(UserService userService, HttpContextAccessor httpContextAccessor) : CrudControllerBase<User>(userService)
+public class UserController(UserService userService, IHttpContextAccessor httpContextAccessor) : CrudControllerBase<User>(userService)
 {
     [HttpPut("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

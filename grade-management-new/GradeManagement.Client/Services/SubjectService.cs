@@ -6,20 +6,21 @@ namespace GradeManagement.Client.Services;
 public class SubjectService
 {
     private readonly SubjectClient client;
-    private SubjectResponse _currentSubject;
+    private SelectedSubjectService _currentSubject;
 
-    public SubjectService(IServiceProvider serviceProvider)
+    public SubjectService(SelectedSubjectService selectedSubjectService, SubjectClient client)
     {
-        client = serviceProvider.GetRequiredService<SubjectClient>();
+        this.client = client;
+        _currentSubject = selectedSubjectService;
     }
 
     public SubjectResponse CurrentSubject
     {
-        get => _currentSubject;
+        get => _currentSubject.CurrentSubject;
         set
         {
-            if (_currentSubject == value) return;
-            _currentSubject = value;
+            if (_currentSubject.CurrentSubject == value) return;
+            _currentSubject.CurrentSubject = value;
             NotifyStateChanged();
         }
     }
@@ -34,9 +35,9 @@ public class SubjectService
     {
         Subjects = (await client.GetAllAsync()).ToList();
         //Subjects = [];
-        if (_currentSubject is null && Subjects.Count > 0)
+        if (_currentSubject.CurrentSubject is null && Subjects.Count > 0)
         {
-            _currentSubject = Subjects[0];
+            _currentSubject.CurrentSubject = Subjects[0];
         }
 
         return Subjects;
