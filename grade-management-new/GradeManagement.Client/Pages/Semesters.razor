@@ -5,6 +5,7 @@
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SemesterClient SemesterClient
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <PageTitle>Semesters</PageTitle>
 

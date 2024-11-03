@@ -8,6 +8,7 @@
 @inject SubjectService SubjectService
 @inject SubjectClient SubjectClient
 @inject UserClient UserClient
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <PageTitle>Teachers</PageTitle>
 

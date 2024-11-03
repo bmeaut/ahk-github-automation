@@ -10,6 +10,8 @@
 @inject SubjectClient SubjectClient
 @inject NavigationManager NavigationManager
 
+@attribute [Authorize(Policy = Policy.RequireAdmin)]
+
 
 <style>
     .clickable-rows .mud-table-body .mud-table-row {

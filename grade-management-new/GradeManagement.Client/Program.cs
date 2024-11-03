@@ -1,4 +1,5 @@
 using GradeManagement.Client.Network;
+using GradeManagement.Client.Policies;
 using GradeManagement.Client.Services;
 
 using Microsoft.AspNetCore.Authorization;
@@ -52,7 +53,8 @@ namespace GradeManagement.Client
             builder.Services.AddSingleton<SelectedSubjectService>();
             builder.Services.AddSingleton<CurrentUserService>();
 
-            builder.Services.AddTransient(sp => new SubjectHeaderHandler(sp.GetRequiredService<SelectedSubjectService>()));
+            builder.Services.AddTransient(sp =>
+                new SubjectHeaderHandler(sp.GetRequiredService<SelectedSubjectService>()));
 
             // Registering HttpClient that uses our custom handler
             builder.Services.AddHttpClient(ServerApi,
@@ -83,6 +85,16 @@ namespace GradeManagement.Client
                 new StudentClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
             builder.Services.AddScoped<DashboardClient>(sp =>
                 new DashboardClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
+
+            builder.Services.AddAuthorizationCore(options =>
+            {
+                options.AddPolicy(Policy.RequireAdmin, policy =>
+                    policy.Requirements.Add(new UserTypeRequirement([UserType.Admin])));
+                options.AddPolicy(Policy.RequireTeacher, policy =>
+                    policy.Requirements.Add(new UserTypeRequirement([UserType.Teacher, UserType.Admin])));
+            });
+
+            builder.Services.AddScoped<IAuthorizationHandler, UserTypeAuthorizationHandler>();
 
 
             builder.Services.AddMudServices();

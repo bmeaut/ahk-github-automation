@@ -1,5 +1,4 @@
 ﻿@page "/courses/{Id:int}"
-@using System.Net
 @using GradeManagement.Client.Components.NewDialogs
 @layout AuthenticatedLayout
 
@@ -8,6 +7,7 @@
 @inject CourseClient CourseClient
 @inject ExerciseClient ExerciseClient
 @inject GroupClient GroupClient
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <LoadingComponent LongTask="@_loading" @ref="loadingRef">
     <PageTitle>Course @_course.Name</PageTitle>

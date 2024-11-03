@@ -6,6 +6,8 @@
 @inject SubjectService SubjectService
 @inject SubjectClient SubjectClient
 
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
+
 <PageTitle>Subjects</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mt-4">Subjects</MudText>

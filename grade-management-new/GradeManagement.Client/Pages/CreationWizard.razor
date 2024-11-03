@@ -8,6 +8,7 @@
 @inject SemesterClient SemesterClient
 @inject CourseClient CourseClient
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 @using GradeManagement.Client.Components.NewDialogs
 @using MudExtensions

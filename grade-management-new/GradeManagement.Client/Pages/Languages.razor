@@ -5,6 +5,7 @@
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject LanguageClient LanguageClient
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <PageTitle>Languages</PageTitle>
 
