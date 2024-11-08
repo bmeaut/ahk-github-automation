@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
-[Authorize]
+//[Authorize]
 [Route("api/courses")]
 [ApiController]
 public class CourseController(CourseService courseService) : CrudControllerBase<Course>(courseService)
@@ -42,7 +42,7 @@ public class CourseController(CourseService courseService) : CrudControllerBase<
 
     [HttpGet("{id:long}/exercises")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
+    //[Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
     public async Task<IEnumerable<ExerciseResponse>> GetAllExercisesByIdAsync([FromRoute] long id)
     {
         return await courseService.GetAllExercisesByIdAsync(id);

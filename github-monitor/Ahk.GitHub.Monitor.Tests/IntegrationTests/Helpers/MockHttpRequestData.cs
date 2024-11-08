@@ -13,8 +13,8 @@ public class MockHttpRequestData : HttpRequestData
 
     public MockHttpRequestData(FunctionContext functionContext, Stream body) : base(functionContext)
     {
-        Body = body;
-        Headers = new HttpHeadersCollection();
+        this.Body = body;
+        this.Headers = new HttpHeadersCollection();
         _response = new MockHttpResponseData(functionContext);
     }
 
@@ -24,7 +24,7 @@ public class MockHttpRequestData : HttpRequestData
 
     public override IReadOnlyCollection<IHttpCookie> Cookies { get; } = new List<IHttpCookie>();
 
-    public override Uri Url { get; } = new Uri("https://localhost");
+    public override Uri Url { get; } = new("https://localhost");
 
     public override IEnumerable<ClaimsIdentity> Identities { get; } = new List<ClaimsIdentity>();
 

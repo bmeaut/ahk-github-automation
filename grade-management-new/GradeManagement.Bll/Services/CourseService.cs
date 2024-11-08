@@ -87,10 +87,11 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
 
     public async Task<IEnumerable<ExerciseResponse>> GetAllExercisesByIdAsync(long id)
     {
-        return await gradeManagementDbContext.Exercise
+        var exercises = await gradeManagementDbContext.Exercise
             .Where(e => e.CourseId == id)
-            .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
+            .Include(e => e.ScoreTypeExercises).ThenInclude(ste => ste.ScoreType)
             .ToListAsync();
+        return mapper.Map<List<ExerciseResponse>>(exercises);
     }
 
     public async Task<IEnumerable<GroupResponse>> GetAllGroupsByIdAsync(long id)

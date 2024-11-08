@@ -37,8 +37,8 @@ internal class StatusTrackingStoreAzureQueue : IStatusTrackingStore
     public Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent) =>
         storeEvent(queueTeacherAssigned, teacherAssignedEvent);
 
-    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChangedű) =>
-        storeEvent(queuePullRequestStatusChanged, pullRequestStatusChangedű);
+    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChanged) =>
+        storeEvent(queuePullRequestStatusChanged, pullRequestStatusChanged);
 
     private static Task storeEvent(QueueWithCreateIfNotExists queue, StatusEventBase @event) => queue.Send(@event);
 }

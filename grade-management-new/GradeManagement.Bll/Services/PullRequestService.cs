@@ -14,21 +14,22 @@ namespace GradeManagement.Bll.Services;
 
 public class PullRequestService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
 {
-    public async Task<PullRequest> GetByIdAsync(long id)
+    public async Task<PullRequest> GetByIdWithoutQfAsync(long id)
     {
         return await gradeManagementDbContext.PullRequest
+            .IgnoreQueryFiltersButNotIsDeleted()
             .ProjectTo<PullRequest>(mapper.ConfigurationProvider)
             .SingleEntityAsync(p => p.Id == id, id);
     }
 
-    public async Task<Data.Models.PullRequest> GetModelByUrlWithoutQfAsync(string pullRequestUrl)
+    public async Task<Data.Models.PullRequest?> GetModelByUrlWithoutQfAsync(string pullRequestUrl)
     {
         return await gradeManagementDbContext.PullRequest
             .IgnoreQueryFiltersButNotIsDeleted()
-            .SingleEntityAsync(p => p.Url == pullRequestUrl, 0);
+            .SingleOrDefaultAsync(p => p.Url == pullRequestUrl);
     }
 
-    public async Task<PullRequest> CreateAsync(PullRequest pullRequest, long subjectId)
+    public async Task<PullRequest> CreateWithoutQfAsync(PullRequest pullRequest, long subjectId)
     {
         var pullRequestEntity = new Data.Models.PullRequest()
         {
@@ -43,7 +44,7 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
         gradeManagementDbContext.PullRequest.Add(pullRequestEntity);
         await gradeManagementDbContext.SaveChangesAsync();
 
-        return await GetByIdAsync(pullRequestEntity.Id);
+        return await GetByIdWithoutQfAsync(pullRequestEntity.Id);
     }
 
     public async Task<IEnumerable<Score>> GetAllScoresByIdSortedByDateDescendingAsync(long id)

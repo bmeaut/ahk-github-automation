@@ -16,7 +16,6 @@
     "url": "https://api.github.com/repos/aabbcc/reporep/actions/runs/124341111",
     "html_url": "https://github.com/aabbcc/reporep/actions/runs/124341111",
     "pull_requests": [
-
     ],
     "created_at": "2021-09-17T06:04:10Z",
     "updated_at": "2021-10-09T12:28:56Z",
@@ -283,7 +282,6 @@
     "allow_forking": true,
     "is_template": false,
     "topics": [
-
     ],
     "visibility": "private",
     "forks": 0,
@@ -303,7 +301,7 @@
     "members_url": "https://api.github.com/orgs/aabbcc/members{/member}",
     "public_members_url": "https://api.github.com/orgs/aabbcc/public_members{/member}",
     "avatar_url": "https://avatars.githubusercontent.com/u/11111111?v=4",
-    "description": "BME Adatvezérelt rendszerek"
+    "description": "BME Adatvezï¿½relt rendszerek"
   },
   "sender": {
     "login": "!!!SENDER",

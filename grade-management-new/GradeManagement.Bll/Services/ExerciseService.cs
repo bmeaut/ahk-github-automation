@@ -32,7 +32,7 @@ public class ExerciseService(
     public async Task<IEnumerable<ExerciseResponse>> GetAllAsync()
     {
         return await gradeManagementDbContext.Exercise
-            .Include(e => e.ScoreTypeExercises)
+            .Include(e => e.ScoreTypeExercises).ThenInclude(ste => ste.ScoreType)
             .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
@@ -40,7 +40,7 @@ public class ExerciseService(
     public async Task<ExerciseResponse> GetByIdAsync(long id)
     {
         return await gradeManagementDbContext.Exercise
-            .Include(e => e.ScoreTypeExercises)
+            .Include(e => e.ScoreTypeExercises).ThenInclude(ste => ste.ScoreType)
             .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .SingleEntityAsync(e => e.Id == id, id);
     }

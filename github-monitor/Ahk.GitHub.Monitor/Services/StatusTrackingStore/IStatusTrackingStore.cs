@@ -8,5 +8,5 @@ public interface IStatusTrackingStore
     Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent);
     Task StoreEvent(PullRequestOpenedEvent pullRequestOpenedEvent);
     Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent);
-    Task StoreEvent(PullRequestStatusChanged pullRequestStatusChangedű);
+    Task StoreEvent(PullRequestStatusChanged pullRequestStatusChanged);
 }
