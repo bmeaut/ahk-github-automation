@@ -36,24 +36,56 @@
     <MudDivider Class="mb-4"/>
 
     <MudStack Row="true" Class="mt-6">
-        <MudSelectExtended ItemCollection="_courses?.ToList()" SearchBox="true" SelectAllPosition="SelectAllPosition.AfterSearchBox" SelectAll="true" MultiSelection="true" @bind-SelectedValues="_selectedCourse" @bind-SelectedValues:after="FilterChanged" T="string" Label="Course" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined">
+        <MudSelectExtended Clearable="true" ItemCollection="_courses?.ToList()" SearchBox="true" SelectAllPosition="SelectAllPosition.AfterSearchBox" SelectAll="true" MultiSelection="true" @bind-SelectedValues="_selectedCourse" @bind-SelectedValues:after="FilterChanged" T="string" Label="Course" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined">
             @foreach (var course in _courses)
             {
                 <MudSelectItemExtended T="string" Value="@course" Text="@course"/>
             }
         </MudSelectExtended>
         <MudSpacer/>
-        <MudSelectExtended ItemCollection="_tasks?.ToList()" SearchBox="true" SelectAllPosition="SelectAllPosition.AfterSearchBox" SelectAll="true" MultiSelection="true" @bind-SelectedValues="_selectedExercise" @bind-SelectedValues:after="FilterChanged" T="string" Label="Exercise" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined">
+        <MudSelectExtended Clearable="true" ItemCollection="_tasks?.ToList()" SearchBox="true" SelectAllPosition="SelectAllPosition.AfterSearchBox" SelectAll="true" MultiSelection="true" @bind-SelectedValues="_selectedExercise" @bind-SelectedValues:after="FilterChanged" T="string" Label="Exercise" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined">
             @foreach (var task in _tasks)
             {
                 <MudSelectItemExtended T="string" Value="@task" Text="@task"/>
             }
         </MudSelectExtended>
         <MudSpacer/>
+        <MudSelect T="string"
+                   Label="Status Filter"
+                   MultiSelection="true"
+                   @bind-SelectedValues="selectedStatuses"
+                   OnClose="ApplyFilter"
+                   Clearable="true"
+                   Variant="Variant.Outlined">
+            <MudSelectItem T="string" Value="@("Merged")">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success" Size="Size.Small"/>
+                    <MudText>Merged</MudText>
+                </div>
+            </MudSelectItem>
+            <MudSelectItem T="string" Value="@("Checked")">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small"/>
+                    <MudText>Teacher Checked</MudText>
+                </div>
+            </MudSelectItem>
+            <MudSelectItem T="string" Value="@("CiRun")">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small"/>
+                    <MudText>CI Flow Ran</MudText>
+                </div>
+            </MudSelectItem>
+            <MudSelectItem T="string" Value="@("NoCi")">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small"/>
+                    <MudText>CI Did Not Run</MudText>
+                </div>
+            </MudSelectItem>
+        </MudSelect>
 
         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large"/>
     </MudStack>
-    <MudDataGrid Items="@_filteredData" T="Dashboard" Class="custom-grid">
+    <MudDataGrid Items="@_filteredData" T="Dashboard" Class="custom-grid" FilterDefinitions="@FilterDefinitions">
         <Columns>
             <PropertyColumn Property="x => x.CourseName" Title="Course"/>
             <PropertyColumn Property="x => x.ExerciseName" Title="Exercise"/>
@@ -204,7 +236,13 @@
     private IEnumerable<string>? _tasks = new List<string>();
     private ICollection<Dashboard> _dashboardData = new List<Dashboard>();
     private ICollection<Dashboard> _filteredData = new List<Dashboard>();
+    private IEnumerable<string> selectedStatuses = [];
+    private List<IFilterDefinition<Dashboard>> FilterDefinitions = [];
 
+
+    private void ApplyFilter()
+    {
+    }
 
     private async Task Loading()
     {
@@ -241,7 +279,7 @@
 
     private void FilterChanged()
     {
-        _filteredData = _dashboardData.Where(x => (_selectedCourse.Contains(x.CourseName)) && ( _selectedExercise.Contains(x.ExerciseName))).ToList();
+        _filteredData = _dashboardData.Where(x => (_selectedCourse.Contains(x.CourseName)) && (_selectedExercise.Contains(x.ExerciseName))).ToList();
         _courses = _dashboardData?.Select(x => x.CourseName).Distinct();
         _tasks = _dashboardData?.Select(x => x.ExerciseName).Distinct();
     }
@@ -254,5 +292,23 @@
     protected override void OnInitialized()
     {
         SubjectService.OnChange += OnSubjectChanged;
+
+        FilterDefinitions.Add(new FilterDefinition<Dashboard>
+        {
+            FilterFunction = x =>
+            {
+                if (!selectedStatuses.Any())
+                    return true;
+                if (selectedStatuses.Contains("Merged") && MergedEntry(x))
+                    return true;
+                if (selectedStatuses.Contains("Checked") && CheckedEntry(x) && !MergedEntry(x))
+                    return true;
+                if (selectedStatuses.Contains("CiRun") && CiRunOnEntry(x) && !CheckedEntry(x) && !MergedEntry(x))
+                    return true;
+                if (selectedStatuses.Contains("NoCi") && !CiRunOnEntry(x) && !CheckedEntry(x) && !MergedEntry(x))
+                    return true;
+                return false;
+            }
+        });
     }
 }
