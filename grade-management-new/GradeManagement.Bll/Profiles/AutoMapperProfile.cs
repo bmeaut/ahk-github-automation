@@ -22,7 +22,10 @@ public class AutoMapperProfile : Profile
     {
         CreateMap<Assignment, Shared.Dtos.Assignment>();
         CreateMap<Course, Shared.Dtos.Course>();
-        CreateMap<Exercise, ExerciseResponse>();
+        CreateMap<Exercise, ExerciseResponse>().ForMember(dest => dest.ScoreTypes,
+            opt => opt.MapFrom(src =>
+                src.ScoreTypeExercises.Where(ste => ste.ExerciseId == src.Id)
+                    .ToDictionary(ste => ste.Order, ste => ste.ScoreType.Type)));
         CreateMap<Group, GroupResponse>();
         CreateMap<Language, Shared.Dtos.Language>();
         CreateMap<PullRequest, Shared.Dtos.PullRequest>();
@@ -32,7 +35,7 @@ public class AutoMapperProfile : Profile
         CreateMap<ScoreTypeExercise, Shared.Dtos.ScoreTypeExercise>();
         CreateMap<Semester, Shared.Dtos.Semester>();
         CreateMap<Student, StudentResponse>();
-        CreateMap<Subject, SubjectResponse>() .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.SubjectId));;
+        CreateMap<Subject, SubjectResponse>().ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.SubjectId));
         CreateMap<User, Shared.Dtos.User>();
     }
 }
