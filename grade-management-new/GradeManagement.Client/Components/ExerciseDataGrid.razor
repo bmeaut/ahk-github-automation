@@ -1,30 +1,34 @@
 ﻿@inject ExerciseClient ExerciseClient
 
-<MudDataGrid T="Exercise" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
+<MudDataGrid T="ExerciseResponse" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
     <Columns>
-        <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+        <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
         <PropertyColumn Property="x => x.GithubPrefix" Title="Github Prefix"/>
-        <DataGridActions TItem="Exercise" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+        <PropertyColumn Property="x => x.DueDate" Title="Due Date"/>
+        <PropertyColumn Property="x => JoinScoreTypes(x)" Title="Score Types"/>
+        <DataGridActions TItem="ExerciseResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
     </Columns>
 </MudDataGrid>
 
 
 @code {
-    [Parameter] public ICollection<Exercise> Values { get; set; }
+    [Parameter] public ICollection<ExerciseResponse> Values { get; set; }
 
-    private async Task StartEditing(CellContext<Exercise?> context)
+    private string JoinScoreTypes(ExerciseResponse item) => string.Join(", ", item.ScoreTypes.Select(x => $"{x.Key}: {x.Value}"));
+
+    private async Task StartEditing(CellContext<ExerciseResponse?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
     }
 
-    private async Task CommittedItemChanges(Exercise items)
+    private async Task CommittedItemChanges(ExerciseResponse items)
     {
-        await ExerciseClient.UpdateAsync(items.Id, items);
+        await ExerciseClient.UpdateAsync(items.Id, items.ToRequest());
     }
 
-    private async Task DeleteItem(Exercise item)
+    private async Task DeleteItem(ExerciseResponse item)
     {
         Values.Remove(item);
         await ExerciseClient.DeleteAsync(item.Id);

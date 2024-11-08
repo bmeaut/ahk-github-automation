@@ -1,0 +1,27 @@
+name: Grade Management New - build
+
+on:
+  push:
+    paths:
+      - "grade-management-new/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: "Run dotnet build"
+        working-directory: grade-management-new
+        run: |
+          dotnet build
+          dotnet test

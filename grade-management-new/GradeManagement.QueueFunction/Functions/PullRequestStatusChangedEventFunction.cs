@@ -21,7 +21,7 @@ public class PullRequestStatusChangedEventFunction
 
     [Function(nameof(PullRequestStatusChangedEventFunction))]
     public async Task Run(
-        [QueueTrigger("pull-request-status-changed", Connection = "AHK_EventsQueueConnectionString")]
+        [QueueTrigger("ahkstatustracking-pull-request-status-changed", Connection = "AHK_EventsQueueConnectionString")]
         PullRequestStatusChanged pullRequestStatusChanged)
     {
         _logger.LogInformation(

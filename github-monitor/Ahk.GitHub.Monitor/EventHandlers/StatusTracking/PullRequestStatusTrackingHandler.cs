@@ -2,54 +2,97 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.EventHandlers
+namespace Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
+
+public class PullRequestStatusTrackingHandler(
+    IGitHubClientFactory gitHubClientFactory,
+    IStatusTrackingStore statusTrackingStore,
+    IMemoryCache cache,
+    IServiceProvider serviceProvider)
+    : RepositoryEventBase<PullRequestEventPayload>(gitHubClientFactory, cache, serviceProvider)
 {
-    public class PullRequestStatusTrackingHandler : RepositoryEventBase<PullRequestEventPayload>
+    public const string GitHubWebhookEventName = "pull_request";
+
+    public async Task<EventHandlerResult> PrStatusChanged(string gitHubRepositoryUrl, string pullRequestUrl,
+        PullRequestStatus pullRequestStatus)
     {
-        public const string GitHubWebhookEventName = "pull_request";
-        private readonly IStatusTrackingStore statusTrackingStore;
+        await statusTrackingStore.StoreEvent(new PullRequestStatusChanged(
+            gitHubRepositoryUrl,
+            pullRequestUrl,
+            pullRequestStatus));
 
-        public PullRequestStatusTrackingHandler(IGitHubClientFactory gitHubClientFactory, IStatusTrackingStore statusTrackingStore, IMemoryCache cache, ILogger logger)
-            : base(gitHubClientFactory, cache, logger)
+        return EventHandlerResult.ActionPerformed("pull request status changed lifecycle handled");
+    }
+
+    protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
+    {
+        if (webhookPayload.PullRequest == null)
         {
-            this.statusTrackingStore = statusTrackingStore;
+            return EventHandlerResult.PayloadError("no pull request information in webhook payload");
         }
 
-        protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
+        if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
         {
-            if (webhookPayload.PullRequest == null)
-                return EventHandlerResult.PayloadError("no pull request information in webhook payload");
-
-            if (webhookPayload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase) ||
-                webhookPayload.Action.Equals("assigned", StringComparison.OrdinalIgnoreCase) ||
-                webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase) ||
-                webhookPayload.Action.Equals("closed", StringComparison.OrdinalIgnoreCase))
-                return await processPullRequestEvent(webhookPayload);
-
-            return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
+            return await this.processPullRequestOpenedEvent(webhookPayload);
         }
 
-        private async Task<EventHandlerResult> processPullRequestEvent(PullRequestEventPayload webhookPayload)
+        if (webhookPayload.Action.Equals("assigned", StringComparison.OrdinalIgnoreCase) ||
+            webhookPayload.Action.Equals("unassigned", StringComparison.OrdinalIgnoreCase))
         {
-            var repository = webhookPayload.Repository.FullName;
-            var action = webhookPayload.Action;
-            var assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
-            var neptun = await getNeptun(webhookPayload.Repository.Id, webhookPayload.PullRequest.Head.Ref);
-
-            await statusTrackingStore.StoreEvent(new PullRequestEvent(
-                repository: repository,
-                timestamp: DateTime.UtcNow,
-                action: action,
-                assignees: assignees,
-                neptun: neptun,
-                htmlUrl: webhookPayload.PullRequest.HtmlUrl,
-                number: webhookPayload.PullRequest.Number));
-
-            return EventHandlerResult.ActionPerformed("pull request lifecycle handled");
+            return await this.teacherAssignedEvent(webhookPayload);
         }
+
+        if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
+        {
+            return await this.teacherAssignedAsReviewerEvent(webhookPayload);
+        }
+
+        if (webhookPayload.Action.Equals("closed", StringComparison.OrdinalIgnoreCase))
+        {
+            return await this.PrStatusChanged(webhookPayload.Repository.HtmlUrl, webhookPayload.PullRequest.HtmlUrl,
+                PullRequestStatus.Closed);
+        }
+
+        return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
+    }
+
+    private async Task<EventHandlerResult> processPullRequestOpenedEvent(PullRequestEventPayload webhookPayload)
+    {
+        await statusTrackingStore.StoreEvent(new PullRequestOpenedEvent(
+            webhookPayload.Repository.HtmlUrl,
+            DateTimeOffset.UtcNow,
+            webhookPayload.PullRequest.Head.Ref,
+            webhookPayload.PullRequest.HtmlUrl));
+
+        return EventHandlerResult.ActionPerformed("pull request opened lifecycle handled");
+    }
+
+    private async Task<EventHandlerResult> teacherAssignedEvent(PullRequestEventPayload webhookPayload)
+    {
+        var assignees = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray();
+
+        await statusTrackingStore.StoreEvent(new TeacherAssignedEvent(
+            webhookPayload.Repository.HtmlUrl,
+            webhookPayload.PullRequest.HtmlUrl,
+            assignees));
+
+        return EventHandlerResult.ActionPerformed("pull request assigned lifecycle handled");
+    }
+
+    private async Task<EventHandlerResult> teacherAssignedAsReviewerEvent(PullRequestEventPayload webhookPayload)
+    {
+        var assignees = webhookPayload.PullRequest.RequestedReviewers?.Select(u => u.Login)?.ToArray();
+
+        await statusTrackingStore.StoreEvent(new TeacherAssignedEvent(
+            webhookPayload.Repository.HtmlUrl,
+            webhookPayload.PullRequest.HtmlUrl,
+            assignees));
+
+        return EventHandlerResult.ActionPerformed("pull request assigned as reviewer lifecycle handled");
     }
 }

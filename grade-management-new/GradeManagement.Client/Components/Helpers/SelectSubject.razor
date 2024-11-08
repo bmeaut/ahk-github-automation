@@ -17,21 +17,21 @@
 
 </style>
 
-<MudSelect T="Subject" Value="@Value"
-           ValueChanged="@((Subject value) => { Value = value; ValueChanged.InvokeAsync(value); })"
+<MudSelect T="SubjectResponse" Value="@Value"
+           ValueChanged="@((SubjectResponse value) => { Value = value; ValueChanged.InvokeAsync(value); })"
            ToStringFunc="@subjectToString" Label="Subject" Class="white-select" Dense="true" Variant="Variant.Outlined"
            AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
     @foreach (var semester in PossibleValues)
     {
-    <MudSelectItem Value="@semester"/>
+        <MudSelectItem Value="@semester"/>
     }
 </MudSelect>
 
 @code {
-[Parameter] public Subject Value { get; set; }
-[Parameter] public List<Subject> PossibleValues { get; set; }
-[Parameter] public EventCallback<Subject> ValueChanged { get; set; }
+    [Parameter] public SubjectResponse Value { get; set; }
+    [Parameter] public List<SubjectResponse> PossibleValues { get; set; }
+    [Parameter] public EventCallback<SubjectResponse> ValueChanged { get; set; }
 
-private Func<Subject, string> subjectToString = p => p.Name;
+    private Func<SubjectResponse, string> subjectToString = p => p.Name;
 
 }

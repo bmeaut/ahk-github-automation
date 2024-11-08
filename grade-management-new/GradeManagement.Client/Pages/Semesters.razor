@@ -5,6 +5,7 @@
 @inject IDialogService DialogService
 @inject CrudSnackbarService SnackbarService
 @inject SemesterClient SemesterClient
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <PageTitle>Semesters</PageTitle>
 
@@ -13,12 +14,12 @@
     <MudDivider Class="mb-4"/>
     <MudDataGrid T="Semester" Items="_semesters" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
-            <DataGridActions TItem="Semester" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+            <DataGridActions TItem="Semester" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem" ShowEdit="false"/>
         </Columns>
     </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {

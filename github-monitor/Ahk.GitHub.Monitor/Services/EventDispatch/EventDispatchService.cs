@@ -1,64 +1,72 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.EventDispatch;
+
+internal class EventDispatchService : IEventDispatchService
 {
-    internal class EventDispatchService : IEventDispatchService
+    private readonly IServiceProvider serviceProvider;
+    private readonly IReadOnlyDictionary<string, List<Type>> handlers;
+
+    public EventDispatchService(IServiceProvider serviceProvider, EventDispatchConfig handlersConfig)
     {
-        private readonly IServiceProvider serviceProvider;
-        private readonly IReadOnlyDictionary<string, List<Type>> handlers;
+        this.serviceProvider = serviceProvider;
 
-        public EventDispatchService(IServiceProvider serviceProvider, EventDispatchConfig handlersConfig)
+        var handlersList = new Dictionary<string, List<Type>>(StringComparer.OrdinalIgnoreCase);
+        foreach ((string GitHubEventName, Type HandlerType) item in handlersConfig.Handlers)
         {
-            this.serviceProvider = serviceProvider;
-
-            var handlers = new Dictionary<string, List<Type>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in handlersConfig.Handlers)
+            if (handlersList.TryGetValue(item.GitHubEventName, out List<Type> l))
             {
-                if (handlers.TryGetValue(item.GitHubEventName, out var l))
-                    l.Add(item.HandlerType);
-                else
-                    handlers[item.GitHubEventName] = new List<Type>() { item.HandlerType };
-            }
-
-            this.handlers = handlers;
-        }
-
-        public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult, ILogger logger)
-        {
-            if (!this.handlers.TryGetValue(gitHubEventName, out var handlersForEvent))
-            {
-                webhookResult.LogInfo($"Event {gitHubEventName} is not of interest");
-                logger.LogInformation($"Event {gitHubEventName} is not of interest");
+                l.Add(item.HandlerType);
             }
             else
             {
-                foreach (var handlerType in handlersForEvent)
-                {
-                    logger.LogInformation($"Event {gitHubEventName} being handled by {handlerType}");
-                    await executeHandler(requestBody, webhookResult, handlerType, logger);
-                }
+                handlersList[item.GitHubEventName] = [item.HandlerType];
             }
         }
 
-        private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType, ILogger logger)
-        {
-            try
-            {
-                var handler = ActivatorUtilities.CreateInstance(serviceProvider, handlerType, logger) as EventHandlers.IGitHubEventHandler;
-                var handlerResult = await handler.Execute(requestBody);
+        handlers = handlersList;
+    }
 
-                logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");
-                webhookResult.LogInfo($"{handlerType.Name} -> {handlerResult.Result}");
-            }
-            catch (Exception ex)
+    public async Task Process(string gitHubEventName, string requestBody, WebhookResult webhookResult,
+        ILogger logger)
+    {
+        if (!handlers.TryGetValue(gitHubEventName, out List<Type> handlersForEvent))
+        {
+            webhookResult.LogInfo($"Event {gitHubEventName} is not of interest");
+            logger.LogInformation($"Event {gitHubEventName} is not of interest");
+        }
+        else
+        {
+            foreach (Type handlerType in handlersForEvent)
             {
-                logger.LogError(ex, $"{handlerType.Name} execution failed");
-                webhookResult.LogError(ex, $"{handlerType.Name} -> exception");
+                logger.LogInformation($"Event {gitHubEventName} being handled by {handlerType}");
+                await this.executeHandler(requestBody, webhookResult, handlerType, logger);
             }
+        }
+    }
+
+    private async Task executeHandler(string requestBody, WebhookResult webhookResult, Type handlerType,
+        ILogger logger)
+    {
+        try
+        {
+            var handler =
+                ActivatorUtilities.CreateInstance(
+                    serviceProvider, handlerType) as EventHandlers.IGitHubEventHandler;
+            EventHandlerResult handlerResult = await handler.Execute(requestBody);
+
+            logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");
+            webhookResult.LogInfo($"{handlerType.Name} -> {handlerResult.Result}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"{handlerType.Name} execution failed");
+            webhookResult.LogError(ex, $"{handlerType.Name} -> exception");
         }
     }
 }

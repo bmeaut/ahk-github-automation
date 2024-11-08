@@ -2,7 +2,7 @@
 
 public class EventScore
 {
-    public long Value { get; set; }
+    public double Value { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
     public string ScoreType { get; set; }
 }

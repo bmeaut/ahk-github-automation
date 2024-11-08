@@ -1,0 +1,106 @@
+﻿@page "/current-user"
+@layout AuthenticatedLayout
+@inject CrudSnackbarService SnackbarService
+@inject UserClient UserClient
+
+<LoadingComponent LongTask="Loading" @ref="loadingRef">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+        <MudPaper Class="pa-4">
+            <MudForm @ref="form" @bind-IsValid="@success">
+                <MudText Typo="Typo.h5" Class="mb-4">Personal Information</MudText>
+                @if (user == null)
+                {
+                    <MudText Typo="Typo.h6">User not found!</MudText>
+                }
+                else
+                {
+                    <MudTextField
+                        @bind-Value="user.Name"
+                        Label="Full Name"
+                        Required="true"
+                        RequiredError="Name is required!"
+                        Class="mt-3"/>
+
+                    <MudTextField
+                        @bind-Value="user.NeptunCode"
+                        Label="Neptun Code"
+                        Required="true"
+                        RequiredError="Neptun code is required!"
+                        Validation="@(new Func<string, IEnumerable<string>>(ValidateNeptunCode))"
+                        Class="mt-3"/>
+
+                    <MudTextField
+                        @bind-Value="user.GithubId"
+                        Label="GitHub ID"
+                        Required="true"
+                        RequiredError="GitHub ID is required!"
+                        Class="mt-3"/>
+
+                    <div class="d-flex align-center justify-space-between mt-6">
+                        <MudButton
+                            Variant="Variant.Filled"
+                            Color="Color.Primary"
+                            DisableElevation="true"
+                            OnClick="SubmitForm">
+                            Save Changes
+                        </MudButton>
+                    </div>
+                }
+            </MudForm>
+        </MudPaper>
+    </MudContainer>
+</LoadingComponent>
+
+@code {
+    private MudForm form;
+    private bool success;
+    private User? user;
+    private LoadingComponent loadingRef;
+
+    private IEnumerable<string> ValidateNeptunCode(string neptunCode)
+    {
+        if (string.IsNullOrEmpty(neptunCode))
+            yield return "Neptun code is required!";
+        if (neptunCode?.Length != 6)
+            yield return "Neptun code must be exactly 6 characters!";
+        if (!neptunCode?.All(c => char.IsLetterOrDigit(c)) ?? false)
+            yield return "Neptun code can only contain letters and numbers!";
+    }
+
+    private async Task SubmitForm()
+    {
+        if (user == null)
+        {
+            SnackbarService.ShowError("User not found!");
+            return;
+        }
+
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            try
+            {
+                // Here you would typically save the user data
+                await UserClient.UpdateAsync(user.Id, user);
+
+                SnackbarService.ShowAddSuccess();
+            }
+            catch (Exception ex)
+            {
+                SnackbarService.ShowAddError();
+            }
+        }
+    }
+
+
+    private async Task Loading()
+    {
+        user = await UserClient.GetCurrentUserAsync();
+        if (user == null)
+        {
+            SnackbarService.ShowError("User not found!");
+        }
+    }
+
+}

@@ -7,25 +7,26 @@
 @inject CrudSnackbarService SnackbarService
 @inject SubjectService SubjectService
 @inject StudentClient StudentClient
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <PageTitle>Students</PageTitle>
 
 <LoadingComponent LongTask="Loading" @ref="loadingRef">
     <MudText Typo="Typo.h4" Class="mt-4">Students</MudText>
     <MudDivider Class="mb-4"/>
-    <MudDataGrid T="Student2" Items="_students" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
+    <MudDataGrid T="StudentResponse" Items="_students" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges">
         <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" IsEditable="false"/>
+            <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
             <PropertyColumn Property="x => x.NeptunCode" Title="Neptun Code"/>
-            <DataGridActions TItem="Student2" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+            <DataGridActions TItem="StudentResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem" ShowDelete="false" ShowEdit="false"/>
         </Columns>
     </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" Icon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {
-    private ICollection<Student2> _students = new List<Student2>();
+    private ICollection<StudentResponse> _students = new List<StudentResponse>();
     private LoadingComponent loadingRef;
 
 
@@ -35,13 +36,13 @@
         var result = await dialog.Result;
         if (!result.Canceled && result.Data != null)
         {
-            await StudentClient.CreateAsync(result.Data as Student2);
+            await StudentClient.CreateAsync(result.Data as StudentRequest);
             SnackbarService.ShowAddSuccess();
             await loadingRef.StartLoading();
         }
     }
 
-    private async Task StartEditing(CellContext<Student2?> context)
+    private async Task StartEditing(CellContext<StudentResponse?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
@@ -49,17 +50,17 @@
 
     private async Task Loading()
     {
-        _students = (await StudentClient.GetAllAsync()).Select(x => x.ToStudent2()).ToList();
+        _students = await StudentClient.GetAllAsync();
     }
 
-    private async Task CommittedItemChanges(Student2 items)
+    private async Task CommittedItemChanges(StudentResponse items)
     {
         //await StudentClient.UpdateAsync(items);
         SnackbarService.ShowError("Update not implemented!");
         await loadingRef.StartLoading();
     }
 
-    private async Task DeleteItem(Student2 item)
+    private async Task DeleteItem(StudentResponse item)
     {
         //await StudentClient.DeleteAsync(item.Id);
         //TODO: ppthez modositva

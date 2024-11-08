@@ -1,18 +1,18 @@
-﻿@using GradeManagement.Shared.Authorization.Policies
+﻿@using GradeManagement.Client.Policies
 <MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-    <AuthorizeView Policy="@TeacherRequirement.PolicyName">
-        <Authorized>
-            <MudNavGroup Title="Data" Expanded="true">
-                <MudNavLink Href="/courses" Match="NavLinkMatch.Prefix">Courses</MudNavLink>
-                <MudNavLink Href="/semesters" Match="NavLinkMatch.Prefix">Semesters</MudNavLink>
-                <MudNavLink Href="/languages" Match="NavLinkMatch.Prefix">Languages</MudNavLink>
-                <MudNavLink Href="/teachers" Match="NavLinkMatch.Prefix">Teachers</MudNavLink>
-            </MudNavGroup>
-            <MudNavGroup Title="Admin" Expanded="false">
-                <MudNavLink Href="/subjects" Match="NavLinkMatch.Prefix">Subjects</MudNavLink>
-                <MudNavLink Href="/students" Match="NavLinkMatch.Prefix">Students</MudNavLink>
-            </MudNavGroup>
-        </Authorized>
+    <AuthorizeView Policy="@Policy.RequireTeacher">
+        <MudNavGroup Title="Data" Expanded="true">
+            <MudNavLink Href="/courses" Match="NavLinkMatch.Prefix">Courses</MudNavLink>
+            <MudNavLink Href="/semesters" Match="NavLinkMatch.Prefix">Semesters</MudNavLink>
+            <MudNavLink Href="/languages" Match="NavLinkMatch.Prefix">Languages</MudNavLink>
+            <MudNavLink Href="/teachers" Match="NavLinkMatch.Prefix">Teachers</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+    <AuthorizeView Policy="@Policy.RequireAdmin">
+        <MudNavGroup Title="Admin" Expanded="false">
+            <MudNavLink Href="/subjects" Match="NavLinkMatch.Prefix">Subjects</MudNavLink>
+            <MudNavLink Href="/students" Match="NavLinkMatch.Prefix">Students</MudNavLink>
+        </MudNavGroup>
     </AuthorizeView>
 </MudNavMenu>

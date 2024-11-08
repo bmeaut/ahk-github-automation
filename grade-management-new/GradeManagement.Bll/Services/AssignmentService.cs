@@ -5,6 +5,7 @@ using AutSoft.Linq.Queryable;
 
 using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
+using GradeManagement.Data.Utils;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Enums;
 
@@ -12,33 +13,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class AssignmentService : IQueryServiceBase<Assignment>
+public class AssignmentService(
+    GradeManagementDbContext gradeManagementDbContext,
+    IMapper mapper /*, ExerciseService exerciseService*/)
+    : IQueryServiceBase<Assignment>
 {
-    private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
-
-    public AssignmentService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    {
-        _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
-    }
-
     public async Task<IEnumerable<Assignment>> GetAllAsync()
     {
-        return await _gradeManagementDbContext.Assignment
-            .ProjectTo<Assignment>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.Assignment
+            .ProjectTo<Assignment>(mapper.ConfigurationProvider)
             .OrderBy(a => a.Id)
             .ToListAsync();
     }
 
     public async Task<Assignment> GetByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.Assignment
-            .ProjectTo<Assignment>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.Assignment
+            .ProjectTo<Assignment>(mapper.ConfigurationProvider)
             .SingleEntityAsync(a => a.Id == id, id);
     }
 
-    public async Task<Assignment> CreateAsync(Assignment requestDto)
+    public async Task<Assignment> CreateAsync(Assignment requestDto, long subjectId)
     {
         var assignmentEntity = new Data.Models.Assignment()
         {
@@ -46,42 +41,46 @@ public class AssignmentService : IQueryServiceBase<Assignment>
             GithubRepoName = requestDto.GithubRepoName,
             GithubRepoUrl = requestDto.GithubRepoUrl,
             StudentId = requestDto.StudentId,
-            ExerciseId = requestDto.ExerciseId
+            ExerciseId = requestDto.ExerciseId,
+            SubjectId = subjectId
         };
-        _gradeManagementDbContext.Assignment.Add(assignmentEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
-        return _mapper.Map<Assignment>(assignmentEntity);
+        gradeManagementDbContext.Assignment.Add(assignmentEntity);
+        await gradeManagementDbContext.SaveChangesAsync();
+        return mapper.Map<Assignment>(assignmentEntity);
     }
 
     public async Task<IEnumerable<PullRequest>> GetAllPullRequestsByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.PullRequest
-            .ProjectTo<PullRequest>(_mapper.ConfigurationProvider)
+        return await gradeManagementDbContext.PullRequest
+            .ProjectTo<PullRequest>(mapper.ConfigurationProvider)
             .Where(p => p.AssignmentId == id)
             .ToListAsync();
     }
 
     public async Task<Data.Models.PullRequest?> GetMergedPullRequestModelByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.PullRequest
+        return await gradeManagementDbContext.PullRequest
             .SingleOrDefaultAsync(pr => pr.AssignmentId == id && pr.Status == PullRequestStatus.Merged);
     }
 
-    public async Task<Data.Models.Assignment> GetAssignmentModelByGitHubRepoNameAsync(string githubRepoName)
+    public async Task<Data.Models.Assignment> GetAssignmentModelByGitHubRepoNameWithoutQfAsync(string githubRepoName)
     {
-        return await _gradeManagementDbContext.Assignment
+        return await gradeManagementDbContext.Assignment
+            .IgnoreQueryFiltersButNotIsDeleted()
             .SingleEntityAsync(a => githubRepoName == a.GithubRepoName, 0);
     }
 
-    public async Task ChangeStudentIdOnAllAssignmentsAsync(long studentIdFrom, long studentIdTo)
+    public async Task ChangeStudentIdOnAllAssignmentsWithoutQfAsync(long studentIdFrom, long studentIdTo)
     {
-        var assignments = await _gradeManagementDbContext.Assignment.Where(a => a.StudentId == studentIdFrom)
+        var assignments = await gradeManagementDbContext.Assignment
+            .IgnoreQueryFiltersButNotIsDeleted()
+            .Where(a => a.StudentId == studentIdFrom)
             .ToListAsync();
         foreach (var assignment in assignments)
         {
             assignment.StudentId = studentIdTo;
         }
 
-        await _gradeManagementDbContext.SaveChangesAsync();
+        await gradeManagementDbContext.SaveChangesAsync();
     }
 }

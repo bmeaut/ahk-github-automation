@@ -1,13 +1,16 @@
 ﻿using GradeManagement.Bll;
 using GradeManagement.Bll.Services;
+using GradeManagement.Server.Authorization.Policies;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers;
 
 [ApiController]
 [Route("api/testassignmentevents")]
+[Authorize(Policy = AdminRequirement.PolicyName)]
 public class AssingmentEventTestController(
     AssignmentEventProcessorService assignmentEventProcessorService,
     IWebHostEnvironment environment)

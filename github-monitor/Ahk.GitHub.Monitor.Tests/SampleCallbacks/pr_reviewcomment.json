@@ -79,16 +79,12 @@
     "merge_commit_sha": "a1c50f1e2b46fd2b668ffb31e859523cd46feebd",
     "assignee": null,
     "assignees": [
-
     ],
     "requested_reviewers": [
-
     ],
     "requested_teams": [
-
     ],
     "labels": [
-
     ],
     "milestone": null,
     "draft": false,
@@ -213,7 +209,6 @@
         "allow_forking": true,
         "is_template": false,
         "topics": [
-
         ],
         "visibility": "private",
         "forks": 0,
@@ -343,7 +338,6 @@
         "allow_forking": true,
         "is_template": false,
         "topics": [
-
         ],
         "visibility": "private",
         "forks": 0,
@@ -479,7 +473,6 @@
     "allow_forking": true,
     "is_template": false,
     "topics": [
-
     ],
     "visibility": "private",
     "forks": 0,

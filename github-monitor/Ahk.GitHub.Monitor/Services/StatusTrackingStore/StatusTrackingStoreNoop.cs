@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore;
+
+public class StatusTrackingStoreNoop : IStatusTrackingStore
 {
-    public class StatusTrackingStoreNoop : IStatusTrackingStore
-    {
-        public Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent) => Task.CompletedTask;
-        public Task StoreEvent(BranchCreateEvent branchCreateEvent) => Task.CompletedTask;
-        public Task StoreEvent(WorkflowRunEvent workflowRunEvent) => Task.CompletedTask;
-        public Task StoreEvent(PullRequestEvent pullRequestEvent) => Task.CompletedTask;
-    }
+    public Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent) => Task.CompletedTask;
+    public Task StoreEvent(PullRequestOpenedEvent pullRequestOpenedEvent) => Task.CompletedTask;
+    public Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent) => Task.CompletedTask;
+    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChanged) => Task.CompletedTask;
 }

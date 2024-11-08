@@ -1,12 +1,63 @@
-﻿<MudDialog>
+﻿@inject CrudSnackbarService SnackbarService
+@inject CurrentUserService CurrentUserService
+
+<MudDialog Style="min-width: 600px;">
     <TitleContent>
         <MudText Typo="Typo.h4">New Subject</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
-            <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
-            <MudTextField T="string" Label="Neptun Code" @bind-Value="value.NeptunCode" Required="true" Validation="@(new Func<string, IEnumerable<string>>(NeptunCodeValidator))"></MudTextField>
-            <MudTextField T="string" Label="Github Org" For="@(() => value.GitHubOrgName)" @bind-Value="value.GitHubOrgName" Required="true"></MudTextField>
+            <MudTextField T="string"
+                          Label="Name"
+                          For="@(() => value.Name)"
+                          @bind-Value="value.Name"
+                          Required="true"/>
+
+            <MudTextField T="string"
+                          Label="Neptun Code"
+                          @bind-Value="value.NeptunCode"
+                          Required="true"
+                          Validation="@(new Func<string, IEnumerable<string>>(NeptunCodeValidator))"/>
+
+            <MudTextField T="string"
+                          Label="Github Org"
+                          For="@(() => value.GitHubOrgName)"
+                          @bind-Value="value.GitHubOrgName"
+                          Required="true"/>
+
+            @if (showApiKeyWarning)
+            {
+                <MudAlert Severity="Severity.Warning" Class="my-2">
+                    This API key will be shown only once. Make sure to save it!
+                </MudAlert>
+            }
+
+            <MudPaper Elevation="0" Class="d-flex flex-column gap-2">
+                <div class="d-flex align-center gap-2">
+                    <MudTextField T="string"
+                                  Label="API Key"
+                                  For="@(() => value.CiApiKey)"
+                                  @bind-Value="value.CiApiKey"
+                                  Required="true"
+                                  ReadOnly="true"
+                                  Variant="Variant.Outlined"
+                                  Class="flex-grow-1"/>
+
+                    <MudTooltip Text="Generate new API key">
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                       OnClick="GenerateApiKey"
+                                       Color="Color.Primary"
+                                       Size="Size.Medium"/>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Copy to clipboard">
+                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                       OnClick="CopyToClipboard"
+                                       Color="Color.Secondary"
+                                       Size="Size.Medium"/>
+                    </MudTooltip>
+                </div>
+            </MudPaper>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -17,31 +68,49 @@
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Inject] private IJSRuntime JS { get; set; }
 
     private MudForm form;
     private bool success;
     private string[] errors;
+    private bool showApiKeyWarning = false;
 
     private void Submit() => MudDialog.Close(DialogResult.Ok(value));
     private void Cancel() => MudDialog.Cancel();
+
+    private void GenerateApiKey()
+    {
+        showApiKeyWarning = true;
+        value.CiApiKey = Guid.NewGuid().ToString();
+    }
+
+    private async Task CopyToClipboard()
+    {
+        if (!string.IsNullOrEmpty(value.CiApiKey))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", value.CiApiKey);
+            SnackbarService.ShowSuccess("API key copied to clipboard!");
+        }
+    }
 
     private async void OnSubmitClicked()
     {
         await form.Validate();
         if (form.IsValid)
         {
+            value.Teachers.Add(CurrentUserService.User);
             Submit();
         }
     }
 
-    public Subject2 value = new()
+    public SubjectRequest value = new()
     {
         Teachers = new List<User>() //TODO: add current user
     };
 
     private IEnumerable<string> NeptunCodeValidator(string pw)
     {
-        if (pw.Length < 20)
+        if (pw.Length > 20)
             yield return "Neptun code should be less than 20 characters long.";
     }
 

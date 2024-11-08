@@ -1,18 +1,15 @@
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.EventHandlers
+namespace Ahk.GitHub.Monitor.EventHandlers.GradeComment.Payload;
+
+internal class IssueCommentPayloadFacade(IssueCommentPayload payload) : ICommentPayload<IssueCommentPayload>
 {
-    internal class IssueCommentPayloadFacade : ICommentPayload<IssueCommentPayload>
-    {
-        public IssueCommentPayloadFacade(IssueCommentPayload payload)
-            => this.Payload = payload;
+    public IssueCommentPayload Payload { get; } = payload;
 
-        public IssueCommentPayload Payload { get; }
-
-        public Repository Repository => Payload.Repository;
-        public int PullRequestNumber => Payload.Issue.Number;
-        public string CommentingUser => Payload.Comment.User.Login;
-        public string CommentHtmlUrl => Payload.Comment.HtmlUrl;
-        public string CommentBody => Payload.Comment.Body;
-    }
+    public Repository Repository => this.Payload.Repository;
+    public int PullRequestNumber => this.Payload.Issue.Number;
+    public string PullRequestUrl => this.Payload.Issue.Url;
+    public string CommentingUser => this.Payload.Comment.User.Login;
+    public string CommentHtmlUrl => this.Payload.Comment.HtmlUrl;
+    public string CommentBody => this.Payload.Comment.Body;
 }

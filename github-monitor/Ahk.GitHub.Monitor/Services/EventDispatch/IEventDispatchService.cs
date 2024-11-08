@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.EventDispatch;
+
+public interface IEventDispatchService
 {
-    public interface IEventDispatchService
-    {
-        Task Process(string githubEventName, string requestBody, WebhookResult webhookResult, ILogger logger);
-    }
+    Task Process(string githubEventName, string requestBody, WebhookResult webhookResult, ILogger logger);
 }

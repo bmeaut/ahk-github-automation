@@ -1,0 +1,316 @@
+﻿@page "/wizard"
+@layout AuthenticatedLayout
+@inject CrudSnackbarService SnackbarService
+@inject IDialogService DialogService
+@inject SubjectClient SubjectClient
+@inject SubjectService SubjectService
+@inject LanguageClient LanguageClient
+@inject SemesterClient SemesterClient
+@inject CourseClient CourseClient
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = Policy.RequireTeacher)]
+
+@using GradeManagement.Client.Components.NewDialogs
+@using MudExtensions
+@using MudBlazor.Extensions
+@using MudExtensions.Utilities
+
+<style>
+    .selected-item {
+        background-color: #e0e0e0; /* Light grey background */
+        font-weight: bold !important;
+    }
+</style>
+
+<MudCard Class="d-flex align-center justify-center mt-5 mx-2">
+    <MudCardContent Style="width: 100%">
+        <MudStepperExtended @ref="_stepper" Class="mud-width-full" Variant="_variant"
+                            ShowPreviousButton="_showPreviousButton" ShowNextButton="_showNextButton"
+                            ShowStepResultIndicator="_showStepResultIndicator" HeaderBadgeView="HeaderBadgeView.All"
+                            HeaderTextView="HeaderTextView.All" HeaderSize="_headerSize"
+                            StepperActionsJustify="StepperActionsJustify.SpaceBetween"
+                            ActiveStepChanged="ActiveStepChanged">
+            @* <StaticContent> *@
+            @*     <MudStack Row="true" AlignItems="AlignItems.Center"> *@
+            @*         <MudAvatar Color="_color">ST</MudAvatar> *@
+            @*         <MudText>This is a static content which shows with each step.</MudText> *@
+            @*     </MudStack> *@
+            @* </StaticContent> *@
+            <ChildContent>
+                <MudStepExtended Icon="@Icons.Material.Filled.Book" Title="New Subject">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewSubjectDialog">
+                                Add
+                                New Subject
+                            </MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.Language" Title="New Language" Optional="true">
+                    <ChildContent>
+                        <LoadingComponent @ref="loadingLangRef" LongTask="@LoadingLanguages">
+                            <div class="d-flex flex-column align-center justify-center" style="width: 100%;">
+                                <MudPaper Class="p-4" Elevation="4" Style="width: 300px;">
+                                    <MudList T="Language">
+                                        @foreach (var language in _languages)
+                                        {
+                                            <MudListItem OnClick="@(() => SelectLanguage(language))"
+                                                         Class="@GetLanguageClass(language)">
+                                                <MudGrid>
+                                                    <MudItem xs="10">
+                                                        @language.Name
+                                                    </MudItem>
+                                                    <MudItem xs="2" Class="d-flex align-center justify-center">
+                                                        @if (IsSelectedLanguage(language))
+                                                        {
+                                                            <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Primary"/>
+                                                        }
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                </MudPaper>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           OnClick="ShowNewLanguageDialog" Class="mt-4">
+                                    Add New Language
+                                </MudButton>
+                            </div>
+                        </LoadingComponent>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.CalendarToday" Title="New Semester" Optional="true">
+                    <ChildContent>
+                        <LoadingComponent @ref="loadingSemRef" LongTask="@LoadingSemesters">
+                            <div class="d-flex flex-column align-center justify-center" style="width: 100%;">
+                                <MudPaper Class="p-4" Elevation="4" Style="width: 300px;">
+                                    <MudList T="Semester">
+                                        @foreach (var semester in _semesters)
+                                        {
+                                            <MudListItem OnClick="@(() => SelectSemester(semester))"
+                                                         Class="@GetSemesterClass(semester)">
+                                                <MudGrid>
+                                                    <MudItem xs="10">
+                                                        @semester.Name
+                                                    </MudItem>
+                                                    <MudItem xs="2" Class="d-flex align-center justify-center">
+                                                        @if (IsSelectedSemester(semester))
+                                                        {
+                                                            <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Primary"/>
+                                                        }
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                </MudPaper>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           OnClick="ShowNewSemesterDialog" Class="mt-4">
+                                    Add New Semester
+                                </MudButton>
+                            </div>
+                        </LoadingComponent>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.School" Title="New Course" Optional="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">
+                                Add
+                                New Course
+                            </MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+
+                <MudStepExtended Icon="@Icons.Material.Filled.Assessment" Title="Result Step" IsResultStep="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudText>For additional steps view Course.</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NavigateToCourse">
+                                Course
+                                view
+                            </MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+            </ChildContent>
+        </MudStepperExtended>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    MudStepperExtended _stepper;
+    Variant _variant = Variant.Filled;
+    bool _showPreviousButton = true;
+    bool _showNextButton = true;
+    bool _showStepResultIndicator = true;
+    bool _addResultStep = true;
+    Color _color = Color.Primary;
+    Size _headerSize = Size.Medium;
+
+    Course? _course;
+    List<Language> _languages = new List<Language>();
+    List<Semester> _semesters = new List<Semester>();
+
+    Language? _selectedLanguage;
+    Semester? _selectedSemester;
+
+    LoadingComponent loadingLangRef;
+    LoadingComponent loadingSemRef;
+
+    private async Task ActiveStepChanged(int step)
+    {
+        switch (step)
+        {
+            case 1:
+                await loadingLangRef.StartLoading();
+                break;
+            case 2:
+                await loadingSemRef.StartLoading();
+                break;
+        }
+
+        while (step > 0)
+        {
+            step--;
+            _stepper.Steps[step].Status = _stepper.Steps[step].Status == StepStatus.Completed ? StepStatus.Completed : StepStatus.Skipped;
+        }
+    }
+
+    private bool IsSelectedLanguage(Language language)
+    {
+        return language.Id == _selectedLanguage?.Id;
+    }
+
+    private string GetLanguageClass(Language language)
+    {
+        return IsSelectedLanguage(language) ? "selected-item" : string.Empty;
+    }
+
+    private async Task LoadingLanguages()
+    {
+        _languages = (await LanguageClient.GetAllAsync()).ToList();
+    }
+
+    private void SelectLanguage(Language language)
+    {
+        _selectedLanguage = language;
+        _stepper.CompleteStep(1);
+    }
+
+    private bool IsSelectedSemester(Semester semester)
+    {
+        return semester.Id == _selectedSemester?.Id;
+    }
+
+    private string GetSemesterClass(Semester semester)
+    {
+        return IsSelectedSemester(semester) ? "selected-item" : string.Empty;
+    }
+
+    private async Task LoadingSemesters()
+    {
+        _semesters = (await SemesterClient.GetAllAsync()).ToList();
+    }
+
+    private void SelectSemester(Semester semester)
+    {
+        _selectedSemester = semester;
+        _stepper.CompleteStep(2);
+    }
+
+    private async Task ShowNewSubjectDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewSubjectDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+
+            SubjectResponse ret = await SubjectClient.CreateAsync(result.Data as SubjectRequest);
+            SnackbarService.ShowAddSuccess();
+            SubjectService.CurrentSubject = ret;
+            await _stepper.CompleteStep(0);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Subject creation failed.");
+        }
+    }
+
+    private async Task ShowNewLanguageDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewLanguageDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+            Language ret = await LanguageClient.CreateAsync(result.Data as Language);
+            SnackbarService.ShowAddSuccess();
+            _selectedLanguage = ret;
+            await _stepper.CompleteStep(1);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Language creation failed.");
+        }
+    }
+
+    private async Task ShowNewSemesterDialog()
+    {
+        var dialog = await DialogService.ShowAsync<NewSemesterDialog>("Hello");
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+            Semester ret = await SemesterClient.CreateAsync(result.Data as Semester);
+            SnackbarService.ShowAddSuccess();
+            _selectedSemester = ret;
+            await _stepper.CompleteStep(2);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Semester creation failed.");
+        }
+    }
+
+    private async Task ShowNewCourseDialog()
+    {
+        //Fill the Value parameter with a Course object
+        var param = new Course()
+        {
+            Language = _selectedLanguage,
+            Semester = _selectedSemester
+        };
+        var dialog = await DialogService.ShowAsync<NewCourseDialog>("Hello", new DialogParameters { ["Value"] = param });
+        var result = await dialog.Result ?? DialogResult.Cancel();
+        if (!result.Canceled && result.Data != null)
+        {
+            var newCourse = result.Data as Course;
+            newCourse.SubjectId = SubjectService.CurrentSubject.Id;
+            _course = await CourseClient.CreateAsync(newCourse);
+            await _stepper.CompleteStep(3);
+        }
+        else if (!result.Canceled)
+        {
+            SnackbarService.ShowAddError("Course creation failed.");
+        }
+    }
+
+    private void NavigateToCourse()
+    {
+        if (_course != null)
+        {
+            NavigationManager.NavigateTo($"/courses/{_course.Id}");
+        }
+        else
+        {
+            SnackbarService.ShowError("Course not created.");
+        }
+    }
+
+    private async void StatusChanged(StepStatus status)
+    {
+        SnackbarService.ShowMessage($"First step {status.ToDescriptionString()}.", Severity.Info);
+    }
+
+}

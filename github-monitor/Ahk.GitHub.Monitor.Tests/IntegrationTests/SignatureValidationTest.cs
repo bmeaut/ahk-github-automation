@@ -1,39 +1,46 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace Ahk.GitHub.Monitor.Tests.IntegrationTests
+namespace Ahk.GitHub.Monitor.Tests.IntegrationTests;
+
+[TestClass]
+public class SignatureValidationTest
 {
-    [TestClass]
-    public class SignatureValidationTest
+    [TestMethod]
+    public async Task InvalidGitHubSignatureHeaderReturnError()
     {
-        [TestMethod]
-        public async Task InvalidGitHubSignatureHeaderReturnError()
-        {
-            var eds = new Mock<Services.IEventDispatchService>();
-            var func = FunctionBuilder.Create(eds.Object);
+        var eds = new Mock<IEventDispatchService>();
+        GitHubMonitorFunction func = FunctionBuilder.Create(eds.Object);
 
-            var wrongSignature = new SampleCallbackData(SampleData.BranchCreate.Body, "wrongsignature", SampleData.BranchCreate.EventName);
-            var resp = await func.InvokeWithContentAndGetResponseAs<ObjectResult>(wrongSignature);
+        var wrongSignature = new SampleCallbackData(SampleData.BranchCreate.Body, "wrongsignature",
+            SampleData.BranchCreate.EventName);
+        ObjectResult resp = await func.InvokeWithContentAndGetResponseAs<ObjectResult>(wrongSignature);
 
-            Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
-            eds.Verify(s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance), Times.Never());
-        }
+        Assert.AreEqual(StatusCodes.Status400BadRequest, resp.StatusCode);
+        eds.Verify(
+            s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance),
+            Times.Never());
+    }
 
-        [TestMethod]
-        public async Task ValidGitHubSignatureAcceptedAndDispatched()
-        {
-            var eds = new Mock<Services.IEventDispatchService>();
-            eds.Setup(s => s.Process(SampleData.BranchCreate.EventName, It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance)).Returns(Task.CompletedTask);
+    [TestMethod]
+    public async Task ValidGitHubSignatureAcceptedAndDispatched()
+    {
+        var eds = new Mock<IEventDispatchService>();
+        eds.Setup(s => s.Process(SampleData.BranchCreate.EventName, It.IsAny<string>(), It.IsAny<WebhookResult>(),
+            NullLogger.Instance)).Returns(Task.CompletedTask);
 
-            var ctx = FunctionBuilder.Create(eds.Object);
-            var resp = await ctx.InvokeWithContentAndGetResponseAs<OkObjectResult>(SampleData.BranchCreate);
+        GitHubMonitorFunction ctx = FunctionBuilder.Create(eds.Object);
+        OkObjectResult resp = await ctx.InvokeWithContentAndGetResponseAs<OkObjectResult>(SampleData.BranchCreate);
 
-            Assert.AreEqual(StatusCodes.Status200OK, resp.StatusCode);
-            eds.Verify(s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>(), NullLogger.Instance), Times.Once());
-        }
+        Assert.AreEqual(StatusCodes.Status200OK, resp.StatusCode);
+        eds.Verify(
+            s => s.Process(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<WebhookResult>(),
+                It.IsAny<ILogger<GitHubMonitorFunction>>()), Times.Once()); // Does not seem to work correctly
     }
 }

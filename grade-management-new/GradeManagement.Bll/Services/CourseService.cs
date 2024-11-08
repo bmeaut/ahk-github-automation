@@ -8,38 +8,31 @@ using GradeManagement.Bll.Services.BaseServices;
 using GradeManagement.Data;
 using GradeManagement.Shared.Dtos;
 using GradeManagement.Shared.Dtos.Response;
+using GradeManagement.Shared.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagement.Bll.Services;
 
-public class CourseService : ICrudServiceBase<Course>
+public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
+    : ICrudServiceBase<Course>
 {
-    private readonly GradeManagementDbContext _gradeManagementDbContext;
-    private readonly IMapper _mapper;
-
-    public CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    {
-        _gradeManagementDbContext = gradeManagementDbContext;
-        _mapper = mapper;
-    }
-
     public async Task<IEnumerable<Course>> GetAllAsync()
     {
-        return await _gradeManagementDbContext.Course
+        return await gradeManagementDbContext.Course
             .Include(c => c.Semester)
             .Include(c => c.Language)
-            .ProjectTo<Course>(_mapper.ConfigurationProvider)
+            .ProjectTo<Course>(mapper.ConfigurationProvider)
             .OrderBy(c => c.Id)
             .ToListAsync();
     }
 
     public async Task<Course> GetByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.Course
+        return await gradeManagementDbContext.Course
             .Include(c => c.Semester)
             .Include(c => c.Language)
-            .ProjectTo<Course>(_mapper.ConfigurationProvider)
+            .ProjectTo<Course>(mapper.ConfigurationProvider)
             .SingleEntityAsync(c => c.Id == id, id);
     }
 
@@ -51,7 +44,7 @@ public class CourseService : ICrudServiceBase<Course>
                 "The Id from the query and the Id of the DTO do not match!");
         }
 
-        var courseEntity = await _gradeManagementDbContext.Course
+        var courseEntity = await gradeManagementDbContext.Course
             .SingleEntityAsync(c => c.Id == id, id);
         courseEntity.Name = requestDto.Name;
         courseEntity.MoodleCourseId = requestDto.MoodleCourseId;
@@ -59,13 +52,18 @@ public class CourseService : ICrudServiceBase<Course>
         courseEntity.SemesterId = requestDto.Semester.Id;
         courseEntity.LanguageId = requestDto.Language.Id;
 
-        await _gradeManagementDbContext.SaveChangesAsync();
+        await gradeManagementDbContext.SaveChangesAsync();
 
         return await GetByIdAsync(courseEntity.Id);
     }
 
     public async Task<Course> CreateAsync(Course requestDto)
     {
+        if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
+        {
+            throw new UnauthorizedException("Current subject does not match the subject of the course!");
+        }
+
         var courseEntityToBeCreated = new Data.Models.Course
         {
             Id = requestDto.Id,
@@ -73,33 +71,34 @@ public class CourseService : ICrudServiceBase<Course>
             MoodleCourseId = requestDto.MoodleCourseId,
             SubjectId = requestDto.SubjectId,
             SemesterId = requestDto.Semester.Id,
-            LanguageId = requestDto.Language.Id
+            LanguageId = requestDto.Language.Id,
         };
-        _gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
-        await _gradeManagementDbContext.SaveChangesAsync();
+        gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
+        await gradeManagementDbContext.SaveChangesAsync();
         return await GetByIdAsync(courseEntityToBeCreated.Id);
     }
 
     public async Task DeleteAsync(long id)
     {
-        var courseEntity = await _gradeManagementDbContext.Course.SingleEntityAsync(c => c.Id == id, id);
-        _gradeManagementDbContext.Course.Remove(courseEntity);
-        await _gradeManagementDbContext.SaveChangesAsync();
+        var courseEntity = await gradeManagementDbContext.Course.SingleEntityAsync(c => c.Id == id, id);
+        gradeManagementDbContext.Course.Remove(courseEntity);
+        await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Exercise>> GetAllExercisesByIdAsync(long id)
+    public async Task<IEnumerable<ExerciseResponse>> GetAllExercisesByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.Exercise
+        var exercises = await gradeManagementDbContext.Exercise
             .Where(e => e.CourseId == id)
-            .ProjectTo<Exercise>(_mapper.ConfigurationProvider)
+            .Include(e => e.ScoreTypeExercises).ThenInclude(ste => ste.ScoreType)
             .ToListAsync();
+        return mapper.Map<List<ExerciseResponse>>(exercises);
     }
 
-    public async Task<IEnumerable<Group>> GetAllGroupsByIdAsync(long id)
+    public async Task<IEnumerable<GroupResponse>> GetAllGroupsByIdAsync(long id)
     {
-        return await _gradeManagementDbContext.Group
+        return await gradeManagementDbContext.Group
             .Where(g => g.CourseId == id)
-            .ProjectTo<Group>(_mapper.ConfigurationProvider)
+            .ProjectTo<GroupResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 }

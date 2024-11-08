@@ -1,6 +1,8 @@
-﻿namespace GradeManagement.Data.Models;
+﻿using GradeManagement.Data.Models.Interfaces;
 
-public class Course : ISoftDelete
+namespace GradeManagement.Data.Models;
+
+public class Course : ISoftDelete, ITenant
 {
     public long Id { get; set; }
     public string Name { get; set; }

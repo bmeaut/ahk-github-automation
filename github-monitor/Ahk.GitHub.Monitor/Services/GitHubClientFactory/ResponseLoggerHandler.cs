@@ -3,26 +3,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Ahk.GitHub.Monitor.Services
+namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory;
+
+internal class ResponseLoggerHandler(HttpMessageHandler innerHandler, ILogger logger)
+    : DelegatingHandler(innerHandler)
 {
-    internal class ResponseLoggerHandler : DelegatingHandler
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        CancellationToken cancellationToken)
     {
-        private readonly ILogger logger;
+        HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
 
-        public ResponseLoggerHandler(HttpMessageHandler innerHandler, ILogger logger)
-            : base(innerHandler)
+        if (!response.IsSuccessStatusCode)
         {
-            this.logger = logger;
+            logger.LogWarning(
+                $"Request {request.Method} request to {request.RequestUri} responded with {response.StatusCode}");
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            var response = await base.SendAsync(request, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-                logger.LogWarning($"Request {request.Method} request to {request.RequestUri} responded with {response.StatusCode}");
-
-            return response;
-        }
+        return response;
     }
 }

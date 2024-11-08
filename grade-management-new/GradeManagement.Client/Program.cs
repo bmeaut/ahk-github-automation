@@ -1,7 +1,6 @@
 using GradeManagement.Client.Network;
+using GradeManagement.Client.Policies;
 using GradeManagement.Client.Services;
-using GradeManagement.Shared.Authorization.Handlers;
-using GradeManagement.Shared.Authorization.Policies;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -10,6 +9,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 using MudBlazor.Services;
 
+using MudExtensions.Services;
+
 using AuthorizationMessageHandler = GradeManagement.Client.Network.AuthorizationMessageHandler;
 
 namespace GradeManagement.Client
@@ -17,6 +18,7 @@ namespace GradeManagement.Client
     public class Program
     {
         public const string ServerApi = "ServerAPI";
+        public const string SubjectApi = "SubjectAPI";
 
         public static async Task Main(string[] args)
         {
@@ -36,12 +38,11 @@ namespace GradeManagement.Client
                     .Add("api://01834b53-87a0-4236-85d3-a999ecec0115/access_backend");
                 //Add scope for email
             });
-            builder.Services.AddAuthorizationCore(options =>
-                options.AddPolicy(TeacherRequirement.PolicyName,
-                    policy => policy.Requirements.Add(new TeacherRequirement())));
-            builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
+            // builder.Services.AddAuthorizationCore(options =>
+            //     options.AddPolicy(TeacherRequirement.PolicyName,
+            //         policy => policy.Requirements.Add(new TeacherRequirement())));
+            // builder.Services.AddSingleton<IAuthorizationHandler, TeacherRequirementHandler>();
 
-            builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<CrudSnackbarService>();
 
             builder.Services.AddTransient(sp =>
@@ -49,15 +50,23 @@ namespace GradeManagement.Client
             builder.Services.AddTransient(sp =>
                 new ExceptionMessageHandler(sp.GetRequiredService<CrudSnackbarService>()));
 
+            builder.Services.AddSingleton<SelectedSubjectService>();
+            builder.Services.AddSingleton<CurrentUserService>();
+
+            builder.Services.AddTransient(sp =>
+                new SubjectHeaderHandler(sp.GetRequiredService<SelectedSubjectService>()));
+
             // Registering HttpClient that uses our custom handler
             builder.Services.AddHttpClient(ServerApi,
                     client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
                 .AddHttpMessageHandler<ExceptionMessageHandler>()
-                .AddHttpMessageHandler<AuthorizationMessageHandler>();
+                .AddHttpMessageHandler<AuthorizationMessageHandler>()
+                .AddHttpMessageHandler<SubjectHeaderHandler>();
 
 
             builder.Services.AddScoped<SubjectClient>(sp =>
                 new SubjectClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
+            builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<CourseClient>(sp =>
                 new CourseClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
             builder.Services.AddScoped<SemesterClient>(sp =>
@@ -77,8 +86,20 @@ namespace GradeManagement.Client
             builder.Services.AddScoped<DashboardClient>(sp =>
                 new DashboardClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
 
+            builder.Services.AddAuthorizationCore(options =>
+            {
+                options.AddPolicy(Policy.RequireAdmin, policy =>
+                    policy.Requirements.Add(new UserTypeRequirement([UserType.Admin])));
+                options.AddPolicy(Policy.RequireTeacher, policy =>
+                    policy.Requirements.Add(new UserTypeRequirement([UserType.Teacher, UserType.Admin])));
+            });
+
+            builder.Services.AddScoped<IAuthorizationHandler, UserTypeAuthorizationHandler>();
+
 
             builder.Services.AddMudServices();
+            builder.Services.AddMudExtensions();
+
 
             await builder.Build().RunAsync();
         }
