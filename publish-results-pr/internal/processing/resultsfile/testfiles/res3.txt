@@ -1,3 +1,0 @@
-﻿###ahk#ex1@t1#2.5
-###ahk#ex1@t2#3#comment
-###ahk#invalid
