@@ -16,12 +16,12 @@ namespace Ahk.GradeManagement.ListGrades
         {
             var items = await this.repo.ListConfirmedWithRepositoryPrefix(Normalize.RepoName(repoPrefix));
             var finalResults = new List<FinalStudentGrade>();
-            foreach (var student in items.GroupBy(r => Normalize.Neptun(r.Neptun)))
+            foreach (var student in items.GroupBy(r => new { Neptun = Normalize.Neptun(r.Neptun), r.GitHubRepoName }))
             {
                 var lastResult = student.OrderByDescending(s => s.Date).First();
                 finalResults.Add(new FinalStudentGrade(
-                    neptun: student.Key,
-                    repo: lastResult.GitHubRepoName,
+                    neptun: student.Key.Neptun,
+                    repo: lastResult.Key.GitHubRepoName,
                     prUrl: lastResult.GitHubPrUrl,
                     points: lastResult.Points == null ? new Dictionary<string, double>() : lastResult.Points.ToDictionary(keySelector: p => p.Name, elementSelector: p => p.Point)));
             }
