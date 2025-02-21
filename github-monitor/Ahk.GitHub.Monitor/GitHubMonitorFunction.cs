@@ -2,45 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Config;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Helpers;
-using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor;
 
 public class GitHubMonitorFunction(
     IEventDispatchService eventDispatchService,
-    IOptions<GitHubMonitorConfig> config,
-    ILogger<GitHubMonitorFunction> logger)
+    ILogger<GitHubMonitorFunction> logger,
+    IConfiguration configuration)
 {
     [Function("github-webhook")]
     public async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
         HttpRequestData request)
     {
-        if (string.IsNullOrEmpty(config.Value.GitHubWebhookSecret))
-        {
-            return new ObjectResult(new { error = "GitHub secret not configured" })
-            {
-                StatusCode = StatusCodes.Status500InternalServerError
-            };
-        }
-
-        if (string.IsNullOrEmpty(config.Value.GitHubAppId) ||
-            string.IsNullOrEmpty(config.Value.GitHubAppPrivateKey))
-        {
-            return new ObjectResult(new { error = "GitHub App ID/Token not configured" })
-            {
-                StatusCode = StatusCodes.Status500InternalServerError
-            };
-        }
-
         request.Headers.TryGetValues("X-GitHub-Event", out IEnumerable<string> eventNameValues);
         var eventName = eventNameValues?.FirstOrDefault();
         request.Headers.TryGetValues("X-GitHub-Delivery", out IEnumerable<string> deliveryIdValues);
@@ -63,8 +48,36 @@ public class GitHubMonitorFunction(
         }
 
         var requestBody = await request.ReadAsStringAsync();
+        if (!PayloadParser<ActivityPayload>.TryParsePayload(requestBody, out ActivityPayload parsedRequestBody,
+                out EventHandlerResult errorResult, logger))
+        {
+            return new BadRequestObjectResult(new { error = errorResult.Result });
+        }
+
+        var orgName = parsedRequestBody.Repository.Owner.Login;
+
+        var orgConfig = new GitHubMonitorConfig();
+        configuration.GetSection(GitHubMonitorConfig.GetSectionName(orgName)).Bind(orgConfig);
+
+        if (string.IsNullOrEmpty(orgConfig.GitHubWebhookSecret))
+        {
+            return new ObjectResult(new { error = "GitHub secret not configured" })
+            {
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+        }
+
+        if (string.IsNullOrEmpty(orgConfig.GitHubAppId) ||
+            string.IsNullOrEmpty(orgConfig.GitHubAppPrivateKey))
+        {
+            return new ObjectResult(new { error = "GitHub App ID/Token not configured" })
+            {
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+        }
+
         if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature,
-                config.Value.GitHubWebhookSecret))
+                orgConfig.GitHubWebhookSecret))
         {
             return new BadRequestObjectResult(new { error = "Payload signature not valid" });
         }

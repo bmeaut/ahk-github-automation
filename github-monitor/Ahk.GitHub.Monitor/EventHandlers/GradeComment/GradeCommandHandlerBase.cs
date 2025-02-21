@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.EventHandlers.GradeComment.Payload;
-using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
 using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.GradeStore;

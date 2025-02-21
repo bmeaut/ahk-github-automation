@@ -6,5 +6,5 @@ namespace Ahk.GitHub.Monitor.Services;
 
 public interface IGitHubClientFactory
 {
-    Task<IGitHubClient> CreateGitHubClient(long installationId, ILogger logger);
+    Task<IGitHubClient> CreateGitHubClient(string gitHubOrg, long installationId, ILogger logger);
 }

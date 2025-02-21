@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace Ahk.GitHub.Monitor.EventHandlers;
+namespace Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 
 internal static class ConfigYamlParser
 {

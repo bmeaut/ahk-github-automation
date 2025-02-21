@@ -1,13 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
+namespace Ahk.GitHub.Monitor.EventHandlers;
 
 public class RepositoryCreateStatusTrackingHandler(
     IGitHubClientFactory gitHubClientFactory,
@@ -20,7 +20,6 @@ public class RepositoryCreateStatusTrackingHandler(
 
     protected override async Task<EventHandlerResult> executeCore(CreateEventPayload webhookPayload) =>
         await this.processRepositoryCreateEvent(webhookPayload);
-
 
     private async Task<EventHandlerResult> processRepositoryCreateEvent(CreateEventPayload webhookPayload)
     {

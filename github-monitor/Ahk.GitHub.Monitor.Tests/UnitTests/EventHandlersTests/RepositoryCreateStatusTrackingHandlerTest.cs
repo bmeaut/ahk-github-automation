@@ -1,11 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
-using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests.Helpers;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 

@@ -1,9 +1,14 @@
+using System;
+using System.Net;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
+using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests.Helpers;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Octokit;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests.EventHandlersTests;
 
@@ -17,7 +22,7 @@ public class RepositoryEventBaseTest
             MemoryCacheMockFactory.Instance);
         EventHandlerResult result = await eh.Execute("invalid payload");
 
-        Assert.IsTrue(result.Result.Contains("payload error", System.StringComparison.InvariantCultureIgnoreCase));
+        Assert.IsTrue(result.Result.Contains("payload error", StringComparison.InvariantCultureIgnoreCase));
     }
 
     [TestMethod]
@@ -27,7 +32,7 @@ public class RepositoryEventBaseTest
             MemoryCacheMockFactory.Instance);
         EventHandlerResult result = await eh.Execute(string.Empty);
 
-        Assert.IsTrue(result.Result.Contains("payload error", System.StringComparison.InvariantCultureIgnoreCase));
+        Assert.IsTrue(result.Result.Contains("payload error", StringComparison.InvariantCultureIgnoreCase));
     }
 
     [TestMethod]
@@ -37,7 +42,7 @@ public class RepositoryEventBaseTest
             MemoryCacheMockFactory.Instance);
         EventHandlerResult result = await eh.Execute("{a:1}");
 
-        Assert.IsTrue(result.Result.Contains("payload error", System.StringComparison.InvariantCultureIgnoreCase));
+        Assert.IsTrue(result.Result.Contains("payload error", StringComparison.InvariantCultureIgnoreCase));
     }
 
     [TestMethod]
@@ -45,13 +50,13 @@ public class RepositoryEventBaseTest
     {
         GitHubClientMockFactory gitHubMock = GitHubClientMockFactory.CreateCustom()
             .WithAhkMonitorConfigYamlContent(c =>
-                c.ThrowsAsync(new Octokit.NotFoundException(string.Empty, System.Net.HttpStatusCode.NotFound)));
+                c.ThrowsAsync(new NotFoundException(string.Empty, HttpStatusCode.NotFound)));
 
         var eh = new TestHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
         EventHandlerResult result = await eh.Execute(SampleData.BranchCreate.Body);
 
         Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml or disabled",
-            System.StringComparison.InvariantCultureIgnoreCase));
+            StringComparison.InvariantCultureIgnoreCase));
         gitHubMock.GitHubClientMock.Verify(c =>
                 c.Repository.Content.GetAllContentsByRef(It.IsAny<long>(), ".github/ahk-monitor.yml",
                     It.IsAny<string>()),
@@ -62,13 +67,13 @@ public class RepositoryEventBaseTest
     public async Task NoAhkMonitorConfigYaml2()
     {
         GitHubClientMockFactory gitHubMock = GitHubClientMockFactory.CreateCustom()
-            .WithAhkMonitorConfigYamlContent(c => c.ReturnsAsync(new Octokit.RepositoryContent[0]));
+            .WithAhkMonitorConfigYamlContent(c => c.ReturnsAsync(new RepositoryContent[0]));
 
         var eh = new TestHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
         EventHandlerResult result = await eh.Execute(SampleData.BranchCreate.Body);
 
         Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml or disabled",
-            System.StringComparison.InvariantCultureIgnoreCase));
+            StringComparison.InvariantCultureIgnoreCase));
         gitHubMock.GitHubClientMock.Verify(c =>
                 c.Repository.Content.GetAllContentsByRef(It.IsAny<long>(), ".github/ahk-monitor.yml",
                     It.IsAny<string>()),
@@ -86,7 +91,7 @@ public class RepositoryEventBaseTest
         EventHandlerResult result = await eh.Execute(SampleData.BranchCreate.Body);
 
         Assert.IsTrue(result.Result.Contains("no ahk-monitor.yml or disabled",
-            System.StringComparison.InvariantCultureIgnoreCase));
+            StringComparison.InvariantCultureIgnoreCase));
         gitHubMock.GitHubClientMock.Verify(c =>
                 c.Repository.Content.GetAllContentsByRef(It.IsAny<long>(), ".github/ahk-monitor.yml",
                     It.IsAny<string>()),
@@ -141,22 +146,22 @@ public class RepositoryEventBaseTest
         var eh = new TestHandler(gitHubMock.CreateFactory(), MemoryCacheMockFactory.Instance);
         EventHandlerResult result = await eh.Execute(SampleData.BranchCreate.Body);
 
-        Assert.IsTrue(result.Result.Contains("TestHandler ok", System.StringComparison.InvariantCultureIgnoreCase));
+        Assert.IsTrue(result.Result.Contains("TestHandler ok", StringComparison.InvariantCultureIgnoreCase));
         gitHubMock.GitHubClientMock.Verify(c =>
                 c.Repository.Content.GetAllContentsByRef(It.IsAny<long>(), ".github/ahk-monitor.yml",
                     It.IsAny<string>()),
             Times.Once());
     }
 
-    private class TestHandler : RepositoryEventBase<Octokit.ActivityPayload>
+    private class TestHandler : RepositoryEventBase<ActivityPayload>
     {
-        public TestHandler(Services.IGitHubClientFactory gitHubClientFactory,
-            Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
+        public TestHandler(IGitHubClientFactory gitHubClientFactory,
+            IMemoryCache cache)
             : base(gitHubClientFactory, cache, ServiceProviderMock.GetMockedObject())
         {
         }
 
-        protected override Task<EventHandlerResult> executeCore(Octokit.ActivityPayload webhookPayload) =>
+        protected override Task<EventHandlerResult> executeCore(ActivityPayload webhookPayload) =>
             Task.FromResult(EventHandlerResult.ActionPerformed("TestHandler ok"));
     }
 }

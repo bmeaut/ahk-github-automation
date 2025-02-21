@@ -49,7 +49,7 @@ internal class GitHubClientMockFactory
     public IGitHubClientFactory CreateFactory()
     {
         var factoryMock = new Mock<IGitHubClientFactory>();
-        factoryMock.Setup(f => f.CreateGitHubClient(It.IsAny<long>(), NullLogger<GitHubMonitorFunction>.Instance))
+        factoryMock.Setup(f => f.CreateGitHubClient(It.IsAny<string>(), It.IsAny<long>(), NullLogger<GitHubMonitorFunction>.Instance))
             .ReturnsAsync(this.GitHubClientMock.Object);
         return factoryMock.Object;
     }

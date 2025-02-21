@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Octokit;
@@ -28,8 +29,8 @@ public class BranchProtectionRuleHandler(
         return EventHandlerResult.ActionPerformed("branch protection rule applied");
     }
 
-    private static BranchProtectionSettingsUpdate getBranchProtectionSettingsUpdate(string branchName,
-        string repositoryDefaultBranch) =>
+    private static BranchProtectionSettingsUpdate getBranchProtectionSettingsUpdate(
+        string branchName, string repositoryDefaultBranch) =>
         // For default: prohibits the merge request into default to be merged
         // For other branches: disables force push
         new(

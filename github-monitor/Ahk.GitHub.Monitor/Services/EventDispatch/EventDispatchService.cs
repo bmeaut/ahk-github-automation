@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -57,7 +58,7 @@ internal class EventDispatchService : IEventDispatchService
         {
             var handler =
                 ActivatorUtilities.CreateInstance(
-                    serviceProvider, handlerType) as EventHandlers.IGitHubEventHandler;
+                    serviceProvider, handlerType) as IGitHubEventHandler;
             EventHandlerResult handlerResult = await handler.Execute(requestBody);
 
             logger.LogInformation($"{handlerType.Name} result: {handlerResult.Result}");

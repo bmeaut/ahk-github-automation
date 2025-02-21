@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -18,7 +20,8 @@ public class FunctionInvokeTest
     {
         var log = new Mock<ILogger<GitHubMonitorFunction>>();
         var eds = new Mock<IEventDispatchService>();
-        var func = new GitHubMonitorFunction(eds.Object, Options.Create(new GitHubMonitorConfig()), log.Object);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var func = new GitHubMonitorFunction(eds.Object, log.Object, mockConfiguration.Object);
 
         ObjectResult resp = await func.InvokeAndGetResponseAs<ObjectResult>(req => { });
 
