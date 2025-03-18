@@ -11,6 +11,7 @@
 @attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 @using GradeManagement.Client.Components.NewDialogs
+@using GradeManagement.Shared.Dtos.GitHubManifest
 @using MudExtensions
 @using MudBlazor.Extensions
 @using MudExtensions.Utilities
@@ -119,6 +120,16 @@
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowNewCourseDialog">
                                 Add
                                 New Course
+                            </MudButton>
+                        </div>
+                    </ChildContent>
+                </MudStepExtended>
+                <MudStepExtended Icon="@Icons.Material.Filled.Code" Title="GitHub App" Optional="true">
+                    <ChildContent>
+                        <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                            <MudText>You finished the subject setup. The last step is to connect it to a GitHub App in your organization.</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConnectGitHubApp">
+                                Connect GitHub App
                             </MudButton>
                         </div>
                     </ChildContent>
@@ -294,6 +305,15 @@
         {
             SnackbarService.ShowAddError("Course creation failed.");
         }
+    }
+
+    private async Task ConnectGitHubApp()
+    {
+        GitHubAppManifest gitHubAppManifest = new();
+        var url = $"https://github.com/organizations/{SubjectService.CurrentSubject.GitHubOrgName}/settings/apps/new";
+
+        using HttpClient client = new HttpClient();
+        HttpResponseMessage response = await client.PostAsJsonAsync(url, gitHubAppManifest);
     }
 
     private void NavigateToCourse()
