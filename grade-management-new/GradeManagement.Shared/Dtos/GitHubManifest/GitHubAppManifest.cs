@@ -15,7 +15,7 @@ public class GitHubAppManifest
     [JsonPropertyName("url")]
     public string Url { get; set; } = "https://github.com/bmeaut/ahk-github-automation";
     [JsonPropertyName("hook_attributes")]
-    public HookAttributes HookAttributes { get; set; }
+    public HookAttributes HookAttributes { get; set; } = new();
     [JsonPropertyName("redirect_url")]
     public string RedirectUrl { get; set; }
     [JsonPropertyName("callback_urls")]
