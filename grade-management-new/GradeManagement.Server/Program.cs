@@ -22,6 +22,7 @@ namespace GradeManagement.Server
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHttpClient();
 
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
 
