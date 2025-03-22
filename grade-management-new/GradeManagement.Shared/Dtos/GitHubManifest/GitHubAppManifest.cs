@@ -4,14 +4,20 @@ namespace GradeManagement.Shared.Dtos.GitHubManifest;
 
 public class GitHubAppManifest
 {
+    public GitHubAppManifest()
+    {
+        string appUrl = Environment.GetEnvironmentVariable("APP_URL");
+        RedirectUrl = $"{appUrl}api/github";
+    }
+
     [JsonPropertyName("name")]
     public string Name { get; set; } = "Ahk GitHub Monitor";
     [JsonPropertyName("url")]
     public string Url { get; set; } = "https://github.com/bmeaut/ahk-github-automation";
     [JsonPropertyName("hook_attributes")]
-    public HookAttributes HookAttributes { get; set; } = new HookAttributes();
+    public HookAttributes HookAttributes { get; set; }
     [JsonPropertyName("redirect_url")]
-    public string RedirectUrl { get; set; } = "https://app.mm-home.eu/api/github";
+    public string RedirectUrl { get; set; }
     [JsonPropertyName("callback_urls")]
     public List<string> CallbackUrls { get; set; } = new();
     /*[JsonPropertyName("setup_url")]

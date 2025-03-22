@@ -15,8 +15,9 @@ namespace GradeManagement.Server.Controllers;
 public class GitHubAppController(IHttpClientFactory httpClientFactory) : ControllerBase
 {
     [HttpGet]
-    public async Task CreateGitHubApp([FromQuery] string code)
+    public async Task<IActionResult> CreateGitHubApp([FromQuery] string code)
     {
+        string appUrl = Environment.GetEnvironmentVariable("APP_URL");
         string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
         var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
         var httpClient = httpClientFactory.CreateClient();
@@ -36,6 +37,8 @@ public class GitHubAppController(IHttpClientFactory httpClientFactory) : Control
         await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubAppPrivateKey", pem);
         await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubWebhookSecret",
             gitHubApp.WebhookSecret);
+
+        return Redirect(appUrl);
     }
 
     public static string RemovePemFencing(string pem)
