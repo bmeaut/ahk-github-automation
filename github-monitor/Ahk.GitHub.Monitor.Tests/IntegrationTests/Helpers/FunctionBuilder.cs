@@ -1,3 +1,4 @@
+using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,5 @@ internal static class FunctionBuilder
     };
 
     public static GitHubMonitorFunction Create(IEventDispatchService dispatchService = null)
-        => new(dispatchService ?? new Mock<IEventDispatchService>().Object,
-            Options.Create(AppConfig),
-            new Mock<ILogger<GitHubMonitorFunction>>().Object);
+        => new(dispatchService ?? new Mock<IEventDispatchService>().Object, Options.Create(AppConfig), new Mock<ILogger<GitHubMonitorFunction>>().Object);
 }

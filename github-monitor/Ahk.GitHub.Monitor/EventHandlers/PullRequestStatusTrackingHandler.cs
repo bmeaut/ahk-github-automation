@@ -1,13 +1,14 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
+namespace Ahk.GitHub.Monitor.EventHandlers;
 
 public class PullRequestStatusTrackingHandler(
     IGitHubClientFactory gitHubClientFactory,

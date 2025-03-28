@@ -1,4 +1,5 @@
 using Ahk.GitHub.Monitor.EventHandlers;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ahk.GitHub.Monitor.Tests.UnitTests;

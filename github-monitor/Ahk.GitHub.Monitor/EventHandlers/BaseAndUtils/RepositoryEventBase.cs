@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Octokit;
-using Octokit.Internal;
 
 namespace Ahk.GitHub.Monitor.EventHandlers;
 
@@ -23,12 +23,14 @@ public abstract class RepositoryEventBase<TPayload>(
 
     public async Task<EventHandlerResult> Execute(string requestBody)
     {
-        if (!this.tryParsePayload(requestBody, out TPayload webhookPayload, out EventHandlerResult errorResult))
+        if (!PayloadParser<TPayload>.TryParsePayload(requestBody, out TPayload webhookPayload,
+                out EventHandlerResult errorResult, Logger))
         {
             return errorResult;
         }
 
-        this.GitHubClient = await gitHubClientFactory.CreateGitHubClient(webhookPayload.Installation.Id, Logger);
+        this.GitHubClient = await gitHubClientFactory.CreateGitHubClient(
+            webhookPayload.Repository.Owner.Login, webhookPayload.Installation.Id, Logger);
 
         if (!await this.isEnabledForRepository(webhookPayload))
         {
@@ -40,45 +42,6 @@ public abstract class RepositoryEventBase<TPayload>(
     }
 
     protected abstract Task<EventHandlerResult> executeCore(TPayload webhookPayload);
-
-    protected bool tryParsePayload(string requestBody, out TPayload payload, out EventHandlerResult errorResult)
-    {
-        payload = null;
-        if (string.IsNullOrEmpty(requestBody))
-        {
-            errorResult = EventHandlerResult.PayloadError("request body was empty");
-            Logger.LogError("request body was empty");
-            return false;
-        }
-
-        try
-        {
-            payload = new SimpleJsonSerializer().Deserialize<TPayload>(requestBody);
-        }
-        catch (Exception ex)
-        {
-            errorResult = EventHandlerResult.PayloadError($"request body deserialization failed: {ex.Message}");
-            Logger.LogError(ex, "request body deserialization failed");
-            return false;
-        }
-
-        if (payload == null)
-        {
-            errorResult = EventHandlerResult.PayloadError("parsed payload was null or empty");
-            Logger.LogError("parsed payload was null or empty");
-            return false;
-        }
-
-        if (payload.Repository == null)
-        {
-            errorResult = EventHandlerResult.PayloadError("no repository information in webhook payload");
-            Logger.LogError("no repository information in webhook payload");
-            return false;
-        }
-
-        errorResult = null;
-        return true;
-    }
 
     protected Task<bool> isUserOrganizationMember(TPayload webhookPayload, string username)
     {

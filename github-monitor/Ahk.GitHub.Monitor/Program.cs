@@ -1,9 +1,9 @@
 #pragma warning disable CA1506
 using System;
 using Ahk.GitHub.Monitor;
+using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.EventHandlers.GradeComment;
-using Ahk.GitHub.Monitor.EventHandlers.StatusTracking;
 using Ahk.GitHub.Monitor.Services;
 using Ahk.GitHub.Monitor.Services.AzureQueues;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
@@ -11,6 +11,7 @@ using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
 using Ahk.GitHub.Monitor.Services.GradeStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 using Azure.Core;
+using Azure.Identity;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
@@ -20,18 +21,26 @@ using Microsoft.Extensions.Hosting;
 
 IHost host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
+    .ConfigureAppConfiguration((context, config) =>
+    {
+        var builtConfig = config.Build(); // Build early to get settings
+        var keyVaultUrl = builtConfig["KEY_VAULT_URI"]; // Ensure you have this in env variables
+
+        if (!string.IsNullOrEmpty(keyVaultUrl))
+        {
+            config.AddAzureKeyVault(
+                new Uri(keyVaultUrl),
+                new DefaultAzureCredential());
+        }
+    })
     .ConfigureServices((context, services) =>
     {
         // Application Insights setup
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        // Load configuration from environment variables with the prefix "AHK_"
-        IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddEnvironmentVariables("AHK_")
-            .Build();
-
-        services.AddLogging(); // Register logging services
+        // Register logging services
+        services.AddLogging();
 
         // Add memory cache with a specific expiration scan frequency
         services.AddMemoryCache(setup =>
@@ -40,17 +49,15 @@ IHost host = new HostBuilder()
         });
 
         // Register services
-        services
-            .AddSingleton<IGitHubClientFactory,
-                GitHubClientFactory>();
+        services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
 
         RegisterEventHandlers(services);
-        services
-            .AddSingleton<IEventDispatchService,
-                EventDispatchService>();
+        services.AddSingleton<IEventDispatchService, EventDispatchService>();
 
-        // Bind configuration
-        services.Configure<GitHubMonitorConfig>(configuration);
+        // Load configuration from environment variables with the prefix "AHK_"
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddEnvironmentVariables("AHK_")
+            .Build();
 
         // Add Azure Queue integration based on configuration
         AddAzureQueueIntegration(services, configuration);
@@ -77,9 +84,9 @@ void RegisterEventHandlers(IServiceCollection services)
 
 void AddAzureQueueIntegration(IServiceCollection services, IConfiguration configuration)
 {
-    GitHubMonitorConfig config = configuration.Get<GitHubMonitorConfig>();
+    QueueConfig queueConfig = configuration.Get<QueueConfig>();
 
-    if (!string.IsNullOrEmpty(config?.EventsQueueConnectionString))
+    if (!string.IsNullOrEmpty(queueConfig?.EventsQueueConnectionString))
     {
         services
             .AddSingleton<IGradeStore, GradeStoreAzureQueue>();
@@ -90,7 +97,7 @@ void AddAzureQueueIntegration(IServiceCollection services, IConfiguration config
         services.AddAzureClients(az =>
         {
             az.ConfigureDefaults(opts => opts.Diagnostics.IsLoggingEnabled = false);
-            az.AddQueueServiceClient(config.EventsQueueConnectionString)
+            az.AddQueueServiceClient(queueConfig.EventsQueueConnectionString)
                 .WithName(QueueClientName.Name)
                 .ConfigureOptions(options =>
                 {
