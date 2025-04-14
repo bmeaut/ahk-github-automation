@@ -4,8 +4,9 @@ namespace GradeManagement.Data.Utils;
 
 public static class DbSetExtensions
 {
-    public static IQueryable<T> IgnoreQueryFiltersButNotIsDeleted<T>(this DbSet<T> dbSet) where T : class
+    public static IQueryable<T> IgnoreQueryFiltersButNotIsDeleted<T>(this DbSet<T> dbSet)
+        where T : class, ISoftDelete
     {
-        return dbSet.IgnoreQueryFilters().Where(e => EF.Property<bool>(e, "IsDeleted") == false);
+        return dbSet.IgnoreQueryFilters().Where(e => !e.IsDeleted);
     }
 }

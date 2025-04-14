@@ -14,6 +14,18 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="AutSoft.Linq" Version="0.10.0" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
     <PackageReference Include="CsvHelper" Version="32.0.3" />
+    <PackageReference Include="jose-jwt" Version="5.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.AspNetCore.Http.Features">
+      <HintPath>..\..\..\..\.dotnet\shared\Microsoft.AspNetCore.App\8.0.11\Microsoft.AspNetCore.Http.Features.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Binder">
+      <HintPath>..\..\..\..\.dotnet\shared\Microsoft.AspNetCore.App\8.0.11\Microsoft.Extensions.Configuration.Binder.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

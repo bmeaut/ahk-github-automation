@@ -132,6 +132,18 @@ public class StudentService(GradeManagementDbContext gradeManagementDbContext, I
         return student;
     }
 
+    public async Task CreateStudentIfNotAvailableByNeptunAsync(string studentNeptun, string studentName, string studentMoodleId)
+    {
+        var student = await gradeManagementDbContext.Student
+            .SingleOrDefaultAsync(s => s.NeptunCode == studentNeptun);
+
+        if (student != null) return;
+
+        student = new Student { Name = studentName, NeptunCode = studentNeptun, MoodleId = studentMoodleId};
+        gradeManagementDbContext.Student.Add(student);
+        await gradeManagementDbContext.SaveChangesAsync();
+    }
+
     public async Task<Student> GetStudentModelByGitHubIdAsync(string studentGitHubId)
     {
         return await gradeManagementDbContext.Student.SingleEntityAsync(s => s.GithubId == studentGitHubId, 0);

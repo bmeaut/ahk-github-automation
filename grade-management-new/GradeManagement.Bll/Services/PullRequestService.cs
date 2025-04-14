@@ -68,11 +68,4 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
             .ToListAsync();
     }
 
-    public async Task<List<Data.Models.Score>> GetApprovedScoreModelsByIdAsync(long id)
-    {
-        return await gradeManagementDbContext.Score
-            .Where(s => s.PullRequestId == id && s.IsApproved)
-            .Include(s => s.ScoreType)
-            .ToListAsync();
-    }
 }

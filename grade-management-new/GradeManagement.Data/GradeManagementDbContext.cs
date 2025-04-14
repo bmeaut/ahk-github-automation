@@ -47,13 +47,15 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
 
         RegisterSoftDeleteQueryFilters(modelBuilder);
         RegisterTenantQueryFilters(modelBuilder);
+        RegisterTenantAndSoftDeleteQueryFilters(modelBuilder);
     }
 
     private void RegisterSoftDeleteQueryFilters(ModelBuilder modelBuilder)
     {
         var entityTypes = modelBuilder.Model.GetEntityTypes()
-            .Where(e => typeof(ISoftDelete)
-                .IsAssignableFrom(e.ClrType));
+            .Where(e =>
+                typeof(ISoftDelete).IsAssignableFrom(e.ClrType) &&
+                !typeof(ITenant).IsAssignableFrom(e.ClrType));
 
         foreach (var entityType in entityTypes)
         {
@@ -72,16 +74,10 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
     {
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (!typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
+            if (typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType) ||
+                !typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
 
             modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildTenantFilter(entityType.ClrType));
-
-            /*
-            var param = Expression.Parameter(entityType.ClrType, "e");
-            var property = Expression.Property(param, nameof(ITenant.SubjectId));
-            var filter = Expression.Lambda(Expression.Equal(property, Expression.Constant(SubjectIdValue)), param);
-
-            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);*/
         }
     }
 
@@ -94,5 +90,35 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
 
         var filterBody = Expression.Equal(tenantProperty, tenantIdProperty);
         return Expression.Lambda(filterBody, param);
+    }
+
+    private void RegisterTenantAndSoftDeleteQueryFilters(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (!typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType) ||
+                !typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
+
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildTenantAndSoftDeleteFilter(entityType.ClrType));
+        }
+    }
+
+    private LambdaExpression BuildTenantAndSoftDeleteFilter(Type type)
+    {
+        // e => e.SubjectId == SubjectIdValue && e.IsDeleted == false
+        var param = Expression.Parameter(type, "e");
+
+        // Tenant filter condition
+        var tenantProperty = Expression.Property(param, nameof(ITenant.SubjectId));
+        var tenantIdProperty = Expression.Property(Expression.Constant(this), nameof(SubjectIdValue));
+        var tenantFilterBody = Expression.Equal(tenantProperty, tenantIdProperty);
+
+        // Soft delete filter condition
+        var softDeleteProperty = Expression.Property(param, nameof(ISoftDelete.IsDeleted));
+        var notDeletedCondition = Expression.Equal(softDeleteProperty, Expression.Constant(false));
+
+        var combinedFilter = Expression.AndAlso(tenantFilterBody, notDeletedCondition);
+
+        return Expression.Lambda(combinedFilter, param);
     }
 }

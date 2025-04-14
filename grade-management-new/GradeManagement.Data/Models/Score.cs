@@ -14,7 +14,7 @@ public class Score : ISoftDelete, ITenant
     public long PullRequestId { get; set; }
     public User? Teacher { get; set; }
     public long? TeacherId { get; set; }
-    public List<ScoreTypeExercise> ScoreTypeExercises { get; set; }
+    public bool SyncedToMoodle { get; set; }
     public bool IsDeleted { get; set; }
     public long SubjectId { get; set; }
 }

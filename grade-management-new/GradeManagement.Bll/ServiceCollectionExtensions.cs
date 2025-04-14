@@ -1,4 +1,5 @@
 ﻿using GradeManagement.Bll.Services;
+using GradeManagement.Bll.Services.Moodle;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +25,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ExerciseService>();
         services.AddTransient<UserService>();
         services.AddTransient<SubjectTeacherService>();
+        services.AddTransient<MoodleIntegrationService>();
+        services.AddTransient<TokenGeneratorService>();
 
         return services;
     }

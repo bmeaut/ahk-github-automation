@@ -31,30 +31,35 @@ public class ExerciseService(
 {
     public async Task<IEnumerable<ExerciseResponse>> GetAllAsync()
     {
-        return await gradeManagementDbContext.Exercise
+        var exercises = await gradeManagementDbContext.Exercise
             .Include(e => e.ScoreTypeExercises).ThenInclude(ste => ste.ScoreType)
             .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
+        return exercises;
     }
 
     public async Task<ExerciseResponse> GetByIdAsync(long id)
     {
-        return await gradeManagementDbContext.Exercise
-            .Include(e => e.ScoreTypeExercises).ThenInclude(ste => ste.ScoreType)
-            .ProjectTo<ExerciseResponse>(mapper.ConfigurationProvider)
+        var exerciseEntity = await gradeManagementDbContext.Exercise
+            .Include(e => e.ScoreTypeExercises)
+            .ThenInclude(ste => ste.ScoreType)
             .SingleEntityAsync(e => e.Id == id, id);
+
+        return mapper.Map<ExerciseResponse>(exerciseEntity);
     }
 
     public async Task<ExerciseResponse> CreateAsync(ExerciseRequest requestDto)
     {
+        Exercise exerciseEntity;
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var exerciseEntity = new Exercise()
+            exerciseEntity = new Exercise()
             {
                 Name = requestDto.Name,
                 GithubPrefix = requestDto.GithubPrefix,
-                dueDate = requestDto.dueDate,
+                ClassroomUrl = requestDto.ClassroomUrl,
+                DueDate = requestDto.DueDate,
                 CourseId = requestDto.CourseId,
                 SubjectId = gradeManagementDbContext.SubjectIdValue
             };
@@ -63,16 +68,17 @@ public class ExerciseService(
             exerciseEntity = await gradeManagementDbContext.Exercise
                 .SingleEntityAsync(e => e.Id == exerciseEntity.Id, exerciseEntity.Id);
             exerciseEntity.ScoreTypeExercises =
-                await GetScoreTypeExercisesByTypeAndOrderAsync(requestDto.ScoreTypes, exerciseEntity.Id);
+                await GetScoreTypeExercisesByTypeAndOrdernAsync(requestDto.ScoreTypes, exerciseEntity.Id);
             await gradeManagementDbContext.SaveChangesAsync();
             await transaction.CommitAsync();
-            return await GetByIdAsync(exerciseEntity.Id);
         }
         catch
         {
             await transaction.RollbackAsync();
             throw;
         }
+
+        return await GetByIdAsync(exerciseEntity.Id);
     }
 
     public async Task<ExerciseResponse> UpdateAsync(long id, ExerciseRequest requestDto)
@@ -88,9 +94,10 @@ public class ExerciseService(
 
         exerciseEntity.Name = requestDto.Name;
         exerciseEntity.GithubPrefix = requestDto.GithubPrefix;
-        exerciseEntity.dueDate = requestDto.dueDate;
+        exerciseEntity.DueDate = requestDto.DueDate;
         exerciseEntity.CourseId = requestDto.CourseId;
-        exerciseEntity.ScoreTypeExercises = await GetScoreTypeExercisesByTypeAndOrderAsync(requestDto.ScoreTypes, id);
+        exerciseEntity.ScoreTypeExercises =
+            await GetScoreTypeExercisesByTypeAndOrderInTransactionAsync(requestDto.ScoreTypes, id);
 
         await gradeManagementDbContext.SaveChangesAsync();
         return await GetByIdAsync(exerciseEntity.Id);
@@ -121,22 +128,13 @@ public class ExerciseService(
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);
     }
 
-    private async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderAsync(
+    private async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderInTransactionAsync(
         Dictionary<int, string> scoreTypes, long exerciseId)
     {
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            foreach (var (order, type) in scoreTypes)
-            {
-                var scoreType = await scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(type);
-                gradeManagementDbContext.ScoreTypeExercise.Add(new ScoreTypeExercise
-                {
-                    ScoreTypeId = scoreType.Id, ExerciseId = exerciseId, Order = order
-                });
-            }
-
-            await gradeManagementDbContext.SaveChangesAsync();
+            await GetScoreTypeExercisesByTypeAndOrdernAsync(scoreTypes, exerciseId);
 
             await transaction.CommitAsync();
         }
@@ -146,74 +144,32 @@ public class ExerciseService(
             throw;
         }
 
-        return gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToList();
+        return await gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToListAsync();
+    }
+
+    private async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrdernAsync(
+        Dictionary<int, string> scoreTypes, long exerciseId)
+    {
+        foreach (var (order, type) in scoreTypes)
+        {
+            var scoreType = await scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(type);
+            gradeManagementDbContext.ScoreTypeExercise.Add(new ScoreTypeExercise
+            {
+                ScoreTypeId = scoreType.Id, ExerciseId = exerciseId, Order = order
+            });
+        }
+
+        await gradeManagementDbContext.SaveChangesAsync();
+
+        return await gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToListAsync();
     }
 
     public async Task<ScoreType> GetScoreTypeByOrderAndExerciseIdAsync(int order, long exerciseId)
     {
-        var scoreTypeExercise =  await gradeManagementDbContext.ScoreTypeExercise
+        var scoreTypeExercise = await gradeManagementDbContext.ScoreTypeExercise
             .Include(ste => ste.ScoreType)
             .SingleEntityAsync(ste => ste.ExerciseId == exerciseId && ste.Order == order, 0);
         return scoreTypeExercise.ScoreType;
-    }
-
-    public async Task<string> GetCsvByExerciseId(long exerciseId)
-    {
-        var assignments = await gradeManagementDbContext.Assignment
-            .Where(a => a.ExerciseId == exerciseId)
-            .Include(assignment => assignment.Student)
-            .ToListAsync();
-
-        var records = new List<Dictionary<string, object>>();
-
-        foreach (var assignment in assignments)
-        {
-            var pullRequest = await assignmentService.GetMergedPullRequestModelByIdAsync(assignment.Id);
-            if (pullRequest == null)
-            {
-                continue;
-            }
-
-            var scores = await pullRequestService.GetApprovedScoreModelsByIdAsync(pullRequest.Id);
-            var record = new Dictionary<string, object>
-            {
-                { "NeptunCode", assignment.Student.NeptunCode }, { "SumOfScores", scores.Sum(s => s.Value) }
-            };
-            foreach (var score in scores)
-            {
-                record[score.ScoreType.Type] = score.Value;
-            }
-
-
-            records.Add(record);
-        }
-
-        await using var writer = new StringWriter();
-        await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        // Write the header
-        var keys = records[0].Keys;
-        foreach (var key in keys)
-        {
-            csv.WriteField(key);
-        }
-
-        await csv.NextRecordAsync();
-
-        // Write the records
-        foreach (var record in records)
-        {
-            foreach (var value in record.Values)
-            {
-                csv.WriteField(value);
-            }
-
-            await csv.NextRecordAsync();
-        }
-
-        await csv.FlushAsync();
-
-        return writer.ToString();
     }
 
     public async Task<IEnumerable<Shared.Dtos.ScoreTypeExercise>> GetScoreTypeExercisesByIdAsync(long id)
@@ -224,5 +180,13 @@ public class ExerciseService(
             .Include(ste => ste.ScoreType)
             .ProjectTo<Shared.Dtos.ScoreTypeExercise>(mapper.ConfigurationProvider)
             .ToListAsync();
+    }
+
+    public async Task SetMoodleScoreUrlByClassroomUrlWithoutQueryFilterAsync(string clasroomUrl, string moodleScoreUrl)
+    {
+        var exercise = await gradeManagementDbContext.Exercise.IgnoreQueryFiltersButNotIsDeleted().SingleEntityAsync(e => e.ClassroomUrl == clasroomUrl, 0);
+        if (exercise.MoodleScoreUrl == moodleScoreUrl) return;
+        exercise.MoodleScoreUrl = moodleScoreUrl;
+        await gradeManagementDbContext.SaveChangesAsync();
     }
 }

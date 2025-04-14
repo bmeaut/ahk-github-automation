@@ -58,13 +58,4 @@ public class ExerciseController(ExerciseService exerciseService) : CrudControlle
         return await exerciseService.GetScoreTypeExercisesByIdAsync(id);
     }
 
-
-    [HttpGet("{id:long}/export")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
-    public async Task<FileContentResult> ExportToCsvAsync([FromRoute] long id)
-    {
-        var csv = await exerciseService.GetCsvByExerciseId(id);
-        return new FileContentResult(Encoding.UTF8.GetBytes(csv), "text/csv; charset=utf-8");
-    }
 }

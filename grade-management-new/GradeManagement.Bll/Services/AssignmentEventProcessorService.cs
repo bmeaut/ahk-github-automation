@@ -93,11 +93,9 @@ public class AssignmentEventProcessorService(
                     BranchName = pullRequestOpened.BranchName,
                     AssignmentId = assignment.Id
                 };
-                pullRequestToCreate = await pullRequestService.CreateWithoutQfAsync(pullRequestToCreate, assignment.SubjectId);
+                await pullRequestService.CreateWithoutQfAsync(pullRequestToCreate, assignment.SubjectId);
                 pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestOpened.PullRequestUrl);
             }
-
-
 
             var assignmentLog = new AssignmentLog()
             {
@@ -123,7 +121,8 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(ciEvaluationCompleted.PullRequestUrl);
+            var pullRequest =
+                await pullRequestService.GetModelByUrlWithoutQfAsync(ciEvaluationCompleted.PullRequestUrl);
             var repositoryName = GetRepositoryNameFromUrl(ciEvaluationCompleted.GitHubRepositoryUrl);
             var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var studentGitHubId = repositoryName.Remove(0, (exercise.GithubPrefix + "-").Length);
@@ -131,7 +130,7 @@ public class AssignmentEventProcessorService(
             var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var subject = await subjectService.GetModelByIdWithoutQfAsync(exercise.SubjectId);
 
-            if(ciEvaluationCompleted.CiApiKey != subject.CiApiKey)
+            if (ciEvaluationCompleted.CiApiKey != subject.CiApiKey)
             {
                 throw new SecurityTokenException("Invalid API key");
             }
@@ -149,7 +148,8 @@ public class AssignmentEventProcessorService(
 
             foreach (var scoreEvent in ciEvaluationCompleted.Scores)
             {
-                await scoreService.CreateScoreBasedOnOrderAsync(scoreEvent.Key, scoreEvent.Value, pullRequest.Id, pullRequest.SubjectId, exercise.Id);
+                await scoreService.CreateScoreBasedOnOrderAsync(scoreEvent.Key, scoreEvent.Value, pullRequest.Id,
+                    pullRequest.SubjectId, exercise.Id);
             }
 
             var assignmentLog = new AssignmentLog()
@@ -196,7 +196,7 @@ public class AssignmentEventProcessorService(
             pullRequest.TeacherId = null; // Unassign previous teacher
             await gradeManagementDbContext.SaveChangesAsync();
 
-            if(teacherAssigned.TeacherGitHubIds == null || teacherAssigned.TeacherGitHubIds.Count == 0)
+            if (teacherAssigned.TeacherGitHubIds == null || teacherAssigned.TeacherGitHubIds.Count == 0)
             {
                 await transaction.CommitAsync();
                 return;
@@ -229,7 +229,6 @@ public class AssignmentEventProcessorService(
 
                 await transaction.CommitAsync();
             }
-
         }
         catch
         {
@@ -247,24 +246,24 @@ public class AssignmentEventProcessorService(
             var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var teacher = await userService.GetModelByGitHubIdAsync(assignmentGradedByTeacher.TeacherGitHubId);
-            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(assignmentGradedByTeacher.PullRequestUrl);
+            var pullRequest =
+                await pullRequestService.GetModelByUrlWithoutQfAsync(assignmentGradedByTeacher.PullRequestUrl);
 
             if (assignmentGradedByTeacher.Scores.IsNullOrEmpty())
             {
-                var latestScores = await pullRequestService.GetLatestUnapprovedScoreModelsWithoutQfByIdAsync(pullRequest.Id);
+                var latestScores =
+                    await pullRequestService.GetLatestUnapprovedScoreModelsWithoutQfByIdAsync(pullRequest.Id);
                 foreach (var scoreEntity in latestScores)
                 {
-                    scoreEntity.IsApproved = true;
-                    scoreEntity.TeacherId = teacher.Id;
+                    await scoreService.ApproveScoreAsync(scoreEntity.Id, teacher.Id);
                 }
-
-                await gradeManagementDbContext.SaveChangesAsync();
             }
             else
             {
                 foreach (var eventScore in assignmentGradedByTeacher.Scores)
                 {
-                    await scoreService.CreateOrApprovePointsFromTeacherInputWithoutQfAsync(eventScore.Key, eventScore.Value, pullRequest.Id, teacher.Id, pullRequest.SubjectId, exercise.Id);
+                    await scoreService.CreateOrApprovePointsFromTeacherInputWithoutQfAsync(eventScore.Key,
+                        eventScore.Value, pullRequest.Id, teacher.Id, pullRequest.SubjectId, exercise.Id);
                 }
             }
 
@@ -292,7 +291,8 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestStatusChanged.PullRequestUrl);
+            var pullRequest =
+                await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestStatusChanged.PullRequestUrl);
             pullRequest.Status = pullRequestStatusChanged.pullRequestStatus;
             await gradeManagementDbContext.SaveChangesAsync();
 
