@@ -5,7 +5,9 @@
     <DialogContent>
         <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
             <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
-            <MudTextField T="string" Label="Github Prefix" For="@(() => value.GithubPrefix)" @bind-Value="value.GithubPrefix" Required="true"></MudTextField>
+            <MudTextField T="string" Label="GitHub Prefix" For="@(() => value.GithubPrefix)" @bind-Value="value.GithubPrefix" Required="true"></MudTextField>
+            <MudTextField T="string" Label="GitHub Classroom URL" For="@(() => value.ClassroomUrl)" @bind-Value="value.ClassroomUrl" Required="true"></MudTextField>
+            <MudTextField T="string" Label="Moodle score name prefix" For="@(() => value.MoodleScoreNamePrefix)" @bind-Value="value.MoodleScoreNamePrefix" Required="true"></MudTextField>
             @* <MudTextField T="string" Label="Github Prefix" For="@(() => value.DueDate)" @bind-Value="value.DueDate" Required="true"></MudTextField> *@
             @* <MudTextField T="string" Label="Github Prefix" For="@(() => value.ScoreTypes)" @bind-Value="value.ScoreTypes" Required="true"></MudTextField> *@
         </MudForm>

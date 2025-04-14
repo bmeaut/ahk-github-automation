@@ -5,6 +5,8 @@
         <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
         <PropertyColumn Property="x => x.GithubPrefix" Title="Github Prefix"/>
+        <PropertyColumn Property="x => x.ClassroomUrl" Title="Github Classroom URL"/>
+        <PropertyColumn Property="x => x.MoodleScoreNamePrefix" Title="Moodle Score Name Prefix"/>
         <PropertyColumn Property="x => x.DueDate" Title="Due Date"/>
         <PropertyColumn Property="x => JoinScoreTypes(x)" Title="Score Types"/>
         <DataGridActions TItem="ExerciseResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
