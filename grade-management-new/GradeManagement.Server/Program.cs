@@ -35,16 +35,7 @@ namespace GradeManagement.Server
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddHttpClient();
 
-            if (builder.Environment.IsDevelopment())
-            {
-                builder.Services.AddAuthentication(defaultScheme: "TestScheme")
-                    .AddScheme<AuthenticationSchemeOptions, MockAuthHandler>(
-                        "TestScheme", options => { });
-            }
-            else
-            {
-                builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
-            }
+            builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
 
             builder.Services.AddClaimsTransformation();
             builder.Services.AddPolicies();
