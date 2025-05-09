@@ -1,3 +1,5 @@
+using Azure.Identity;
+
 using GradeManagement.Bll;
 using GradeManagement.Bll.Profiles;
 using GradeManagement.Data;
@@ -6,6 +8,7 @@ using GradeManagement.Server.Authorization;
 using GradeManagement.Server.Middlewares;
 using GradeManagement.Server.Middlewares.ExceptionHandlers;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 
@@ -21,10 +24,27 @@ namespace GradeManagement.Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var keyVaultUri = builder.Configuration["KEY_VAULT_URI"];
+            if (!string.IsNullOrEmpty(keyVaultUri))
+            {
+                builder.Configuration.AddAzureKeyVault(
+                    new Uri(keyVaultUri),
+                    new DefaultAzureCredential());
+            }
+
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddHttpClient();
 
-            builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+            if (builder.Environment.IsDevelopment())
+            {
+                builder.Services.AddAuthentication(defaultScheme: "TestScheme")
+                    .AddScheme<AuthenticationSchemeOptions, MockAuthHandler>(
+                        "TestScheme", options => { });
+            }
+            else
+            {
+                builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+            }
 
             builder.Services.AddClaimsTransformation();
             builder.Services.AddPolicies();

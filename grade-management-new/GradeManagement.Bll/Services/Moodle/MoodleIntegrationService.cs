@@ -27,11 +27,12 @@ public class MoodleIntegrationService(
     {
         if (score.SyncedToMoodle || !score.IsApproved) return;
         var exercise = score.PullRequest.Assignment.Exercise;
+        var course = exercise.Course;
         var student = score.PullRequest.Assignment.Student;
         var scoreType = score.ScoreType;
         if (student.MoodleId == null) throw new MoodleSyncException("No moodle ID for student");
 
-        var token = tokenGeneratorService.GenerateAccessToken();
+        var token = tokenGeneratorService.GenerateAccessToken(course);
 
         if (token == null) throw new MoodleSyncException("Token was null when trying to register score");
         var client = new HttpClient();

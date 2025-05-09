@@ -45,7 +45,7 @@ public class SubjectController(SubjectService subjectService, IHttpContextAccess
     [HttpGet("{id:long}/courses")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
-    public async Task<List<Course>> GetAllCoursesByIdAsync([FromRoute] long id)
+    public async Task<List<CourseResponse>> GetAllCoursesByIdAsync([FromRoute] long id)
     {
         return await subjectService.GetAllCoursesByIdAsync(id);
     }

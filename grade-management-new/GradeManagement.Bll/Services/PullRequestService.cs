@@ -62,10 +62,9 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
         return await gradeManagementDbContext.Score
             .IgnoreQueryFiltersButNotIsDeleted()
             .Where(s => s.PullRequestId == id && !s.IsApproved)
-            .Include(s=>s.ScoreType)
+            .Include(s => s.ScoreType)
             .GroupBy(s => s.ScoreType)
             .Select(g => g.OrderByDescending(s => s.CreatedDate).FirstOrDefault())
             .ToListAsync();
     }
-
 }

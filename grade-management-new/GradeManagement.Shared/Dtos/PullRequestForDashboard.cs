@@ -12,5 +12,4 @@ public class PullRequestForDashboard
     public long AssignmentId { get; set; }
     public long? TeacherId { get; set; }
     public List<Score> Scores { get; set; }
-
 }

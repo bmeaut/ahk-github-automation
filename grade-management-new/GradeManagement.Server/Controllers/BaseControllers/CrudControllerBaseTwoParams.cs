@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GradeManagement.Server.Controllers.BaseControllers;
 
-public abstract class CrudControllerBase<TRequestDto, TResponseDto>(ICrudServiceBase<TRequestDto, TResponseDto> crudService)
+public abstract class CrudControllerBase<TRequestDto, TResponseDto>(
+    ICrudServiceBase<TRequestDto, TResponseDto> crudService)
     : RestrictedCrudControllerBase<TRequestDto, TResponseDto>(crudService)
 {
     [HttpPut("{id:long}")]

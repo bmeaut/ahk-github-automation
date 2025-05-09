@@ -4,9 +4,15 @@ using AutoMapper.QueryableExtensions;
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+
 using GradeManagement.Bll.Services.BaseServices;
+using GradeManagement.Bll.Services.Utils;
 using GradeManagement.Data;
-using GradeManagement.Shared.Dtos;
+using GradeManagement.Data.Models;
+using GradeManagement.Shared.Config;
+using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 using GradeManagement.Shared.Exceptions;
 
@@ -15,28 +21,28 @@ using Microsoft.EntityFrameworkCore;
 namespace GradeManagement.Bll.Services;
 
 public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    : ICrudServiceBase<Course>
+    : ICrudServiceBase<CourseRequest, CourseResponse>
 {
-    public async Task<IEnumerable<Course>> GetAllAsync()
+    public async Task<IEnumerable<CourseResponse>> GetAllAsync()
     {
         return await gradeManagementDbContext.Course
             .Include(c => c.Semester)
             .Include(c => c.Language)
-            .ProjectTo<Course>(mapper.ConfigurationProvider)
+            .ProjectTo<CourseResponse>(mapper.ConfigurationProvider)
             .OrderBy(c => c.Id)
             .ToListAsync();
     }
 
-    public async Task<Course> GetByIdAsync(long id)
+    public async Task<CourseResponse> GetByIdAsync(long id)
     {
         return await gradeManagementDbContext.Course
             .Include(c => c.Semester)
             .Include(c => c.Language)
-            .ProjectTo<Course>(mapper.ConfigurationProvider)
+            .ProjectTo<CourseResponse>(mapper.ConfigurationProvider)
             .SingleEntityAsync(c => c.Id == id, id);
     }
 
-    public async Task<Course> UpdateAsync(long id, Course requestDto)
+    public async Task<CourseResponse> UpdateAsync(long id, CourseRequest requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -47,7 +53,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
         var courseEntity = await gradeManagementDbContext.Course
             .SingleEntityAsync(c => c.Id == id, id);
         courseEntity.Name = requestDto.Name;
-        courseEntity.MoodleCourseId = requestDto.MoodleCourseId;
+        courseEntity.MoodleClientId = requestDto.MoodleClientId;
         courseEntity.SubjectId = requestDto.SubjectId;
         courseEntity.SemesterId = requestDto.Semester.Id;
         courseEntity.LanguageId = requestDto.Language.Id;
@@ -57,24 +63,30 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
         return await GetByIdAsync(courseEntity.Id);
     }
 
-    public async Task<Course> CreateAsync(Course requestDto)
+    public async Task<CourseResponse> CreateAsync(CourseRequest requestDto)
     {
         if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
         {
             throw new UnauthorizedException("Current subject does not match the subject of the course!");
         }
 
-        var courseEntityToBeCreated = new Data.Models.Course
+        var keyGenerator = new RsaKeyGenerator();
+
+        var courseEntityToBeCreated = new Course
         {
             Id = requestDto.Id,
             Name = requestDto.Name,
-            MoodleCourseId = requestDto.MoodleCourseId,
+            MoodleClientId = requestDto.MoodleClientId,
+            PublicKey = keyGenerator.PublicKey,
             SubjectId = requestDto.SubjectId,
             SemesterId = requestDto.Semester.Id,
             LanguageId = requestDto.Language.Id,
         };
         gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
         await gradeManagementDbContext.SaveChangesAsync();
+
+        await SetSecret(requestDto.MoodleClientId, keyGenerator.PrivateKey);
+
         return await GetByIdAsync(courseEntityToBeCreated.Id);
     }
 
@@ -100,5 +112,14 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
             .Where(g => g.CourseId == id)
             .ProjectTo<GroupResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
+    }
+
+    private static async Task SetSecret(string moodleClientId, string privateKey)
+    {
+        var keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
+        if (string.IsNullOrEmpty(keyVaultUrl)) throw new ArgumentException("Key vault URL is null or empty!");
+        var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+
+        await client.SetSecretAsync($"{MoodleConfig.Name}--{moodleClientId}--MoodlePrivateKey", privateKey);
     }
 }

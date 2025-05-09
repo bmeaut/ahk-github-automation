@@ -19,5 +19,4 @@ public abstract class QueryControllerBase<TDto>(IQueryServiceBase<TDto> querySer
     {
         return await queryService.GetByIdAsync(id);
     }
-
 }

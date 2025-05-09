@@ -15,17 +15,20 @@ namespace GradeManagement.Server.Controllers;
 [Authorize]
 [Route("api/exercises")]
 [ApiController]
-public class ExerciseController(ExerciseService exerciseService) : CrudControllerBase<ExerciseRequest, Shared.Dtos.Response.ExerciseResponse>(exerciseService)
+public class ExerciseController(ExerciseService exerciseService)
+    : CrudControllerBase<ExerciseRequest, Shared.Dtos.Response.ExerciseResponse>(exerciseService)
 {
     [HttpPut("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = TeacherOnSubjectRequirement.PolicyName)]
-    public override async Task<Shared.Dtos.Response.ExerciseResponse> UpdateAsync(long id, ExerciseRequest requestDto) => await base.UpdateAsync(id, requestDto);
+    public override async Task<Shared.Dtos.Response.ExerciseResponse>
+        UpdateAsync(long id, ExerciseRequest requestDto) => await base.UpdateAsync(id, requestDto);
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = TeacherOnSubjectRequirement.PolicyName)]
-    public override async Task<Shared.Dtos.Response.ExerciseResponse> CreateAsync(ExerciseRequest requestDto) => await base.CreateAsync(requestDto);
+    public override async Task<Shared.Dtos.Response.ExerciseResponse> CreateAsync(ExerciseRequest requestDto) =>
+        await base.CreateAsync(requestDto);
 
     [HttpDelete("{id:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -35,12 +38,14 @@ public class ExerciseController(ExerciseService exerciseService) : CrudControlle
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
-    public override async Task<IEnumerable<Shared.Dtos.Response.ExerciseResponse>> GetAllAsync() => await base.GetAllAsync();
+    public override async Task<IEnumerable<Shared.Dtos.Response.ExerciseResponse>> GetAllAsync() =>
+        await base.GetAllAsync();
 
     [HttpGet("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = DemonstratorOnSubjectRequirement.PolicyName)]
-    public override async Task<Shared.Dtos.Response.ExerciseResponse> GetByIdAsync(long id) => await base.GetByIdAsync(id);
+    public override async Task<Shared.Dtos.Response.ExerciseResponse> GetByIdAsync(long id) =>
+        await base.GetByIdAsync(id);
 
     [HttpGet("{id:long}/assignments")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -57,5 +62,4 @@ public class ExerciseController(ExerciseService exerciseService) : CrudControlle
     {
         return await exerciseService.GetScoreTypeExercisesByIdAsync(id);
     }
-
 }

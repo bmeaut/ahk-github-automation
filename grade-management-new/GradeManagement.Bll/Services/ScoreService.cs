@@ -36,7 +36,7 @@ public class ScoreService(
         var score = await gradeManagementDbContext.Score
             .IgnoreQueryFiltersButNotIsDeleted()
             .Include(s => s.PullRequest)
-            .ThenInclude(pr => pr.Assignment).ThenInclude(a => a.Exercise)
+            .ThenInclude(pr => pr.Assignment).ThenInclude(a => a.Exercise).ThenInclude(e => e.Course)
             .Include(s => s.PullRequest)
             .ThenInclude(pr => pr.Assignment).ThenInclude(a => a.Student)
             .Include(s => s.ScoreType)
@@ -80,7 +80,7 @@ public class ScoreService(
         var scoreToUpload = await gradeManagementDbContext.Score
             .IgnoreQueryFiltersButNotIsDeleted()
             .Include(s => s.PullRequest)
-            .ThenInclude(pr => pr.Assignment).ThenInclude(a => a.Exercise)
+            .ThenInclude(pr => pr.Assignment).ThenInclude(a => a.Exercise).ThenInclude(e => e.Course)
             .Include(s => s.PullRequest)
             .ThenInclude(pr => pr.Assignment).ThenInclude(a => a.Student)
             .Include(s => s.ScoreType)

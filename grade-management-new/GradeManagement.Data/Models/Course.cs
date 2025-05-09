@@ -6,8 +6,8 @@ public class Course : ISoftDelete, ITenant
 {
     public long Id { get; set; }
     public string Name { get; set; }
-    public string MoodleCourseId { get; set; }
-    public string? PrivateKey { get; set; }
+    public string MoodleClientId { get; set; }
+    public string PublicKey { get; set; }
     public Semester Semester { get; set; }
     public long SemesterId { get; set; }
     public Subject Subject { get; set; }

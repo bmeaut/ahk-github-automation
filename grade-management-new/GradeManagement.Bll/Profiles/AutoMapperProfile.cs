@@ -2,6 +2,7 @@ using AutoMapper;
 
 using GradeManagement.Data.Models;
 using GradeManagement.Shared.Dtos;
+using GradeManagement.Shared.Dtos.Request;
 using GradeManagement.Shared.Dtos.Response;
 
 using Assignment = GradeManagement.Data.Models.Assignment;
@@ -21,7 +22,7 @@ public class AutoMapperProfile : Profile
     public AutoMapperProfile()
     {
         CreateMap<Assignment, Shared.Dtos.Assignment>();
-        CreateMap<Course, Shared.Dtos.Course>();
+        CreateMap<Course, CourseResponse>();
         CreateMap<Exercise, ExerciseResponse>().ForMember(dest => dest.ScoreTypes,
             opt => opt.MapFrom(src =>
                 src.ScoreTypeExercises.Where(ste => ste.ExerciseId == src.Id)

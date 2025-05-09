@@ -10,8 +10,6 @@ public class HookAttributes
         Url = $"{monitorUrl}api/github-webhooks";
     }
 
-    [JsonPropertyName("url")]
-    public string Url { get; set; }
-    [JsonPropertyName("active")]
-    public bool Active { get; set; } = true;
+    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("active")] public bool Active { get; set; } = true;
 }

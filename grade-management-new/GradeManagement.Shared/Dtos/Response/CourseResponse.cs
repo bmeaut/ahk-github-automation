@@ -1,10 +1,11 @@
-﻿namespace GradeManagement.Shared.Dtos;
+﻿namespace GradeManagement.Shared.Dtos.Response;
 
-public class Course
+public class CourseResponse
 {
     public long Id { get; set; }
     public string Name { get; set; }
-    public string MoodleCourseId { get; set; }
+    public string MoodleClientId { get; set; }
+    public string PublicKey { get; set; }
     public long SubjectId { get; set; }
     public Semester Semester { get; set; }
     public Language Language { get; set; }

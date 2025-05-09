@@ -25,6 +25,7 @@ public class EntityNotFoundExceptionHandler : IExceptionHandler
 
             return true;
         }
+
         return false;
     }
 }

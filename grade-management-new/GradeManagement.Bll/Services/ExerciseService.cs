@@ -59,6 +59,7 @@ public class ExerciseService(
                 Name = requestDto.Name,
                 GithubPrefix = requestDto.GithubPrefix,
                 ClassroomUrl = requestDto.ClassroomUrl,
+                MoodleScoreNamePrefix = requestDto.MoodleScoreNamePrefix,
                 DueDate = requestDto.DueDate,
                 CourseId = requestDto.CourseId,
                 SubjectId = gradeManagementDbContext.SubjectIdValue
@@ -184,7 +185,8 @@ public class ExerciseService(
 
     public async Task SetMoodleScoreUrlByClassroomUrlWithoutQueryFilterAsync(string clasroomUrl, string moodleScoreUrl)
     {
-        var exercise = await gradeManagementDbContext.Exercise.IgnoreQueryFiltersButNotIsDeleted().SingleEntityAsync(e => e.ClassroomUrl == clasroomUrl, 0);
+        var exercise = await gradeManagementDbContext.Exercise.IgnoreQueryFiltersButNotIsDeleted()
+            .SingleEntityAsync(e => e.ClassroomUrl == clasroomUrl, 0);
         if (exercise.MoodleScoreUrl == moodleScoreUrl) return;
         exercise.MoodleScoreUrl = moodleScoreUrl;
         await gradeManagementDbContext.SaveChangesAsync();

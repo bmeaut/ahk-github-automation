@@ -16,7 +16,6 @@ using Microsoft.EntityFrameworkCore;
 
 using System.Security.Claims;
 
-using Course = GradeManagement.Shared.Dtos.Course;
 using Task = System.Threading.Tasks.Task;
 using User = GradeManagement.Shared.Dtos.User;
 
@@ -164,13 +163,13 @@ public class SubjectService(
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<List<Course>> GetAllCoursesByIdAsync(long id)
+    public async Task<List<CourseResponse>> GetAllCoursesByIdAsync(long id)
     {
         return await gradeManagementDbContext.Course
             .Include(c => c.Semester)
             .Include(c => c.Language)
             .Where(c => c.SubjectId == id)
-            .ProjectTo<Course>(mapper.ConfigurationProvider)
+            .ProjectTo<CourseResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
