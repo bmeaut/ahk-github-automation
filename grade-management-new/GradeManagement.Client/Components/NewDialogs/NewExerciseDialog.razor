@@ -3,14 +3,39 @@
         <MudText Typo="Typo.h4">New Exercise</MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="form" Model="@value" @bind-IsValid="@success" @bind-Errors="@errors">
-            <MudTextField T="string" Label="Name" For="@(() => value.Name)" @bind-Value="value.Name" Required="true"></MudTextField>
-            <MudTextField T="string" Label="GitHub Prefix" For="@(() => value.GithubPrefix)" @bind-Value="value.GithubPrefix" Required="true"></MudTextField>
-            <MudTextField T="string" Label="GitHub Classroom URL" For="@(() => value.ClassroomUrl)" @bind-Value="value.ClassroomUrl" Required="true"></MudTextField>
-            <MudTextField T="string" Label="Moodle score name prefix" For="@(() => value.MoodleScoreNamePrefix)" @bind-Value="value.MoodleScoreNamePrefix" Required="true"></MudTextField>
-            @* <MudTextField T="string" Label="Github Prefix" For="@(() => value.DueDate)" @bind-Value="value.DueDate" Required="true"></MudTextField> *@
-            @* <MudTextField T="string" Label="Github Prefix" For="@(() => value.ScoreTypes)" @bind-Value="value.ScoreTypes" Required="true"></MudTextField> *@
+        <MudForm @ref="form" Model="@Value" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudTextField T="string" Label="Name" For="@(() => Value.Name)" @bind-Value="Value.Name" Required="true"/>
+            <MudTextField T="string" Label="GitHub Prefix" For="@(() => Value.GithubPrefix)"
+                          @bind-Value="Value.GithubPrefix" Required="true"/>
+            <MudTextField T="string" Label="GitHub Classroom URL" For="@(() => Value.ClassroomUrl)"
+                          @bind-Value="Value.ClassroomUrl" Required="true"/>
+            <MudTextField T="string" Label="Moodle score name prefix" For="@(() => Value.MoodleScoreNamePrefix)"
+                          @bind-Value="Value.MoodleScoreNamePrefix" Required="true"/>
         </MudForm>
+
+        <MudDivider Class="my-4"/>
+        <MudText Typo="Typo.h6">Score Types</MudText>
+        <MudStack Spacing="2">
+            @foreach (var item in OrderedScoreTypes.Select((kvp, index) => new { kvp.Key, kvp.Value, index }))
+            {
+                <MudPaper Class="p-2 d-flex align-items-center justify-content-between">
+                    <MudTextField T="string" Class="me-2" Value="@item.Value"
+                                  ValueChanged="val => UpdateScoreType(item.index, val)"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Disabled="@(item.index == 0)"
+                                   OnClick="@(() => MoveScoreTypeUp(item.index))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                                   Disabled="@(item.index == OrderedScoreTypes.Count - 1)"
+                                   OnClick="@(() => MoveScoreTypeDown(item.index))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => RemoveScoreType(item.index))"
+                                   Color="Color.Error"/>
+                </MudPaper>
+            }
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddScoreType">
+                <MudIcon Icon="@Icons.Material.Filled.Add"/>
+                Add Score Type
+            </MudButton>
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Cancel">Cancel</MudButton>
@@ -25,7 +50,14 @@
     private bool success;
     private string[] errors;
 
-    private void Submit() => MudDialog.Close(DialogResult.Ok(value));
+    [Parameter]
+    public ExerciseRequest Value { get; set; } = new()
+    {
+        DueDate = DateTime.Now,
+        ScoreTypes = new Dictionary<string, string>()
+    };
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Value));
     private void Cancel() => MudDialog.Cancel();
 
     async void OnSubmitClicked()
@@ -37,10 +69,54 @@
         }
     }
 
-    public ExerciseRequest value = new()
+    // ScoreTypes Logic
+    private List<KeyValuePair<string, string>> OrderedScoreTypes =>
+        Value.ScoreTypes.OrderBy(kvp => int.Parse(kvp.Key)).ToList();
+
+    private void AddScoreType()
     {
-        DueDate = DateTime.Now,
-        ScoreTypes = new Dictionary<string, string>()
-    };
+        int nextKey = Value.ScoreTypes.Count + 1;
+        Value.ScoreTypes[nextKey.ToString()] = "";
+    }
+
+    private void RemoveScoreType(int index)
+    {
+        var list = OrderedScoreTypes;
+        if (index < 0 || index >= list.Count) return;
+
+        list.RemoveAt(index);
+        ReorderScoreTypes(list);
+    }
+
+    private void MoveScoreTypeUp(int index)
+    {
+        if (index <= 0) return;
+        var list = OrderedScoreTypes;
+        (list[index - 1], list[index]) = (list[index], list[index - 1]);
+        ReorderScoreTypes(list);
+    }
+
+    private void MoveScoreTypeDown(int index)
+    {
+        var list = OrderedScoreTypes;
+        if (index >= list.Count - 1) return;
+        (list[index + 1], list[index]) = (list[index], list[index + 1]);
+        ReorderScoreTypes(list);
+    }
+
+    private void UpdateScoreType(int index, string newValue)
+    {
+        var list = OrderedScoreTypes;
+        var pair = list[index];
+        list[index] = new KeyValuePair<string, string>(pair.Key, newValue);
+        ReorderScoreTypes(list);
+    }
+
+    private void ReorderScoreTypes(List<KeyValuePair<string, string>> list)
+    {
+        Value.ScoreTypes = list
+            .Select((kvp, idx) => new KeyValuePair<string, string>((idx + 1).ToString(), kvp.Value))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
 
 }

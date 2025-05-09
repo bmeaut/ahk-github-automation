@@ -7,6 +7,7 @@
 @inject CourseClient CourseClient
 @inject ExerciseClient ExerciseClient
 @inject GroupClient GroupClient
+@inject IJSRuntime JsRuntime
 @attribute [Authorize(Policy = Policy.RequireTeacher)]
 
 <LoadingComponent LongTask="@_loading" @ref="loadingRef">
@@ -14,27 +15,41 @@
     <MudText Typo="Typo.h4" Class="mt-4">@_course.Name</MudText>
     <MudDivider Class="mb-4"/>
     <MudGrid>
+
         <MudItem xs="12" sm="6" md="4">
-            <MudField Label="Moodle Course Id" Variant="Variant.Text">@_course.MoodleCourseId</MudField>
+            <MudField Label="Moodle Client ID" Variant="Variant.Outlined">@_course.MoodleClientId</MudField>
         </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudField Label="Semester" Variant="Variant.Text">@_course.Semester.Name</MudField>
+        <MudItem xs="12" sm="6" md="3">
+            <MudField Label="Semester" Variant="Variant.Outlined">@_course.Semester.Name</MudField>
         </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudField Label="Language" Variant="Variant.Text">@_course.Language.Name</MudField>
+        <MudItem xs="12" sm="6" md="3">
+            <MudField Label="Language" Variant="Variant.Outlined">@_course.Language.Name</MudField>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="2">
+            <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                <MudButton Style="background-color: #e1bee7; color: #6a1b9a;" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.ContentCopy"
+                           OnClick="@(() => CopyToClipboard(_course.PublicKey))">
+                    Copy Public Key
+                </MudButton>
+            </div>
         </MudItem>
         <MudItem xs="12">
             <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
                 <MudText Typo="Typo.h6" Style="align-self: start">Exercises:</MudText>
                 <ExerciseDataGrid Values="_exercises"/>
-                <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewExerciseDialog">New Exercise</MudButton>
+                <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@NewExerciseDialog">New Exercise
+                </MudButton>
             </MudStack>
         </MudItem>
         <MudItem xs="12">
             <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
                 <MudText Typo="Typo.h6" Style="align-self: start">Groups:</MudText>
                 <GroupDataGrid Values="_groups"/>
-                <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@NewGroupDialog">New Group</MudButton>
+                <MudButton Color="@Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@NewGroupDialog">New Group
+                </MudButton>
             </MudStack>
         </MudItem>
     </MudGrid>
@@ -42,12 +57,12 @@
 
 @code {
     [Parameter] public int Id { get; set; }
-    Course _course;
+    CourseResponse _course;
     ICollection<ExerciseResponse> _exercises;
     ICollection<GroupResponse> _groups;
     private LoadingComponent loadingRef;
 
-    private async Task<Course> _loadCourseAsync()
+    private async Task<CourseResponse> _loadCourseAsync()
     {
         return await CourseClient.GetByIdAsync(Id);
     }
@@ -94,6 +109,20 @@
             await GroupClient.CreateAsync(group);
             SnackbarService.ShowAddSuccess();
             await loadingRef.StartLoading();
+        }
+    }
+
+    private async Task CopyToClipboard(string publicKey)
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", publicKey);
+            SnackbarService.ShowSuccess("Public key copied to clipboard!");
+        }
+        catch (JSException)
+        {
+            await JsRuntime.InvokeVoidAsync("copyTextFallback", publicKey);
+            SnackbarService.ShowSuccess("Public key copied to clipboard!");
         }
     }
 

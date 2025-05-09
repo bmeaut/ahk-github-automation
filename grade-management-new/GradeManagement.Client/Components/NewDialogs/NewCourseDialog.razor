@@ -1,11 +1,13 @@
-﻿<MudDialog>
+﻿<MudDialog MaxWidth="MaxWidth.Large" FullWidth="true">
     <TitleContent>
         <MudText Typo="Typo.h4">New Course</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" Model="@Value" @bind-IsValid="@success" @bind-Errors="@errors">
-            <MudTextField T="string" Label="Name" For="@(() => Value.Name)" @bind-Value="Value.Name" Required="true"></MudTextField>
-            <MudTextField T="string" Label="Moodle Course Id" @bind-Value="@Value.MoodleCourseId" Required="true"></MudTextField>
+            <MudTextField T="string" Label="Name" For="@(() => Value.Name)" @bind-Value="Value.Name"
+                          Required="true"></MudTextField>
+            <MudTextField T="string" Label="Moodle Client ID" @bind-Value="@Value.MoodleClientId"
+                          Required="true"></MudTextField>
             <SelectSemester @bind-Value="@Value.Semester"/>
             <SelectLanguage @bind-Value="@Value.Language"/>
         </MudForm>
@@ -23,7 +25,7 @@
     private bool success;
     private string[] errors;
 
-    [Parameter] public Course Value { get; set; } = new Course();
+    [Parameter] public CourseRequest Value { get; set; } = new CourseRequest();
 
     void Submit() => MudDialog.Close(DialogResult.Ok(Value));
     void Cancel() => MudDialog.Cancel();

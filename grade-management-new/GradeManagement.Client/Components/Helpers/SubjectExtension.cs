@@ -46,7 +46,9 @@ public static class Extensions
             Name = exercise.Name,
             DueDate = exercise.DueDate,
             GithubPrefix = exercise.GithubPrefix,
-            ScoreTypes = exercise.ScoreTypes
+            ScoreTypes = exercise.ScoreTypes,
+            ClassroomUrl = exercise.ClassroomUrl,
+            MoodleScoreNamePrefix = exercise.MoodleScoreNamePrefix
         };
     }
 

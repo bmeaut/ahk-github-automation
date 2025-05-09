@@ -164,7 +164,7 @@
     Color _color = Color.Primary;
     Size _headerSize = Size.Medium;
 
-    Course? _course;
+    CourseResponse? _course;
     List<Language> _languages = new List<Language>();
     List<Semester> _semesters = new List<Semester>();
 
@@ -289,7 +289,7 @@
     private async Task ShowNewCourseDialog()
     {
         //Fill the Value parameter with a Course object
-        var param = new Course()
+        var param = new CourseRequest()
         {
             Language = _selectedLanguage,
             Semester = _selectedSemester
@@ -298,7 +298,7 @@
         var result = await dialog.Result ?? DialogResult.Cancel();
         if (!result.Canceled && result.Data != null)
         {
-            var newCourse = result.Data as Course;
+            var newCourse = result.Data as CourseRequest;
             newCourse.SubjectId = SubjectService.CurrentSubject.Id;
             _course = await CourseClient.CreateAsync(newCourse);
             await _stepper.CompleteStep(3);

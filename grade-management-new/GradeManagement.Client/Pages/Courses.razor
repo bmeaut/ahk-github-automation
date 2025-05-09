@@ -9,6 +9,7 @@
 @inject CourseClient CourseClient
 @inject SubjectClient SubjectClient
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
 
 @attribute [Authorize(Policy = Policy.RequireAdmin)]
 
@@ -29,11 +30,12 @@
 <LoadingComponent @ref="loadingComponentRef" LongTask="@_loading">
     <MudText Typo="Typo.h4" Class="mt-4">Courses</MudText>
     <MudDivider Class="mb-4"/>
-    <MudDataGrid T="Course" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent" Class="clickable-rows">
+    <MudDataGrid T="CourseResponse" Items="_courses" EditMode="DataGridEditMode.Form" ReadOnly="false"
+                 CommittedItemChanges="@CommittedItemChanges" RowClick="@RowClickEvent" Class="clickable-rows">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
             <PropertyColumn Property="x => x.Name" Title="Name"/>
-            <PropertyColumn Property="x => x.MoodleCourseId" Title="Moodle Course Id"/>
+            <PropertyColumn Property="x => x.MoodleClientId" Title="Moodle Client ID"/>
             <TemplateColumn Title="Semester">
                 <CellTemplate>
                     @context.Item.Semester.Name
@@ -50,17 +52,27 @@
                     <SelectLanguage @bind-Value="@context.Item.Language"/>
                 </EditTemplate>
             </TemplateColumn>
-            <DataGridActions TItem="Course" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
+            <TemplateColumn Title="Public Key">
+                <CellTemplate>
+                    <MudButton Style="background-color: #e1bee7; color: #6a1b9a;" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.ContentCopy"
+                               OnClick="@(() => CopyToClipboard(context.Item.PublicKey))">
+                        Copy
+                    </MudButton>
+                </CellTemplate>
+            </TemplateColumn>
+            <DataGridActions TItem="CourseResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
         </Columns>
     </MudDataGrid>
-    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OpenDialog"/>
+    <MudFab Style="position:fixed; bottom:50px;right:50px" Color="@Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+            OnClick="@OpenDialog"/>
 </LoadingComponent>
 
 @code {
-    private ICollection<Course> _courses = new List<Course>();
+    private ICollection<CourseResponse> _courses = new List<CourseResponse>();
     private LoadingComponent loadingComponentRef;
 
-    private void RowClickEvent(DataGridRowClickEventArgs<Course> args)
+    private void RowClickEvent(DataGridRowClickEventArgs<CourseResponse> args)
     {
         var courseId = args.Item.Id;
         NavigationManager.NavigateTo($"/courses/{courseId}");
@@ -79,29 +91,38 @@
         var result = await dialog.Result ?? DialogResult.Cancel();
         if (!result.Canceled && result.Data != null)
         {
-            var newCourse = result.Data as Course;
+            var newCourse = result.Data as CourseRequest;
             newCourse.SubjectId = SubjectService.CurrentSubject.Id;
             await CourseClient.CreateAsync(newCourse);
             await _loading();
         }
     }
 
-    private async Task StartEditing(CellContext<Course?> context)
+    private async Task StartEditing(CellContext<CourseResponse?> context)
     {
         await context.Actions.StartEditingItemAsync();
         StateHasChanged();
     }
 
-    private async Task CommittedItemChanges(Course items)
+    private async Task CommittedItemChanges(CourseResponse item)
     {
-        await CourseClient.UpdateAsync(items.Id, items);
+        CourseRequest courseRequest = new CourseRequest()
+        {
+            Id = item.Id,
+            Language = item.Language,
+            MoodleClientId = item.MoodleClientId,
+            Name = item.Name,
+            Semester = item.Semester,
+            SubjectId = item.SubjectId
+        };
+        await CourseClient.UpdateAsync(courseRequest.Id, courseRequest);
         //StateHasChanged();
         SnackbarService.ShowEditSuccess();
         //await loadingComponentRef.StartLoading();
         _courses = await SubjectClient.GetAllCoursesByIdAsync(SubjectService.CurrentSubject.Id);
     }
 
-    private async Task DeleteItem(Course item)
+    private async Task DeleteItem(CourseResponse item)
     {
         await CourseClient.DeleteAsync(item.Id);
         SnackbarService.ShowDeleteSuccess();
@@ -122,6 +143,20 @@
     public void Dispose()
     {
         SubjectService.OnChange -= OnSubjectChanged;
+    }
+
+    private async Task CopyToClipboard(string publicKey)
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", publicKey);
+            SnackbarService.ShowSuccess("Public key copied to clipboard!");
+        }
+        catch (JSException)
+        {
+            await JsRuntime.InvokeVoidAsync("copyTextFallback", publicKey);
+            SnackbarService.ShowSuccess("Public key copied to clipboard!");
+        }
     }
 
 }

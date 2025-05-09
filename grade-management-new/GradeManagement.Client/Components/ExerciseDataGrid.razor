@@ -1,40 +1,77 @@
-﻿@inject ExerciseClient ExerciseClient
+﻿@using GradeManagement.Client.Components.NewDialogs
+@inject IDialogService DialogService
+@inject ExerciseClient ExerciseClient
 
-<MudDataGrid T="ExerciseResponse" Items="Values" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" Style="width: 100%">
+<MudDataGrid T="ExerciseResponse"
+             Items="Values"
+             Style="width: 100%">
     <Columns>
         <PropertyColumn Property="x => x.Id" Title="Id" Editable="false"/>
         <PropertyColumn Property="x => x.Name" Title="Name"/>
-        <PropertyColumn Property="x => x.GithubPrefix" Title="Github Prefix"/>
-        <PropertyColumn Property="x => x.ClassroomUrl" Title="Github Classroom URL"/>
+        <PropertyColumn Property="x => x.GithubPrefix" Title="GitHub Prefix"/>
+        <PropertyColumn Property="x => x.ClassroomUrl" Title="GitHub Classroom URL"/>
         <PropertyColumn Property="x => x.MoodleScoreNamePrefix" Title="Moodle Score Name Prefix"/>
         <PropertyColumn Property="x => x.DueDate" Title="Due Date"/>
         <PropertyColumn Property="x => JoinScoreTypes(x)" Title="Score Types"/>
-        <DataGridActions TItem="ExerciseResponse" OnEditItem="@StartEditing" OnDeleteItem="@DeleteItem"/>
-    </Columns>
-</MudDataGrid>
 
+        <TemplateColumn>
+            <CellTemplate>
+                <MudButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditExercise(context))"/>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+
+</MudDataGrid>
 
 @code {
     [Parameter] public ICollection<ExerciseResponse> Values { get; set; }
 
-    private string JoinScoreTypes(ExerciseResponse item) => string.Join(", ", item.ScoreTypes.Select(x => $"{x.Key}: {x.Value}"));
+    private string JoinScoreTypes(ExerciseResponse item) =>
+        string.Join(", ", item.ScoreTypes.Select(x => $"{x.Key}: {x.Value}"));
 
-    private async Task StartEditing(CellContext<ExerciseResponse?> context)
+    private async Task EditExercise(CellContext<ExerciseResponse?> context)
     {
-        await context.Actions.StartEditingItemAsync();
-        StateHasChanged();
+        var item = context.Item;
+        if (item == null) return;
+
+        var parameters = new DialogParameters
+        {
+            ["value"] = item.ToRequest()
+        };
+
+        var dialog = DialogService.Show<NewExerciseDialog>("Edit Exercise", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ExerciseRequest updated)
+        {
+            var updatedResponse = await ExerciseClient.UpdateAsync(item.Id, updated);
+
+            var index = Values.ToList().FindIndex(x => x.Id == item.Id);
+            if (Values is List<object> list && index >= 0 && index < list.Count)
+            {
+                list[index] = updatedResponse;
+            }
+
+            StateHasChanged();
+        }
     }
 
-    private async Task CommittedItemChanges(ExerciseResponse items)
+    private async Task DeleteExercise(CellContext<ExerciseResponse?> context)
     {
-        await ExerciseClient.UpdateAsync(items.Id, items.ToRequest());
-    }
+        var item = context.Item;
+        if (item == null) return;
 
-    private async Task DeleteItem(ExerciseResponse item)
-    {
-        Values.Remove(item);
-        await ExerciseClient.DeleteAsync(item.Id);
-        StateHasChanged();
+        var confirm = await DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            $"Delete '{item.Name}'?",
+            yesText: "Yes", cancelText: "No");
+
+        if (confirm is true)
+        {
+            Values.Remove(item);
+            await ExerciseClient.DeleteAsync(item.Id);
+            StateHasChanged();
+        }
     }
 
 }
