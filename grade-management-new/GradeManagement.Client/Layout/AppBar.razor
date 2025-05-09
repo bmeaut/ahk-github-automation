@@ -8,8 +8,8 @@
     <MudIconButton Icon="@(DrawerOpened ? Icons.Material.Filled.Close : Icons.Material.Filled.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
     <MudText Typo="Typo.h3" Class="ml-3" Style="cursor: pointer" @onclick="NavigateHome">AHK Review UI</MudText>
     <MudSpacer/>
+    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Href="/wizard" Class="me-2" />
     <SelectSubject @bind-Value="@SubjectService.CurrentSubject" PossibleValues="@SubjectService.Subjects"/>
-    @* <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Inherit" Edge="Edge.End" Size="Size.Large" Href="/subjects"/> *@
 
     <!-- Profile Dropdown Menu -->
     <MudMenu Class="ms-4">
