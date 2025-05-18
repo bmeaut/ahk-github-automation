@@ -14,12 +14,12 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "http://10.0.0.176:5180",
+      "applicationUrl": "http://10.0.0.10:5180",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MONITOR_URL": "https://monitor.mm-home.eu/api/github-webhook",
         "KEY_VAULT_URI": "https://ahkgithubmonitorsecrets.vault.azure.net/",
-        "APP_URL": "app.mm-home.eu"
+        "APP_URL": "https://app.mm-home.eu/"
       }
     },
     "https": {
@@ -27,12 +27,12 @@
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "https://10.0.0.176:7136;http://10.0.0.176:5180",
+      "applicationUrl": "https://10.0.0.10:7136;http://10.0.0.10:5180",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MONITOR_URL": "https://monitor.mm-home.eu/api/github-webhook",
         "KEY_VAULT_URI": "https://ahkgithubmonitorsecrets.vault.azure.net/",
-        "APP_URL": "app.mm-home.eu"
+        "APP_URL": "https://app.mm-home.eu/"
       }
     },
     "IIS Express": {

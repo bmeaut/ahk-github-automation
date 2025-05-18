@@ -1,6 +1,7 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
+using GradeManagement.Data;
 using GradeManagement.Shared.Dtos.GitHubManifest;
 
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ public class GitHubAppController(IHttpClientFactory httpClientFactory) : Control
         await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubWebhookSecret",
             gitHubApp.WebhookSecret);
 
-        return Redirect(appUrl);
+        return Redirect($"https://github.com/organizations/ahk-dev-org/settings/apps/{gitHubApp.Slug}/installations");
     }
 
     public static string RemovePemFencing(string pem)

@@ -33,7 +33,7 @@ public class RsaKeyGenerator
 
     private string ExportPublicKey(RSA rsa)
     {
-        var publicKeyBytes = rsa.ExportRSAPublicKey();
+        var publicKeyBytes = rsa.ExportSubjectPublicKeyInfo();
         var base64PublicKey = Convert.ToBase64String(publicKeyBytes);
         var sb = new StringBuilder();
         sb.AppendLine("-----BEGIN PUBLIC KEY-----");
@@ -41,7 +41,6 @@ public class RsaKeyGenerator
         {
             sb.AppendLine(base64PublicKey.Substring(i, Math.Min(64, base64PublicKey.Length - i)));
         }
-
         sb.AppendLine("-----END PUBLIC KEY-----");
         return sb.ToString();
     }

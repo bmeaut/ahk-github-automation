@@ -1,3 +1,6 @@
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+
 using GradeManagement.Data.Models;
 using GradeManagement.Shared.Config;
 using GradeManagement.Shared.Exceptions;
@@ -22,9 +25,9 @@ public class TokenGeneratorService(IConfiguration configuration)
     private const string Scope =
         "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly https://purl.imsglobal.org/spec/lti-ags/scope/score";
 
-    public string? GenerateAccessToken(Course course)
+    public async Task<string?> GenerateAccessToken(Course course)
     {
-        var token = MakeClientAssertionToken(course);
+        var token = await MakeClientAssertionToken(course);
 
         var endPoint = "https://edu.vik.bme.hu/mod/lti/token.php";
         var client = new HttpClient();
@@ -43,7 +46,7 @@ public class TokenGeneratorService(IConfiguration configuration)
         return content?.Access_token;
     }
 
-    private string MakeClientAssertionToken(Course course)
+    private async Task<string> MakeClientAssertionToken(Course course)
     {
         var appUrl = configuration["APP_URL"];
         if (string.IsNullOrEmpty(appUrl)) throw new MoodleSyncException("App url was null or empty!");
@@ -56,14 +59,22 @@ public class TokenGeneratorService(IConfiguration configuration)
         claims.Add(new Claim("aud", "https://edu.vik.bme.hu/mod/lti/token.php"));
         claims.Add(new Claim("sub", course.MoodleClientId));
 
-        return CreateToken(claims, course);
+        return await CreateToken(claims, course);
     }
 
-    private string CreateToken(List<Claim> claims, Course course)
+    private async Task<string> CreateToken(List<Claim> claims, Course course)
     {
-        var moodleConfig = new MoodleConfig();
-        configuration.GetSection(MoodleConfig.GetSectionName(course.MoodleClientId)).Bind(moodleConfig);
-        var privateRsaKey = moodleConfig.MoodlePrivateKey;
+        string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
+        if (keyVaultUrl == null)
+        {
+            throw new Exception("Please set environment variable KEY_VAULT_URI");
+        }
+
+        var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+        var moodlePrivateKey =
+            await secretClient.GetSecretAsync($"{MoodleConfig.Name}--{course.MoodleClientId}--MoodlePrivateKey");
+
+        var privateRsaKey = moodlePrivateKey.Value.Value;
         if (string.IsNullOrEmpty(privateRsaKey)) throw new MoodleSyncException("Private RSA was null or empty!");
 
         privateRsaKey = privateRsaKey.Trim();

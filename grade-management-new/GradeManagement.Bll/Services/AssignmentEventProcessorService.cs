@@ -5,6 +5,7 @@ using GradeManagement.Data.Models;
 using GradeManagement.Shared.Dtos.AssignmentEvents;
 using GradeManagement.Shared.Enums;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Assignment = GradeManagement.Shared.Dtos.Assignment;
@@ -38,6 +39,20 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
+            var existingAssignment = await gradeManagementDbContext.Assignment.Where(
+                a => a.GithubRepoUrl == assignmentAccepted.GitHubRepositoryUrl).FirstOrDefaultAsync();
+            if (existingAssignment != null)
+            {
+                var assignmentLogForExistingAssingnment = new AssignmentLog()
+                {
+                    EventType = EventType.AssignmentAccepted,
+                    Description = $"Assignment for github repo url {assignmentAccepted.GitHubRepositoryUrl} already exists!",
+                    AssignmentId = existingAssignment.Id
+                };
+                await assignmentLogService.CreateAsync(assignmentLogForExistingAssingnment);
+                return;
+            }
+
             var repositoryName = GetRepositoryNameFromUrl(assignmentAccepted.GitHubRepositoryUrl);
             var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var studentGitHubId = repositoryName.Remove(0, (exercise.GithubPrefix + "-").Length);

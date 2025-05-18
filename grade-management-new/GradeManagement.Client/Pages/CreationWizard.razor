@@ -11,6 +11,7 @@
 @inject LanguageClient LanguageClient
 @inject SemesterClient SemesterClient
 @inject CourseClient CourseClient
+@inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @attribute [Authorize(Policy = Policy.RequireTeacher)]
@@ -313,8 +314,9 @@
     {
         try
         {
-            // Create proper manifest with required fields
-            GitHubAppManifest gitHubAppManifest = new();
+            string appUrl = await Http.GetStringAsync("api/config/app-url");
+            string monitorUrl = await Http.GetStringAsync("api/config/monitor-url");
+            GitHubAppManifest gitHubAppManifest = new(appUrl, monitorUrl);
 
             var manifestJson = JsonSerializer.Serialize(gitHubAppManifest);
 

@@ -6,6 +6,8 @@ using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -26,6 +28,13 @@ public class GitHubMonitorFunction(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
         HttpRequestData request)
     {
+        string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
+        if (keyVaultUrl == null)
+        {
+            return new BadRequestObjectResult(new { error = "Please set environment variable KEY_VAULT_URI" });
+        }
+        var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+
         request.Headers.TryGetValues("X-GitHub-Event", out IEnumerable<string> eventNameValues);
         var eventName = eventNameValues?.FirstOrDefault();
         request.Headers.TryGetValues("X-GitHub-Delivery", out IEnumerable<string> deliveryIdValues);
@@ -42,6 +51,11 @@ public class GitHubMonitorFunction(
             return new BadRequestObjectResult(new { error = "X-GitHub-Event header missing" });
         }
 
+        if (eventName == "ping")
+        {
+            return new OkObjectResult("pong");
+        }
+
         if (string.IsNullOrEmpty(receivedSignature))
         {
             return new BadRequestObjectResult(new { error = "X-Hub-Signature-256 header missing" });
@@ -56,10 +70,12 @@ public class GitHubMonitorFunction(
 
         var orgName = parsedRequestBody.Repository.Owner.Login;
 
-        var orgConfig = new GitHubMonitorConfig();
-        configuration.GetSection(GitHubMonitorConfig.GetSectionName(orgName)).Bind(orgConfig);
+        var githubAppId = await secretClient.GetSecretAsync($"GitHubMonitorConfig--{orgName}--GitHubAppId");
+        var githubAppPrivateKey = await secretClient.GetSecretAsync($"GitHubMonitorConfig--{orgName}--GitHubAppPrivateKey");
+        var githubWebhookSecret = await secretClient.GetSecretAsync($"GitHubMonitorConfig--{orgName}--GitHubWebhookSecret");
 
-        if (string.IsNullOrEmpty(orgConfig.GitHubWebhookSecret))
+
+        if (string.IsNullOrEmpty(githubWebhookSecret.Value.Value))
         {
             return new ObjectResult(new { error = "GitHub secret not configured" })
             {
@@ -67,8 +83,8 @@ public class GitHubMonitorFunction(
             };
         }
 
-        if (string.IsNullOrEmpty(orgConfig.GitHubAppId) ||
-            string.IsNullOrEmpty(orgConfig.GitHubAppPrivateKey))
+        if (string.IsNullOrEmpty(githubAppId.Value.Value) ||
+            string.IsNullOrEmpty(githubAppPrivateKey.Value.Value))
         {
             return new ObjectResult(new { error = "GitHub App ID/Token not configured" })
             {
@@ -77,7 +93,7 @@ public class GitHubMonitorFunction(
         }
 
         if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature,
-                orgConfig.GitHubWebhookSecret))
+                githubWebhookSecret.Value.Value))
         {
             return new BadRequestObjectResult(new { error = "Payload signature not valid" });
         }

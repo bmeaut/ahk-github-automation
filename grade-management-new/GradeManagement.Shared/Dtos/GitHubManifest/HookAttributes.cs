@@ -4,10 +4,9 @@ namespace GradeManagement.Shared.Dtos.GitHubManifest;
 
 public class HookAttributes
 {
-    public HookAttributes()
+    public HookAttributes(string monitorUrl)
     {
-        string monitorUrl = Environment.GetEnvironmentVariable("MONITOR_URL");
-        Url = $"{monitorUrl}api/github-webhooks";
+        Url = $"{monitorUrl}";
     }
 
     [JsonPropertyName("url")] public string Url { get; set; }

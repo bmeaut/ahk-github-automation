@@ -32,7 +32,7 @@ public class MoodleIntegrationService(
         var scoreType = score.ScoreType;
         if (student.MoodleId == null) throw new MoodleSyncException("No moodle ID for student");
 
-        var token = tokenGeneratorService.GenerateAccessToken(course);
+        var token = await tokenGeneratorService.GenerateAccessToken(course);
 
         if (token == null) throw new MoodleSyncException("Token was null when trying to register score");
         var client = new HttpClient();
@@ -42,6 +42,7 @@ public class MoodleIntegrationService(
         {
             Timestamp = DateTimeOffset.Now.ToString("O"),
             ScoreGiven = Convert.ToInt32(score.Value),
+            ScoreMaximum = 100,
             UserId = student.MoodleId,
             ActivityProgress = "Completed",
             GradingProgress = "FullyGraded"
