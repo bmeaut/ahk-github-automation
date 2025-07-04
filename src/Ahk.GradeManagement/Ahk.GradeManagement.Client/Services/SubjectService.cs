@@ -1,4 +1,5 @@
 using Ahk.GradeManagement.Client.Network;
+using Ahk.GradeManagement.Shared.Dtos.Response;
 
 
 namespace Ahk.GradeManagement.Client.Services;
@@ -19,7 +20,8 @@ public class SubjectService
         get => _currentSubject.CurrentSubject;
         set
         {
-            if (_currentSubject.CurrentSubject == value) return;
+            if (_currentSubject.CurrentSubject == value)
+                return;
             _currentSubject.CurrentSubject = value;
             NotifyStateChanged();
         }

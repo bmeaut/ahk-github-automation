@@ -6,9 +6,11 @@ namespace Ahk.GradeManagement.Bll.Services;
 
 public static class AuthorizationHelper
 {
-    public static string GetCurrentUserEmail(ClaimsPrincipal user)
+    public static string GetCurrentUserEmail(this ClaimsPrincipal user)
     {
-        return user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("email")?.Value;
+        return user.FindFirst(ClaimTypes.Email)?.Value
+            ?? user.FindFirst("email")?.Value
+            ?? user.FindFirst(ClaimTypes.Upn)?.Value;
     }
 
     public static string? GetCurrentUserRole(ClaimsPrincipal user)

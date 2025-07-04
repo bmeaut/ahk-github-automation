@@ -1,10 +1,12 @@
-using Ahk.GradeManagement.Client.Network;
+using Ahk.GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
 
 namespace Ahk.GradeManagement.Client.Components.Helpers;
 
 public static class Extensions
 {
-    public static SubjectRequest ToRequest(this SubjectResponse subject, ICollection<User>? teachers = null)
+    public static SubjectRequest ToRequest(this SubjectResponse subject, List<User>? teachers = null)
     {
         return new SubjectRequest
         {
@@ -27,7 +29,7 @@ public static class Extensions
         };
     }
 
-    public static GroupRequest ToRequest(this GroupResponse group, ICollection<User>? teachers = null)
+    public static GroupRequest ToRequest(this GroupResponse group, List<User>? teachers = null)
     {
         return new GroupRequest { Id = group.Id, Name = group.Name, CourseId = group.CourseId, Teachers = teachers };
     }
@@ -66,7 +68,7 @@ public static class Extensions
     }
 
 
-    public static StudentRequest ToRequest(this StudentResponse student, ICollection<long>? groupIds = null)
+    public static StudentRequest ToRequest(this StudentResponse student, List<long>? groupIds = null)
     {
         return new StudentRequest
         {

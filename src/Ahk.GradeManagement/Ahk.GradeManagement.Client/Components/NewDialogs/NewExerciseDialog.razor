@@ -1,4 +1,4 @@
-﻿<MudDialog>
+<MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h4">New Exercise</MudText>
     </TitleContent>
@@ -54,7 +54,7 @@
     public ExerciseRequest Value { get; set; } = new()
     {
         DueDate = DateTime.Now,
-        ScoreTypes = new Dictionary<string, string>()
+        ScoreTypes = new Dictionary<int, string>()
     };
 
     private void Submit() => MudDialog.Close(DialogResult.Ok(Value));
@@ -70,13 +70,13 @@
     }
 
     // ScoreTypes Logic
-    private List<KeyValuePair<string, string>> OrderedScoreTypes =>
-        Value.ScoreTypes.OrderBy(kvp => int.Parse(kvp.Key)).ToList();
+    private List<KeyValuePair<int, string>> OrderedScoreTypes =>
+        Value.ScoreTypes.OrderBy(kvp => kvp.Key).ToList();
 
     private void AddScoreType()
     {
         int nextKey = Value.ScoreTypes.Count + 1;
-        Value.ScoreTypes[nextKey.ToString()] = "";
+        Value.ScoreTypes[nextKey] = "";
     }
 
     private void RemoveScoreType(int index)
@@ -108,14 +108,14 @@
     {
         var list = OrderedScoreTypes;
         var pair = list[index];
-        list[index] = new KeyValuePair<string, string>(pair.Key, newValue);
+        list[index] = new KeyValuePair<int, string>(pair.Key, newValue);
         ReorderScoreTypes(list);
     }
 
-    private void ReorderScoreTypes(List<KeyValuePair<string, string>> list)
+    private void ReorderScoreTypes(List<KeyValuePair<int, string>> list)
     {
         Value.ScoreTypes = list
-            .Select((kvp, idx) => new KeyValuePair<string, string>((idx + 1).ToString(), kvp.Value))
+            .Select((kvp, idx) => new KeyValuePair<int, string>(idx + 1, kvp.Value))
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
 

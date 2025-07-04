@@ -45,6 +45,7 @@ public class Program
         builder.Services.AddControllersWithViews();
         builder.Services.AddOpenApiDocument(config =>
         {
+            config.DocumentName = "AHK2.OpenAPI";
             config.Title = "AHK Grade Management API";
         });
         builder.Services.AddRazorPages();

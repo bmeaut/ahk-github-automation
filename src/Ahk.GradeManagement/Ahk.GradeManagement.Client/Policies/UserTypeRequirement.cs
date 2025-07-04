@@ -1,4 +1,4 @@
-using Ahk.GradeManagement.Client.Network;
+using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 

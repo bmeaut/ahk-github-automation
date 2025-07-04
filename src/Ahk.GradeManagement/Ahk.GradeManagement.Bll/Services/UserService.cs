@@ -158,7 +158,7 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
         var email = AuthorizationHelper.GetCurrentUserEmail(httpContextUser);
         var currentUser = await gradeManagementDbContext.User
             .ProjectTo<Shared.Dtos.User>(mapper.ConfigurationProvider)
-            .SingleEntityAsync(u => u.BmeEmail == email, 0);
+            .SingleEntityAsync(u => u.BmeEmail == email, [email]);
         return currentUser;
     }
 }

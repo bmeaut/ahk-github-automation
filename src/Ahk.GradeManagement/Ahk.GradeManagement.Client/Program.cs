@@ -1,6 +1,7 @@
 using Ahk.GradeManagement.Client.Network;
 using Ahk.GradeManagement.Client.Policies;
 using Ahk.GradeManagement.Client.Services;
+using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -34,7 +35,7 @@ public class Program
         builder.Services.AddMsalAuthentication(options =>
         {
             builder.Configuration.Bind("AzureAd", options.ProviderOptions.Authentication);
-            options.ProviderOptions.DefaultAccessTokenScopes.Add("api://01834b53-87a0-4236-85d3-a999ecec0115/access_backend");
+            options.ProviderOptions.DefaultAccessTokenScopes.Add("api://0ff49368-7e23-4e6a-9c57-973a6cac8bbd/AHK2.API");
             //Add scope for email
         });
 

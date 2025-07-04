@@ -13,7 +13,8 @@ public class UserClaimsTransformation(UserService userService, SubjectTeacherSer
     {
         if (principal.Identity is ClaimsIdentity identity && identity.IsAuthenticated)
         {
-            var userEmail = identity.FindFirst(ClaimTypes.Email)?.Value ?? identity.FindFirst("email")?.Value;
+            var userEmail = principal.GetCurrentUserEmail();
+
             var user = await userService.GetOrCreateUserByEmailAsync(userEmail);
             var subjectRoles = await subjectTeacherService.GetAllSubjectsWithRolesForTeacherAsync(user.Id);
 
