@@ -1,8 +1,8 @@
-using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Shared.Enums;
 
 using System.Security.Claims;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public static class AuthorizationHelper
 {

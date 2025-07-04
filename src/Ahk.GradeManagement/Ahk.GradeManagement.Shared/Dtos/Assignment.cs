@@ -1,4 +1,4 @@
-namespace GradeManagement.Shared.Dtos;
+namespace Ahk.GradeManagement.Shared.Dtos;
 
 public class Assignment
 {

@@ -1,8 +1,8 @@
-﻿using GradeManagement.Client.Network;
+using Ahk.GradeManagement.Client.Network;
 
 using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Client.Policies;
+namespace Ahk.GradeManagement.Client.Policies;
 
 public class UserTypeAuthorizationHandler(UserClient userClient) : AuthorizationHandler<UserTypeRequirement>
 {
@@ -13,8 +13,6 @@ public class UserTypeAuthorizationHandler(UserClient userClient) : Authorization
         var user = await userClient.GetCurrentUserAsync();
 
         if (requirement.Type.Contains(user.Type))
-        {
             context.Succeed(requirement);
-        }
     }
 }

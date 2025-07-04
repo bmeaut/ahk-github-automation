@@ -1,8 +1,8 @@
-using GradeManagement.Data.Models.Interfaces;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
 
 using System.ComponentModel.DataAnnotations;
 
-namespace GradeManagement.Data.Models;
+namespace Ahk.GradeManagement.Dal.Entities;
 
 public class Subject : ISoftDelete, ITenant
 {

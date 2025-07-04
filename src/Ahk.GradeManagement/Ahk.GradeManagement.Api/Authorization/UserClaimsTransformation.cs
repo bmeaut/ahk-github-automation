@@ -1,11 +1,11 @@
-﻿using GradeManagement.Bll.Services;
-using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authentication;
 
 using System.Security.Claims;
 
-namespace GradeManagement.Server.Authorization;
+namespace Ahk.GradeManagement.Api.Authorization;
 
 public class UserClaimsTransformation(UserService userService, SubjectTeacherService subjectTeacherService) : IClaimsTransformation
 {

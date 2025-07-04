@@ -1,9 +1,9 @@
-﻿using GradeManagement.Bll.Services;
-using GradeManagement.Bll.Services.Moodle;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Bll.Services.Moodle;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GradeManagement.Bll;
+namespace Ahk.GradeManagement.Bll;
 
 public static class ServiceCollectionExtensions
 {

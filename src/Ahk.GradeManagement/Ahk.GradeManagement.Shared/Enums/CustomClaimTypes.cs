@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Shared.Enums;
+namespace Ahk.GradeManagement.Shared.Enums;
 
 public static class CustomClaimTypes
 {

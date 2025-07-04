@@ -1,6 +1,6 @@
-﻿using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Shared.Enums;
 
-namespace GradeManagement.Shared.Dtos.AssignmentEvents;
+namespace Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
 
 public class PullRequestStatusChanged : AssignmentEventBase
 {

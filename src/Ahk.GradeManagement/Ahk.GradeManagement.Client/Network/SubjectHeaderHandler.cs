@@ -1,8 +1,8 @@
-﻿using GradeManagement.Client.Services;
+using Ahk.GradeManagement.Client.Services;
 
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
-namespace GradeManagement.Client.Network;
+namespace Ahk.GradeManagement.Client.Network;
 
 public class SubjectHeaderHandler(SelectedSubjectService SelectedSubjectService) : DelegatingHandler
 {
@@ -12,9 +12,7 @@ public class SubjectHeaderHandler(SelectedSubjectService SelectedSubjectService)
         Console.WriteLine("SubjectHeaderHandler");
         var subjectId = SelectedSubjectService.CurrentSubject?.Id;
         if (subjectId is not null)
-        {
             request.Headers.Add("X-Subject-Id-Value", subjectId.ToString());
-        }
 
         return await base.SendAsync(request, cancellationToken);
     }

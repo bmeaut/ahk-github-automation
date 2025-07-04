@@ -1,7 +1,7 @@
-﻿using GradeManagement.Client.Network;
+using Ahk.GradeManagement.Client.Network;
 
 
-namespace GradeManagement.Client.Services;
+namespace Ahk.GradeManagement.Client.Services;
 
 public class SubjectService
 {
@@ -36,9 +36,7 @@ public class SubjectService
         Subjects = (await client.GetAllAsync()).ToList();
         //Subjects = [];
         if (_currentSubject.CurrentSubject is null && Subjects.Count > 0)
-        {
             _currentSubject.CurrentSubject = Subjects[0];
-        }
 
         return Subjects;
     }

@@ -1,6 +1,6 @@
-﻿using GradeManagement.Client.Network;
+using Ahk.GradeManagement.Client.Network;
 
-namespace GradeManagement.Client.Components.Helpers;
+namespace Ahk.GradeManagement.Client.Components.Helpers;
 
 public static class Extensions
 {

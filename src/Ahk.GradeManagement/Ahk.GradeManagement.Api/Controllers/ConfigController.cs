@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/config")]
@@ -14,9 +14,7 @@ public class ConfigController : ControllerBase
         var appUrl = Environment.GetEnvironmentVariable("APP_URL");
 
         if (string.IsNullOrEmpty(appUrl))
-        {
             return NotFound("APP_URL is not set.");
-        }
 
         return Ok(appUrl);
     }
@@ -29,9 +27,7 @@ public class ConfigController : ControllerBase
         var monitorUrl = Environment.GetEnvironmentVariable("MONITOR_URL");
 
         if (string.IsNullOrEmpty(monitorUrl))
-        {
             return NotFound("MONITOR_URL is not set.");
-        }
 
         return Ok(monitorUrl);
     }

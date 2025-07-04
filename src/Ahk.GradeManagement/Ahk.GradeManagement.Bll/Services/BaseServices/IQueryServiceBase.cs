@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Bll.Services.BaseServices;
+namespace Ahk.GradeManagement.Bll.Services.BaseServices;
 
 public interface IQueryServiceBase<TDto>
 {

@@ -1,9 +1,9 @@
-﻿using GradeManagement.Data;
-using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class SubjectTeacherService(GradeManagementDbContext gradeManagementDbContext)
 {

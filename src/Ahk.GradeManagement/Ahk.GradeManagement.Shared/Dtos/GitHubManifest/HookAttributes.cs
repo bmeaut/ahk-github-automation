@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GradeManagement.Shared.Dtos.GitHubManifest;
+namespace Ahk.GradeManagement.Shared.Dtos.GitHubManifest;
 
 public class HookAttributes
 {

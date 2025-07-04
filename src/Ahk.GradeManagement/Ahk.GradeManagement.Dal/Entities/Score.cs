@@ -1,6 +1,6 @@
-﻿using GradeManagement.Data.Models.Interfaces;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
 
-namespace GradeManagement.Data.Models;
+namespace Ahk.GradeManagement.Dal.Entities;
 
 public class Score : ISoftDelete, ITenant
 {

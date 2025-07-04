@@ -1,13 +1,9 @@
-﻿using GradeManagement.Bll.Services;
-using GradeManagement.Data;
-using GradeManagement.Server.Authorization.Policies;
-using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Api.Authorization.Policies;
+using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 
-using System.Security.Claims;
-
-namespace GradeManagement.Server.Authorization.Handlers;
+namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
 public class UserRequirementHandler : AuthorizationHandler<UserRequirement>
 {

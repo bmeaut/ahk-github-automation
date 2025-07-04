@@ -1,10 +1,9 @@
-﻿using GradeManagement.Bll;
-using GradeManagement.Bll.Services;
-using GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Shared.Dtos;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/dashboard")]

@@ -1,25 +1,24 @@
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+using Ahk.GradeManagement.Shared.Enums;
+
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
-using GradeManagement.Shared.Enums;
-
 using Microsoft.EntityFrameworkCore;
 
 using System.Security.Claims;
 
 using Task = System.Threading.Tasks.Task;
-using User = GradeManagement.Shared.Dtos.User;
+using User = Ahk.GradeManagement.Shared.Dtos.User;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class SubjectService(
     GradeManagementDbContext gradeManagementDbContext,
@@ -39,9 +38,7 @@ public class SubjectService(
     {
         var roleClaim = AuthorizationHelper.GetCurrentUserRole(httpContextUser);
         if (roleClaim != null && roleClaim == UserType.Admin.ToString())
-        {
             return await GetAllAsync();
-        }
 
         var user = await userService.GetCurrentUserAsync(httpContextUser);
         return await gradeManagementDbContext.SubjectTeacher
@@ -56,9 +53,7 @@ public class SubjectService(
     {
         var roleClaim = AuthorizationHelper.GetCurrentUserRole(httpContextUser);
         if (roleClaim != null && roleClaim == UserType.Admin.ToString())
-        {
             return await GetByIdAsync(id);
-        }
 
         var subjectsForUser = await GetAllAsyncForUserWithoutQf(httpContextUser);
 
@@ -68,9 +63,7 @@ public class SubjectService(
             .SingleEntityAsync(s => s.Id == id, id);
 
         if (subjectsForUser.Any(s => s.Id == id))
-        {
             return subject;
-        }
 
         throw new ValidationException("Id", id.ToString(), "The user does not have access to this subject!");
     }
@@ -108,9 +101,10 @@ public class SubjectService(
             gradeManagementDbContext.SubjectTeacher.RemoveRange(oldSubjectTeachers);
             foreach (var teacher in teachers)
             {
-                gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
+                gradeManagementDbContext.SubjectTeacher.Add(new Dal.Entities.SubjectTeacher
                 {
-                    SubjectId = subjectEntity.SubjectId, UserId = teacher.Id
+                    SubjectId = subjectEntity.SubjectId,
+                    UserId = teacher.Id
                 });
             }
         }
@@ -122,7 +116,7 @@ public class SubjectService(
 
     public async Task<SubjectResponse> CreateAsync(SubjectRequest requestDto)
     {
-        var subjectEntity = new Subject
+        var subjectEntity = new Dal.Entities.Subject
         {
             Name = requestDto.Name,
             NeptunCode = requestDto.NeptunCode,
@@ -139,9 +133,10 @@ public class SubjectService(
                 : await userService.GetAllUserEntitiesFromDtoListAsync(requestDto.Teachers);
         foreach (var teacher in teachers)
         {
-            gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
+            gradeManagementDbContext.SubjectTeacher.Add(new Dal.Entities.SubjectTeacher
             {
-                SubjectId = subjectEntity.SubjectId, UserId = teacher.Id
+                SubjectId = subjectEntity.SubjectId,
+                UserId = teacher.Id
             });
         }
 
@@ -188,9 +183,10 @@ public class SubjectService(
         var teacherEntity = await gradeManagementDbContext.User
             .SingleEntityAsync(u => u.Id == teacherId, teacherId);
 
-        gradeManagementDbContext.SubjectTeacher.Add(new SubjectTeacher
+        gradeManagementDbContext.SubjectTeacher.Add(new Dal.Entities.SubjectTeacher
         {
-            SubjectId = subjectEntity.SubjectId, UserId = teacherEntity.Id
+            SubjectId = subjectEntity.SubjectId,
+            UserId = teacherEntity.Id
         });
 
         await gradeManagementDbContext.SaveChangesAsync();
@@ -207,7 +203,7 @@ public class SubjectService(
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<Subject> GetModelByIdWithoutQfAsync(long id)
+    public async Task<Dal.Entities.Subject> GetModelByIdWithoutQfAsync(long id)
     {
         return await gradeManagementDbContext.Subject
             .IgnoreQueryFiltersButNotIsDeleted()

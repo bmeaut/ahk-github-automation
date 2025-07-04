@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Data;
+namespace Ahk.GradeManagement.Dal.Entities.Interfaces;
 
 public interface ISoftDelete
 {

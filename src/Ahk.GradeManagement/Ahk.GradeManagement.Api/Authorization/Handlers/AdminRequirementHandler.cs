@@ -1,8 +1,8 @@
-﻿using GradeManagement.Server.Authorization.Policies;
+using Ahk.GradeManagement.Api.Authorization.Policies;
 
 using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Server.Authorization.Handlers;
+namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
 public class AdminRequirementHandler : AuthorizationHandler<AdminRequirement>
 {

@@ -1,25 +1,26 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Linq.Queryable;
 
 using CsvHelper;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
-
 using Microsoft.EntityFrameworkCore;
 
 using System.Globalization;
 
-using Assignment = GradeManagement.Shared.Dtos.Assignment;
+using Assignment = Ahk.GradeManagement.Shared.Dtos.Assignment;
 using ValidationException = AutSoft.Common.Exceptions.ValidationException;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class ExerciseService(
     GradeManagementDbContext gradeManagementDbContext,
@@ -129,7 +130,7 @@ public class ExerciseService(
             .SingleEntityAsync(e => githubRepoName.StartsWith(e.GithubPrefix), 0);
     }
 
-    private async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderInTransactionAsync(
+    private async Task<List<Dal.Entities.ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrderInTransactionAsync(
         Dictionary<int, string> scoreTypes, long exerciseId)
     {
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
@@ -148,13 +149,13 @@ public class ExerciseService(
         return await gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToListAsync();
     }
 
-    private async Task<List<ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrdernAsync(
+    private async Task<List<Dal.Entities.ScoreTypeExercise>> GetScoreTypeExercisesByTypeAndOrdernAsync(
         Dictionary<int, string> scoreTypes, long exerciseId)
     {
         foreach (var (order, type) in scoreTypes)
         {
             var scoreType = await scoreTypeService.GetOrCreateScoreTypeByTypeStringAsync(type);
-            gradeManagementDbContext.ScoreTypeExercise.Add(new ScoreTypeExercise
+            gradeManagementDbContext.ScoreTypeExercise.Add(new Dal.Entities.ScoreTypeExercise
             {
                 ScoreTypeId = scoreType.Id, ExerciseId = exerciseId, Order = order
             });
@@ -165,7 +166,7 @@ public class ExerciseService(
         return await gradeManagementDbContext.ScoreTypeExercise.Where(s => s.ExerciseId == exerciseId).ToListAsync();
     }
 
-    public async Task<ScoreType> GetScoreTypeByOrderAndExerciseIdAsync(int order, long exerciseId)
+    public async Task<Dal.Entities.ScoreType> GetScoreTypeByOrderAndExerciseIdAsync(int order, long exerciseId)
     {
         var scoreTypeExercise = await gradeManagementDbContext.ScoreTypeExercise
             .Include(ste => ste.ScoreType)

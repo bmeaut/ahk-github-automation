@@ -1,9 +1,9 @@
-﻿using GradeManagement.Server.Authorization.Policies;
-using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Api.Authorization.Policies;
+using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Server.Authorization.Handlers;
+namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
 public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpContextAccessor)
     : AuthorizationHandler<DemonstratorOnSubjectRequirement>

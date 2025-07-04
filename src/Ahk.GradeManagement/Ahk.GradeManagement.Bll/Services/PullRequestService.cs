@@ -1,16 +1,16 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Shared.Dtos;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Data;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos;
-
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class PullRequestService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
 {
@@ -22,7 +22,7 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
             .SingleEntityAsync(p => p.Id == id, id);
     }
 
-    public async Task<Data.Models.PullRequest?> GetModelByUrlWithoutQfAsync(string pullRequestUrl)
+    public async Task<Dal.Entities.PullRequest?> GetModelByUrlWithoutQfAsync(string pullRequestUrl)
     {
         return await gradeManagementDbContext.PullRequest
             .IgnoreQueryFiltersButNotIsDeleted()
@@ -31,7 +31,7 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
 
     public async Task<PullRequest> CreateWithoutQfAsync(PullRequest pullRequest, long subjectId)
     {
-        var pullRequestEntity = new Data.Models.PullRequest()
+        var pullRequestEntity = new Dal.Entities.PullRequest()
         {
             Url = pullRequest.Url,
             OpeningDate = pullRequest.OpeningDate,
@@ -57,7 +57,7 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
             .ToListAsync();
     }
 
-    public async Task<List<Data.Models.Score>> GetLatestUnapprovedScoreModelsWithoutQfByIdAsync(long id)
+    public async Task<List<Dal.Entities.Score>> GetLatestUnapprovedScoreModelsWithoutQfByIdAsync(long id)
     {
         return await gradeManagementDbContext.Score
             .IgnoreQueryFiltersButNotIsDeleted()

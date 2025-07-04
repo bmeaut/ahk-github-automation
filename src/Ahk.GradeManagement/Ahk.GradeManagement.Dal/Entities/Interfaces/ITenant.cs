@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Data.Models.Interfaces;
+namespace Ahk.GradeManagement.Dal.Entities.Interfaces;
 
 public interface ITenant
 {

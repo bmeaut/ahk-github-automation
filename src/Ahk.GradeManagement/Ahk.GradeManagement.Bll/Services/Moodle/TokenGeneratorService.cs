@@ -1,9 +1,10 @@
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Config;
+
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-using GradeManagement.Data.Models;
-using GradeManagement.Shared.Config;
-using GradeManagement.Shared.Exceptions;
+using Ahk.GradeManagement.Shared.Exceptions;
 
 using Jose;
 
@@ -18,7 +19,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
-namespace GradeManagement.Bll.Services.Moodle;
+namespace Ahk.GradeManagement.Bll.Services.Moodle;
 
 public class TokenGeneratorService(IConfiguration configuration)
 {
@@ -64,11 +65,9 @@ public class TokenGeneratorService(IConfiguration configuration)
 
     private async Task<string> CreateToken(List<Claim> claims, Course course)
     {
-        string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
+        var keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
         if (keyVaultUrl == null)
-        {
             throw new Exception("Please set environment variable KEY_VAULT_URI");
-        }
 
         var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
         var moodlePrivateKey =
@@ -85,9 +84,7 @@ public class TokenGeneratorService(IConfiguration configuration)
             var pemReader = new PemReader(tr);
             var keyPair = pemReader.ReadObject() as AsymmetricCipherKeyPair;
             if (keyPair == null)
-            {
                 throw new MoodleSyncException("Could not read RSA private key");
-            }
 
             var privateRsaParams = keyPair.Private as RsaPrivateCrtKeyParameters;
             rsaParams = DotNetUtilities.ToRSAParameters(privateRsaParams);

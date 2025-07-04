@@ -1,12 +1,11 @@
-﻿using GradeManagement.Bll;
-using GradeManagement.Bll.Services;
-using GradeManagement.Server.Authorization.Policies;
-using GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Api.Authorization.Policies;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Shared.Dtos;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 [Authorize]
 [Route("api/pullrequests")]

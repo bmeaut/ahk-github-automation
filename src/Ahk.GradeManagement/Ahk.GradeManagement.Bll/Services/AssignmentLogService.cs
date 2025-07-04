@@ -1,7 +1,7 @@
-﻿using GradeManagement.Data;
-using GradeManagement.Data.Models;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class AssignmentLogService(GradeManagementDbContext gradeManagementDbContext)
 {

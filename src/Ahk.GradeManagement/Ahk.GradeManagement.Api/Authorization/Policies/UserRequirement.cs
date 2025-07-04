@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Server.Authorization.Policies;
+namespace Ahk.GradeManagement.Api.Authorization.Policies;
 
 public class UserRequirement : IAuthorizationRequirement
 {

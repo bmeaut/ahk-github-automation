@@ -1,9 +1,9 @@
-﻿using GradeManagement.Data;
-using GradeManagement.Data.Models;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class ScoreTypeService(GradeManagementDbContext gradeManagementDbContext)
 {

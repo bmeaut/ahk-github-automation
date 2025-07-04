@@ -1,11 +1,9 @@
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos.Moodle;
-using GradeManagement.Shared.Exceptions;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Dtos.Moodle;
+using Ahk.GradeManagement.Shared.Exceptions;
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
@@ -13,7 +11,7 @@ using System.Text;
 
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace GradeManagement.Bll.Services.Moodle;
+namespace Ahk.GradeManagement.Bll.Services.Moodle;
 
 public class MoodleIntegrationService(
     TokenGeneratorService tokenGeneratorService,
@@ -25,16 +23,19 @@ public class MoodleIntegrationService(
 
     public async Task UploadScore(Score score)
     {
-        if (score.SyncedToMoodle || !score.IsApproved) return;
+        if (score.SyncedToMoodle || !score.IsApproved)
+            return;
         var exercise = score.PullRequest.Assignment.Exercise;
         var course = exercise.Course;
         var student = score.PullRequest.Assignment.Student;
         var scoreType = score.ScoreType;
-        if (student.MoodleId == null) throw new MoodleSyncException("No moodle ID for student");
+        if (student.MoodleId == null)
+            throw new MoodleSyncException("No moodle ID for student");
 
         var token = await tokenGeneratorService.GenerateAccessToken(course);
 
-        if (token == null) throw new MoodleSyncException("Token was null when trying to register score");
+        if (token == null)
+            throw new MoodleSyncException("Token was null when trying to register score");
         var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -146,13 +147,16 @@ public class MoodleIntegrationService(
     public async Task<string> HandleJWT(IFormCollection formData)
     {
         var state = States[formData["state"]];
-        if (state == (null, null)) throw new MoodleSyncException("No state saved with given value!");
+        if (state == (null, null))
+            throw new MoodleSyncException("No state saved with given value!");
         States.Remove(formData["state"]);
         var id_token = formData["id_token"].FirstOrDefault();
-        if (id_token == null) throw new MoodleSyncException("No token available to be read!");
+        if (id_token == null)
+            throw new MoodleSyncException("No token available to be read!");
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.ReadToken(id_token) as JwtSecurityToken;
-        if (token == null) throw new MoodleSyncException("Error parsing token!");
+        if (token == null)
+            throw new MoodleSyncException("Error parsing token!");
         if (!token.Payload["aud"].Equals(state.Item1) || !token.Payload["nonce"].Equals(state.Item2))
             throw new MoodleSyncException("Wrong aud or nonce!");
         var lisClaimString = token.Payload[LtiLisClaim.JwtUrl].ToString() ??

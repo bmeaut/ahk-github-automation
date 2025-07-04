@@ -1,6 +1,6 @@
-﻿using MudBlazor;
+using MudBlazor;
 
-namespace GradeManagement.Client.Services;
+namespace Ahk.GradeManagement.Client.Services;
 
 public class CrudSnackbarService(ISnackbar snackbar)
 {

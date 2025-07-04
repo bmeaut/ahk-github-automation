@@ -1,6 +1,7 @@
-using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
+using Ahk.GradeManagement.Shared.Enums;
 
-namespace GradeManagement.Data.Models;
+namespace Ahk.GradeManagement.Dal.Entities;
 
 public class User : ISoftDelete
 {

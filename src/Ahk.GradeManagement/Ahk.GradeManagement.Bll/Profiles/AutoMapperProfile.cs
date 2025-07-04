@@ -1,21 +1,20 @@
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+
 using AutoMapper;
 
-using GradeManagement.Data.Models;
-using GradeManagement.Shared.Dtos;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
+using Assignment = Ahk.GradeManagement.Dal.Entities.Assignment;
+using Course = Ahk.GradeManagement.Dal.Entities.Course;
+using Language = Ahk.GradeManagement.Dal.Entities.Language;
+using PullRequest = Ahk.GradeManagement.Dal.Entities.PullRequest;
+using Score = Ahk.GradeManagement.Dal.Entities.Score;
+using ScoreType = Ahk.GradeManagement.Dal.Entities.ScoreType;
+using ScoreTypeExercise = Ahk.GradeManagement.Dal.Entities.ScoreTypeExercise;
+using Semester = Ahk.GradeManagement.Dal.Entities.Semester;
+using User = Ahk.GradeManagement.Dal.Entities.User;
 
-using Assignment = GradeManagement.Data.Models.Assignment;
-using Course = GradeManagement.Data.Models.Course;
-using Language = GradeManagement.Data.Models.Language;
-using PullRequest = GradeManagement.Data.Models.PullRequest;
-using Score = GradeManagement.Data.Models.Score;
-using ScoreType = GradeManagement.Data.Models.ScoreType;
-using ScoreTypeExercise = GradeManagement.Data.Models.ScoreTypeExercise;
-using Semester = GradeManagement.Data.Models.Semester;
-using User = GradeManagement.Data.Models.User;
-
-namespace GradeManagement.Bll.Profiles;
+namespace Ahk.GradeManagement.Bll.Profiles;
 
 public class AutoMapperProfile : Profile
 {

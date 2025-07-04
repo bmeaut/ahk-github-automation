@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
 
-namespace GradeManagement.Data.Utils;
+using Microsoft.EntityFrameworkCore;
+
+namespace Ahk.GradeManagement.Dal.Utils;
 
 public static class DbSetExtensions
 {

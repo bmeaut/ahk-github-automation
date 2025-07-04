@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GradeManagement.Shared.Dtos.Moodle;
+namespace Ahk.GradeManagement.Shared.Dtos.Moodle;
 
 public class LtiLisClaim
 {

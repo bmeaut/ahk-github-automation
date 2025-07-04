@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
+
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace GradeManagement.Data.Interceptors;
+namespace Ahk.GradeManagement.Dal.Interceptors;
 
 public class SoftDeleteInterceptor : SaveChangesInterceptor
 {

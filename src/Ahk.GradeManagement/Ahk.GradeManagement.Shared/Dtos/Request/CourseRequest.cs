@@ -1,4 +1,6 @@
-﻿namespace GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos;
+
+namespace Ahk.GradeManagement.Shared.Dtos.Request;
 
 public class CourseRequest
 {

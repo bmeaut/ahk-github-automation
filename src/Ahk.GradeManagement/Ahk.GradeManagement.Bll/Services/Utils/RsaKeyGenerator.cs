@@ -1,4 +1,4 @@
-namespace GradeManagement.Bll.Services.Utils;
+namespace Ahk.GradeManagement.Bll.Services.Utils;
 
 using System.Security.Cryptography;
 using System.Text;
@@ -22,7 +22,7 @@ public class RsaKeyGenerator
         var base64PrivateKey = Convert.ToBase64String(privateKeyBytes);
         var sb = new StringBuilder();
         sb.AppendLine("-----BEGIN RSA PRIVATE KEY-----");
-        for (int i = 0; i < base64PrivateKey.Length; i += 64)
+        for (var i = 0; i < base64PrivateKey.Length; i += 64)
         {
             sb.AppendLine(base64PrivateKey.Substring(i, Math.Min(64, base64PrivateKey.Length - i)));
         }
@@ -37,7 +37,7 @@ public class RsaKeyGenerator
         var base64PublicKey = Convert.ToBase64String(publicKeyBytes);
         var sb = new StringBuilder();
         sb.AppendLine("-----BEGIN PUBLIC KEY-----");
-        for (int i = 0; i < base64PublicKey.Length; i += 64)
+        for (var i = 0; i < base64PublicKey.Length; i += 64)
         {
             sb.AppendLine(base64PublicKey.Substring(i, Math.Min(64, base64PublicKey.Length - i)));
         }

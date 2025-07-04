@@ -1,12 +1,12 @@
-using GradeManagement.Data.Interceptors;
-using GradeManagement.Data.Models;
-using GradeManagement.Data.Models.Interfaces;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
+using Ahk.GradeManagement.Dal.Interceptors;
 
 using Microsoft.EntityFrameworkCore;
 
 using System.Linq.Expressions;
 
-namespace GradeManagement.Data;
+namespace Ahk.GradeManagement.Dal;
 
 public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext> options)
     : DbContext(options)
@@ -75,7 +75,8 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType) ||
-                !typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
+                !typeof(ITenant).IsAssignableFrom(entityType.ClrType))
+                continue;
 
             modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildTenantFilter(entityType.ClrType));
         }
@@ -97,7 +98,8 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (!typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType) ||
-                !typeof(ITenant).IsAssignableFrom(entityType.ClrType)) continue;
+                !typeof(ITenant).IsAssignableFrom(entityType.ClrType))
+                continue;
 
             modelBuilder.Entity(entityType.ClrType).HasQueryFilter(BuildTenantAndSoftDeleteFilter(entityType.ClrType));
         }

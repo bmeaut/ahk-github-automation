@@ -1,11 +1,10 @@
-using GradeManagement.Bll;
-using GradeManagement.Bll.Services;
-using GradeManagement.Shared.Dtos.AssignmentEvents;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
 
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace GradeManagement.QueueFunction.Functions;
+namespace Ahk.GradeManagement.QueueFunction.Functions;
 
 public class PullRequestStatusChangedEventFunction
 {

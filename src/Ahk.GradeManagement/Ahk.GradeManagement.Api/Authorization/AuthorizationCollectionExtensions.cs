@@ -1,10 +1,10 @@
-﻿using GradeManagement.Server.Authorization.Handlers;
-using GradeManagement.Server.Authorization.Policies;
+using Ahk.GradeManagement.Api.Authorization.Handlers;
+using Ahk.GradeManagement.Api.Authorization.Policies;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Server.Authorization;
+namespace Ahk.GradeManagement.Api.Authorization;
 
 public static class AuthorizationCollectionExtensions
 {

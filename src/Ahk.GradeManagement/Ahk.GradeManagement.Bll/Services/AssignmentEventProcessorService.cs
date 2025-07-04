@@ -1,17 +1,17 @@
-﻿using AutSoft.Common.Exceptions;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
+using Ahk.GradeManagement.Shared.Enums;
 
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Shared.Dtos.AssignmentEvents;
-using GradeManagement.Shared.Enums;
+using AutSoft.Common.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-using Assignment = GradeManagement.Shared.Dtos.Assignment;
-using PullRequest = GradeManagement.Shared.Dtos.PullRequest;
+using Assignment = Ahk.GradeManagement.Shared.Dtos.Assignment;
+using PullRequest = Ahk.GradeManagement.Shared.Dtos.PullRequest;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class AssignmentEventProcessorService(
     GradeManagementDbContext gradeManagementDbContext,
@@ -146,9 +146,7 @@ public class AssignmentEventProcessorService(
             var subject = await subjectService.GetModelByIdWithoutQfAsync(exercise.SubjectId);
 
             if (ciEvaluationCompleted.CiApiKey != subject.CiApiKey)
-            {
                 throw new SecurityTokenException("Invalid API key");
-            }
 
             if (string.IsNullOrEmpty(student.NeptunCode))
             {
@@ -197,7 +195,7 @@ public class AssignmentEventProcessorService(
 
             if (pullRequest == null)
             {
-                pullRequest = new Data.Models.PullRequest()
+                pullRequest = new Dal.Entities.PullRequest()
                 {
                     Url = teacherAssigned.PullRequestUrl,
                     OpeningDate = DateTime.UtcNow,

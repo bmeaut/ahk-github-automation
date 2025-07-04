@@ -1,6 +1,6 @@
-using GradeManagement.Bll;
-using GradeManagement.Bll.Profiles;
-using GradeManagement.Data.Utils;
+using Ahk.GradeManagement.Bll;
+using Ahk.GradeManagement.Bll.Profiles;
+using Ahk.GradeManagement.Dal.Utils;
 
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;

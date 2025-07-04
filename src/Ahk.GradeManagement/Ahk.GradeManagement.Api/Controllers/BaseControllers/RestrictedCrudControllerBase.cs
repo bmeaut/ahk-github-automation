@@ -1,8 +1,8 @@
-﻿using GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers.BaseControllers;
+namespace Ahk.GradeManagement.Api.Controllers.BaseControllers;
 
 public abstract class RestrictedCrudControllerBase<TDto>(IRestrictedCrudServiceBase<TDto> restrictedCrudService)
     : QueryControllerBase<TDto>(restrictedCrudService)

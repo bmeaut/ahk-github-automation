@@ -1,17 +1,17 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Shared.Enums;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos;
-using GradeManagement.Shared.Enums;
-
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class AssignmentService(
     GradeManagementDbContext gradeManagementDbContext,
@@ -35,7 +35,7 @@ public class AssignmentService(
 
     public async Task<Assignment> CreateAsync(Assignment requestDto, long subjectId)
     {
-        var assignmentEntity = new Data.Models.Assignment()
+        var assignmentEntity = new Dal.Entities.Assignment()
         {
             Id = requestDto.Id,
             GithubRepoName = requestDto.GithubRepoName,
@@ -57,13 +57,13 @@ public class AssignmentService(
             .ToListAsync();
     }
 
-    public async Task<Data.Models.PullRequest?> GetMergedPullRequestModelByIdAsync(long id)
+    public async Task<Dal.Entities.PullRequest?> GetMergedPullRequestModelByIdAsync(long id)
     {
         return await gradeManagementDbContext.PullRequest
             .SingleOrDefaultAsync(pr => pr.AssignmentId == id && pr.Status == PullRequestStatus.Merged);
     }
 
-    public async Task<Data.Models.Assignment> GetAssignmentModelByGitHubRepoNameWithoutQfAsync(string githubRepoName)
+    public async Task<Dal.Entities.Assignment> GetAssignmentModelByGitHubRepoNameWithoutQfAsync(string githubRepoName)
     {
         return await gradeManagementDbContext.Assignment
             .IgnoreQueryFiltersButNotIsDeleted()

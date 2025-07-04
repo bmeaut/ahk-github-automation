@@ -1,15 +1,15 @@
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Shared.Dtos;
+
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Shared.Dtos;
-
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class LanguageService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     : IRestrictedCrudServiceBase<Language>
@@ -30,7 +30,7 @@ public class LanguageService(GradeManagementDbContext gradeManagementDbContext, 
 
     public async Task<Language> CreateAsync(Language requestDto)
     {
-        var languageEntity = new Data.Models.Language();
+        var languageEntity = new Dal.Entities.Language();
         languageEntity.Name = requestDto.Name;
 
         gradeManagementDbContext.Language.Add(languageEntity);

@@ -1,8 +1,6 @@
-﻿using GradeManagement.Client.Services;
-
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
-namespace GradeManagement.Client.Network;
+namespace Ahk.GradeManagement.Client.Network;
 
 public class AuthorizationMessageHandler(IAccessTokenProvider tokenProvider) : DelegatingHandler
 {

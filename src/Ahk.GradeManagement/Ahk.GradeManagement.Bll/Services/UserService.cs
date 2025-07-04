@@ -1,41 +1,42 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Dtos;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+using Ahk.GradeManagement.Shared.Enums;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Shared.Dtos;
-using GradeManagement.Shared.Dtos.Response;
-using GradeManagement.Shared.Enums;
-
 using Microsoft.EntityFrameworkCore;
 
 using System.Security.Claims;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class UserService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
-    : ICrudServiceBase<User>
+    : ICrudServiceBase<Shared.Dtos.User>
 {
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<IEnumerable<Shared.Dtos.User>> GetAllAsync()
     {
         return await gradeManagementDbContext.User
-            .ProjectTo<User>(mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.User>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<User> GetByIdAsync(long id)
+    public async Task<Shared.Dtos.User> GetByIdAsync(long id)
     {
         return await gradeManagementDbContext.User
-            .ProjectTo<User>(mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.User>(mapper.ConfigurationProvider)
             .SingleEntityAsync(u => u.Id == id, id);
     }
 
-    public async Task<User> CreateAsync(User requestDto)
+    public async Task<Shared.Dtos.User> CreateAsync(Shared.Dtos.User requestDto)
     {
-        var userEntity = new Data.Models.User
+        var userEntity = new Dal.Entities.User
         {
             Name = requestDto.Name,
             NeptunCode = requestDto.NeptunCode,
@@ -45,7 +46,7 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
         };
         gradeManagementDbContext.User.Add(userEntity);
         await gradeManagementDbContext.SaveChangesAsync();
-        return mapper.Map<User>(userEntity);
+        return mapper.Map<Shared.Dtos.User>(userEntity);
     }
 
     public async Task DeleteAsync(long id)
@@ -63,7 +64,7 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
         await gradeManagementDbContext.SaveChangesAsync();
     }
 
-    public async Task<User> UpdateAsync(long id, User requestDto)
+    public async Task<Shared.Dtos.User> UpdateAsync(long id, Shared.Dtos.User requestDto)
     {
         if (requestDto.Id != id)
         {
@@ -79,7 +80,7 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
         userEntity.Type = requestDto.Type;
 
         await gradeManagementDbContext.SaveChangesAsync();
-        return mapper.Map<User>(userEntity);
+        return mapper.Map<Shared.Dtos.User>(userEntity);
     }
 
     public async Task<List<GroupResponse>> GetAllGroupsByIdAsync(long id)
@@ -102,7 +103,7 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
             .ToListAsync();
     }
 
-    public async Task<List<Data.Models.User>> GetAllUserEntitiesFromDtoListAsync(List<User> users)
+    public async Task<List<Dal.Entities.User>> GetAllUserEntitiesFromDtoListAsync(List<Shared.Dtos.User> users)
     {
         var userEntities = await gradeManagementDbContext.User
             .Where(t => users.Select(rqT => rqT.Id).Contains(t.Id))
@@ -114,32 +115,32 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
                 users.Where(rqT => userEntities.All(t => t.Id != rqT.Id)).Select(t => t.Id).ToList();
             foreach (var teacherId in teachersNotFoundIds)
             {
-                throw EntityNotFoundException.CreateForType<Data.Models.User>(teacherId);
+                throw EntityNotFoundException.CreateForType<Dal.Entities.User>(teacherId);
             }
         }
 
         return userEntities;
     }
 
-    public async Task<List<PullRequest>> GetAllPullRequestsByIdAsync(long id)
+    public async Task<List<Shared.Dtos.PullRequest>> GetAllPullRequestsByIdAsync(long id)
     {
         return await gradeManagementDbContext.PullRequest
             .Where(pr => pr.TeacherId == id)
-            .ProjectTo<PullRequest>(mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.PullRequest>(mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<Data.Models.User> GetModelByGitHubIdAsync(string githubId)
+    public async Task<Dal.Entities.User> GetModelByGitHubIdAsync(string githubId)
     {
         return await gradeManagementDbContext.User
             .SingleEntityAsync(u => u.GithubId == githubId, 0);
     }
 
-    public async Task<Data.Models.User> GetOrCreateUserByEmailAsync(string email)
+    public async Task<Dal.Entities.User> GetOrCreateUserByEmailAsync(string email)
     {
         var user = await gradeManagementDbContext.User.Where(u => u.BmeEmail == email).FirstOrDefaultAsync();
         if (user != null) return user;
-        user = new Data.Models.User
+        user = new Dal.Entities.User
         {
             Name = "Auto Generated from email: " + email,
             NeptunCode = "",
@@ -152,11 +153,11 @@ public class UserService(GradeManagementDbContext gradeManagementDbContext, IMap
         return user;
     }
 
-    public async Task<User> GetCurrentUserAsync(ClaimsPrincipal httpContextUser)
+    public async Task<Shared.Dtos.User> GetCurrentUserAsync(ClaimsPrincipal httpContextUser)
     {
         var email = AuthorizationHelper.GetCurrentUserEmail(httpContextUser);
         var currentUser = await gradeManagementDbContext.User
-            .ProjectTo<User>(mapper.ConfigurationProvider)
+            .ProjectTo<Shared.Dtos.User>(mapper.ConfigurationProvider)
             .SingleEntityAsync(u => u.BmeEmail == email, 0);
         return currentUser;
     }

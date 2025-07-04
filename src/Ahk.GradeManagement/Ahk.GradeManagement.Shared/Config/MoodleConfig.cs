@@ -1,4 +1,4 @@
-namespace GradeManagement.Shared.Config;
+namespace Ahk.GradeManagement.Shared.Config;
 
 public class MoodleConfig
 {

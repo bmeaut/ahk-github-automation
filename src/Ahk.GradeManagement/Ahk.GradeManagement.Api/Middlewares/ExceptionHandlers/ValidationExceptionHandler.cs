@@ -1,9 +1,9 @@
-﻿using AutSoft.Common.Exceptions;
+using AutSoft.Common.Exceptions;
 
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Middlewares.ExceptionHandlers;
+namespace Ahk.GradeManagement.Api.Middlewares.ExceptionHandlers;
 
 public class ValidationExceptionHandler : IExceptionHandler
 {

@@ -1,8 +1,8 @@
-using GradeManagement.Bll.Services.Moodle;
+using Ahk.GradeManagement.Bll.Services.Moodle;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 [Route("api/moodle")]
 [ApiController]

@@ -1,22 +1,21 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-using Assignment = GradeManagement.Shared.Dtos.Assignment;
+using Assignment = Ahk.GradeManagement.Shared.Dtos.Assignment;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class StudentService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     : ICrudServiceBase<StudentRequest, StudentResponse>
@@ -40,7 +39,9 @@ public class StudentService(GradeManagementDbContext gradeManagementDbContext, I
     {
         var studentEntity = new Student()
         {
-            Name = requestDto.Name, NeptunCode = requestDto.NeptunCode, GithubId = requestDto.GithubId
+            Name = requestDto.Name,
+            NeptunCode = requestDto.NeptunCode,
+            GithubId = requestDto.GithubId
         };
 
         gradeManagementDbContext.Student.Add(studentEntity);
@@ -123,7 +124,8 @@ public class StudentService(GradeManagementDbContext gradeManagementDbContext, I
         var student = await gradeManagementDbContext.Student
             .SingleOrDefaultAsync(s => s.GithubId == studentGitHubId);
 
-        if (student != null) return student;
+        if (student != null)
+            return student;
 
         student = new Student { Name = "Auto created from GitHub ID: " + studentGitHubId, GithubId = studentGitHubId };
         gradeManagementDbContext.Student.Add(student);
@@ -137,9 +139,10 @@ public class StudentService(GradeManagementDbContext gradeManagementDbContext, I
         var student = await gradeManagementDbContext.Student
             .SingleOrDefaultAsync(s => s.NeptunCode == studentNeptun);
 
-        if (student != null) return;
+        if (student != null)
+            return;
 
-        student = new Student { Name = studentName, NeptunCode = studentNeptun, MoodleId = studentMoodleId};
+        student = new Student { Name = studentName, NeptunCode = studentNeptun, MoodleId = studentMoodleId };
         gradeManagementDbContext.Student.Add(student);
         await gradeManagementDbContext.SaveChangesAsync();
     }

@@ -1,6 +1,6 @@
-﻿using GradeManagement.Client.Network;
+using Ahk.GradeManagement.Client.Network;
 
-namespace GradeManagement.Client.Services;
+namespace Ahk.GradeManagement.Client.Services;
 
 public class SelectedSubjectService
 {

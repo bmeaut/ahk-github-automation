@@ -1,6 +1,8 @@
-﻿using GradeManagement.Client.Services;
+using Ahk.GradeManagement.Client.Services;
 
-namespace GradeManagement.Client.Network;
+using Ahk.GradeManagement.Client.Network;
+
+namespace Ahk.GradeManagement.Client.Network;
 
 public class ExceptionMessageHandler(CrudSnackbarService _crudSnackbarService) : DelegatingHandler
 {

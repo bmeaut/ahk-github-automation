@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Ahk.GradeManagement.Dal;
+
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GradeManagement.Data.Utils;
+namespace Ahk.GradeManagement.Dal.Utils;
 
 public static class ServiceCollectionExtensions
 {

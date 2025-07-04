@@ -1,15 +1,13 @@
-using GradeManagement.Bll;
-using GradeManagement.Bll.Services;
-using GradeManagement.Server.Authorization.Policies;
-using GradeManagement.Server.Controllers.BaseControllers;
-using GradeManagement.Shared.Dtos;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
+using Ahk.GradeManagement.Api.Authorization.Policies;
+using Ahk.GradeManagement.Api.Controllers.BaseControllers;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 //[Authorize]
 [Route("api/courses")]

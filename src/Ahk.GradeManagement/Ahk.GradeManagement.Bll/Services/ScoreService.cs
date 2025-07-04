@@ -1,14 +1,13 @@
-﻿using AutSoft.Linq.Queryable;
+using Ahk.GradeManagement.Bll.Services.Moodle;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Dal.Utils;
 
-using GradeManagement.Bll.Services.Moodle;
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Data.Utils;
-using GradeManagement.Shared.Dtos.AssignmentEvents;
+using AutSoft.Linq.Queryable;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class ScoreService(
     GradeManagementDbContext gradeManagementDbContext,
@@ -45,8 +44,8 @@ public class ScoreService(
         score.IsApproved = true;
         score.TeacherId = teacherId;
 
-        gradeManagementDbContext.SaveChangesAsync();
-        moodleIntegrationService.UploadScore(score);
+        await gradeManagementDbContext.SaveChangesAsync();
+        await moodleIntegrationService.UploadScore(score);
     }
 
     public async Task CreateOrApprovePointsFromTeacherInputWithoutQfAsync(
@@ -86,7 +85,7 @@ public class ScoreService(
             .Include(s => s.ScoreType)
             .SingleEntityAsync(s => s.Id == scoreEntity.Id, scoreEntity.Id);
 
-        moodleIntegrationService.UploadScore(scoreToUpload);
+        await moodleIntegrationService.UploadScore(scoreToUpload);
     }
 
     private async Task<Score?> GetLatestModelByScoreValueAndTypeWithoutQfAsync(double score, ScoreType scoreType)

@@ -1,4 +1,4 @@
-namespace GradeManagement.Shared.Dtos.Request;
+namespace Ahk.GradeManagement.Shared.Dtos.Request;
 
 public class GroupRequest
 {

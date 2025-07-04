@@ -1,6 +1,6 @@
-﻿using GradeManagement.Shared.Enums;
+using Ahk.GradeManagement.Shared.Enums;
 
-namespace GradeManagement.Shared.Dtos;
+namespace Ahk.GradeManagement.Shared.Dtos;
 
 public class PullRequestForDashboard
 {

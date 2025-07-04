@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Client.Network;
+namespace Ahk.GradeManagement.Client.Network;
 
 using System;
 using System.Collections.Generic;

@@ -1,9 +1,9 @@
-﻿using GradeManagement.Bll.Services;
-using GradeManagement.Shared.Dtos.AssignmentEvents;
+using Ahk.GradeManagement.Bll.Services;
+using Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/cievaluation")]

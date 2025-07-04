@@ -1,4 +1,4 @@
-namespace GradeManagement.Shared.Dtos.Moodle;
+namespace Ahk.GradeManagement.Shared.Dtos.Moodle;
 
 using System.Text.Json.Serialization;
 using System.Collections.Generic;

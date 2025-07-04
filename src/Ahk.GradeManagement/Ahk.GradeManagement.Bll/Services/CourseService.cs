@@ -1,4 +1,10 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Shared.Config;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
@@ -7,18 +13,13 @@ using AutSoft.Linq.Queryable;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Bll.Services.Utils;
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Shared.Config;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
-using GradeManagement.Shared.Exceptions;
+using Ahk.GradeManagement.Bll.Services.Utils;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     : ICrudServiceBase<CourseRequest, CourseResponse>
@@ -66,9 +67,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
     public async Task<CourseResponse> CreateAsync(CourseRequest requestDto)
     {
         if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
-        {
             throw new UnauthorizedException("Current subject does not match the subject of the course!");
-        }
 
         var keyGenerator = new RsaKeyGenerator();
 

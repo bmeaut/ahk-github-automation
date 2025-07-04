@@ -1,21 +1,21 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
+using Ahk.GradeManagement.Shared.Dtos.Request;
+using Ahk.GradeManagement.Shared.Dtos.Response;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Data.Models;
-using GradeManagement.Shared.Dtos.Request;
-using GradeManagement.Shared.Dtos.Response;
-
 using Microsoft.EntityFrameworkCore;
 
-using GroupTeacher = GradeManagement.Data.Models.GroupTeacher;
-using User = GradeManagement.Shared.Dtos.User;
+using GroupTeacher = Ahk.GradeManagement.Dal.Entities.GroupTeacher;
+using User = Ahk.GradeManagement.Shared.Dtos.User;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class GroupService(
     GradeManagementDbContext gradeManagementDbContext,

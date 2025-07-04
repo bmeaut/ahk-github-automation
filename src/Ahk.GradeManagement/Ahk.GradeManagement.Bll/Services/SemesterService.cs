@@ -1,15 +1,15 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Shared.Dtos;
+
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
 using AutSoft.Linq.Queryable;
 
-using GradeManagement.Bll.Services.BaseServices;
-using GradeManagement.Data;
-using GradeManagement.Shared.Dtos;
-
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class SemesterService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
     : IRestrictedCrudServiceBase<Semester>
@@ -30,7 +30,7 @@ public class SemesterService(GradeManagementDbContext gradeManagementDbContext, 
 
     public async Task<Semester> CreateAsync(Semester requestDto)
     {
-        var semesterEntity = new Data.Models.Semester { Name = requestDto.Name };
+        var semesterEntity = new Dal.Entities.Semester { Name = requestDto.Name };
 
         gradeManagementDbContext.Semester.Add(semesterEntity);
         await gradeManagementDbContext.SaveChangesAsync();

@@ -1,3 +1,3 @@
-﻿namespace GradeManagement.Shared.Dtos.AssignmentEvents;
+namespace Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
 
 public class AssignmentAccepted : AssignmentEventBase;

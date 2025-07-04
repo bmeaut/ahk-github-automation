@@ -1,8 +1,8 @@
-﻿using GradeManagement.Client.Network;
+using Ahk.GradeManagement.Client.Network;
 
 using Microsoft.AspNetCore.Authorization;
 
-namespace GradeManagement.Client.Policies;
+namespace Ahk.GradeManagement.Client.Policies;
 
 public class UserTypeRequirement(UserType[] type) : IAuthorizationRequirement
 {

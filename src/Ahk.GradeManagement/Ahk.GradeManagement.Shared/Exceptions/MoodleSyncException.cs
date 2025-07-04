@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Shared.Exceptions;
+namespace Ahk.GradeManagement.Shared.Exceptions;
 
 public class MoodleSyncException : Exception
 {

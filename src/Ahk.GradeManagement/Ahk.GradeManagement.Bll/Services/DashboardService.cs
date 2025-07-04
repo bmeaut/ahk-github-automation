@@ -1,11 +1,11 @@
-﻿using AutoMapper;
+using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Shared.Dtos;
 
-using GradeManagement.Data;
-using GradeManagement.Shared.Dtos;
+using AutoMapper;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace GradeManagement.Bll.Services;
+namespace Ahk.GradeManagement.Bll.Services;
 
 public class DashboardService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
 {

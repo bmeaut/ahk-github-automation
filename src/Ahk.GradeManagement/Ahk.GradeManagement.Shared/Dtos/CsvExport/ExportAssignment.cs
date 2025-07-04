@@ -1,4 +1,4 @@
-﻿namespace GradeManagement.Shared.Dtos.CsvExport;
+namespace Ahk.GradeManagement.Shared.Dtos.CsvExport;
 
 public class ExportAssignment
 {

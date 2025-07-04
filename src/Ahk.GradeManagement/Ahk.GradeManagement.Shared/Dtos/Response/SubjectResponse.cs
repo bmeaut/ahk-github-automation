@@ -1,4 +1,4 @@
-namespace GradeManagement.Shared.Dtos.Response;
+namespace Ahk.GradeManagement.Shared.Dtos.Response;
 
 public class SubjectResponse
 {

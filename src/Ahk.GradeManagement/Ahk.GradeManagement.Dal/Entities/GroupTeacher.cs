@@ -1,4 +1,6 @@
-namespace GradeManagement.Data.Models;
+using Ahk.GradeManagement.Dal.Entities.Interfaces;
+
+namespace Ahk.GradeManagement.Dal.Entities;
 
 public class GroupTeacher : ISoftDelete
 {

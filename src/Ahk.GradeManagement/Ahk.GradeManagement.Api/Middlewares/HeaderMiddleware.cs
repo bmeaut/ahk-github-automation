@@ -1,6 +1,6 @@
-﻿using GradeManagement.Data;
+using Ahk.GradeManagement.Dal;
 
-namespace GradeManagement.Server.Middlewares;
+namespace Ahk.GradeManagement.Api.Middlewares;
 
 public class HeaderMiddleware(RequestDelegate next)
 {
@@ -9,9 +9,7 @@ public class HeaderMiddleware(RequestDelegate next)
         if (context.Request.Headers.TryGetValue("X-Subject-Id-Value", out var subjectIdHeader))
         {
             if (long.TryParse(subjectIdHeader, out var subjectId))
-            {
                 gradeManagementDbContext.SubjectIdValue = subjectId;
-            }
         }
 
         await next(context);

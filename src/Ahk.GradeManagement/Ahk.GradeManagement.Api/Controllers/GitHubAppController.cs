@@ -1,15 +1,16 @@
+using Ahk.GradeManagement.Shared.Dtos.GitHubManifest;
+
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
 using GradeManagement.Data;
-using GradeManagement.Shared.Dtos.GitHubManifest;
 
 using Microsoft.AspNetCore.Mvc;
 
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace GradeManagement.Server.Controllers;
+namespace Ahk.GradeManagement.Api.Controllers;
 
 [Route("api/github")]
 [ApiController]
@@ -18,8 +19,8 @@ public class GitHubAppController(IHttpClientFactory httpClientFactory) : Control
     [HttpGet]
     public async Task<IActionResult> CreateGitHubApp([FromQuery] string code)
     {
-        string appUrl = Environment.GetEnvironmentVariable("APP_URL");
-        string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
+        var appUrl = Environment.GetEnvironmentVariable("APP_URL");
+        var keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
         var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
         var httpClient = httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
