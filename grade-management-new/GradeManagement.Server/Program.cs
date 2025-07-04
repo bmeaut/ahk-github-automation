@@ -41,9 +41,6 @@ namespace GradeManagement.Server
             builder.Services.AddPolicies();
             builder.Services.AddRequirementHandlers();
 
-            builder.Services.AddDbContext<GradeManagementDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
-
             builder.Services.AddGradeManagementDbContext(builder.Configuration, "DbConnection");
 
             // Add services to the container.

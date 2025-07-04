@@ -109,11 +109,15 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long>("LanguageId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("MoodleCourseId")
+                    b.Property<string>("MoodleClientId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -142,8 +146,15 @@ namespace GradeManagement.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("ClassroomUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<long>("CourseId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("DueDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("GithubPrefix")
                         .IsRequired()
@@ -152,15 +163,19 @@ namespace GradeManagement.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("MoodleScoreNamePrefix")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MoodleScoreUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("SubjectId")
                         .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset>("dueDate")
-                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -338,6 +353,9 @@ namespace GradeManagement.Data.Migrations
                     b.Property<long>("SubjectId")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("SyncedToMoodle")
+                        .HasColumnType("bit");
+
                     b.Property<long?>("TeacherId")
                         .HasColumnType("bigint");
 
@@ -392,17 +410,12 @@ namespace GradeManagement.Data.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<long?>("ScoreId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("ScoreTypeId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ExerciseId");
-
-                    b.HasIndex("ScoreId");
 
                     b.HasIndex("ScoreTypeId");
 
@@ -442,6 +455,9 @@ namespace GradeManagement.Data.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("MoodleId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -727,13 +743,8 @@ namespace GradeManagement.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GradeManagement.Data.Models.Score", null)
-                        .WithMany("ScoreTypeExercises")
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("GradeManagement.Data.Models.ScoreType", "ScoreType")
-                        .WithMany()
+                        .WithMany("ScoreTypeExercises")
                         .HasForeignKey("ScoreTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -802,13 +813,10 @@ namespace GradeManagement.Data.Migrations
                     b.Navigation("Scores");
                 });
 
-            modelBuilder.Entity("GradeManagement.Data.Models.Score", b =>
-                {
-                    b.Navigation("ScoreTypeExercises");
-                });
-
             modelBuilder.Entity("GradeManagement.Data.Models.ScoreType", b =>
                 {
+                    b.Navigation("ScoreTypeExercises");
+
                     b.Navigation("Scores");
                 });
 
