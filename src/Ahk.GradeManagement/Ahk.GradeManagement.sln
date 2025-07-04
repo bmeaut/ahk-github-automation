@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34616.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Api", "Ahk.GradeManagement.Api\Ahk.GradeManagement.Api.csproj", "{46F4253C-2972-44EA-954F-F3FA505EA493}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Shared", "Ahk.GradeManagement.Shared\Ahk.GradeManagement.Shared.csproj", "{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Dal", "Ahk.GradeManagement.Dal\Ahk.GradeManagement.Dal.csproj", "{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Client", "Ahk.GradeManagement.Client\Ahk.GradeManagement.Client.csproj", "{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Bll", "Ahk.GradeManagement.Bll\Ahk.GradeManagement.Bll.csproj", "{C35296DC-6738-461E-BE3C-44C29081E4D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.QueueFunction", "Ahk.GradeManagement.QueueFunction\Ahk.GradeManagement.QueueFunction.csproj", "{060978F8-B9A6-4CAC-99A0-6BC3B932719E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{46F4253C-2972-44EA-954F-F3FA505EA493}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46F4253C-2972-44EA-954F-F3FA505EA493}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46F4253C-2972-44EA-954F-F3FA505EA493}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46F4253C-2972-44EA-954F-F3FA505EA493}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1DEEC4A-D24D-4EB1-BEF3-590A2F87DC41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C3B8C57-9CD2-422E-AC59-A1C330899DCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5332B0A-FE4C-4EC3-BF39-1B37DA4BEA41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C35296DC-6738-461E-BE3C-44C29081E4D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C35296DC-6738-461E-BE3C-44C29081E4D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C35296DC-6738-461E-BE3C-44C29081E4D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C35296DC-6738-461E-BE3C-44C29081E4D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {97A48E62-DF9C-4807-9113-FB0C29A8899B}
+	EndGlobalSection
+EndGlobal

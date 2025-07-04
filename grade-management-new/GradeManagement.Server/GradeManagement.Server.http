@@ -1,6 +1,0 @@
-@GradeManagement.Server_HostAddress = https://app.mm-home.eu
-
-GET {{GradeManagement.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
