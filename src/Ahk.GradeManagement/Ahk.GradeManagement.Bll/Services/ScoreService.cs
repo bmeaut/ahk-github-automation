@@ -1,7 +1,7 @@
 using Ahk.GradeManagement.Bll.Services.Moodle;
 using Ahk.GradeManagement.Dal;
 using Ahk.GradeManagement.Dal.Entities;
-using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Dal.Extensions;
 
 using AutSoft.Linq.Queryable;
 

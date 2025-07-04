@@ -1,15 +1,12 @@
-using Ahk.GradeManagement.Dal;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Ahk.GradeManagement.Dal.Utils;
+namespace Ahk.GradeManagement.Dal;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddGradeManagementDbContext(this IServiceCollection services,
-        IConfiguration configuration, string connectionStringName)
+    public static IServiceCollection AddGradeManagementDbContext(this IServiceCollection services, IConfiguration configuration, string connectionStringName)
     {
         services.AddDbContext<GradeManagementDbContext>(options =>
         {

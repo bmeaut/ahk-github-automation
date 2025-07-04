@@ -10,9 +10,7 @@ namespace Ahk.GradeManagement.Api.Controllers;
 [ApiController]
 [Route("api/testassignmentevents")]
 [Authorize(Policy = AdminRequirement.PolicyName)]
-public class AssingmentEventTestController(
-    AssignmentEventProcessorService assignmentEventProcessorService,
-    IWebHostEnvironment environment)
+public class AssingmentEventTestController(AssignmentEventProcessorService assignmentEventProcessorService, IWebHostEnvironment environment)
     : ControllerBase
 {
     [HttpPost("assignmentaccepted")]

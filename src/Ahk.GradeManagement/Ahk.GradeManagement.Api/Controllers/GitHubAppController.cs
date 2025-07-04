@@ -3,8 +3,6 @@ using Ahk.GradeManagement.Shared.Dtos.GitHubManifest;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-using GradeManagement.Data;
-
 using Microsoft.AspNetCore.Mvc;
 
 using System.Net.Http.Headers;

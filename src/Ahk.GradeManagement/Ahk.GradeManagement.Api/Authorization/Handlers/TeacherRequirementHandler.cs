@@ -7,10 +7,9 @@ namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
 public class TeacherRequirementHandler : AuthorizationHandler<TeacherRequirement>
 {
-    protected override Task HandleRequirementAsync(
-        AuthorizationHandlerContext context, TeacherRequirement requirement)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, TeacherRequirement requirement)
     {
-        if (AdminRoleChecker.CheckAdminRole(context, requirement))
+        if (context.User.IsInAdminRole())
         {
             context.Succeed(requirement);
             return Task.CompletedTask;

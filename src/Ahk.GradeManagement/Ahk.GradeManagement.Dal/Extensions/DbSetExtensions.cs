@@ -2,7 +2,7 @@ using Ahk.GradeManagement.Dal.Entities.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace Ahk.GradeManagement.Dal.Utils;
+namespace Ahk.GradeManagement.Dal.Extensions;
 
 public static class DbSetExtensions
 {

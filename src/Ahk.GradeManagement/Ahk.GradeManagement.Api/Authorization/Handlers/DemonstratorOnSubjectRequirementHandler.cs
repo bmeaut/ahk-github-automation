@@ -3,13 +3,14 @@ using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 
+using System.Globalization;
+
 namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
 public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpContextAccessor)
     : AuthorizationHandler<DemonstratorOnSubjectRequirement>
 {
-    protected override Task HandleRequirementAsync(
-        AuthorizationHandlerContext context, DemonstratorOnSubjectRequirement requirement)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, DemonstratorOnSubjectRequirement requirement)
     {
         var httpContext = httpContextAccessor.HttpContext;
         if (httpContext == null)
@@ -18,26 +19,24 @@ public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpCo
             return Task.CompletedTask;
         }
 
-        if (AdminRoleChecker.CheckAdminRole(context, requirement))
+        if (context.User.IsInAdminRole())
         {
             context.Succeed(requirement);
             return Task.CompletedTask;
         }
 
-        if (httpContext.Request.Headers.TryGetValue("X-Subject-Id-Value", out var subjectIdHeader))
+        if (httpContext.Request.Headers.TryGetValue("X-Subject-Id-Value", out var subjectIdHeader)
+            && long.TryParse(subjectIdHeader, out var subjectId))
         {
-            if (long.TryParse(subjectIdHeader, out var subjectId))
+            var subjectAccessClaims = context.User.FindAll(CustomClaimTypes.SubjectAccess).Select(c => c.Value).ToList();
+            var roleOnSubjectClaim = context.User.FindFirst($"{CustomClaimTypes.AccessLevel}_{subjectId}");
+
+            if (subjectAccessClaims.Contains(subjectId.ToString(CultureInfo.InvariantCulture))
+                && roleOnSubjectClaim != null
+                && (roleOnSubjectClaim.Value == UserRoleOnSubject.Demonstrator.ToString() || roleOnSubjectClaim.Value == UserRoleOnSubject.Teacher.ToString()))
             {
-                var subjectAccessClaims =
-                    context.User.FindAll(CustomClaimTypes.SubjectAccess).Select(c => c.Value).ToList();
-                var roleOnSubjectClaim = context.User.FindFirst($"{CustomClaimTypes.AccessLevel}_{subjectId}");
-                if (subjectAccessClaims.Contains(subjectId.ToString()) && roleOnSubjectClaim != null &&
-                    (roleOnSubjectClaim.Value == UserRoleOnSubject.Demonstrator.ToString() ||
-                     roleOnSubjectClaim.Value == UserRoleOnSubject.Teacher.ToString()))
-                {
-                    context.Succeed(requirement);
-                    return Task.CompletedTask;
-                }
+                context.Succeed(requirement);
+                return Task.CompletedTask;
             }
         }
 

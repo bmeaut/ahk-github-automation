@@ -1,7 +1,7 @@
-namespace Ahk.GradeManagement.Bll.Services.Utils;
-
 using System.Security.Cryptography;
 using System.Text;
+
+namespace Ahk.GradeManagement.Bll.Services.Utils;
 
 public class RsaKeyGenerator
 {

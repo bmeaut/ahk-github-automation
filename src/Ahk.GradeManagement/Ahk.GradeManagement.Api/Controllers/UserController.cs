@@ -7,8 +7,6 @@ using Ahk.GradeManagement.Shared.Dtos.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using System.Security.Claims;
-
 namespace Ahk.GradeManagement.Api.Controllers;
 
 [Authorize]

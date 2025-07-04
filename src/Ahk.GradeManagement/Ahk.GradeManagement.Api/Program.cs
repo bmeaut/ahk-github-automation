@@ -3,14 +3,10 @@ using Ahk.GradeManagement.Api.Middlewares;
 using Ahk.GradeManagement.Api.Middlewares.ExceptionHandlers;
 using Ahk.GradeManagement.Bll;
 using Ahk.GradeManagement.Bll.Profiles;
-using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Dal;
 
 using Azure.Identity;
 
-using GradeManagement.Data;
-
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 
 using MudBlazor.Services;

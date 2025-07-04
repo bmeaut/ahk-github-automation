@@ -12,14 +12,16 @@ public static class AuthorizationCollectionExtensions
     {
         services.AddAuthorizationBuilder()
             .AddPolicy(AdminRequirement.PolicyName, policy => policy.Requirements.Add(new AdminRequirement()));
+
         services.AddAuthorizationBuilder()
-            .AddPolicy(DemonstratorOnSubjectRequirement.PolicyName,
-                policy => policy.Requirements.Add(new DemonstratorOnSubjectRequirement()));
+            .AddPolicy(DemonstratorOnSubjectRequirement.PolicyName, policy => policy.Requirements.Add(new DemonstratorOnSubjectRequirement()));
+
         services.AddAuthorizationBuilder()
-            .AddPolicy(TeacherOnSubjectRequirement.PolicyName,
-                policy => policy.Requirements.Add(new TeacherOnSubjectRequirement()));
+            .AddPolicy(TeacherOnSubjectRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherOnSubjectRequirement()));
+
         services.AddAuthorizationBuilder()
             .AddPolicy(TeacherRequirement.PolicyName, policy => policy.Requirements.Add(new TeacherRequirement()));
+
         services.AddAuthorizationBuilder()
             .AddPolicy(UserRequirement.PolicyName, policy => policy.Requirements.Add(new UserRequirement()));
     }

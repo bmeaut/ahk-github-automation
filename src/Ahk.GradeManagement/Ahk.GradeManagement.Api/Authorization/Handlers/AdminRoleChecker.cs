@@ -1,14 +1,14 @@
 using Ahk.GradeManagement.Shared.Enums;
 
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
 public static class AdminRoleChecker
 {
-    public static bool CheckAdminRole(AuthorizationHandlerContext context, IAuthorizationRequirement requirement)
+    public static bool IsInAdminRole(this ClaimsPrincipal user)
     {
-        var roleClaim = context.User.FindFirst(CustomClaimTypes.UserRole);
+        var roleClaim = user.FindFirst(CustomClaimTypes.UserRole);
         if (roleClaim == null || roleClaim.Value != UserType.Admin.ToString())
             return false;
 

@@ -1,7 +1,7 @@
 using Ahk.GradeManagement.Bll.Services.BaseServices;
 using Ahk.GradeManagement.Dal;
 using Ahk.GradeManagement.Dal.Entities;
-using Ahk.GradeManagement.Dal.Utils;
+using Ahk.GradeManagement.Dal.Extensions;
 using Ahk.GradeManagement.Shared.Dtos;
 using Ahk.GradeManagement.Shared.Dtos.Request;
 using Ahk.GradeManagement.Shared.Dtos.Response;
