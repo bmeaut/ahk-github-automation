@@ -5,7 +5,9 @@
     "aspNetCoreToOpenApi": {
       "project": "../../Ahk.GradeManagement.Api/Ahk.GradeManagement.Api.csproj",
       "msBuildProjectExtensionsPath": null,
-      "configuration": null,
+      // Api project does not reference Client project when NSwag.Generate configuration is used
+      // so we can generate the OpenAPI document without building the Client project
+      "configuration": "NSwag.Generate",
       "runtime": null,
       "targetFramework": null,
       "noBuild": false,
@@ -30,7 +32,7 @@
       "serviceHost": null,
       "serviceBasePath": null,
       "serviceSchemes": [],
-      "infoTitle": "My Title",
+      "infoTitle": "AHK2.OpenAPI",
       "infoDescription": null,
       "infoVersion": "1.0.0",
       "documentTemplate": null,

@@ -34,7 +34,7 @@
 
   <Target Name="NSwag">
     <Copy SourceFiles="@(ReferencePath)" DestinationFolder="$(OutDir)References" />
-    <Exec Command="$(NSwagExe_Net80) run Network/ApiClients.nswag /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
+    <Exec Command="$(NSwagExe_Net80) run Network/ApiClients.nswag /variables:OutDir=$(OutDir)" />
     <RemoveDir Directories="$(OutDir)References" />
   </Target>
 

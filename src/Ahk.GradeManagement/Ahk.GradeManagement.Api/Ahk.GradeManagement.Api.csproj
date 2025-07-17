@@ -29,8 +29,11 @@
     <PackageReference Include="NSwag.AspNetCore" Version="14.4.0" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' != 'NSwag.Generate' ">
     <ProjectReference Include="..\Ahk.GradeManagement.Client\Ahk.GradeManagement.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Ahk.GradeManagement.Dal\Ahk.GradeManagement.Dal.csproj" />
     <ProjectReference Include="..\Ahk.GradeManagement.Bll\Ahk.GradeManagement.Bll.csproj" />
     <ProjectReference Include="..\Ahk.GradeManagement.Shared\Ahk.GradeManagement.Shared.csproj" />
