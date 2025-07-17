@@ -5,21 +5,17 @@ using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 using MudBlazor.Services;
 
 using MudExtensions.Services;
 
-using AuthorizationMessageHandler = Ahk.GradeManagement.Client.Network.AuthorizationMessageHandler;
-
 namespace Ahk.GradeManagement.Client;
 
 public class Program
 {
     public const string ServerApi = "ServerAPI";
-    public const string SubjectApi = "SubjectAPI";
 
     public static async Task Main(string[] args)
     {
@@ -27,53 +23,44 @@ public class Program
         builder.RootComponents.Add<App>("#app");
         builder.RootComponents.Add<HeadOutlet>("head::after");
 
-        builder.Services.AddScoped(sp => new HttpClient
-        {
-            BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
-        });
-
         builder.Services.AddMsalAuthentication(options =>
         {
             builder.Configuration.Bind("AzureAd", options.ProviderOptions.Authentication);
             options.ProviderOptions.DefaultAccessTokenScopes.Add("api://0ff49368-7e23-4e6a-9c57-973a6cac8bbd/AHK2.API");
             //Add scope for email
         });
-
-        builder.Services.AddScoped<CrudSnackbarService>();
-
-        builder.Services.AddTransient(sp => new AuthorizationMessageHandler(sp.GetRequiredService<IAccessTokenProvider>()));
-        builder.Services.AddTransient(sp => new ExceptionMessageHandler(sp.GetRequiredService<CrudSnackbarService>()));
-
-        builder.Services.AddSingleton<SelectedSubjectService>();
-        builder.Services.AddSingleton<CurrentUserService>();
-
-        builder.Services.AddTransient(sp => new SubjectHeaderHandler(sp.GetRequiredService<SelectedSubjectService>()));
-
-        // Registering HttpClient that uses our custom handler
-        builder.Services.AddHttpClient(ServerApi, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
-            .AddHttpMessageHandler<ExceptionMessageHandler>()
-            .AddHttpMessageHandler<AuthorizationMessageHandler>()
-            .AddHttpMessageHandler<SubjectHeaderHandler>();
-
-        builder.Services.AddScoped(sp => new SubjectClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped<SubjectService>();
-        builder.Services.AddScoped(sp => new CourseClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new SemesterClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new LanguageClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new UserClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new GroupClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new ExerciseClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new AssignmentClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new StudentClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-        builder.Services.AddScoped(sp => new DashboardClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(ServerApi)));
-
+        builder.Services.AddScoped<IAuthorizationHandler, UserTypeAuthorizationHandler>();
         builder.Services.AddAuthorizationCore(options =>
         {
             options.AddPolicy(Policy.RequireAdmin, policy => policy.Requirements.Add(new UserTypeRequirement([UserType.Admin])));
             options.AddPolicy(Policy.RequireTeacher, policy => policy.Requirements.Add(new UserTypeRequirement([UserType.Teacher, UserType.Admin])));
         });
 
-        builder.Services.AddScoped<IAuthorizationHandler, UserTypeAuthorizationHandler>();
+        builder.Services.AddScoped<CrudSnackbarService>();
+        builder.Services.AddScoped<SubjectService>();
+        builder.Services.AddSingleton<SelectedSubjectService>();
+        builder.Services.AddSingleton<CurrentUserService>();
+
+        builder.Services.AddTransient<AuthorizationMessageHandler>();
+        builder.Services.AddTransient<ExceptionMessageHandler>();
+        builder.Services.AddTransient<SubjectHeaderHandler>();
+
+        builder.Services.ConfigureHttpClientDefaults(b => b
+            .AddHttpMessageHandler<AuthorizationMessageHandler>()
+            .AddHttpMessageHandler<ExceptionMessageHandler>()
+            .AddHttpMessageHandler<SubjectHeaderHandler>()
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)));
+
+        builder.Services.AddHttpClient<SubjectClient>();
+        builder.Services.AddHttpClient<CourseClient>();
+        builder.Services.AddHttpClient<SemesterClient>();
+        builder.Services.AddHttpClient<LanguageClient>();
+        builder.Services.AddHttpClient<UserClient>();
+        builder.Services.AddHttpClient<GroupClient>();
+        builder.Services.AddHttpClient<ExerciseClient>();
+        builder.Services.AddHttpClient<AssignmentClient>();
+        builder.Services.AddHttpClient<StudentClient>();
+        builder.Services.AddHttpClient<DashboardClient>();
 
         builder.Services.AddMudServices();
         builder.Services.AddMudExtensions();
