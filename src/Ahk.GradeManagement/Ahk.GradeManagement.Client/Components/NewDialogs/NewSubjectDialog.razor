@@ -1,4 +1,4 @@
-﻿@inject CrudSnackbarService SnackbarService
+@inject CrudSnackbarService SnackbarService
 @inject CurrentUserService CurrentUserService
 
 <MudDialog Style="min-width: 600px;">
@@ -67,7 +67,7 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
     [Inject] private IJSRuntime JS { get; set; }
 
     private MudForm form;
