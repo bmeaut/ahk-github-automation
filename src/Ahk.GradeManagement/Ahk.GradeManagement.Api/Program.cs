@@ -1,9 +1,7 @@
 using Ahk.GradeManagement.Api.Authorization;
-using Ahk.GradeManagement.Api.Middlewares;
-using Ahk.GradeManagement.Api.Middlewares.ExceptionHandlers;
+using Ahk.GradeManagement.Api.ErrorHandling;
 using Ahk.GradeManagement.Api.RequestContext;
 using Ahk.GradeManagement.Bll;
-using Ahk.GradeManagement.Bll.Profiles;
 using Ahk.GradeManagement.Dal;
 
 using Azure.Identity;
@@ -41,40 +39,28 @@ public class Program
 
         builder.Services.AddGradeManagementDbContext(builder.Configuration, "DbConnection");
 
-        // Add services to the container.
-
         builder.Services.AddControllersWithViews();
         builder.Services.AddOpenApiDocument(config =>
         {
             config.DocumentName = "AHK2.OpenAPI";
             config.Title = "AHK Grade Management API";
         });
-        builder.Services.AddRazorPages();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
 
-        builder.Services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
-
         builder.Services.AddBllServices();
 
-        builder.Services.AddExceptionHandler<EntityNotFoundExceptionHandler>();
-        builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
-        builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
-        builder.Services.AddProblemDetails();
+        builder.Services.AddCustomProblemDetails(builder.Configuration);
+
+        builder.Services.AddRazorPages();
         builder.Services.AddMudServices();
         builder.Services.AddMudExtensions();
 
         var app = builder.Build();
 
-
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            // Add OpenAPI 3.0 document serving middleware
-            // Available at: https://localhost:7136/swagger/v1/swagger.json
             app.UseOpenApi();
-            // Add web UIs to interact with the document
-            // Available at: https://localhost:7136/swagger
             app.UseSwaggerUi();
             app.UseWebAssemblyDebugging();
         }

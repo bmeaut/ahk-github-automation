@@ -1,3 +1,4 @@
+using Ahk.GradeManagement.Bll.Mapping;
 using Ahk.GradeManagement.Bll.Services;
 using Ahk.GradeManagement.Bll.Services.Moodle;
 
@@ -9,6 +10,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddBllServices(this IServiceCollection services)
     {
+        services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
+
         services.AddTransient<AssignmentService>();
         services.AddTransient<DashboardService>();
         services.AddTransient<AssignmentLogService>();

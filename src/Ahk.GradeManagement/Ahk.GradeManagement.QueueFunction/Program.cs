@@ -1,5 +1,5 @@
 using Ahk.GradeManagement.Bll;
-using Ahk.GradeManagement.Bll.Profiles;
+using Ahk.GradeManagement.Bll.Mapping;
 using Ahk.GradeManagement.Dal;
 
 using Microsoft.Azure.Functions.Worker;

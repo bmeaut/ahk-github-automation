@@ -14,7 +14,7 @@ using ScoreTypeExercise = Ahk.GradeManagement.Dal.Entities.ScoreTypeExercise;
 using Semester = Ahk.GradeManagement.Dal.Entities.Semester;
 using User = Ahk.GradeManagement.Dal.Entities.User;
 
-namespace Ahk.GradeManagement.Bll.Profiles;
+namespace Ahk.GradeManagement.Bll.Mapping;
 
 public class AutoMapperProfile : Profile
 {
