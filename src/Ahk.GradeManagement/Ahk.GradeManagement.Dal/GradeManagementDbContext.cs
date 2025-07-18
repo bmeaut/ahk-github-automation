@@ -1,3 +1,4 @@
+using Ahk.GradeManagement.Backend.Common.RequestContext;
 using Ahk.GradeManagement.Dal.Entities;
 using Ahk.GradeManagement.Dal.Entities.Interfaces;
 using Ahk.GradeManagement.Dal.Interceptors;
@@ -8,11 +9,9 @@ using System.Linq.Expressions;
 
 namespace Ahk.GradeManagement.Dal;
 
-public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext> options)
+public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext> options, IRequestContext requestContext)
     : DbContext(options)
 {
-    //Add Migration: dotnet ef migrations add <MigrationName> --project GradeManagement.Data --startup-project GradeManagement.Server
-
     public DbSet<Assignment> Assignment { get; set; }
     public DbSet<AssignmentLog> AssignmentLog { get; set; }
     public DbSet<Course> Course { get; set; }
@@ -31,7 +30,7 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
     public DbSet<SubjectTeacher> SubjectTeacher { get; set; }
     public DbSet<User> User { get; set; }
 
-    public long SubjectIdValue { get; set; }
+    public long CurrentSubjectId => requestContext.CurrentUser?.CurrentSubjectId ?? 0;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.AddInterceptors(new SoftDeleteInterceptor());
@@ -87,7 +86,7 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
         // e => ((ITenant)e).TenantId == CurrentTenantId
         var param = Expression.Parameter(type, "e");
         var tenantProperty = Expression.Property(param, nameof(ITenant.SubjectId));
-        var tenantIdProperty = Expression.Property(Expression.Constant(this), nameof(SubjectIdValue));
+        var tenantIdProperty = Expression.Property(Expression.Constant(this), nameof(CurrentSubjectId));
 
         var filterBody = Expression.Equal(tenantProperty, tenantIdProperty);
         return Expression.Lambda(filterBody, param);
@@ -112,7 +111,7 @@ public class GradeManagementDbContext(DbContextOptions<GradeManagementDbContext>
 
         // Tenant filter condition
         var tenantProperty = Expression.Property(param, nameof(ITenant.SubjectId));
-        var tenantIdProperty = Expression.Property(Expression.Constant(this), nameof(SubjectIdValue));
+        var tenantIdProperty = Expression.Property(Expression.Constant(this), nameof(CurrentSubjectId));
         var tenantFilterBody = Expression.Equal(tenantProperty, tenantIdProperty);
 
         // Soft delete filter condition

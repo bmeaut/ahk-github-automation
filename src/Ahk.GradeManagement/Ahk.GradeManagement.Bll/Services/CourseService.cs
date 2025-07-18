@@ -18,10 +18,11 @@ using Ahk.GradeManagement.Dal.Entities;
 using Ahk.GradeManagement.Shared.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
+using Ahk.GradeManagement.Backend.Common.RequestContext;
 
 namespace Ahk.GradeManagement.Bll.Services;
 
-public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper)
+public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, IRequestContext requestContext)
     : ICrudServiceBase<CourseRequest, CourseResponse>
 {
     public async Task<IEnumerable<CourseResponse>> GetAllAsync()
@@ -66,7 +67,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
 
     public async Task<CourseResponse> CreateAsync(CourseRequest requestDto)
     {
-        if (requestDto.SubjectId != gradeManagementDbContext.SubjectIdValue)
+        if (requestDto.SubjectId != requestContext.CurrentUser?.CurrentSubjectId)
             throw new UnauthorizedException("Current subject does not match the subject of the course!");
 
         var keyGenerator = new RsaKeyGenerator();

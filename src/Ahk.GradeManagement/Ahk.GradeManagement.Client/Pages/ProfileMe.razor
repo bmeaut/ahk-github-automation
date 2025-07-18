@@ -1,7 +1,9 @@
-﻿@page "/current-user"
+@page "/current-user"
 @layout AuthenticatedLayout
 @inject CrudSnackbarService SnackbarService
 @inject UserClient UserClient
+
+@attribute [Authorize]
 
 <LoadingComponent LongTask="Loading" @ref="loadingRef">
     <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">

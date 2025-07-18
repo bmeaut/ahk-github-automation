@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ahk.GradeManagement.Backend.Common\Ahk.GradeManagement.Backend.Common.csproj" />
     <ProjectReference Include="..\Ahk.GradeManagement.Shared\Ahk.GradeManagement.Shared.csproj" />
   </ItemGroup>
 

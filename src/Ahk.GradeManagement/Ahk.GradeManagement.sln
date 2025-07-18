@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ahk.GradeManagement.Bll", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.QueueFunction", "Ahk.GradeManagement.QueueFunction\Ahk.GradeManagement.QueueFunction.csproj", "{060978F8-B9A6-4CAC-99A0-6BC3B932719E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.Backend.Common", "Ahk.GradeManagement.Backend.Common\Ahk.GradeManagement.Backend.Common.csproj", "{A5E7963C-DD12-4A80-B876-07C2379B06D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{060978F8-B9A6-4CAC-99A0-6BC3B932719E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

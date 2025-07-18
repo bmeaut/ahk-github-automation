@@ -1,18 +1,20 @@
 using Ahk.GradeManagement.Client.Services;
+using Ahk.GradeManagement.Shared.Constants;
 
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using System.Globalization;
 
 namespace Ahk.GradeManagement.Client.Network;
 
-public class SubjectHeaderHandler(SelectedSubjectService SelectedSubjectService) : DelegatingHandler
+public class SubjectHeaderHandler(SelectedSubjectService selectedSubjectService) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        Console.WriteLine("SubjectHeaderHandler");
-        var subjectId = SelectedSubjectService.CurrentSubject?.Id;
+        var subjectId = selectedSubjectService.CurrentSubject?.Id;
         if (subjectId is not null)
-            request.Headers.Add("X-Subject-Id-Value", subjectId.ToString());
+        {
+            request.Headers.Add(Headers.XSubjectId, subjectId.Value.ToString(CultureInfo.InvariantCulture));
+        }
 
         return await base.SendAsync(request, cancellationToken);
     }

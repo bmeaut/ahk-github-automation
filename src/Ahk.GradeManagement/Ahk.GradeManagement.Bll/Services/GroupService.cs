@@ -1,3 +1,4 @@
+using Ahk.GradeManagement.Backend.Common.RequestContext;
 using Ahk.GradeManagement.Bll.Services.BaseServices;
 using Ahk.GradeManagement.Dal;
 using Ahk.GradeManagement.Dal.Entities;
@@ -21,7 +22,8 @@ public class GroupService(
     GradeManagementDbContext gradeManagementDbContext,
     IMapper mapper,
     UserService userService,
-    CourseService courseService)
+    CourseService courseService,
+    IRequestContext requestContext)
     : ICrudServiceBase<GroupRequest, GroupResponse>
 {
     public async Task<IEnumerable<GroupResponse>> GetAllAsync()
@@ -45,7 +47,7 @@ public class GroupService(
         {
             Name = requestDto.Name,
             CourseId = requestDto.CourseId,
-            SubjectId = gradeManagementDbContext.SubjectIdValue
+            SubjectId = requestContext.CurrentUser.CurrentSubjectId.Value
         };
         gradeManagementDbContext.Group.Add(groupEntity);
         await gradeManagementDbContext.SaveChangesAsync();

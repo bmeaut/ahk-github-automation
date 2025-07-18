@@ -1,3 +1,4 @@
+using Ahk.GradeManagement.Backend.Common.RequestContext;
 using Ahk.GradeManagement.Bll.Services.BaseServices;
 using Ahk.GradeManagement.Dal;
 using Ahk.GradeManagement.Dal.Entities;
@@ -27,7 +28,8 @@ public class ExerciseService(
     IMapper mapper,
     PullRequestService pullRequestService,
     AssignmentService assignmentService,
-    ScoreTypeService scoreTypeService)
+    ScoreTypeService scoreTypeService,
+    IRequestContext requestContext)
     : ICrudServiceBase<ExerciseRequest, ExerciseResponse>
 {
     public async Task<IEnumerable<ExerciseResponse>> GetAllAsync()
@@ -63,7 +65,7 @@ public class ExerciseService(
                 MoodleScoreNamePrefix = requestDto.MoodleScoreNamePrefix,
                 DueDate = requestDto.DueDate,
                 CourseId = requestDto.CourseId,
-                SubjectId = gradeManagementDbContext.SubjectIdValue
+                SubjectId = requestContext.CurrentUser.CurrentSubjectId.Value
             };
             gradeManagementDbContext.Exercise.Add(exerciseEntity);
             await gradeManagementDbContext.SaveChangesAsync();

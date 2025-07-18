@@ -12,7 +12,7 @@ namespace Ahk.GradeManagement.Api.Controllers;
 
 [Route("api/subjects")]
 [ApiController]
-public class SubjectController(SubjectService subjectService, IHttpContextAccessor httpContextAccessor)
+public class SubjectController(SubjectService subjectService)
     : CrudControllerBase<SubjectRequest, SubjectResponse>(subjectService)
 {
     [HttpPut("{id:long}")]

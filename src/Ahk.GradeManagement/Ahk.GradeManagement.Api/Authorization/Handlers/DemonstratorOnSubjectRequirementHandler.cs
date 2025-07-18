@@ -1,4 +1,5 @@
 using Ahk.GradeManagement.Api.Authorization.Policies;
+using Ahk.GradeManagement.Backend.Common.RequestContext;
 using Ahk.GradeManagement.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ using System.Globalization;
 
 namespace Ahk.GradeManagement.Api.Authorization.Handlers;
 
-public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpContextAccessor)
+public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpContextAccessor, IRequestContext requestContext)
     : AuthorizationHandler<DemonstratorOnSubjectRequirement>
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, DemonstratorOnSubjectRequirement requirement)
@@ -25,13 +26,12 @@ public class DemonstratorOnSubjectRequirementHandler(IHttpContextAccessor httpCo
             return Task.CompletedTask;
         }
 
-        if (httpContext.Request.Headers.TryGetValue("X-Subject-Id-Value", out var subjectIdHeader)
-            && long.TryParse(subjectIdHeader, out var subjectId))
+        if (requestContext.CurrentUser?.CurrentSubjectId is not null)
         {
             var subjectAccessClaims = context.User.FindAll(CustomClaimTypes.SubjectAccess).Select(c => c.Value).ToList();
-            var roleOnSubjectClaim = context.User.FindFirst($"{CustomClaimTypes.AccessLevel}_{subjectId}");
+            var roleOnSubjectClaim = context.User.FindFirst($"{CustomClaimTypes.AccessLevel}_{requestContext.CurrentUser.CurrentSubjectId}");
 
-            if (subjectAccessClaims.Contains(subjectId.ToString(CultureInfo.InvariantCulture))
+            if (subjectAccessClaims.Contains(requestContext.CurrentUser.CurrentSubjectId.Value.ToString(CultureInfo.InvariantCulture))
                 && roleOnSubjectClaim != null
                 && (roleOnSubjectClaim.Value == UserRoleOnSubject.Demonstrator.ToString() || roleOnSubjectClaim.Value == UserRoleOnSubject.Teacher.ToString()))
             {

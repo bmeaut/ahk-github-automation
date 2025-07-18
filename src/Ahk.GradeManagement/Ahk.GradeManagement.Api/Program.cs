@@ -1,6 +1,7 @@
 using Ahk.GradeManagement.Api.Authorization;
 using Ahk.GradeManagement.Api.Middlewares;
 using Ahk.GradeManagement.Api.Middlewares.ExceptionHandlers;
+using Ahk.GradeManagement.Api.RequestContext;
 using Ahk.GradeManagement.Bll;
 using Ahk.GradeManagement.Bll.Profiles;
 using Ahk.GradeManagement.Dal;
@@ -29,7 +30,7 @@ public class Program
                 new DefaultAzureCredential());
         }
 
-        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddRequestContext();
         builder.Services.AddHttpClient();
 
         builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
@@ -81,7 +82,6 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseExceptionHandler();
-        app.UseMiddleware<HeaderMiddleware>();
 
         app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();
