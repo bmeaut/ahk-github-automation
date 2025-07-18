@@ -69,8 +69,7 @@ public class SubjectController(SubjectService subjectService)
     [HttpDelete("{subjectId:long}/teachers/{teacherId:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [Authorize(Policy = TeacherOnSubjectRequirement.PolicyName)]
-    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId,
-        [FromRoute] long teacherId)
+    public async Task<ActionResult> DeleteTeacherFromSubjectByIdAsync([FromRoute] long subjectId, [FromRoute] long teacherId)
     {
         await subjectService.DeleteTeacherFromSubjectByIdAsync(subjectId, teacherId);
         return NoContent();

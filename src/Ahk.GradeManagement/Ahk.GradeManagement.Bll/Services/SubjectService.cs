@@ -136,7 +136,8 @@ public class SubjectService(
             gradeManagementDbContext.SubjectTeacher.Add(new Dal.Entities.SubjectTeacher
             {
                 SubjectId = subjectEntity.SubjectId,
-                UserId = teacher.Id
+                UserId = teacher.Id,
+                Role = UserRoleOnSubject.Teacher,
             });
         }
 
@@ -186,7 +187,8 @@ public class SubjectService(
         gradeManagementDbContext.SubjectTeacher.Add(new Dal.Entities.SubjectTeacher
         {
             SubjectId = subjectEntity.SubjectId,
-            UserId = teacherEntity.Id
+            UserId = teacherEntity.Id,
+            Role = UserRoleOnSubject.Teacher,
         });
 
         await gradeManagementDbContext.SaveChangesAsync();
