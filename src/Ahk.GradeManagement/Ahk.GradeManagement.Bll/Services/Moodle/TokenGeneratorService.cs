@@ -1,30 +1,34 @@
+using Ahk.GradeManagement.Backend.Common.Options;
 using Ahk.GradeManagement.Dal.Entities;
 using Ahk.GradeManagement.Shared.Config;
+using Ahk.GradeManagement.Shared.Exceptions;
 
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-using Ahk.GradeManagement.Shared.Exceptions;
-
 using Jose;
 
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
 
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
 namespace Ahk.GradeManagement.Bll.Services.Moodle;
 
-public class TokenGeneratorService(IConfiguration configuration)
+public class TokenGeneratorService(IOptions<AhkOptions> ahkOptionsAccessor)
 {
-    private const string Scope =
-        "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly https://purl.imsglobal.org/spec/lti-ags/scope/score";
+    private readonly AhkOptions _ahkOptions = ahkOptionsAccessor.Value;
+    private static readonly string Scope = "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem " +
+        "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly " +
+        "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly " +
+        "https://purl.imsglobal.org/spec/lti-ags/scope/score";
 
     public async Task<string?> GenerateAccessToken(Course course)
     {
@@ -35,9 +39,8 @@ public class TokenGeneratorService(IConfiguration configuration)
 
         var data = new[]
         {
-            new KeyValuePair<string, string>("grant_type", "client_credentials"), new KeyValuePair<string, string>(
-                "client_assertion_type",
-                "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+            new KeyValuePair<string, string>("grant_type", "client_credentials"),
+            new KeyValuePair<string, string>("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
             new KeyValuePair<string, string>("client_assertion", token),
             new KeyValuePair<string, string>("scope", Scope),
         };
@@ -49,32 +52,26 @@ public class TokenGeneratorService(IConfiguration configuration)
 
     private async Task<string> MakeClientAssertionToken(Course course)
     {
-        var appUrl = configuration["APP_URL"];
-        if (string.IsNullOrEmpty(appUrl)) throw new MoodleSyncException("App url was null or empty!");
-
-        var claims = new List<Claim>();
-        claims.Add(new Claim("iss", appUrl));
-        claims.Add(new Claim("iat", ((int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds).ToString()));
-        claims.Add(new Claim("exp",
-            ((int)(DateTime.UtcNow.AddHours(1) - new DateTime(1970, 1, 1)).TotalSeconds).ToString()));
-        claims.Add(new Claim("aud", "https://edu.vik.bme.hu/mod/lti/token.php"));
-        claims.Add(new Claim("sub", course.MoodleClientId));
+        List<Claim> claims =
+        [
+            new Claim("iss", _ahkOptions.AppUrl),
+            new Claim("iat", ((int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds).ToString(CultureInfo.InvariantCulture)),
+            new Claim("exp", ((int)(DateTime.UtcNow.AddHours(1) - new DateTime(1970, 1, 1)).TotalSeconds).ToString(CultureInfo.InvariantCulture)),
+            new Claim("aud", "https://edu.vik.bme.hu/mod/lti/token.php"),
+            new Claim("sub", course.MoodleClientId)
+        ];
 
         return await CreateToken(claims, course);
     }
 
     private async Task<string> CreateToken(List<Claim> claims, Course course)
     {
-        var keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
-        if (keyVaultUrl == null)
-            throw new Exception("Please set environment variable KEY_VAULT_URI");
-
-        var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
-        var moodlePrivateKey =
-            await secretClient.GetSecretAsync($"{MoodleConfig.Name}--{course.MoodleClientId}--MoodlePrivateKey");
+        var secretClient = new SecretClient(new Uri(_ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
+        var moodlePrivateKey = await secretClient.GetSecretAsync($"{MoodleConfig.Name}--{course.MoodleClientId}--MoodlePrivateKey");
 
         var privateRsaKey = moodlePrivateKey.Value.Value;
-        if (string.IsNullOrEmpty(privateRsaKey)) throw new MoodleSyncException("Private RSA was null or empty!");
+        if (string.IsNullOrEmpty(privateRsaKey))
+            throw new MoodleSyncException("Private RSA was null or empty!");
 
         privateRsaKey = privateRsaKey.Trim();
 
@@ -82,8 +79,7 @@ public class TokenGeneratorService(IConfiguration configuration)
         using (var tr = new StringReader(privateRsaKey))
         {
             var pemReader = new PemReader(tr);
-            var keyPair = pemReader.ReadObject() as AsymmetricCipherKeyPair;
-            if (keyPair == null)
+            if (pemReader.ReadObject() is not AsymmetricCipherKeyPair keyPair)
                 throw new MoodleSyncException("Could not read RSA private key");
 
             var privateRsaParams = keyPair.Private as RsaPrivateCrtKeyParameters;

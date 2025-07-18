@@ -1,9 +1,11 @@
+using Ahk.GradeManagement.Backend.Common.Options;
 using Ahk.GradeManagement.Shared.Dtos.GitHubManifest;
 
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -12,14 +14,14 @@ namespace Ahk.GradeManagement.Api.Controllers;
 
 [Route("api/github")]
 [ApiController]
-public class GitHubAppController(IHttpClientFactory httpClientFactory) : ControllerBase
+public class GitHubAppController(IHttpClientFactory httpClientFactory, IOptions<AhkOptions> ahkOptionsAccessor) : ControllerBase
 {
+    private readonly AhkOptions _ahkOptions = ahkOptionsAccessor.Value;
+
     [HttpGet]
     public async Task<IActionResult> CreateGitHubApp([FromQuery] string code)
     {
-        var appUrl = Environment.GetEnvironmentVariable("APP_URL");
-        var keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
-        var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+        var client = new SecretClient(new Uri(_ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
         var httpClient = httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -30,21 +32,14 @@ public class GitHubAppController(IHttpClientFactory httpClientFactory) : Control
 
         var content = await response.Content.ReadAsStringAsync();
         var gitHubApp = JsonSerializer.Deserialize<GitHubApp>(content);
-        var pem = RemovePemFencing(gitHubApp.Pem);
 
-        await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubAppId",
-            gitHubApp.Id.ToString());
+        var lines = gitHubApp.Pem.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        var pem = string.Join("", lines.Skip(1).Take(lines.Length - 2));
+
+        await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubAppId", gitHubApp.Id.ToString());
         await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubAppPrivateKey", pem);
-        await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubWebhookSecret",
-            gitHubApp.WebhookSecret);
+        await client.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubWebhookSecret", gitHubApp.WebhookSecret);
 
         return Redirect($"https://github.com/organizations/ahk-dev-org/settings/apps/{gitHubApp.Slug}/installations");
-    }
-
-    public static string RemovePemFencing(string pem)
-    {
-        var lines = pem.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        var base64String = string.Join("", lines.Skip(1).Take(lines.Length - 2));
-        return base64String;
     }
 }

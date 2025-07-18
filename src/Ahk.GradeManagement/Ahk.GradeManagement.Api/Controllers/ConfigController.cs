@@ -1,22 +1,22 @@
+using Ahk.GradeManagement.Backend.Common.Options;
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Ahk.GradeManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/config")]
-public class ConfigController : ControllerBase
+public class ConfigController(IOptions<AhkOptions> ahkOptionsAccessor) : ControllerBase
 {
+    private readonly AhkOptions _ahkOptions = ahkOptionsAccessor.Value;
+
     [HttpGet("app-url")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult GetAppUrl()
     {
-        var appUrl = Environment.GetEnvironmentVariable("APP_URL");
-
-        if (string.IsNullOrEmpty(appUrl))
-            return NotFound("APP_URL is not set.");
-
-        return Ok(appUrl);
+        return Ok(_ahkOptions.AppUrl);
     }
 
     [HttpGet("monitor-url")]
@@ -24,11 +24,6 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult GetMonitorUrl()
     {
-        var monitorUrl = Environment.GetEnvironmentVariable("MONITOR_URL");
-
-        if (string.IsNullOrEmpty(monitorUrl))
-            return NotFound("MONITOR_URL is not set.");
-
-        return Ok(monitorUrl);
+       return Ok(_ahkOptions.MonitorUrl);
     }
 }

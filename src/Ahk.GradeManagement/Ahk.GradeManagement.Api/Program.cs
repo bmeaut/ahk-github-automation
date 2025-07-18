@@ -1,6 +1,7 @@
 using Ahk.GradeManagement.Api.Authorization;
 using Ahk.GradeManagement.Api.ErrorHandling;
 using Ahk.GradeManagement.Api.RequestContext;
+using Ahk.GradeManagement.Backend.Common.Options;
 using Ahk.GradeManagement.Bll;
 using Ahk.GradeManagement.Dal;
 
@@ -20,13 +21,8 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        var keyVaultUri = builder.Configuration["KEY_VAULT_URI"];
-        if (!string.IsNullOrEmpty(keyVaultUri))
-        {
-            builder.Configuration.AddAzureKeyVault(
-                new Uri(keyVaultUri),
-                new DefaultAzureCredential());
-        }
+        var ahkOptions = builder.Services.ConfigureOption<AhkOptions>(builder.Configuration);
+        builder.Configuration.AddAzureKeyVault(new Uri(ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
 
         builder.Services.AddRequestContext();
         builder.Services.AddHttpClient();

@@ -19,12 +19,16 @@ using Ahk.GradeManagement.Shared.Exceptions;
 
 using Microsoft.EntityFrameworkCore;
 using Ahk.GradeManagement.Backend.Common.RequestContext;
+using Microsoft.Extensions.Options;
+using Ahk.GradeManagement.Backend.Common.Options;
 
 namespace Ahk.GradeManagement.Bll.Services;
 
-public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, IRequestContext requestContext)
+public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, IRequestContext requestContext, IOptions<AhkOptions> ahkOptionsAccessor)
     : ICrudServiceBase<CourseRequest, CourseResponse>
 {
+    private readonly AhkOptions _ahkOptions = ahkOptionsAccessor.Value;
+
     public async Task<IEnumerable<CourseResponse>> GetAllAsync()
     {
         return await gradeManagementDbContext.Course
@@ -114,11 +118,9 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
             .ToListAsync();
     }
 
-    private static async Task SetSecret(string moodleClientId, string privateKey)
+    private async Task SetSecret(string moodleClientId, string privateKey)
     {
-        var keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
-        if (string.IsNullOrEmpty(keyVaultUrl)) throw new ArgumentException("Key vault URL is null or empty!");
-        var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+        var client = new SecretClient(new Uri(_ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
 
         await client.SetSecretAsync($"{MoodleConfig.Name}--{moodleClientId}--MoodlePrivateKey", privateKey);
     }
