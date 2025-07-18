@@ -1,4 +1,4 @@
-namespace Ahk.GradeManagement.Client.Policies;
+namespace Ahk.GradeManagement.Client.Auth;
 
 public static class Policy
 {
