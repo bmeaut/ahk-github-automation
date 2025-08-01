@@ -15,7 +15,7 @@ env:
 jobs:
   # 👇 Call the build workflow to create the artifacts to deploy, and provide the artifact name.
   build:
-    uses: ./.github/workflows/5-include-with-deploy-template--build.yml
+    uses: ./.github/workflows/AHK.GradeManagement-build.yml
     with:
       artifactName: ${{ github.env.artifactName }}
     secrets: inherit # Pass secrets to the build workflow, if necessary.
