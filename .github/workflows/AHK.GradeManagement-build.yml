@@ -6,7 +6,7 @@ on:
 
   # Run workflow on pushes to any branch, except the main branch.
   # push:
-  #   branches-ignore: main
+  #   branches-ignore: dev
 
   # Allows you to run this workflow manually from the Actions tab.
   workflow_dispatch:
@@ -41,7 +41,8 @@ jobs:
 
       - name: "Run dotnet publish"
         working-directory: src/Ahk.GradeManagement
-        run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.Api.csproj --configuration Release --output ./output/Ahk.GradeManagement.Api
+        run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.Api.csproj --configuration Release --property:PublishDir='./output/Ahk.GradeManagement.Api' 
+           ./output/Ahk.GradeManagement.Api
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

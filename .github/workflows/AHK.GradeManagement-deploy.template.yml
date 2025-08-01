@@ -1,0 +1,35 @@
+name: Deploy TEMPLATE AHK.GradeManagement 
+
+on:
+  # 👇 Allows this workflow to be called from the deployment workflow, but the parameters must be provided.
+  workflow_call:
+    inputs:
+      artifactName:
+        description: The name of the artifact to download and deploy.
+        required: true
+        type: string
+      environmentName:
+        description: The name of the environment to deploy to.
+        required: true
+        type: string
+    
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # 👇 Allows using variables and secrets defined in the provided environment.
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifactName }}
+          path: ./buildArtifact
+
+      # Deploy to Azure Web apps
+      - name: 'Run Azure webapp deploy action using publish profile credentials'
+        uses: azure/webapps-deploy@v3
+        with: 
+          app-name: ${{ env.AHK_GradeManagement_App_Name }} # Replace with your app name
+          publish-profile: ${{ secrets.AHK_GradeManagement_PUBLISH_PROFILE  }} # Define secret variable in repository settings as per action documentation
+          package: '${{ ./buildArtifact }}/AHK.GradeManagement.Api'

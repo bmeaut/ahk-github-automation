@@ -1,0 +1,41 @@
+name: Deploy AHK.GradeManagement
+
+on:
+  # Trigger the workflow on a push to the main branch.
+  push:
+    branches: dev
+
+  # Allows you to run this workflow manually (for any branch) from the Actions tab.
+  workflow_dispatch:
+
+env:
+  # 👇 Set the artifact name that will be used by the build and deployments, so it is now only defined in one place.
+  artifactName: buildArtifact
+
+jobs:
+  # 👇 Call the build workflow to create the artifacts to deploy, and provide the artifact name.
+  build:
+    uses: ./.github/workflows/5-include-with-deploy-template--build.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+    secrets: inherit # Pass secrets to the build workflow, if necessary.
+
+  deploy-to-test:
+    # Only run this deploy job after the build-and-test job completes successfully.
+    needs: build
+    # 👇 Call the deploy template with the proper environment name to deploy the artifacts.
+    uses: ./.github/workflows/AHK.GradeManagement-deploy.template.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+      environmentName: test
+    secrets: inherit # Pass repository secrets to the deployment workflow.
+
+  deploy-to-production:
+    # Only run this deploy job after the deploy-to-test job completes successfully.
+    needs: deploy-to-test
+    # 👇 Call the deploy template with the proper environment name to deploy the artifacts.
+    uses: ./.github/workflows/AHK.GradeManagement-deploy.template.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+      environmentName: production
+    secrets: inherit # Pass repository secrets to the deployment workflow.
