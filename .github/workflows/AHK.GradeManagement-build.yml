@@ -41,7 +41,7 @@ jobs:
 
       - name: "Run dotnet publish"
         working-directory: src/Ahk.GradeManagement
-        run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.Api.csproj --no-restore --configuration Release --property:PublishDir='./output/Ahk.GradeManagement.Api'
+        run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.Api.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GradeManagement.Api'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
