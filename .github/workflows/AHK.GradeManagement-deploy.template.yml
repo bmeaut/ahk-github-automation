@@ -32,4 +32,4 @@ jobs:
         with: 
           app-name: ${{ env.AHK_GradeManagement_App_Name }} # Replace with your app name
           publish-profile: ${{ secrets.AHK_GradeManagement_PUBLISH_PROFILE  }} # Define secret variable in repository settings as per action documentation
-          package: './buildArtifact/AHK.GradeManagement.Api'
+          package: './buildArtifact/Ahk.GradeManagement.Api'
