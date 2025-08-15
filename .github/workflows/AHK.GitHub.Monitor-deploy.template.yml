@@ -1,0 +1,33 @@
+name: Deploy TEMPLATE AHK.GitHub.Monitor 
+
+on:
+  # Allows this workflow to be called from the deployment workflow, but the parameters must be provided.
+  workflow_call:
+    inputs:
+      artifactName:
+        description: The name of the artifact to download and deploy.
+        required: true
+        type: string
+      environmentName:
+        description: The name of the environment to deploy to.
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifactName }}
+          path: .
+
+      - name: "Run Azure Functions deploy action using publish profile credentials"
+        uses: Azure/functions-action@v1
+        id: fa
+        with: 
+          app-name: ${{ env.AHK_GitHub_Monitor_App_Name }} # Replace with your app name
+          publish-profile: ${{ secrets.AHK_GitHub_Monitor_PUBLISH_PROFILE  }} # Define secret variable in repository settings as per action documentation
+          package: './buildArtifact/Ahk.GitHub.Monitor'

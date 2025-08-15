@@ -1,0 +1,36 @@
+name: Deploy AHK.GitHub.Monitor
+
+on:
+  # Trigger the workflow on a push to the main branch.
+  push:
+    branches: dev
+
+  # Allows you to run this workflow manually (for any branch) from the Actions tab.
+  workflow_dispatch:
+
+env:
+  artifactName: buildArtifact
+
+jobs:
+  # 👇 Call the build workflow to create the artifacts to deploy, and provide the artifact name.
+  build:
+    uses: ./.github/workflows/AHK.GitHub.Monitor-build.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+    secrets: inherit # Pass secrets to the build workflow, if necessary.
+
+  deploy-to-test:
+    needs: build
+    uses: ./.github/workflows/AHK.GitHub.Monitor-deploy.template.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+      environmentName: test
+    secrets: inherit # Pass repository secrets to the deployment workflow.
+
+  deploy-to-production:
+    needs: deploy-to-test
+    uses: ./.github/workflows/AHK.GitHub.Monitor-deploy.template.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+      environmentName: production
+    secrets: inherit # Pass repository secrets to the deployment workflow.
