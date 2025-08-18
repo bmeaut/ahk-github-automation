@@ -1,4 +1,4 @@
-name: Deploy AHK.GitHub.Monitor
+name: Deploy AHK.GradeManagement.QueueFunction
 
 on:
   # Trigger the workflow on a push to the main branch.
@@ -10,14 +10,14 @@ on:
 
 env:
   artifactName: buildArtifact
-  appNameEnvVar: "AHK_GitHub_Monitor_App_Name"
-  publishProfileSecret: "AHK_GitHub_Monitor_PUBLISH_PROFILE"
-  packageName: "Ahk.GitHub.Monitor"
+  appNameEnvVar: "AHK_GradeManagement_QueueFunction_App_Name"
+  publishProfileSecret: "AHK_GradeManagement_QueueFunction_PUBLISH_PROFILE"
+  packageName: "Ahk.GradeManagement.QueueFunction"
 
 jobs:
   # 👇 Call the build workflow to create the artifacts to deploy, and provide the artifact name.
   build:
-    uses: ./.github/workflows/AHK.GitHub.Monitor-build.yml
+    uses: ./.github/workflows/AHK.GradeManagement.QueueFunction-build.yml
     with:
       artifactName: ${{ github.env.artifactName }}
     secrets: inherit # Pass secrets to the build workflow, if necessary.

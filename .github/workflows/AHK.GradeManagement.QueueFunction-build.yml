@@ -1,4 +1,4 @@
-name: Build AHK.GitHub.Monitor
+name: Build AHK.GradeManagement
 
 on:
   pull_request:
@@ -36,23 +36,15 @@ jobs:
           dotnet-version: "9.0.x"
 
       - name: "Run dotnet restore"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet restore Ahk.Github.Monitor.sln
-
-      - name: "Run dotnet build"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet build Ahk.Github.Monitor.sln --no-restore --configuration Release
-
-      - name: "Run dotnet test"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet test Ahk.Github.Monitor.sln --no-restore --no-build --configuration Release
+        working-directory: src/Ahk.GradeManagement
+        run: dotnet restore Ahk.GradeManagement.sln
 
       - name: "Run dotnet publish"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet publish Ahk.Github.Monitor/Ahk.Github.Monitor.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.Github.Monitor'
+        working-directory: src/Ahk.GradeManagement
+        run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.QueueFunction.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GradeManagement.QueueFunction'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.artifactName }}
-          path: ./output
+          path: ./output # Put the path to the build artifact files directory here.
