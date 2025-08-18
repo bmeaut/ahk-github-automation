@@ -41,7 +41,7 @@ jobs:
 
       - name: "Run dotnet publish"
         working-directory: src/Ahk.GradeManagement
-        run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.QueueFunction.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GradeManagement.QueueFunction'
+        run: dotnet publish Ahk.GradeManagement.QueueFunction/Ahk.GradeManagement.QueueFunction.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GradeManagement.QueueFunction'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
