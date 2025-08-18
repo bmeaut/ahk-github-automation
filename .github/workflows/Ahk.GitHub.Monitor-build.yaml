@@ -36,20 +36,20 @@ jobs:
           dotnet-version: "9.0.x"
 
       - name: "Run dotnet restore"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet restore Ahk.Github.Monitor.sln
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet restore Ahk.GitHub.Monitor.sln
 
       - name: "Run dotnet build"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet build Ahk.Github.Monitor.sln --no-restore --configuration Release
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet build Ahk.GitHub.Monitor.sln --no-restore --configuration Release
 
       - name: "Run dotnet test"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet test Ahk.Github.Monitor.sln --no-restore --no-build --configuration Release
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet test Ahk.GitHub.Monitor.sln --no-restore --no-build --configuration Release
 
       - name: "Run dotnet publish"
-        working-directory: src/Ahk.Github.Monitor
-        run: dotnet publish Ahk.Github.Monitor/Ahk.Github.Monitor.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.Github.Monitor'
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet publish Ahk.GitHub.Monitor/Ahk.GitHub.Monitor.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GitHub.Monitor'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
