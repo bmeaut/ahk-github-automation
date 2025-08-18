@@ -31,7 +31,10 @@ public class GitHubMonitorFunction(
         string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
         if (keyVaultUrl == null)
         {
-            return new BadRequestObjectResult(new { error = "Please set environment variable KEY_VAULT_URI" });
+            return new ObjectResult(new { error = "KEY_VAULT_URI not configured" })
+            {
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
         }
         var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
 
