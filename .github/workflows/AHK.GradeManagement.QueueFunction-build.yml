@@ -1,4 +1,4 @@
-name: Build AHK.GradeManagement
+name: Build AHK.GradeManagement.QueueFunction
 
 on:
   pull_request:
