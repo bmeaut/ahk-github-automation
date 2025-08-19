@@ -10,9 +10,6 @@ on:
 
 env:
   artifactName: buildArtifact
-  appNameEnvVar: "AHK_GitHub_Monitor_App_Name"
-  publishProfileSecret: "AHK_GitHub_Monitor_PUBLISH_PROFILE"
-  packageName: "Ahk.GitHub.Monitor"
 
 jobs:
   # 👇 Call the build workflow to create the artifacts to deploy, and provide the artifact name.
@@ -24,22 +21,16 @@ jobs:
 
   deploy-to-test:
     needs: build
-    uses: ./.github/workflows/AzureFunctions-deploy.template.yml
+    uses: ./.github/workflows/AHK.GitHub.Monitor-deploy.template.yml
     with:
       environmentName: test
       artifactName: ${{ github.env.artifactName }}
-      packageName: ${{ github.env.packageName }}
-      appNameEnvVar: ${{ github.env.appNameEnvVar }}
-      publishProfileSecret: ${{ github.env.publishProfileSecret }}
     secrets: inherit # Pass repository secrets to the deployment workflow.
 
   deploy-to-production:
     needs: deploy-to-test
-    uses: ./.github/workflows/AzureFunctions-deploy.template.yml
+    uses: ./.github/workflows/AHK.GitHub.Monitor-deploy.template.yml
     with:
       environmentName: production
       artifactName: ${{ github.env.artifactName }}
-      packageName: ${{ github.env.packageName }}
-      appNameEnvVar: ${{ github.env.appNameEnvVar }}
-      publishProfileSecret: ${{ github.env.publishProfileSecret }}
     secrets: inherit # Pass repository secrets to the deployment workflow.
