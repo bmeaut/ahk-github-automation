@@ -12,7 +12,6 @@ on:
         description: The name of the environment to deploy to.
         required: true
         type: string
-    
 
 jobs:
   deploy:

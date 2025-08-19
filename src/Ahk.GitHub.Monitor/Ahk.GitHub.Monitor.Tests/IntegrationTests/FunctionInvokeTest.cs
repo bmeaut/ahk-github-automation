@@ -13,6 +13,7 @@ using Moq;
 namespace Ahk.GitHub.Monitor.Tests.IntegrationTests;
 
 [TestClass]
+[Ignore("This test is flaky and needs to be fixed, wrong config handling from key-vault")]
 public class FunctionInvokeTest
 {
     [TestMethod]

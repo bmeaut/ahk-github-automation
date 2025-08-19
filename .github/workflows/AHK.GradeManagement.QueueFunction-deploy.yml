@@ -1,0 +1,45 @@
+name: Deploy AHK.GradeManagement.QueueFunction
+
+on:
+  # Trigger the workflow on a push to the main branch.
+  push:
+    branches: dev
+
+  # Allows you to run this workflow manually (for any branch) from the Actions tab.
+  workflow_dispatch:
+
+env:
+  artifactName: buildArtifact
+  appNameEnvVar: "AHK_GradeManagement_QueueFunction_App_Name"
+  publishProfileSecret: "AHK_GradeManagement_QueueFunction_PUBLISH_PROFILE"
+  packageName: "Ahk.GradeManagement.QueueFunction"
+
+jobs:
+  # 👇 Call the build workflow to create the artifacts to deploy, and provide the artifact name.
+  build:
+    uses: ./.github/workflows/AHK.GradeManagement.QueueFunction-build.yml
+    with:
+      artifactName: ${{ github.env.artifactName }}
+    secrets: inherit # Pass secrets to the build workflow, if necessary.
+
+  deploy-to-test:
+    needs: build
+    uses: ./.github/workflows/AzureFunctions-deploy.template.yml
+    with:
+      environmentName: test
+      artifactName: ${{ github.env.artifactName }}
+      packageName: ${{ github.env.packageName }}
+      appNameEnvVar: ${{ github.env.appNameEnvVar }}
+      publishProfileSecret: ${{ github.env.publishProfileSecret }}
+    secrets: inherit # Pass repository secrets to the deployment workflow.
+
+  deploy-to-production:
+    needs: deploy-to-test
+    uses: ./.github/workflows/AzureFunctions-deploy.template.yml
+    with:
+      environmentName: production
+      artifactName: ${{ github.env.artifactName }}
+      packageName: ${{ github.env.packageName }}
+      appNameEnvVar: ${{ github.env.appNameEnvVar }}
+      publishProfileSecret: ${{ github.env.publishProfileSecret }}
+    secrets: inherit # Pass repository secrets to the deployment workflow.

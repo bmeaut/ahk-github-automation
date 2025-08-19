@@ -1,0 +1,37 @@
+name: Deploy Functions TEMPLATE 
+
+on:
+  # Allows this workflow to be called from the deployment workflow, but the parameters must be provided.
+  workflow_call:
+    inputs:
+      artifactName:
+        description: The name of the artifact to download and deploy.
+        required: true
+        type: string
+      environmentName:
+        description: The name of the environment to deploy to.
+        required: true
+        type: string
+      packageName:
+        description: The name of the package from the artifact to deploy.
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environmentName }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifactName }}
+          path: .
+
+      - name: "Run Azure Functions deploy action using publish profile credentials"
+        uses: Azure/functions-action@v1
+        id: fa
+        with: 
+          app-name: ${{ vars[inputs.appName] || env[inputs.appName] }}
+          publish-profile: ${{ secrets[inputs.publishProfileSecret] }}
+          package: './${{ inputs.artifactName }}/${{ inputs.packageName }}'

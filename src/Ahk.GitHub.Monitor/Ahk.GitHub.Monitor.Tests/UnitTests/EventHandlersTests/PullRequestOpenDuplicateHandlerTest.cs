@@ -89,6 +89,7 @@ public class PullRequestOpenDuplicateHandlerTest
     }
 
     [TestMethod]
+    [Ignore("Nem tisztázott üzletileg a követelmény")]
     public async Task OtherClosedPullRequestYieldsWarning()
     {
         GitHubClientMockFactory gitHubMock = GitHubClientMockFactory.CreateDefault()

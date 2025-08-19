@@ -1,0 +1,58 @@
+name: Build AHK.GitHub.Monitor
+
+on:
+  pull_request:
+    branches: dev # Run workflow on PRs to the main branch.
+
+  # Run workflow on pushes to any branch, except the main branch.
+  # push:
+  #   branches-ignore: dev
+
+  # Allows you to run this workflow manually from the Actions tab.
+  workflow_dispatch:
+
+  # 👇 Allows this workflow to be called from the deployment workflow, but the parameters must be provided.
+  workflow_call:
+    inputs:
+      artifactName:
+        description: The name of the artifact to upload to.
+        required: true
+        type: string
+
+env:
+  # 👇 Provide a default artifact name for when this workflow is not called by the deployment workflow.
+  artifactName: ${{ inputs.artifactName || 'buildArtifact' }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo source code
+        uses: actions/checkout@v3
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: "Run dotnet restore"
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet restore Ahk.GitHub.Monitor.sln
+
+      - name: "Run dotnet build"
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet build Ahk.GitHub.Monitor.sln --no-restore --configuration Release
+
+      - name: "Run dotnet test"
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet test Ahk.GitHub.Monitor.sln --no-restore --no-build --configuration Release
+
+      - name: "Run dotnet publish"
+        working-directory: src/Ahk.GitHub.Monitor
+        run: dotnet publish Ahk.GitHub.Monitor/Ahk.GitHub.Monitor.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GitHub.Monitor'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.artifactName }}
+          path: ./output
