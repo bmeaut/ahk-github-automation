@@ -30,4 +30,4 @@ jobs:
         with: 
           app-name: ${{ vars.AHK_GRADEMANAGEMENT_QUEUEFUNCTION_APP_NAME }}
           publish-profile: ${{ secrets.AHK_GRADEMANAGEMENT_QUEUEFUNCTION_PUBLISH_PROFILE }}
-          package: './${{ inputs.artifactName }}/Ahk.GradeManagement.QueueFunction'
+          package: './buildArtifact/Ahk.GradeManagement.QueueFunction'

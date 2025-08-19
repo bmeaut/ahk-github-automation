@@ -30,4 +30,4 @@ jobs:
         with: 
           app-name: ${{ vars.AHK_GITHUB_MONITOR_APP_NAME }}
           publish-profile: ${{ secrets.AHK_GITHUB_MONITOR_PUBLISH_PROFILE }}
-          package: './${{ inputs.artifactName }}/Ahk.GitHub.Monitor'
+          package: './buildArtifact/Ahk.GitHub.Monitor'
