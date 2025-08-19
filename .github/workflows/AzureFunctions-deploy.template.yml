@@ -16,6 +16,14 @@ on:
         description: The name of the package from the artifact to deploy.
         required: true
         type: string
+      appNameEnvVar:
+        description: The name of the environment variable that contains the Azure Function app name.
+        required: true
+        type: string
+      publishProfileSecret:
+        description: The name of the secret that contains the Azure Function publish profile.
+        required: true
+        type: string
 
 jobs:
   deploy:
@@ -32,6 +40,6 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with: 
-          app-name: ${{ vars[inputs.appName] || env[inputs.appName] }}
+          app-name: ${{ vars[inputs.appNameEnvVar] || env[inputs.appNameEnvVar] }}
           publish-profile: ${{ secrets[inputs.publishProfileSecret] }}
           package: './${{ inputs.artifactName }}/${{ inputs.packageName }}'
