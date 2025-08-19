@@ -29,6 +29,6 @@ jobs:
       - name: 'Run Azure webapp deploy action using publish profile credentials'
         uses: azure/webapps-deploy@v3
         with: 
-          app-name: ${{ env.AHK_GradeManagement_App_Name }} # Replace with your app name
+          app-name: ${{ vars.AHK_GradeManagement_App_Name }} # Replace with your app name
           publish-profile: ${{ secrets.AHK_GradeManagement_PUBLISH_PROFILE  }} # Define secret variable in repository settings as per action documentation
           package: './buildArtifact/Ahk.GradeManagement.Api'

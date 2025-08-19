@@ -28,6 +28,6 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with: 
-          app-name: ${{ env.AHK_GitHub_Monitor_App_Name }}
-          publish-profile: ${{ secrets.AHK_GitHub_Monitor_PUBLISH_PROFILE }}
+          app-name: ${{ vars.AHK_GITHUB_MONITOR_APP_NAME }}
+          publish-profile: ${{ secrets.AHK_GITHUB_MONITOR_PUBLISH_PROFILE }}
           package: './${{ inputs.artifactName }}/Ahk.GitHub.Monitor'

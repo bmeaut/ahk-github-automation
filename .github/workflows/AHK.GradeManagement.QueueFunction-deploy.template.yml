@@ -28,6 +28,6 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with: 
-          app-name: ${{ env.AHK_GradeManagement_QueueFunction_App_Name }}
-          publish-profile: ${{ secrets.AHK_GradeManagement_QueueFunction_Publish_Profile }}
+          app-name: ${{ vars.AHK_GRADEMANAGEMENT_QUEUEFUNCTION_APP_NAME }}
+          publish-profile: ${{ secrets.AHK_GRADEMANAGEMENT_QUEUEFUNCTION_PUBLISH_PROFILE }}
           package: './${{ inputs.artifactName }}/Ahk.GradeManagement.QueueFunction'
