@@ -44,7 +44,10 @@ jobs:
         run: dotnet publish Ahk.GradeManagement.Api/Ahk.GradeManagement.Api.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GradeManagement.Api'
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.0
         with:
           name: ${{ env.artifactName }}
           path: ./output # Put the path to the build artifact files directory here.
+          if-no-files-found: error
+          include-hidden-files: true
+
