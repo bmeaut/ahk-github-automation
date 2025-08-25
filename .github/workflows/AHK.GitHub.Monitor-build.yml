@@ -52,7 +52,9 @@ jobs:
         run: dotnet publish Ahk.GitHub.Monitor/Ahk.GitHub.Monitor.csproj --no-restore --configuration Release --output '${{ github.workspace }}/output/Ahk.GitHub.Monitor'
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.0
         with:
           name: ${{ env.artifactName }}
-          path: ./output
+          path: ./output # Put the path to the build artifact files directory here.
+          if-no-files-found: error
+          include-hidden-files: true
