@@ -6,27 +6,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Ahk.GradeManagement.QueueFunction.Functions;
 
-public class PullRequestStatusChangedEventFunction
+public class PullRequestStatusChangedEventFunction(ILogger<PullRequestStatusChangedEventFunction> logger,
+    AssignmentEventProcessorService assignmentEventProcessorService)
 {
-    private readonly ILogger<PullRequestStatusChangedEventFunction> _logger;
-    private readonly AssignmentEventProcessorService _assignmentEventProcessorService;
-
-    public PullRequestStatusChangedEventFunction(ILogger<PullRequestStatusChangedEventFunction> logger,
-        AssignmentEventProcessorService assignmentEventProcessorService)
-    {
-        _logger = logger;
-        _assignmentEventProcessorService = assignmentEventProcessorService;
-    }
-
     [Function(nameof(PullRequestStatusChangedEventFunction))]
-    public async Task Run(
-        [QueueTrigger("ahkstatustracking-pull-request-status-changed", Connection = "AHK_EventsQueueConnectionString")]
-        PullRequestStatusChanged pullRequestStatusChanged)
+    public async Task Run([QueueTrigger("ahkstatustracking-pull-request-status-changed", Connection = "ahk-queue-storage")] PullRequestStatusChanged pullRequestStatusChanged)
     {
-        _logger.LogInformation(
-            $"Pull request status changed event function triggered for repo url: {pullRequestStatusChanged.GitHubRepositoryUrl}");
-        await _assignmentEventProcessorService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
-        _logger.LogInformation(
-            $"Pull request status changed event consumed for repo url: {pullRequestStatusChanged.GitHubRepositoryUrl}");
+        logger.LogInformation("Pull request status changed event function triggered for repo url: {RepoUrl}", pullRequestStatusChanged.GitHubRepositoryUrl);
+        await assignmentEventProcessorService.ConsumePullRequestStatusChangedEventAsync(pullRequestStatusChanged);
+        logger.LogInformation("Pull request status changed event consumed for repo url: {RepoUrl}", pullRequestStatusChanged.GitHubRepositoryUrl);
     }
 }

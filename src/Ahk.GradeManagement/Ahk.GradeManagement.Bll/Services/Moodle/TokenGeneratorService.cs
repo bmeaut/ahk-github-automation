@@ -3,7 +3,6 @@ using Ahk.GradeManagement.Dal.Entities;
 using Ahk.GradeManagement.Shared.Config;
 using Ahk.GradeManagement.Shared.Exceptions;
 
-using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
 using Jose;
@@ -22,7 +21,7 @@ using System.Security.Cryptography;
 
 namespace Ahk.GradeManagement.Bll.Services.Moodle;
 
-public class TokenGeneratorService(IOptions<AhkOptions> ahkOptionsAccessor)
+public class TokenGeneratorService(IOptions<AhkOptions> ahkOptionsAccessor, SecretClient secretClient)
 {
     private readonly AhkOptions _ahkOptions = ahkOptionsAccessor.Value;
     private static readonly string Scope = "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem " +
@@ -66,7 +65,6 @@ public class TokenGeneratorService(IOptions<AhkOptions> ahkOptionsAccessor)
 
     private async Task<string> CreateToken(List<Claim> claims, Course course)
     {
-        var secretClient = new SecretClient(new Uri(_ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
         var moodlePrivateKey = await secretClient.GetSecretAsync($"{MoodleConfig.Name}--{course.MoodleClientId}--MoodlePrivateKey");
 
         var privateRsaKey = moodlePrivateKey.Value.Value;

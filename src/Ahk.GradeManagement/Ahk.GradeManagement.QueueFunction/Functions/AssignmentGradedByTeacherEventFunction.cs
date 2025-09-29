@@ -6,27 +6,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Ahk.GradeManagement.QueueFunction.Functions;
 
-public class AssignmentGradedByTeacherEventFunction
+public class AssignmentGradedByTeacherEventFunction(
+    ILogger<AssignmentGradedByTeacherEventFunction> logger,
+    AssignmentEventProcessorService assignmentEventProcessorService)
 {
-    private readonly ILogger<AssignmentGradedByTeacherEventFunction> _logger;
-    private readonly AssignmentEventProcessorService _assignmentEventProcessorService;
-
-    public AssignmentGradedByTeacherEventFunction(ILogger<AssignmentGradedByTeacherEventFunction> logger,
-        AssignmentEventProcessorService assignmentEventProcessorService)
-    {
-        _logger = logger;
-        _assignmentEventProcessorService = assignmentEventProcessorService;
-    }
-
     [Function(nameof(AssignmentGradedByTeacherEventFunction))]
-    public async Task Run(
-        [QueueTrigger("ahkstatustracking-assignment-graded-by-teacher", Connection = "AHK_EventsQueueConnectionString")]
-        AssignmentGradedByTeacher assignmentGradedByTeacher)
+    public async Task Run([QueueTrigger("ahkstatustracking-assignment-graded-by-teacher", Connection = "ahk-queue-storage")] AssignmentGradedByTeacher assignmentGradedByTeacher)
     {
-        _logger.LogInformation(
-            $"Assignment graded by teacher event function triggered for repo url: {assignmentGradedByTeacher.GitHubRepositoryUrl}");
-        await _assignmentEventProcessorService.ConsumeAssignmentGradedByTeacherEventAsync(assignmentGradedByTeacher);
-        _logger.LogInformation(
-            $"Assignment graded by teacher event consumed for repo url: {assignmentGradedByTeacher.GitHubRepositoryUrl}");
+        logger.LogInformation("Assignment graded by teacher event function triggered for repo url: {RepoUrl}", assignmentGradedByTeacher.GitHubRepositoryUrl);
+        await assignmentEventProcessorService.ConsumeAssignmentGradedByTeacherEventAsync(assignmentGradedByTeacher);
+        logger.LogInformation("Assignment graded by teacher event consumed for repo url: {RepoUrl}", assignmentGradedByTeacher.GitHubRepositoryUrl);
     }
 }

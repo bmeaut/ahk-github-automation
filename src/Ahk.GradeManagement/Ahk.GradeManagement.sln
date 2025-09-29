@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.QueueFu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.Backend.Common", "Ahk.GradeManagement.Backend.Common\Ahk.GradeManagement.Backend.Common.csproj", "{A5E7963C-DD12-4A80-B876-07C2379B06D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.AppHost", "Ahk.GradeManagement.AppHost\Ahk.GradeManagement.AppHost.csproj", "{7ABD1340-E8B4-4C95-ADC0-5AD6FB7EC82E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.ServiceDefaults", "Ahk.GradeManagement.ServiceDefaults\Ahk.GradeManagement.ServiceDefaults.csproj", "{24CF132E-75EA-449C-79E7-2A040D82A221}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +55,14 @@ Global
 		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5E7963C-DD12-4A80-B876-07C2379B06D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7ABD1340-E8B4-4C95-ADC0-5AD6FB7EC82E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ABD1340-E8B4-4C95-ADC0-5AD6FB7EC82E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ABD1340-E8B4-4C95-ADC0-5AD6FB7EC82E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ABD1340-E8B4-4C95-ADC0-5AD6FB7EC82E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24CF132E-75EA-449C-79E7-2A040D82A221}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24CF132E-75EA-449C-79E7-2A040D82A221}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24CF132E-75EA-449C-79E7-2A040D82A221}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24CF132E-75EA-449C-79E7-2A040D82A221}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,14 +11,10 @@ public class AssignmentAcceptedEventFunction(
     AssignmentEventProcessorService assignmentEventProcessorService)
 {
     [Function(nameof(AssignmentAcceptedEventFunction))]
-    public async Task Run(
-        [QueueTrigger("ahkstatustracking-assignment-accepted", Connection = "AHK_EventsQueueConnectionString")]
-        AssignmentAccepted assignmentAcceptedEvent)
+    public async Task Run([QueueTrigger("ahkstatustracking-assignment-accepted", Connection = "ahk-queue-storage")] AssignmentAccepted assignmentAcceptedEvent)
     {
-        logger.LogInformation(
-            $"Assignment accepted event function triggered for repo url: {assignmentAcceptedEvent.GitHubRepositoryUrl}");
+        logger.LogInformation("Assignment accepted event function triggered for repo url: {RepoUrl}", assignmentAcceptedEvent.GitHubRepositoryUrl);
         await assignmentEventProcessorService.ConsumeAssignmentAcceptedEventAsync(assignmentAcceptedEvent);
-        logger.LogInformation(
-            $"Assignment accepted event consumed for repo url: {assignmentAcceptedEvent.GitHubRepositoryUrl}");
+        logger.LogInformation("Assignment accepted event consumed for repo url: {RepoUrl}", assignmentAcceptedEvent.GitHubRepositoryUrl);
     }
 }

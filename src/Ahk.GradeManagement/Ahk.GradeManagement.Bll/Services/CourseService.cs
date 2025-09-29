@@ -1,8 +1,12 @@
+using Ahk.GradeManagement.Backend.Common.RequestContext;
 using Ahk.GradeManagement.Bll.Services.BaseServices;
+using Ahk.GradeManagement.Bll.Services.Utils;
 using Ahk.GradeManagement.Dal;
+using Ahk.GradeManagement.Dal.Entities;
 using Ahk.GradeManagement.Shared.Config;
 using Ahk.GradeManagement.Shared.Dtos.Request;
 using Ahk.GradeManagement.Shared.Dtos.Response;
+using Ahk.GradeManagement.Shared.Exceptions;
 
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -10,25 +14,15 @@ using AutoMapper.QueryableExtensions;
 using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
-using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-using Ahk.GradeManagement.Bll.Services.Utils;
-using Ahk.GradeManagement.Dal.Entities;
-using Ahk.GradeManagement.Shared.Exceptions;
-
 using Microsoft.EntityFrameworkCore;
-using Ahk.GradeManagement.Backend.Common.RequestContext;
-using Microsoft.Extensions.Options;
-using Ahk.GradeManagement.Backend.Common.Options;
 
 namespace Ahk.GradeManagement.Bll.Services;
 
-public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, IRequestContext requestContext, IOptions<AhkOptions> ahkOptionsAccessor)
+public class CourseService(GradeManagementDbContext gradeManagementDbContext, IMapper mapper, IRequestContext requestContext, SecretClient secretClient)
     : ICrudServiceBase<CourseRequest, CourseResponse>
 {
-    private readonly AhkOptions _ahkOptions = ahkOptionsAccessor.Value;
-
     public async Task<IEnumerable<CourseResponse>> GetAllAsync()
     {
         return await gradeManagementDbContext.Course
@@ -89,7 +83,7 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
         gradeManagementDbContext.Course.Add(courseEntityToBeCreated);
         await gradeManagementDbContext.SaveChangesAsync();
 
-        await SetSecret(requestDto.MoodleClientId, keyGenerator.PrivateKey);
+        await secretClient.SetSecretAsync($"{MoodleConfig.Name}--{requestDto.MoodleClientId}--MoodlePrivateKey", keyGenerator.PrivateKey);
 
         return await GetByIdAsync(courseEntityToBeCreated.Id);
     }
@@ -116,12 +110,5 @@ public class CourseService(GradeManagementDbContext gradeManagementDbContext, IM
             .Where(g => g.CourseId == id)
             .ProjectTo<GroupResponse>(mapper.ConfigurationProvider)
             .ToListAsync();
-    }
-
-    private async Task SetSecret(string moodleClientId, string privateKey)
-    {
-        var client = new SecretClient(new Uri(_ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
-
-        await client.SetSecretAsync($"{MoodleConfig.Name}--{moodleClientId}--MoodlePrivateKey", privateKey);
     }
 }

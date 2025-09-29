@@ -11,14 +11,10 @@ public class PullRequestOpenedEventFunction(
     AssignmentEventProcessorService assignmentEventProcessorService)
 {
     [Function(nameof(PullRequestOpenedEventFunction))]
-    public async Task Run(
-        [QueueTrigger("ahkstatustracking-pull-request-opened", Connection = "AHK_EventsQueueConnectionString")]
-        PullRequestOpened pullRequestOpened)
+    public async Task Run([QueueTrigger("ahkstatustracking-pull-request-opened", Connection = "ahk-queue-storage")] PullRequestOpened pullRequestOpened)
     {
-        logger.LogInformation(
-            $"Pull request opened event function triggered for repo url: {pullRequestOpened.GitHubRepositoryUrl}");
+        logger.LogInformation("Pull request opened event function triggered for repo url: {RepoUrl}", pullRequestOpened.GitHubRepositoryUrl);
         await assignmentEventProcessorService.ConsumePullRequestOpenedEventAsync(pullRequestOpened);
-        logger.LogInformation(
-            $"Pull request opened event consumed for repo url: {pullRequestOpened.GitHubRepositoryUrl}");
+        logger.LogInformation("Pull request opened event consumed for repo url: {RepoUrl}", pullRequestOpened.GitHubRepositoryUrl);
     }
 }

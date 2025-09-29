@@ -11,14 +11,10 @@ public class TeacherAssignedEventFunction(
     AssignmentEventProcessorService assignmentEventProcessorService)
 {
     [Function(nameof(TeacherAssignedEventFunction))]
-    public async Task Run(
-        [QueueTrigger("ahkstatustracking-teacher-assigned", Connection = "AHK_EventsQueueConnectionString")]
-        TeacherAssigned teacherAssigned)
+    public async Task Run([QueueTrigger("ahkstatustracking-teacher-assigned", Connection = "ahk-queue-storage")] TeacherAssigned teacherAssigned)
     {
-        logger.LogInformation(
-            $"Teacher assigned event function triggered for repo url: {teacherAssigned.GitHubRepositoryUrl}");
+        logger.LogInformation("Teacher assigned event function triggered for repo url: {RepoUrl}", teacherAssigned.GitHubRepositoryUrl);
         await assignmentEventProcessorService.ConsumeTeacherAssignedEventAsync(teacherAssigned);
-        logger.LogInformation(
-            $"Teacher assigned event consumed for repo url: {teacherAssigned.GitHubRepositoryUrl}");
+        logger.LogInformation("Teacher assigned event consumed for repo url: {RepoUrl}", teacherAssigned.GitHubRepositoryUrl);
     }
 }

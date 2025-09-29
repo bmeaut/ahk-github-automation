@@ -3,7 +3,10 @@
     "GradeManagement.QueueFunction": {
       "commandName": "Project",
       "commandLineArgs": "--port 7106",
-      "launchBrowser": false
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }

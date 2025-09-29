@@ -1,11 +1,10 @@
 using Ahk.GradeManagement.Api.Authorization;
 using Ahk.GradeManagement.Api.ErrorHandling;
+using Ahk.GradeManagement.Api.KeyVault;
 using Ahk.GradeManagement.Api.RequestContext;
 using Ahk.GradeManagement.Backend.Common.Options;
 using Ahk.GradeManagement.Bll;
 using Ahk.GradeManagement.Dal;
-
-using Azure.Identity;
 
 using Microsoft.Identity.Web;
 
@@ -20,9 +19,11 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        builder.AddServiceDefaults();
 
-        var ahkOptions = builder.Services.ConfigureOption<AhkOptions>(builder.Configuration);
-        builder.Configuration.AddAzureKeyVault(new Uri(ahkOptions.KeyVaultUrl), new DefaultAzureCredential());
+        builder.Services.ConfigureOption<AhkOptions>(builder.Configuration);
+
+        builder.AddKeyVault();
 
         builder.Services.AddRequestContext();
         builder.Services.AddHttpClient();
@@ -53,6 +54,8 @@ public class Program
         builder.Services.AddMudExtensions();
 
         var app = builder.Build();
+
+        app.MapDefaultEndpoints();
 
         if (app.Environment.IsDevelopment())
         {
