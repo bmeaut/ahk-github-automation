@@ -1,53 +1,39 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
 using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
-using Azure.Identity;
+
 using Azure.Security.KeyVault.Secrets;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 using Octokit;
+
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor;
 
 public class GitHubMonitorFunction(
     IEventDispatchService eventDispatchService,
     ILogger<GitHubMonitorFunction> logger,
-    IConfiguration configuration)
+    SecretClient secretClient)
 {
     [Function("github-webhook")]
-    public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
-        HttpRequestData request)
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData request)
     {
-        string keyVaultUrl = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
-        if (keyVaultUrl == null)
-        {
-            return new ObjectResult(new { error = "KEY_VAULT_URI not configured" })
-            {
-                StatusCode = StatusCodes.Status500InternalServerError
-            };
-        }
-        var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
-
-        request.Headers.TryGetValues("X-GitHub-Event", out IEnumerable<string> eventNameValues);
+        request.Headers.TryGetValues("X-GitHub-Event", out var eventNameValues);
         var eventName = eventNameValues?.FirstOrDefault();
-        request.Headers.TryGetValues("X-GitHub-Delivery", out IEnumerable<string> deliveryIdValues);
+        request.Headers.TryGetValues("X-GitHub-Delivery", out var deliveryIdValues);
         var deliveryId = deliveryIdValues?.FirstOrDefault();
-        request.Headers.TryGetValues("X-Hub-Signature-256", out IEnumerable<string> signatureValues);
+        request.Headers.TryGetValues("X-Hub-Signature-256", out var signatureValues);
         var receivedSignature = signatureValues?.FirstOrDefault();
 
-        logger.LogInformation(
-            "Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'",
-            deliveryId, eventName);
+        logger.LogInformation("Webhook delivery: Delivery id = '{DeliveryId}', Event name = '{EventName}'", deliveryId, eventName);
 
         if (string.IsNullOrEmpty(eventName))
         {
@@ -65,8 +51,7 @@ public class GitHubMonitorFunction(
         }
 
         var requestBody = await request.ReadAsStringAsync();
-        if (!PayloadParser<ActivityPayload>.TryParsePayload(requestBody, out ActivityPayload parsedRequestBody,
-                out EventHandlerResult errorResult, logger))
+        if (!PayloadParser<ActivityPayload>.TryParsePayload(requestBody, out var parsedRequestBody, out var errorResult, logger))
         {
             return new BadRequestObjectResult(new { error = errorResult.Result });
         }
@@ -86,8 +71,7 @@ public class GitHubMonitorFunction(
             };
         }
 
-        if (string.IsNullOrEmpty(githubAppId.Value.Value) ||
-            string.IsNullOrEmpty(githubAppPrivateKey.Value.Value))
+        if (string.IsNullOrEmpty(githubAppId.Value.Value) || string.IsNullOrEmpty(githubAppPrivateKey.Value.Value))
         {
             return new ObjectResult(new { error = "GitHub App ID/Token not configured" })
             {
@@ -95,24 +79,17 @@ public class GitHubMonitorFunction(
             };
         }
 
-        if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature,
-                githubWebhookSecret.Value.Value))
+        if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature, githubWebhookSecret.Value.Value))
         {
             return new BadRequestObjectResult(new { error = "Payload signature not valid" });
         }
 
-        return await this.runCore(eventName, deliveryId, requestBody);
-    }
-
-    private async Task<IActionResult> runCore(string eventName, string deliveryId, string requestBody)
-    {
         logger.LogInformation("Webhook delivery accepted with Delivery id = '{DeliveryId}'", deliveryId);
         var webhookResult = new WebhookResult();
         try
         {
             await eventDispatchService.Process(eventName, requestBody, webhookResult, logger);
-            logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'",
-                deliveryId);
+            logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'", deliveryId);
         }
         catch (Exception ex)
         {

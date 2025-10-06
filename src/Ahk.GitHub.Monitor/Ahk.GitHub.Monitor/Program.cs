@@ -58,7 +58,7 @@ else
 
 builder.Services.AddAzureClients(client =>
 {
-    client.AddQueueServiceClient(builder.Configuration.GetConnectionString("ahk-queue-storage"))
+    client.AddQueueServiceClient(builder.Configuration["ahk-queue-storage"])
         .WithName(QueueClientName.Name)
         .ConfigureOptions(options =>
         {
