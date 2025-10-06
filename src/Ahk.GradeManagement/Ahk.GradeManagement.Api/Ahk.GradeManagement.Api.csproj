@@ -27,7 +27,7 @@
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.13.0" />
     <PackageReference Include="Microsoft.Identity.Web" Version="3.14.1" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="3.14.1" />
-    <PackageReference Include="NSwag.AspNetCore" Version="14.6.0" />
+    <PackageReference Include="NSwag.AspNetCore" Version="14.6.1" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(Configuration)' != 'NSwag.Generate' ">

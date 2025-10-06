@@ -1,10 +1,8 @@
-using Ahk.GradeManagement.Backend.Common.Options;
 using Ahk.GradeManagement.Shared.Dtos.GitHubManifest;
 
 using Azure.Security.KeyVault.Secrets;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -36,6 +34,6 @@ public class GitHubAppController(IHttpClientFactory httpClientFactory, SecretCli
         await secretClient.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubAppPrivateKey", pem);
         await secretClient.SetSecretAsync($"GitHubMonitorConfig--{gitHubApp.Owner.Login}--GitHubWebhookSecret", gitHubApp.WebhookSecret);
 
-        return Redirect($"https://github.com/organizations/ahk-dev-org/settings/apps/{gitHubApp.Slug}/installations");
+        return Redirect($"https://github.com/organizations/{gitHubApp.Owner.Login}/settings/apps/{gitHubApp.Slug}/installations");
     }
 }

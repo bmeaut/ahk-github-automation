@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.1" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -11,13 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.1" />
     <PackageReference Include="Aspire.Hosting.Azure.Functions" Version="9.5.0-preview.1.25474.7" />
-    <PackageReference Include="Aspire.Hosting.SqlServer" Version="9.5.0" />
+    <PackageReference Include="Aspire.Hosting.DevTunnels" Version="9.5.0-preview.1.25474.7" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="9.5.1" />
     <PackageReference Include="AzureKeyVaultEmulator.Aspire.Hosting" Version="2.6.5" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor.csproj" />
     <ProjectReference Include="..\Ahk.GradeManagement.Api\Ahk.GradeManagement.Api.csproj" />
     <ProjectReference Include="..\Ahk.GradeManagement.QueueFunction\Ahk.GradeManagement.QueueFunction.csproj" />
   </ItemGroup>

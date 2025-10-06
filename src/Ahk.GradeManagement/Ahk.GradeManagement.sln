@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.AppHost
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GradeManagement.ServiceDefaults", "Ahk.GradeManagement.ServiceDefaults\Ahk.GradeManagement.ServiceDefaults.csproj", "{24CF132E-75EA-449C-79E7-2A040D82A221}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ahk.GitHub.Monitor", "..\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor\Ahk.GitHub.Monitor.csproj", "{31AEEBCA-7790-38BA-DF1F-6BE5B7CD29C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{24CF132E-75EA-449C-79E7-2A040D82A221}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24CF132E-75EA-449C-79E7-2A040D82A221}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24CF132E-75EA-449C-79E7-2A040D82A221}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31AEEBCA-7790-38BA-DF1F-6BE5B7CD29C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31AEEBCA-7790-38BA-DF1F-6BE5B7CD29C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31AEEBCA-7790-38BA-DF1F-6BE5B7CD29C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31AEEBCA-7790-38BA-DF1F-6BE5B7CD29C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

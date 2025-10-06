@@ -1,7 +1,3 @@
-#pragma warning disable CA1506
-using System;
-using Ahk.GitHub.Monitor;
-using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.EventHandlers.GradeComment;
 using Ahk.GitHub.Monitor.Services;
@@ -10,110 +6,87 @@ using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
 using Ahk.GitHub.Monitor.Services.GradeStore;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
+
 using Azure.Core;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Queues;
+
+using AzureKeyVaultEmulator.Aspire.Client;
+
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-IHost host = new HostBuilder()
-    .ConfigureFunctionsWebApplication()
-    .ConfigureAppConfiguration((context, config) =>
-    {
-        var builtConfig = config.Build(); // Build early to get settings
-        var keyVaultUrl = builtConfig["KEY_VAULT_URI"]; // Ensure you have this in env variables
+using System;
 
-        if (!string.IsNullOrEmpty(keyVaultUrl))
-        {
-            config.AddAzureKeyVault(
-                new Uri(keyVaultUrl),
-                new DefaultAzureCredential());
-        }
-    })
-    .ConfigureServices((context, services) =>
-    {
-        // Application Insights setup
-        services.AddApplicationInsightsTelemetryWorkerService();
-        services.ConfigureFunctionsApplicationInsights();
 
-        // Register logging services
-        services.AddLogging();
+var builder = FunctionsApplication.CreateBuilder(args);
 
-        // Add memory cache with a specific expiration scan frequency
-        services.AddMemoryCache(setup =>
-        {
-            setup.ExpirationScanFrequency = TimeSpan.FromMinutes(4);
-        });
+builder.AddServiceDefaults();
 
-        // Register services
-        services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
+builder.ConfigureFunctionsWebApplication();
 
-        RegisterEventHandlers(services);
-        services.AddSingleton<IEventDispatchService, EventDispatchService>();
+builder.Services
+    .AddApplicationInsightsTelemetryWorkerService()
+    .ConfigureFunctionsApplicationInsights();
 
-        // Load configuration from environment variables with the prefix "AHK_"
-        IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddEnvironmentVariables("AHK_")
-            .Build();
-
-        // Add Azure Queue integration based on configuration
-        AddAzureQueueIntegration(services, configuration);
-    })
-    .Build();
-
-host.Run();
-
-void RegisterEventHandlers(IServiceCollection services)
+var kvConnString = builder.Configuration.GetConnectionString("KeyVault");
+if (builder.Environment.IsDevelopment())
 {
-    EventDispatchConfigBuilder builder = new EventDispatchConfigBuilder(services)
-        .Add<BranchProtectionRuleHandler>(BranchProtectionRuleHandler.GitHubWebhookEventName)
-        .Add<IssueCommentEditDeleteHandler>(IssueCommentEditDeleteHandler.GitHubWebhookEventName)
-        .Add<PullRequestOpenDuplicateHandler>(PullRequestOpenDuplicateHandler.GitHubWebhookEventName)
-        .Add<PullRequestReviewToAssigneeHandler>(PullRequestReviewToAssigneeHandler.GitHubWebhookEventName)
-        .Add<GradeCommandIssueCommentHandler>(GradeCommandIssueCommentHandler.GitHubWebhookEventName)
-        .Add<GradeCommandReviewCommentHandler>(GradeCommandReviewCommentHandler.GitHubWebhookEventName)
-        .Add<ActionWorkflowRunHandler>(ActionWorkflowRunHandler.GitHubWebhookEventName)
-        .Add<RepositoryCreateStatusTrackingHandler>(RepositoryCreateStatusTrackingHandler.GitHubWebhookEventName)
-        .Add<PullRequestStatusTrackingHandler>(PullRequestStatusTrackingHandler.GitHubWebhookEventName);
-    EventDispatchConfig config = builder.Build();
-    services.AddSingleton(config);
+    builder.Services.AddAzureKeyVaultEmulator(kvConnString);
+    builder.Configuration.AddAzureKeyVault(
+        new SecretClient(new Uri(kvConnString), new EmulatedTokenCredential(kvConnString), new()
+        {
+            DisableChallengeResourceVerification = true
+        }),
+        new AzureKeyVaultConfigurationOptions());
+}
+else
+{
+    builder.Services.AddAzureClients(client =>
+    {
+        client.AddSecretClient(new Uri(kvConnString));
+    });
+
+    builder.Configuration.AddAzureKeyVault(new Uri(kvConnString), new DefaultAzureCredential());
 }
 
-void AddAzureQueueIntegration(IServiceCollection services, IConfiguration configuration)
+builder.Services.AddAzureClients(client =>
 {
-    QueueConfig queueConfig = configuration.Get<QueueConfig>();
-
-    if (!string.IsNullOrEmpty(queueConfig?.EventsQueueConnectionString))
-    {
-        services
-            .AddSingleton<IGradeStore, GradeStoreAzureQueue>();
-        services
-            .AddSingleton<IStatusTrackingStore,
-                StatusTrackingStoreAzureQueue>();
-
-        services.AddAzureClients(az =>
+    client.AddQueueServiceClient(builder.Configuration.GetConnectionString("ahk-queue-storage"))
+        .WithName(QueueClientName.Name)
+        .ConfigureOptions(options =>
         {
-            az.ConfigureDefaults(opts => opts.Diagnostics.IsLoggingEnabled = false);
-            az.AddQueueServiceClient(queueConfig.EventsQueueConnectionString)
-                .WithName(QueueClientName.Name)
-                .ConfigureOptions(options =>
-                {
-                    options.MessageEncoding = QueueMessageEncoding.Base64;
-                    options.Retry.Mode = RetryMode.Exponential;
-                    options.Retry.MaxRetries = 5;
-                    options.Retry.MaxDelay = TimeSpan.FromSeconds(100);
-                });
+            options.MessageEncoding = QueueMessageEncoding.Base64;
+            options.Retry.Mode = RetryMode.Exponential;
+            options.Retry.MaxRetries = 5;
+            options.Retry.MaxDelay = TimeSpan.FromSeconds(100);
         });
-    }
-    else
-    {
-        services.AddSingleton<IGradeStore, GradeStoreNoop>();
-        services
-            .AddSingleton<IStatusTrackingStore,
-                StatusTrackingStoreNoop>();
-    }
-}
-#pragma warning restore CA1506
+});
+
+builder.Services.AddMemoryCache(setup => setup.ExpirationScanFrequency = TimeSpan.FromMinutes(4));
+
+builder.Services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
+builder.Services.AddSingleton<IEventDispatchService, EventDispatchService>();
+var eventDispatchBuilder = new EventDispatchConfigBuilder(builder.Services)
+    .Add<BranchProtectionRuleHandler>(BranchProtectionRuleHandler.GitHubWebhookEventName)
+    .Add<IssueCommentEditDeleteHandler>(IssueCommentEditDeleteHandler.GitHubWebhookEventName)
+    .Add<PullRequestOpenDuplicateHandler>(PullRequestOpenDuplicateHandler.GitHubWebhookEventName)
+    .Add<PullRequestReviewToAssigneeHandler>(PullRequestReviewToAssigneeHandler.GitHubWebhookEventName)
+    .Add<GradeCommandIssueCommentHandler>(GradeCommandIssueCommentHandler.GitHubWebhookEventName)
+    .Add<GradeCommandReviewCommentHandler>(GradeCommandReviewCommentHandler.GitHubWebhookEventName)
+    .Add<ActionWorkflowRunHandler>(ActionWorkflowRunHandler.GitHubWebhookEventName)
+    .Add<RepositoryCreateStatusTrackingHandler>(RepositoryCreateStatusTrackingHandler.GitHubWebhookEventName)
+    .Add<PullRequestStatusTrackingHandler>(PullRequestStatusTrackingHandler.GitHubWebhookEventName);
+builder.Services.AddSingleton(eventDispatchBuilder.Build());
+
+builder.Services.AddSingleton<IGradeStore, GradeStoreAzureQueue>();
+builder.Services.AddSingleton<IStatusTrackingStore, StatusTrackingStoreAzureQueue>();
+
+builder.Build().Run();
+
