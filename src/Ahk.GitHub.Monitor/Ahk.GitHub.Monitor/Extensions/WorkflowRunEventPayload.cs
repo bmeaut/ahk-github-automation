@@ -1,4 +1,6 @@
-namespace Octokit;
+using Octokit;
+
+namespace Ahk.GitHub.Monitor.Extensions;
 
 public class WorkflowRunEventPayload : ActivityPayload
 {

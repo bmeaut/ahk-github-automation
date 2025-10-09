@@ -1,6 +1,6 @@
 namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
-public abstract class StatusEventBase(string gitHubRepositoryUrl)
+public abstract class StatusEventBase
 {
-    public string GitHubRepositoryUrl { get; } = gitHubRepositoryUrl;
+    public required string GitHubRepositoryUrl { get; init; }
 }

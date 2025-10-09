@@ -7,10 +7,10 @@ internal class ReviewCommentPayloadFacade(PullRequestReviewEventPayload payload)
 {
     public PullRequestReviewEventPayload Payload { get; } = payload;
 
-    public Repository Repository => this.Payload.Repository;
-    public int PullRequestNumber => this.Payload.PullRequest.Number;
-    public string PullRequestUrl => this.Payload.PullRequest.Url;
-    public string CommentingUser => this.Payload.Review.User.Login;
-    public string CommentHtmlUrl => this.Payload.Review.HtmlUrl;
-    public string CommentBody => this.Payload.Review.Body;
+    public Repository Repository => Payload.Repository;
+    public int PullRequestNumber => Payload.PullRequest.Number;
+    public string PullRequestUrl => Payload.PullRequest.Url;
+    public string CommentingUser => Payload.Review.User.Login;
+    public string CommentHtmlUrl => Payload.Review.HtmlUrl;
+    public string CommentBody => Payload.Review.Body;
 }

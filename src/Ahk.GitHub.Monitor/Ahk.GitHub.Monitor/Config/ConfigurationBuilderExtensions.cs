@@ -1,19 +1,41 @@
-﻿using System;
+using System;
+
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+
+using AzureKeyVaultEmulator.Aspire.Client;
+
+using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Ahk.GitHub.Monitor.Config;
 
 public static class ConfigurationBuilderExtensions
 {
-    public static IConfigurationBuilder AddAzureKeyVaultIfConfigured(this IConfigurationBuilder builder)
+    public static FunctionsApplicationBuilder AddAzureKeyVaultConfiguration(this FunctionsApplicationBuilder builder)
     {
-        var keyVaultUri = Environment.GetEnvironmentVariable("KEY_VAULT_URI");
-
-        if (!string.IsNullOrEmpty(keyVaultUri))
+        var kvConnString = builder.Configuration.GetConnectionString("KeyVault");
+        if (builder.Environment.IsDevelopment())
         {
-            var credential = new DefaultAzureCredential();
-            builder.AddAzureKeyVault(new Uri(keyVaultUri), credential);
+            builder.Services.AddAzureKeyVaultEmulator(kvConnString);
+            builder.Configuration.AddAzureKeyVault(
+                new SecretClient(new Uri(kvConnString), new EmulatedTokenCredential(kvConnString), new()
+                {
+                    DisableChallengeResourceVerification = true
+                }),
+                new AzureKeyVaultConfigurationOptions());
+        }
+        else
+        {
+            builder.Services.AddAzureClients(client =>
+            {
+                client.AddSecretClient(new Uri(kvConnString));
+            });
+
+            builder.Configuration.AddAzureKeyVault(new Uri(kvConnString), new DefaultAzureCredential());
         }
 
         return builder;

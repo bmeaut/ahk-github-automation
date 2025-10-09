@@ -17,7 +17,7 @@ public static class GitHubSignatureValidator
         var requestBytes = Encoding.UTF8.GetBytes(requestBody);
         using var hmac = new HMACSHA256(key);
         var hash = hmac.ComputeHash(requestBytes);
-        var expectedSignature = "sha256=" + hash.toHexString();
+        var expectedSignature = "sha256=" + hash.ToHexString();
 
         // compare length first, do not even try to compare content if these do not match
         if (receivedSignature.Length != expectedSignature.Length)
@@ -28,7 +28,7 @@ public static class GitHubSignatureValidator
         return receivedSignature.Equals(expectedSignature, StringComparison.Ordinal);
     }
 
-    private static string toHexString(this byte[] bytes)
+    private static string ToHexString(this byte[] bytes)
     {
         var builder = new StringBuilder(bytes.Length * 2);
         foreach (var b in bytes)

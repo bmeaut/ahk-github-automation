@@ -1,27 +1,31 @@
+using Ahk.GitHub.Monitor.EventHandlers.Abstractions;
+using Ahk.GitHub.Monitor.Extensions;
+using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
+
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+
+using Octokit;
+
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
-using Ahk.GitHub.Monitor.Services;
-using Microsoft.Extensions.Caching.Memory;
-using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers;
 
 public class ActionWorkflowRunHandler(
     IGitHubClientFactory gitHubClientFactory,
     IMemoryCache cache,
-    IServiceProvider serviceProvider)
-    : RepositoryEventBase<WorkflowRunEventPayload>(gitHubClientFactory, cache, serviceProvider)
+    ILogger<ActionWorkflowRunHandler> logger)
+    : RepositoryEventHandlerBase<WorkflowRunEventPayload>(gitHubClientFactory, cache, logger), IGitHubEventHandler
 {
+    public static string GitHubWebhookEventName => "workflow_run";
+
+    // TODO config legyen
     public const int WorkflowRunThreshold = 5;
-    public const string GitHubWebhookEventName = "workflow_run";
+    private const string WarningText = ":exclamation: **You triggered too many automated evaluations; extra evaluations are penalized. Túl sok automata értékelést futtattál; az extra futtatások pontlevonással járnak.** ";
 
-    private const string WarningText =
-        ":exclamation: **You triggered too many automated evaluations; extra evaluations are penalized. Túl sok automata értékelést futtattál; az extra futtatások pontlevonással járnak.** ";
-
-    protected override async Task<EventHandlerResult> executeCore(WorkflowRunEventPayload webhookPayload)
+    protected override async Task<EventHandlerResult> ExecuteCoreAsync(WorkflowRunEventPayload webhookPayload)
     {
         if (webhookPayload.Action.Equals("completed", StringComparison.OrdinalIgnoreCase))
         {
@@ -30,22 +34,24 @@ public class ActionWorkflowRunHandler(
                 return EventHandlerResult.PayloadError("missing actor user");
             }
 
-            if (await this.isUserOrganizationMember(webhookPayload, webhookPayload.Sender.Login))
+            if (await GetIsUserOrganizationMemberAsync(webhookPayload, webhookPayload.Sender.Login))
             {
                 return EventHandlerResult.NoActionNeeded("workflow_run ok, not triggered by student");
             }
 
-            var workflowRuns = await this.GitHubClient.CountWorkflowRunsInRepository(
-                webhookPayload.Repository.Owner.Login, webhookPayload.Repository.Name, webhookPayload.Sender.Login);
+            var workflowRuns = await GitHubClient.CountWorkflowRunsInRepositoryAsync(
+                webhookPayload.Repository.Owner.Login,
+                webhookPayload.Repository.Name,
+                webhookPayload.Sender.Login);
             if (workflowRuns <= WorkflowRunThreshold)
             {
                 return EventHandlerResult.NoActionNeeded("workflow_run ok, has less then threshold");
             }
 
-            var prNum = await this.getMostRecentPullRequest(webhookPayload);
+            var prNum = await GetMostRecentPullRequestAsync(webhookPayload);
             if (prNum.HasValue)
             {
-                await this.GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, prNum.Value, WarningText);
+                await GitHubClient.Issue.Comment.Create(webhookPayload.Repository.Id, prNum.Value, WarningText);
             }
 
             return EventHandlerResult.ActionPerformed("workflow_run warning, threshold exceeded");
@@ -54,11 +60,14 @@ public class ActionWorkflowRunHandler(
         return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
     }
 
-    private async Task<int?> getMostRecentPullRequest(WorkflowRunEventPayload webhookPayload)
+    private async Task<int?> GetMostRecentPullRequestAsync(WorkflowRunEventPayload webhookPayload)
     {
-        IReadOnlyList<PullRequest> list = await this.GitHubClient.PullRequest.GetAllForRepository(
+        var list = await GitHubClient.PullRequest.GetAllForRepository(
             webhookPayload.Repository.Id,
             new PullRequestRequest() { State = ItemStateFilter.All });
-        return list.OrderByDescending(p => p.UpdatedAt).FirstOrDefault()?.Number;
+
+        return list.OrderByDescending(p => p.UpdatedAt)
+            .FirstOrDefault()
+            ?.Number;
     }
 }

@@ -1,4 +1,4 @@
-namespace Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
+namespace Ahk.GitHub.Monitor.EventHandlers.Abstractions;
 
 public class EventHandlerResult(string result)
 {

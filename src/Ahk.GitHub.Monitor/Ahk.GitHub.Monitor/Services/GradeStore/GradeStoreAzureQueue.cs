@@ -11,23 +11,35 @@ internal class GradeStoreAzureQueue : IGradeStore
 {
     private const string QueueName = "ahkstatustracking-assignment-graded-by-teacher";
 
-    private readonly QueueWithCreateIfNotExists queue;
+    private readonly QueueWithCreateIfNotExists _queue;
 
     public GradeStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
     {
-        QueueServiceClient queueService = clientFactory.CreateClient(QueueClientName.Name);
-        queue = new QueueWithCreateIfNotExists(queueService, QueueName);
+        var queueService = clientFactory.CreateClient(QueueClientName.Name);
+        _queue = new QueueWithCreateIfNotExists(queueService, QueueName);
     }
 
-    public Task StoreGrade(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results)
+    public Task StoreGradeAsync(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results)
     {
-        var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, results, System.DateTimeOffset.UtcNow);
-        return queue.Send(e);
+        return _queue.Send(new AssignmentGradedByTeacher
+        {
+            DateOfGrading = System.DateTimeOffset.UtcNow,
+            PullRequestUrl = prUrl,
+            GitHubRepositoryUrl = repositoryUrl,
+            TeacherGitHubId = actor,
+            Scores = results,
+        });
     }
 
-    public Task ConfirmAutoGrade(string repositoryUrl, string prUrl, string actor)
+    public Task ConfirmAutoGradeAsync(string repositoryUrl, string prUrl, string actor)
     {
-        var e = new AssignmentGradedByTeacher(repositoryUrl, prUrl, actor, [], System.DateTimeOffset.UtcNow);
-        return queue.Send(e);
+        return _queue.Send(new AssignmentGradedByTeacher
+        {
+            GitHubRepositoryUrl = repositoryUrl,
+            PullRequestUrl = prUrl,
+            TeacherGitHubId = actor,
+            Scores = [],
+            DateOfGrading = System.DateTimeOffset.UtcNow
+        });
     }
 }

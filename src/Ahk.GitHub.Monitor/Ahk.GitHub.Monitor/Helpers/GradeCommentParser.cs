@@ -18,8 +18,8 @@ internal class GradeCommentParser
     {
         if (string.IsNullOrEmpty(value))
         {
-            this.IsMatch = false;
-            this.GradesWithOrder = [];
+            IsMatch = false;
+            GradesWithOrder = [];
             return;
         }
 
@@ -29,15 +29,15 @@ internal class GradeCommentParser
             Match m = CommandRegex.Match(line);
             if (m.Success)
             {
-                this.IsMatch = true;
-                this.GradesWithOrder = getGrades(m.Value);
+                IsMatch = true;
+                GradesWithOrder = getGrades(m.Value);
             }
         }
     }
 
     public bool IsMatch { get; }
     public Dictionary<int, double> GradesWithOrder { get; }
-    public bool HasGrades => this.IsMatch && this.GradesWithOrder.Count > 0;
+    public bool HasGrades => IsMatch && GradesWithOrder.Count > 0;
 
     private static Dictionary<int, double> getGrades(string value)
     {

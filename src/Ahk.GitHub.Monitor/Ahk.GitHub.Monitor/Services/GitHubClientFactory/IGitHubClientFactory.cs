@@ -1,10 +1,12 @@
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+
 using Octokit;
 
-namespace Ahk.GitHub.Monitor.Services;
+using System.Threading.Tasks;
+
+namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory;
 
 public interface IGitHubClientFactory
 {
-    Task<IGitHubClient> CreateGitHubClient(string gitHubOrg, long installationId, ILogger logger);
+    public Task<IGitHubClient> CreateGitHubClientAsync(string gitHubOrg, long installationId, ILogger logger);
 }

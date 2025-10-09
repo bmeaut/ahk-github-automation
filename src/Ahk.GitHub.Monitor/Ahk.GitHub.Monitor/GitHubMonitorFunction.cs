@@ -1,4 +1,4 @@
-using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
+using Ahk.GitHub.Monitor.EventHandlers.Parsers;
 using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
 
@@ -18,10 +18,7 @@ using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor;
 
-public class GitHubMonitorFunction(
-    IEventDispatchService eventDispatchService,
-    ILogger<GitHubMonitorFunction> logger,
-    SecretClient secretClient)
+public class GitHubMonitorFunction(IEventDispatchService eventDispatchService, ILogger<GitHubMonitorFunction> logger, SecretClient secretClient)
 {
     [Function("github-webhook")]
     public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData request)
@@ -51,7 +48,7 @@ public class GitHubMonitorFunction(
         }
 
         var requestBody = await request.ReadAsStringAsync();
-        if (!PayloadParser<ActivityPayload>.TryParsePayload(requestBody, out var parsedRequestBody, out var errorResult, logger))
+        if (!PayloadParser.TryParsePayload<ActivityPayload>(requestBody, out var parsedRequestBody, out var errorResult, logger))
         {
             return new BadRequestObjectResult(new { error = errorResult.Result });
         }
@@ -88,7 +85,7 @@ public class GitHubMonitorFunction(
         var webhookResult = new WebhookResult();
         try
         {
-            await eventDispatchService.Process(eventName, requestBody, webhookResult, logger);
+            await eventDispatchService.ProcessAsync(eventName, requestBody, webhookResult, logger);
             logger.LogInformation("Webhook delivery processed succesfully with Delivery id = '{DeliveryId}'", deliveryId);
         }
         catch (Exception ex)

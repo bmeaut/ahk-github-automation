@@ -6,10 +6,10 @@ internal class IssueCommentPayloadFacade(IssueCommentPayload payload) : IComment
 {
     public IssueCommentPayload Payload { get; } = payload;
 
-    public Repository Repository => this.Payload.Repository;
-    public int PullRequestNumber => this.Payload.Issue.Number;
-    public string PullRequestUrl => this.Payload.Issue.Url;
-    public string CommentingUser => this.Payload.Comment.User.Login;
-    public string CommentHtmlUrl => this.Payload.Comment.HtmlUrl;
-    public string CommentBody => this.Payload.Comment.Body;
+    public Repository Repository => Payload.Repository;
+    public int PullRequestNumber => Payload.Issue.Number;
+    public string PullRequestUrl => Payload.Issue.Url;
+    public string CommentingUser => Payload.Comment.User.Login;
+    public string CommentHtmlUrl => Payload.Comment.HtmlUrl;
+    public string CommentBody => Payload.Comment.Body;
 }

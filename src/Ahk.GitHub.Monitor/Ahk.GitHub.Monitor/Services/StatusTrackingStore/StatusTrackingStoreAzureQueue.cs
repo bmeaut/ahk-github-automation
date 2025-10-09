@@ -1,8 +1,11 @@
-using System.Threading.Tasks;
 using Ahk.GitHub.Monitor.Services.AzureQueues;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
+
 using Azure.Storage.Queues;
+
 using Microsoft.Extensions.Azure;
+
+using System.Threading.Tasks;
 
 namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 
@@ -13,32 +16,30 @@ internal class StatusTrackingStoreAzureQueue : IStatusTrackingStore
     private const string QueueNameTeacherAssigned = "ahkstatustracking-teacher-assigned";
     private const string QueueNamePullRequestStatusChanged = "ahkstatustracking-pull-request-status-changed";
 
-    private readonly QueueWithCreateIfNotExists queueRepositoryCreate;
-    private readonly QueueWithCreateIfNotExists queuePrOpened;
-    private readonly QueueWithCreateIfNotExists queueTeacherAssigned;
-    private readonly QueueWithCreateIfNotExists queuePullRequestStatusChanged;
+    private readonly QueueWithCreateIfNotExists _queueRepositoryCreate;
+    private readonly QueueWithCreateIfNotExists _queuePrOpened;
+    private readonly QueueWithCreateIfNotExists _queueTeacherAssigned;
+    private readonly QueueWithCreateIfNotExists _queuePullRequestStatusChanged;
 
     public StatusTrackingStoreAzureQueue(IAzureClientFactory<QueueServiceClient> clientFactory)
     {
-        QueueServiceClient queueService = clientFactory.CreateClient(QueueClientName.Name);
-        queueRepositoryCreate = new QueueWithCreateIfNotExists(queueService, QueueNameRepositoryCreate);
-        queuePrOpened = new QueueWithCreateIfNotExists(queueService, QueueNamePullRequestOpened);
-        queueTeacherAssigned = new QueueWithCreateIfNotExists(queueService, QueueNameTeacherAssigned);
-        queuePullRequestStatusChanged =
-            new QueueWithCreateIfNotExists(queueService, QueueNamePullRequestStatusChanged);
+        var queueService = clientFactory.CreateClient(QueueClientName.Name);
+
+        _queueRepositoryCreate = new QueueWithCreateIfNotExists(queueService, QueueNameRepositoryCreate);
+        _queuePrOpened = new QueueWithCreateIfNotExists(queueService, QueueNamePullRequestOpened);
+        _queueTeacherAssigned = new QueueWithCreateIfNotExists(queueService, QueueNameTeacherAssigned);
+        _queuePullRequestStatusChanged = new QueueWithCreateIfNotExists(queueService, QueueNamePullRequestStatusChanged);
     }
 
-    public Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent) =>
-        storeEvent(queueRepositoryCreate, repositoryCreateEvent);
+    public Task StoreEventAsync(RepositoryCreatedEvent repositoryCreateEvent) =>
+        _queueRepositoryCreate.Send(repositoryCreateEvent);
 
-    public Task StoreEvent(PullRequestOpenedEvent pullRequestOpenedEvent) =>
-        storeEvent(queuePrOpened, pullRequestOpenedEvent);
+    public Task StoreEventAsync(PullRequestOpenedEvent pullRequestOpenedEvent) =>
+        _queuePrOpened.Send(pullRequestOpenedEvent);
 
-    public Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent) =>
-        storeEvent(queueTeacherAssigned, teacherAssignedEvent);
+    public Task StoreEventAsync(TeacherAssignedEvent teacherAssignedEvent) =>
+        _queueTeacherAssigned.Send(teacherAssignedEvent);
 
-    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChanged) =>
-        storeEvent(queuePullRequestStatusChanged, pullRequestStatusChanged);
-
-    private static Task storeEvent(QueueWithCreateIfNotExists queue, StatusEventBase @event) => queue.Send(@event);
+    public Task StoreEventAsync(PullRequestStatusChanged pullRequestStatusChanged) =>
+        _queuePullRequestStatusChanged.Send(pullRequestStatusChanged);
 }

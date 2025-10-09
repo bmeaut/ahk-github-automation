@@ -1,21 +1,25 @@
+using Ahk.GitHub.Monitor.Config;
+using Ahk.GitHub.Monitor.Extensions;
+using Ahk.GitHub.Monitor.Helpers;
+
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+
+using Newtonsoft.Json.Linq;
+
+using Octokit;
+using Octokit.Internal;
+
 using System;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Ahk.GitHub.Monitor.Config;
-using Ahk.GitHub.Monitor.Extensions;
-using Ahk.GitHub.Monitor.Helpers;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using Octokit;
-using Octokit.Internal;
+
 using ProductHeaderValue = Octokit.ProductHeaderValue;
 
 namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory;
@@ -25,13 +29,13 @@ namespace Ahk.GitHub.Monitor.Services.GitHubClientFactory;
 /// </summary>
 public class GitHubClientFactory(IMemoryCache cache, IConfiguration configuration) : IGitHubClientFactory
 {
-    public async Task<IGitHubClient> CreateGitHubClient(string gitHubOrg, long installationId, ILogger logger)
+    public async Task<IGitHubClient> CreateGitHubClientAsync(string gitHubOrg, long installationId, ILogger logger)
     {
         var token = await cache.GetOrCreateAsync(
             $"githubtokenforinstallation_{installationId}",
             async cacheEntry =>
             {
-                var token = await this.getInstallationToken(gitHubOrg, installationId, logger);
+                var token = await GetInstallationTokenAsync(gitHubOrg, installationId, logger);
                 cacheEntry.SetValue(token);
                 cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
                 return token;
@@ -57,24 +61,21 @@ public class GitHubClientFactory(IMemoryCache cache, IConfiguration configuratio
         return gitHubClient;
     }
 
-    private async Task<string> getInstallationToken(string gitHubOrg, long installationId, ILogger logger)
+    private async Task<string> GetInstallationTokenAsync(string gitHubOrg, long installationId, ILogger logger)
     {
-        var applicationToken = this.getApplicationToken(gitHubOrg);
+        var applicationToken = GetApplicationTokenAsync(gitHubOrg);
         using var client = new HttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Post,
-            $"https://api.github.com/app/installations/{installationId}/access_tokens");
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/app/installations/{installationId}/access_tokens");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", applicationToken);
         request.Headers.UserAgent.Add(ProductInfoHeaderValue.Parse("Ahk"));
-        request.Headers.Accept.Add(
-            MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json"));
+        request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/vnd.github.machine-man-preview+json"));
 
-        using HttpResponseMessage response = await client.SendAsync(request);
+        using var response = await client.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError(
-                $"Failed to get access token for installation {installationId}, response payload is: {json}");
+            logger.LogError("Failed to get access token for installation {InstallationId}, response payload is: {Json}", installationId, json);
         }
 
         response.EnsureSuccessStatusCode();
@@ -83,23 +84,20 @@ public class GitHubClientFactory(IMemoryCache cache, IConfiguration configuratio
         return obj["token"]?.Value<string>();
     }
 
-    private string getApplicationToken(string gitHubOrg)
+    private string GetApplicationTokenAsync(string gitHubOrg)
     {
         var orgConfig = new GitHubMonitorConfig();
         configuration.GetSection(GitHubMonitorConfig.GetSectionName(gitHubOrg)).Bind(orgConfig);
 
-        RSAParameters parameters = CryptoHelper.GetRsaParameters(orgConfig.GitHubAppPrivateKey);
+        var parameters = CryptoHelper.GetRsaParameters(orgConfig.GitHubAppPrivateKey);
         var key = new RsaSecurityKey(parameters);
         var creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
-        DateTime now = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
         var token = new JwtSecurityToken(
             claims:
             [
-                new Claim("iat", now.ToUnixTimeStamp().ToString(CultureInfo.InvariantCulture),
-                    ClaimValueTypes.Integer),
-                new Claim("exp",
-                    now.AddMinutes(10).ToUnixTimeStamp()
-                        .ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
+                new Claim("iat", now.ToUnixTimeStamp().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
+                new Claim("exp", now.AddMinutes(10).ToUnixTimeStamp().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
                 new Claim("iss", orgConfig.GitHubAppId, ClaimValueTypes.Integer)
             ],
             signingCredentials: creds);

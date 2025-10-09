@@ -1,18 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
 namespace Ahk.GitHub.Monitor.Services.GradeStore.Dto;
 
-public class AssignmentGradedByTeacher(
-    string gitHubRepositoryUrl,
-    string pullRequestUrl,
-    string teacherGitHubId,
-    Dictionary<int, double> scores,
-    DateTimeOffset dateOfGrading) : StatusEventBase(gitHubRepositoryUrl)
+public class AssignmentGradedByTeacher : StatusEventBase
 {
-    public string PullRequestUrl { get; set; } = pullRequestUrl;
-    public string TeacherGitHubId { get; set; } = teacherGitHubId;
-    public Dictionary<int, double> Scores { get; set; } = scores; // order, score
-    public DateTimeOffset DateOfGrading { get; set; } = dateOfGrading;
+    public required string PullRequestUrl { get; init; }
+    public required string TeacherGitHubId { get; init; }
+    public required Dictionary<int, double> Scores { get; init; } // order, score
+    public required DateTimeOffset DateOfGrading { get; init; }
 }

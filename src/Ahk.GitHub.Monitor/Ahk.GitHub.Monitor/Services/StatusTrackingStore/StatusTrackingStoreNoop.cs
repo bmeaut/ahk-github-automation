@@ -5,8 +5,8 @@ namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 
 public class StatusTrackingStoreNoop : IStatusTrackingStore
 {
-    public Task StoreEvent(RepositoryCreateEvent repositoryCreateEvent) => Task.CompletedTask;
-    public Task StoreEvent(PullRequestOpenedEvent pullRequestOpenedEvent) => Task.CompletedTask;
-    public Task StoreEvent(TeacherAssignedEvent teacherAssignedEvent) => Task.CompletedTask;
-    public Task StoreEvent(PullRequestStatusChanged pullRequestStatusChanged) => Task.CompletedTask;
+    public Task StoreEventAsync(RepositoryCreatedEvent repositoryCreateEvent) => Task.CompletedTask;
+    public Task StoreEventAsync(PullRequestOpenedEvent pullRequestOpenedEvent) => Task.CompletedTask;
+    public Task StoreEventAsync(TeacherAssignedEvent teacherAssignedEvent) => Task.CompletedTask;
+    public Task StoreEventAsync(PullRequestStatusChanged pullRequestStatusChanged) => Task.CompletedTask;
 }

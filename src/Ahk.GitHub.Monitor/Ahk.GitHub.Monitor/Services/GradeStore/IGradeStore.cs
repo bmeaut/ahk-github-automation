@@ -5,6 +5,6 @@ namespace Ahk.GitHub.Monitor.Services.GradeStore;
 
 public interface IGradeStore
 {
-    Task StoreGrade(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results);
-    Task ConfirmAutoGrade(string repositoryUrl, string prUrl, string actor);
+    public Task StoreGradeAsync(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results);
+    public Task ConfirmAutoGradeAsync(string repositoryUrl, string prUrl, string actor);
 }

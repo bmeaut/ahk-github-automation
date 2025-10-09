@@ -1,11 +1,7 @@
-﻿namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
+namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
-public class PullRequestStatusChanged(
-    string gitHubRepositoryUrl,
-    string pullRequestUrl,
-    PullRequestStatus pullRequestStatus)
-    : StatusEventBase(gitHubRepositoryUrl)
+public class PullRequestStatusChanged : StatusEventBase
 {
-    public string PullRequestUrl { get; } = pullRequestUrl;
-    public PullRequestStatus PullRequestStatus { get; } = pullRequestStatus;
+    public required string PullRequestUrl { get; init; }
+    public required PullRequestStatus PullRequestStatus { get; init; }
 }

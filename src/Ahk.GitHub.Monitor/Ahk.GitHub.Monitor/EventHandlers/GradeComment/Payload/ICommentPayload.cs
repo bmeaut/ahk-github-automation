@@ -11,6 +11,6 @@ public interface ICommentPayload<T>
     public int PullRequestNumber { get; }
     public string PullRequestUrl { get; }
     public string CommentingUser { get; }
-    string CommentHtmlUrl { get; }
-    string CommentBody { get; }
+    public string CommentHtmlUrl { get; }
+    public string CommentBody { get; }
 }

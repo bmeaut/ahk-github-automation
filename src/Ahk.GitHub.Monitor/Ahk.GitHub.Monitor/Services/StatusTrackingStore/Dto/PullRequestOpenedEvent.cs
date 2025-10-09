@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 
 namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
 
-public class PullRequestOpenedEvent(
-    string gitHubRepositoryUrl,
-    DateTimeOffset timestamp,
-    string branchName,
-    string pullRequestUrl)
-    : StatusEventBase(gitHubRepositoryUrl)
+public class PullRequestOpenedEvent : StatusEventBase
 {
-    public string PullRequestUrl { get; } = pullRequestUrl;
-    public string BranchName { get; } = branchName;
-    public DateTimeOffset OpeningDate { get; } = timestamp;
+    public required string PullRequestUrl { get; init; }
+    public required string BranchName { get; init; }
+    public required DateTimeOffset OpeningDate { get; init; }
 }

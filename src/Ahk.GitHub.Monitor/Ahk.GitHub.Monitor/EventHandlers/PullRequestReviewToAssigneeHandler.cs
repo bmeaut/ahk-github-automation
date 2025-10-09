@@ -1,10 +1,13 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
-using Ahk.GitHub.Monitor.Services;
+
+using Ahk.GitHub.Monitor.EventHandlers.Abstractions;
+using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+
 using Octokit;
 
 namespace Ahk.GitHub.Monitor.EventHandlers;
@@ -12,12 +15,12 @@ namespace Ahk.GitHub.Monitor.EventHandlers;
 public class PullRequestReviewToAssigneeHandler(
     IGitHubClientFactory gitHubClientFactory,
     IMemoryCache cache,
-    IServiceProvider serviceProvider)
-    : RepositoryEventBase<PullRequestEventPayload>(gitHubClientFactory, cache, serviceProvider)
+    ILogger<PullRequestReviewToAssigneeHandler> logger)
+    : RepositoryEventHandlerBase<PullRequestEventPayload>(gitHubClientFactory, cache, logger), IGitHubEventHandler
 {
-    public const string GitHubWebhookEventName = "pull_request";
+    public static string GitHubWebhookEventName => "pull_request";
 
-    protected override async Task<EventHandlerResult> executeCore(PullRequestEventPayload webhookPayload)
+    protected override async Task<EventHandlerResult> ExecuteCoreAsync(PullRequestEventPayload webhookPayload)
     {
         if (webhookPayload.PullRequest == null)
         {
@@ -26,17 +29,18 @@ public class PullRequestReviewToAssigneeHandler(
 
         if (webhookPayload.Action.Equals("review_requested", StringComparison.OrdinalIgnoreCase))
         {
-            if (webhookPayload.PullRequest.RequestedReviewers == null ||
-                webhookPayload.PullRequest.RequestedReviewers.Count == 0)
+            if ((webhookPayload.PullRequest.RequestedReviewers?.Count ?? 0) == 0)
             {
                 return EventHandlerResult.PayloadError("no requested reviewer in webhook payload");
             }
 
-            if (!isPrAssignedToReviewer(webhookPayload))
+            if (!IsPrAssignedToReviewer(webhookPayload))
             {
-                await this.GitHubClient.Issue.Assignee.AddAssignees(webhookPayload.Repository.Owner.Login,
+                await GitHubClient.Issue.Assignee.AddAssignees(
+                    webhookPayload.Repository.Owner.Login,
                     webhookPayload.Repository.Name, webhookPayload.PullRequest.Number,
-                    getUsersToAssign(webhookPayload));
+                    new([.. webhookPayload.PullRequest.RequestedReviewers.Select(r => r.Login)]));
+
                 return EventHandlerResult.ActionPerformed("pull request review_requested handled, assignee set");
             }
 
@@ -46,17 +50,13 @@ public class PullRequestReviewToAssigneeHandler(
         return EventHandlerResult.EventNotOfInterest(webhookPayload.Action);
     }
 
-    private static AssigneesUpdate getUsersToAssign(PullRequestEventPayload webhookPayload)
-        => new(webhookPayload.PullRequest.RequestedReviewers.Select(r => r.Login).ToList());
-
-    private static bool isPrAssignedToReviewer(PullRequestEventPayload webhookPayload)
+    private static bool IsPrAssignedToReviewer(PullRequestEventPayload webhookPayload)
     {
         if (webhookPayload.PullRequest.Assignee == null)
         {
             return false;
         }
 
-        return webhookPayload.PullRequest.RequestedReviewers.Any(
-            r => r.Id == webhookPayload.PullRequest.Assignee.Id);
+        return webhookPayload.PullRequest.RequestedReviewers.Any(r => r.Id == webhookPayload.PullRequest.Assignee.Id);
     }
 }

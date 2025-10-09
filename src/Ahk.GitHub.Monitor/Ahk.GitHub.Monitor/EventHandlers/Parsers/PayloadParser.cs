@@ -1,14 +1,18 @@
-﻿using System;
+using Ahk.GitHub.Monitor.EventHandlers.Abstractions;
+
 using Microsoft.Extensions.Logging;
+
 using Octokit;
 using Octokit.Internal;
 
-namespace Ahk.GitHub.Monitor.EventHandlers.BaseAndUtils;
+using System;
 
-public class PayloadParser<TPayload>
-    where TPayload : ActivityPayload
+namespace Ahk.GitHub.Monitor.EventHandlers.Parsers;
+
+public static class PayloadParser
 {
-    public static bool TryParsePayload(string requestBody, out TPayload payload, out EventHandlerResult errorResult, ILogger logger)
+    public static bool TryParsePayload<TPayload>(string requestBody, out TPayload payload, out EventHandlerResult errorResult, ILogger logger)
+        where TPayload : ActivityPayload
     {
         payload = null;
         if (string.IsNullOrEmpty(requestBody))
