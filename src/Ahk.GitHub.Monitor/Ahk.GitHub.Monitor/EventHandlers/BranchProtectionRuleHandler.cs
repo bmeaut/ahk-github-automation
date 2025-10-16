@@ -15,9 +15,9 @@ public class BranchProtectionRuleHandler(
     IGitHubClientFactory gitHubClientFactory,
     IMemoryCache cache,
     ILogger<BranchProtectionRuleHandler> logger)
-    : RepositoryEventHandlerBase<CreateEventPayload>(gitHubClientFactory, cache, logger)
+    : RepositoryEventHandlerBase<CreateEventPayload>(gitHubClientFactory, cache, logger), IGitHubEventHandler
 {
-    public const string GitHubWebhookEventName = "create";
+    public static string GitHubWebhookEventName => "create";
 
     protected override async Task<EventHandlerResult> ExecuteCoreAsync(CreateEventPayload webhookPayload)
     {

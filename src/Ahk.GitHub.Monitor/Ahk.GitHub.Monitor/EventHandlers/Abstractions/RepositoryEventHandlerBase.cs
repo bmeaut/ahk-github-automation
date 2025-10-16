@@ -9,6 +9,8 @@ using Octokit;
 using System;
 using System.Threading.Tasks;
 
+using YamlDotNet.Core;
+
 namespace Ahk.GitHub.Monitor.EventHandlers.Abstractions;
 
 public abstract class RepositoryEventHandlerBase<TPayload>(IGitHubClientFactory gitHubClientFactory, IMemoryCache cache, ILogger logger) : IGitHubEventHandler
@@ -29,8 +31,7 @@ public abstract class RepositoryEventHandlerBase<TPayload>(IGitHubClientFactory 
 
         if (!await IsEnabledForRepositoryAsync(webhookPayload))
         {
-            Logger.LogInformation("no ahk-monitor.yml or disabled");
-            return EventHandlerResult.Disabled("no ahk-monitor.yml or disabled");
+            return EventHandlerResult.Disabled("Ahk Github Monitor is disabled on repository");
         }
 
         return await ExecuteCoreAsync(webhookPayload);
@@ -91,8 +92,14 @@ public abstract class RepositoryEventHandlerBase<TPayload>(IGitHubClientFactory 
             var contentAsString = contents[0].Content;
             return ConfigYamlParser.IsEnabled(contentAsString);
         }
-        catch (NotFoundException)
+        catch (NotFoundException ex)
         {
+            Logger.LogInformation(ex, "No .github/ahk-monitor.yml found in repository {Repo}", webhookPayload.Repository.FullName);
+            return false;
+        }
+        catch (YamlException ex)
+        {
+            Logger.LogInformation(ex, "Invalid .github/ahk-monitor.yml found in repository {Repo}", webhookPayload.Repository.FullName);
             return false;
         }
     }
