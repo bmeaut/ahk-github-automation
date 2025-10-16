@@ -90,7 +90,7 @@ public class AssignmentEventProcessorService(
         {
             var repositoryName = GetRepositoryNameFromUrl(pullRequestOpened.GitHubRepositoryUrl);
             var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
-            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestOpened.PullRequestUrl);
+            var pullRequest = await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(pullRequestOpened.PullRequestGitHubId);
 
             if (pullRequest != null)
             {
@@ -102,6 +102,7 @@ public class AssignmentEventProcessorService(
             {
                 var pullRequestToCreate = new PullRequest()
                 {
+                    GitHubId = pullRequestOpened.PullRequestGitHubId,
                     Url = pullRequestOpened.PullRequestUrl,
                     OpeningDate = pullRequestOpened.OpeningDate,
                     Status = PullRequestStatus.Open,
@@ -109,7 +110,7 @@ public class AssignmentEventProcessorService(
                     AssignmentId = assignment.Id
                 };
                 await pullRequestService.CreateWithoutQfAsync(pullRequestToCreate, assignment.SubjectId);
-                pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestOpened.PullRequestUrl);
+                pullRequest = await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(pullRequestOpened.PullRequestGitHubId);
             }
 
             var assignmentLog = new AssignmentLog()
@@ -136,8 +137,7 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var pullRequest =
-                await pullRequestService.GetModelByUrlWithoutQfAsync(ciEvaluationCompleted.PullRequestUrl);
+            var pullRequest = await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(ciEvaluationCompleted.PullRequestGitHubId);
             var repositoryName = GetRepositoryNameFromUrl(ciEvaluationCompleted.GitHubRepositoryUrl);
             var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var studentGitHubId = repositoryName.Remove(0, (exercise.GithubPrefix + "-").Length);
@@ -191,12 +191,13 @@ public class AssignmentEventProcessorService(
         {
             var repositoryName = GetRepositoryNameFromUrl(teacherAssigned.GitHubRepositoryUrl);
             var assignment = await assignmentService.GetAssignmentModelByGitHubRepoNameWithoutQfAsync(repositoryName);
-            var pullRequest = await pullRequestService.GetModelByUrlWithoutQfAsync(teacherAssigned.PullRequestUrl);
+            var pullRequest = await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(teacherAssigned.PullRequestGitHubId);
 
             if (pullRequest == null)
             {
                 pullRequest = new Dal.Entities.PullRequest()
                 {
+                    GitHubId = teacherAssigned.PullRequestGitHubId,
                     Url = teacherAssigned.PullRequestUrl,
                     OpeningDate = DateTime.UtcNow,
                     Status = PullRequestStatus.Open,
@@ -260,7 +261,7 @@ public class AssignmentEventProcessorService(
             var exercise = await exerciseService.GetExerciseModelByGitHubRepoNameWithoutQfAsync(repositoryName);
             var teacher = await userService.GetModelByGitHubIdAsync(assignmentGradedByTeacher.TeacherGitHubId);
             var pullRequest =
-                await pullRequestService.GetModelByUrlWithoutQfAsync(assignmentGradedByTeacher.PullRequestUrl);
+                await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(assignmentGradedByTeacher.PullRequestGitHubId);
 
             if (assignmentGradedByTeacher.Scores.IsNullOrEmpty())
             {
@@ -283,8 +284,7 @@ public class AssignmentEventProcessorService(
             var assignmentLog = new AssignmentLog()
             {
                 EventType = EventType.AssignmentGradedByTeacher,
-                Description =
-                    $"Assignment {assignment.GithubRepoUrl} with id {assignment.Id} graded by teacher {teacher.GithubId}",
+                Description = $"Assignment {assignment.GithubRepoUrl} with id {assignment.Id} graded by teacher {teacher.GithubId}",
                 AssignmentId = assignment.Id,
                 PullRequestId = pullRequest.Id
             };
@@ -304,16 +304,14 @@ public class AssignmentEventProcessorService(
         await using var transaction = await gradeManagementDbContext.Database.BeginTransactionAsync();
         try
         {
-            var pullRequest =
-                await pullRequestService.GetModelByUrlWithoutQfAsync(pullRequestStatusChanged.PullRequestUrl);
-            pullRequest.Status = pullRequestStatusChanged.pullRequestStatus;
+            var pullRequest = await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(pullRequestStatusChanged.PullRequestGitHubId);
+            pullRequest.Status = pullRequestStatusChanged.PullRequestStatus;
             await gradeManagementDbContext.SaveChangesAsync();
 
             var assignmentLog = new AssignmentLog()
             {
                 EventType = EventType.PullRequestStatusChanged,
-                Description =
-                    $"Pull request {pullRequest.Url} with id {pullRequest.Id} status changed to {pullRequest.Status}",
+                Description = $"Pull request {pullRequest.Url} with id {pullRequest.Id} status changed to {pullRequest.Status}",
                 AssignmentId = pullRequest.AssignmentId,
                 PullRequestId = pullRequest.Id
             };

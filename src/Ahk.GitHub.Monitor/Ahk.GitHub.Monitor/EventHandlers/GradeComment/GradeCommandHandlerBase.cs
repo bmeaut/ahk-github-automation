@@ -71,18 +71,11 @@ public abstract class GradeCommandHandlerBase<T>(
         Logger.LogInformation("Storing grades for {RepositoryFullName}", webhookPayload.Repository.FullName);
         if (gradeCommand.HasGrades)
         {
-            await gradeStore.StoreGradeAsync(
-                webhookPayload.Repository.HtmlUrl,
-                pr.HtmlUrl,
-                webhookPayload.CommentingUser,
-                gradeCommand.GradesWithOrder);
+            await gradeStore.StoreGradeAsync(webhookPayload.Repository.HtmlUrl, pr.HtmlUrl, pr.Id, webhookPayload.CommentingUser, gradeCommand.GradesWithOrder);
         }
         else
         {
-            await gradeStore.ConfirmAutoGradeAsync(
-                webhookPayload.Repository.HtmlUrl,
-                pr.HtmlUrl,
-                webhookPayload.CommentingUser);
+            await gradeStore.ConfirmAutoGradeAsync(webhookPayload.Repository.HtmlUrl, pr.HtmlUrl, pr.Id, webhookPayload.CommentingUser);
         }
     }
 
@@ -97,20 +90,11 @@ public abstract class GradeCommandHandlerBase<T>(
 
         Logger.LogInformation("PR ({PrId}) is being merged in {RepositoryUrl}", webhookPayload.PullRequestNumber, webhookPayload.Repository.Url);
 
-        await GitHubClient.PullRequest.Review.Create(
-            webhookPayload.Repository.Id,
-            webhookPayload.PullRequestNumber,
-            new() { Event = PullRequestReviewEvent.Approve });
+        await GitHubClient.PullRequest.Review.Create(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber, new() { Event = PullRequestReviewEvent.Approve });
 
-        await GitHubClient.PullRequest.Merge(
-            webhookPayload.Repository.Id,
-            webhookPayload.PullRequestNumber,
-            new());
+        await GitHubClient.PullRequest.Merge(webhookPayload.Repository.Id, webhookPayload.PullRequestNumber, new());
 
-        await pullRequestStatusTrackingHandler.PrStatusChangedAsync(
-            webhookPayload.Repository.Url,
-            webhookPayload.PullRequestUrl,
-            PullRequestStatus.Merged);
+        await pullRequestStatusTrackingHandler.PrStatusChangedAsync(webhookPayload.Repository.HtmlUrl, pr.HtmlUrl, pr.Id, PullRequestStatus.Merged);
     }
 
     private async Task<EventHandlerResult> HandleNotPrAsync(ICommentPayload<T> webhookPayload)

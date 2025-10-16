@@ -5,6 +5,7 @@ namespace Ahk.GradeManagement.Shared.Dtos;
 public class PullRequest
 {
     public long Id { get; set; }
+    public long GitHubId { get; set; }
     public string Url { get; set; }
     public DateTimeOffset OpeningDate { get; set; }
     public PullRequestStatus Status { get; set; } = PullRequestStatus.Open;

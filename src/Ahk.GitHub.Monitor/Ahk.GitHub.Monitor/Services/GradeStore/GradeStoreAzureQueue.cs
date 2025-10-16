@@ -19,10 +19,11 @@ internal class GradeStoreAzureQueue : IGradeStore
         _queue = new QueueWithCreateIfNotExists(queueService, QueueName);
     }
 
-    public Task StoreGradeAsync(string repositoryUrl, string prUrl, string actor, Dictionary<int, double> results)
+    public Task StoreGradeAsync(string repositoryUrl, string prUrl, long pullRequestGitHubId, string actor, Dictionary<int, double> results)
     {
         return _queue.Send(new AssignmentGradedByTeacher
         {
+            PullRequestGitHubId = pullRequestGitHubId,
             DateOfGrading = System.DateTimeOffset.UtcNow,
             PullRequestUrl = prUrl,
             GitHubRepositoryUrl = repositoryUrl,
@@ -31,10 +32,11 @@ internal class GradeStoreAzureQueue : IGradeStore
         });
     }
 
-    public Task ConfirmAutoGradeAsync(string repositoryUrl, string prUrl, string actor)
+    public Task ConfirmAutoGradeAsync(string repositoryUrl, string prUrl, long pullRequestGitHubId, string actor)
     {
         return _queue.Send(new AssignmentGradedByTeacher
         {
+            PullRequestGitHubId = pullRequestGitHubId,
             GitHubRepositoryUrl = repositoryUrl,
             PullRequestUrl = prUrl,
             TeacherGitHubId = actor,

@@ -5,7 +5,6 @@ using Ahk.GradeManagement.Shared.Dtos;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
-using AutSoft.Common.Exceptions;
 using AutSoft.Linq.Queryable;
 
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +21,18 @@ public class PullRequestService(GradeManagementDbContext gradeManagementDbContex
             .SingleEntityAsync(p => p.Id == id, id);
     }
 
-    public async Task<Dal.Entities.PullRequest?> GetModelByUrlWithoutQfAsync(string pullRequestUrl)
+    public async Task<Dal.Entities.PullRequest?> GetEntityByGitHubIdWithoutQfAsync(long gitHubId)
     {
         return await gradeManagementDbContext.PullRequest
             .IgnoreQueryFiltersButNotIsDeleted()
-            .SingleOrDefaultAsync(p => p.Url == pullRequestUrl);
+            .SingleOrDefaultAsync(p => p.GitHubId == gitHubId);
     }
 
     public async Task<PullRequest> CreateWithoutQfAsync(PullRequest pullRequest, long subjectId)
     {
         var pullRequestEntity = new Dal.Entities.PullRequest()
         {
+            GitHubId = pullRequest.GitHubId,
             Url = pullRequest.Url,
             OpeningDate = pullRequest.OpeningDate,
             Status = pullRequest.Status,

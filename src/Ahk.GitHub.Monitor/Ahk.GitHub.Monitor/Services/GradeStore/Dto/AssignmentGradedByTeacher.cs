@@ -6,6 +6,7 @@ namespace Ahk.GitHub.Monitor.Services.GradeStore.Dto;
 
 public class AssignmentGradedByTeacher : StatusEventBase
 {
+    public required long PullRequestGitHubId { get; init; }
     public required string PullRequestUrl { get; init; }
     public required string TeacherGitHubId { get; init; }
     public required Dictionary<int, double> Scores { get; init; } // order, score

@@ -23,11 +23,12 @@ public class PullRequestStatusTrackingHandler(
 {
     public static string GitHubWebhookEventName => "pull_request";
 
-    public async Task<EventHandlerResult> PrStatusChangedAsync(string gitHubRepositoryUrl, string pullRequestUrl, PullRequestStatus pullRequestStatus)
+    public async Task<EventHandlerResult> PrStatusChangedAsync(string gitHubRepositoryUrl, string pullRequestUrl, long pullRequestGitHubId, PullRequestStatus pullRequestStatus)
     {
         await statusTrackingStore.StoreEventAsync(new PullRequestStatusChanged()
         {
             GitHubRepositoryUrl = gitHubRepositoryUrl,
+            PullRequestGitHubId = pullRequestGitHubId,
             PullRequestUrl = pullRequestUrl,
             PullRequestStatus = pullRequestStatus
         });
@@ -47,7 +48,7 @@ public class PullRequestStatusTrackingHandler(
             "opened" => await ProcessPullRequestOpenedEventAsync(webhookPayload),
             "assigned" or "unassigned" => await TeacherAssignedEventAsync(webhookPayload),
             "review_requested" => await TeacherAssignedAsReviewerEventAsync(webhookPayload),
-            "closed" => await PrStatusChangedAsync(webhookPayload.Repository.HtmlUrl, webhookPayload.PullRequest.HtmlUrl, PullRequestStatus.Closed),
+            "closed" => await PrStatusChangedAsync(webhookPayload.Repository.HtmlUrl, webhookPayload.PullRequest.HtmlUrl, webhookPayload.PullRequest.Id, PullRequestStatus.Closed),
             _ => EventHandlerResult.EventNotOfInterest(webhookPayload.Action)
         };
     }
@@ -56,6 +57,7 @@ public class PullRequestStatusTrackingHandler(
     {
         await statusTrackingStore.StoreEventAsync(new PullRequestOpenedEvent()
         {
+            PullRequestGitHubId = webhookPayload.PullRequest.Id,
             BranchName = webhookPayload.PullRequest.Head.Ref,
             PullRequestUrl = webhookPayload.PullRequest.HtmlUrl,
             OpeningDate = DateTimeOffset.UtcNow,
@@ -69,6 +71,7 @@ public class PullRequestStatusTrackingHandler(
     {
         await statusTrackingStore.StoreEventAsync(new TeacherAssignedEvent()
         {
+            PullRequestGitHubId = webhookPayload.PullRequest.Id,
             GitHubRepositoryUrl = webhookPayload.Repository.HtmlUrl,
             PullRequestUrl = webhookPayload.PullRequest.HtmlUrl,
             TeacherGitHubIds = webhookPayload.PullRequest.Assignees?.Select(u => u.Login)?.ToArray()
@@ -81,6 +84,7 @@ public class PullRequestStatusTrackingHandler(
     {
         await statusTrackingStore.StoreEventAsync(new TeacherAssignedEvent()
         {
+            PullRequestGitHubId = webhookPayload.PullRequest.Id,
             GitHubRepositoryUrl = webhookPayload.Repository.HtmlUrl,
             PullRequestUrl = webhookPayload.PullRequest.HtmlUrl,
             TeacherGitHubIds = webhookPayload.PullRequest.RequestedReviewers?.Select(u => u.Login)?.ToArray()
