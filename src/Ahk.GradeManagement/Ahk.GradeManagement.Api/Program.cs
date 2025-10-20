@@ -46,6 +46,7 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
 
         builder.Services.AddBllServices();
+        builder.Services.AddMassTransitWithConsumers();
 
         builder.Services.AddCustomProblemDetails(builder.Configuration);
 

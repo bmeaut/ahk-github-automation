@@ -55,7 +55,8 @@ internal class EventDispatchService : IEventDispatchService
     {
         try
         {
-            var handler = ActivatorUtilities.CreateInstance(_serviceProvider, handlerType) as IGitHubEventHandler;
+            using var scope = _serviceProvider.CreateScope();
+            var handler = ActivatorUtilities.CreateInstance(scope.ServiceProvider, handlerType) as IGitHubEventHandler;
             var handlerResult = await handler.ExecuteAsync(requestBody);
 
             logger.LogInformation("{HandlerTypeName} result: {HandlerResult}", handlerType.Name, handlerResult.Result);

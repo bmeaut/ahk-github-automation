@@ -1,23 +1,24 @@
-using System;
-using System.Threading.Tasks;
-
 using Ahk.GitHub.Monitor.EventHandlers.Abstractions;
 using Ahk.GitHub.Monitor.EventHandlers.GradeComment.Payload;
 using Ahk.GitHub.Monitor.Helpers;
 using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
-using Ahk.GitHub.Monitor.Services.GradeStore;
-using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
+using Ahk.GradeManagement.Events;
+
+using MassTransit;
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 using Octokit;
 
+using System;
+using System.Threading.Tasks;
+
 namespace Ahk.GitHub.Monitor.EventHandlers.GradeComment;
 
 public abstract class GradeCommandHandlerBase<T>(
     IGitHubClientFactory gitHubClientFactory,
-    IGradeStore gradeStore,
+    IPublishEndpoint publishEndpoint,
     IMemoryCache cache,
     ILogger logger,
     PullRequestStatusTrackingHandler pullRequestStatusTrackingHandler)
@@ -71,11 +72,27 @@ public abstract class GradeCommandHandlerBase<T>(
         Logger.LogInformation("Storing grades for {RepositoryFullName}", webhookPayload.Repository.FullName);
         if (gradeCommand.HasGrades)
         {
-            await gradeStore.StoreGradeAsync(webhookPayload.Repository.HtmlUrl, pr.HtmlUrl, pr.Id, webhookPayload.CommentingUser, gradeCommand.GradesWithOrder);
+            await publishEndpoint.Publish(new AssignmentGradedByTeacher
+            {
+                PullRequestGitHubId = pr.Id,
+                DateOfGrading = DateTimeOffset.UtcNow,
+                PullRequestUrl = pr.HtmlUrl,
+                GitHubRepositoryUrl = webhookPayload.Repository.HtmlUrl,
+                TeacherGitHubId = webhookPayload.CommentingUser,
+                Scores = gradeCommand.GradesWithOrder
+            });
         }
         else
         {
-            await gradeStore.ConfirmAutoGradeAsync(webhookPayload.Repository.HtmlUrl, pr.HtmlUrl, pr.Id, webhookPayload.CommentingUser);
+            await publishEndpoint.Publish(new AssignmentGradedByTeacher
+            {
+                PullRequestGitHubId = pr.Id,
+                GitHubRepositoryUrl = webhookPayload.Repository.HtmlUrl,
+                PullRequestUrl = pr.HtmlUrl,
+                TeacherGitHubId = webhookPayload.CommentingUser,
+                Scores = [],
+                DateOfGrading = DateTimeOffset.UtcNow
+            });
         }
     }
 

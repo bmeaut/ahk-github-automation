@@ -6,29 +6,24 @@ var keyVault = builder.AddAzureKeyVaultEmulator("KeyVault", new() { Persist = tr
 
 var dbConnection = builder.AddConnectionString("DbConnection");
 
-var queueStorage = builder.AddAzureStorage("ahk-storage")
+var serviceBus = builder.AddAzureServiceBus("ahk-servicebus")
     .RunAsEmulator()
-    .AddQueues("ahk-queue-storage");
+    .AddServiceBusQueue("ahk-events");
 
 var webhook = builder.AddAzureFunctionsProject<Projects.Ahk_GitHub_Monitor>("ahk-github-monitor")
     .WithEnvironment("AZURE_FUNCTIONS_ENVIRONMENT", builder.Environment.EnvironmentName)
     .WithReference(keyVault)
-    .WithReference(queueStorage);
+    .WithReference(serviceBus);
 
 var webhookTunnel = builder.AddDevTunnel("github-webhook-tunnel")
     .WithReference(webhook, allowAnonymous: true);
-
-var queueFunction = builder.AddAzureFunctionsProject<Projects.Ahk_GradeManagement_QueueFunction>("ahk-grademanagement-queuefunction")
-    .WithEnvironment("AZURE_FUNCTIONS_ENVIRONMENT", builder.Environment.EnvironmentName)
-    .WithReference(keyVault)
-    .WithReference(queueStorage)
-    .WithReference(dbConnection);
 
 var backendTunnel = builder.AddDevTunnel("github-post-install-tunnel");
 
 var backend = builder.AddProject<Projects.Ahk_GradeManagement_Api>("ahk-grademanagement-api")
     .WithReference(keyVault)
     .WithReference(dbConnection)
+    .WithReference(serviceBus)
     .WithReference(webhook, webhookTunnel);
 
 backendTunnel.WithReference(backend, allowAnonymous: true);

@@ -1,4 +1,4 @@
-namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
+namespace Ahk.GradeManagement.Events;
 
 public enum PullRequestStatus
 {

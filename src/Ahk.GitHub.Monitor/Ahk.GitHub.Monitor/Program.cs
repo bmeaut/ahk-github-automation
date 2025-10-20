@@ -1,18 +1,14 @@
 using Ahk.GitHub.Monitor.Config;
 using Ahk.GitHub.Monitor.EventHandlers;
 using Ahk.GitHub.Monitor.EventHandlers.GradeComment;
-using Ahk.GitHub.Monitor.Services.AzureQueues;
 using Ahk.GitHub.Monitor.Services.EventDispatch;
 using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
-using Ahk.GitHub.Monitor.Services.GradeStore;
-using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
 
-using Azure.Core;
-using Azure.Storage.Queues;
+using MassTransit;
 
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -31,17 +27,14 @@ builder.Services
 
 builder.AddAzureKeyVaultConfiguration();
 
-builder.Services.AddAzureClients(client =>
+builder.Services.AddMassTransit(x =>
 {
-    client.AddQueueServiceClient(builder.Configuration["ahk-queue-storage"])
-        .WithName(QueueClientName.Name)
-        .ConfigureOptions(options =>
-        {
-            options.MessageEncoding = QueueMessageEncoding.Base64;
-            options.Retry.Mode = RetryMode.Exponential;
-            options.Retry.MaxRetries = 5;
-            options.Retry.MaxDelay = TimeSpan.FromSeconds(100);
-        });
+    x.UsingAzureServiceBus((context, cfg) =>
+    {
+        var configuration = context.GetRequiredService<IConfiguration>();
+        var connectionString = configuration.GetValue<string>("Aspire:Azure:Messaging:ServiceBus:ahk-events:ConnectionString");
+        cfg.Host(connectionString);
+    });
 });
 
 builder.Services.AddMemoryCache(setup => setup.ExpirationScanFrequency = TimeSpan.FromMinutes(4));
@@ -59,9 +52,6 @@ var eventDispatchBuilder = new EventDispatchConfigBuilder(builder.Services)
     .Add<RepositoryCreatedStatusTrackingHandler>()
     .Add<PullRequestStatusTrackingHandler>();
 builder.Services.AddSingleton(eventDispatchBuilder.Build());
-
-builder.Services.AddSingleton<IGradeStore, GradeStoreAzureQueue>();
-builder.Services.AddSingleton<IStatusTrackingStore, StatusTrackingStoreAzureQueue>();
 
 builder.Build().Run();
 

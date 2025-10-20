@@ -1,6 +1,6 @@
 using Ahk.GradeManagement.Dal;
 using Ahk.GradeManagement.Dal.Entities;
-using Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
+using Ahk.GradeManagement.Events;
 using Ahk.GradeManagement.Shared.Enums;
 
 using AutSoft.Common.Exceptions;
@@ -105,7 +105,7 @@ public class AssignmentEventProcessorService(
                     GitHubId = pullRequestOpened.PullRequestGitHubId,
                     Url = pullRequestOpened.PullRequestUrl,
                     OpeningDate = pullRequestOpened.OpeningDate,
-                    Status = PullRequestStatus.Open,
+                    Status = Shared.Enums.PullRequestStatus.Open,
                     BranchName = pullRequestOpened.BranchName,
                     AssignmentId = assignment.Id
                 };
@@ -200,7 +200,7 @@ public class AssignmentEventProcessorService(
                     GitHubId = teacherAssigned.PullRequestGitHubId,
                     Url = teacherAssigned.PullRequestUrl,
                     OpeningDate = DateTime.UtcNow,
-                    Status = PullRequestStatus.Open,
+                    Status = Shared.Enums.PullRequestStatus.Open,
                     BranchName = "",
                     AssignmentId = assignment.Id,
                     SubjectId = assignment.SubjectId
@@ -305,7 +305,7 @@ public class AssignmentEventProcessorService(
         try
         {
             var pullRequest = await pullRequestService.GetEntityByGitHubIdWithoutQfAsync(pullRequestStatusChanged.PullRequestGitHubId);
-            pullRequest.Status = pullRequestStatusChanged.PullRequestStatus;
+            pullRequest.Status = (Shared.Enums.PullRequestStatus)pullRequestStatusChanged.PullRequestStatus;
             await gradeManagementDbContext.SaveChangesAsync();
 
             var assignmentLog = new AssignmentLog()

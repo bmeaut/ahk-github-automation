@@ -1,6 +1,6 @@
 using Ahk.GradeManagement.Api.Authorization.Policies;
 using Ahk.GradeManagement.Bll.Services;
-using Ahk.GradeManagement.Shared.Dtos.AssignmentEvents;
+using Ahk.GradeManagement.Events;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

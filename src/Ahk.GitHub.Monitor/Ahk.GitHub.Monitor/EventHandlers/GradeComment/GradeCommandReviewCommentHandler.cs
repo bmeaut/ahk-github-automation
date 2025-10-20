@@ -1,7 +1,8 @@
 using Ahk.GitHub.Monitor.EventHandlers.Abstractions;
 using Ahk.GitHub.Monitor.EventHandlers.GradeComment.Payload;
 using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
-using Ahk.GitHub.Monitor.Services.GradeStore;
+
+using MassTransit;
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -15,11 +16,11 @@ namespace Ahk.GitHub.Monitor.EventHandlers.GradeComment;
 
 public class GradeCommandReviewCommentHandler(
     IGitHubClientFactory gitHubClientFactory,
-    IGradeStore gradeStore,
+    IPublishEndpoint publishEndpoint,
     IMemoryCache cache,
     ILogger<GradeCommandReviewCommentHandler> logger,
     PullRequestStatusTrackingHandler pullRequestStatusTrackingHandler)
-    : GradeCommandHandlerBase<PullRequestReviewEventPayload>(gitHubClientFactory, gradeStore, cache, logger, pullRequestStatusTrackingHandler), IGitHubEventHandler
+    : GradeCommandHandlerBase<PullRequestReviewEventPayload>(gitHubClientFactory, publishEndpoint, cache, logger, pullRequestStatusTrackingHandler), IGitHubEventHandler
 {
     public static string GitHubWebhookEventName => "pull_request_review";
 

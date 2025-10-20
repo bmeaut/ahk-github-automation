@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ahk.GradeManagement.Events\Ahk.GradeManagement.Events.csproj" />
     <ProjectReference Include="..\Ahk.GradeManagement.Shared\Ahk.GradeManagement.Shared.csproj" />
   </ItemGroup>
 

@@ -1,7 +1,8 @@
 using Ahk.GitHub.Monitor.EventHandlers.Abstractions;
 using Ahk.GitHub.Monitor.Services.GitHubClientFactory;
-using Ahk.GitHub.Monitor.Services.StatusTrackingStore;
-using Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
+using Ahk.GradeManagement.Events;
+
+using MassTransit;
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,7 @@ namespace Ahk.GitHub.Monitor.EventHandlers;
 
 public class RepositoryCreatedStatusTrackingHandler(
     IGitHubClientFactory gitHubClientFactory,
-    IStatusTrackingStore statusTrackingStore,
+    IPublishEndpoint publishEndpoint,
     IMemoryCache cache,
     ILogger<RepositoryCreatedStatusTrackingHandler> logger)
     : RepositoryEventHandlerBase<CreateEventPayload>(gitHubClientFactory, cache, logger), IGitHubEventHandler
@@ -23,7 +24,7 @@ public class RepositoryCreatedStatusTrackingHandler(
 
     protected override async Task<EventHandlerResult> ExecuteCoreAsync(CreateEventPayload webhookPayload)
     {
-        await statusTrackingStore.StoreEventAsync(new RepositoryCreatedEvent() { GitHubRepositoryUrl = webhookPayload.Repository.HtmlUrl });
+        await publishEndpoint.Publish(new AssignmentAccepted { GitHubRepositoryUrl = webhookPayload.Repository.HtmlUrl });
         return EventHandlerResult.ActionPerformed("repository created lifecycle handled");
     }
 }

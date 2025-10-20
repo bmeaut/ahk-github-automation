@@ -1,9 +1,8 @@
-using System.Collections.Generic;
+namespace Ahk.GradeManagement.Events;
 
-namespace Ahk.GitHub.Monitor.Services.StatusTrackingStore.Dto;
-
-public class TeacherAssignedEvent : StatusEventBase
+public record TeacherAssigned
 {
+    public required string GitHubRepositoryUrl { get; init; }
     public required long PullRequestGitHubId { get; init; }
     public required string PullRequestUrl { get; init; }
     public required IReadOnlyCollection<string> TeacherGitHubIds { get; init; }

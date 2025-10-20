@@ -97,7 +97,7 @@ public class GitHubClientFactory(IMemoryCache cache, IConfiguration configuratio
             claims:
             [
                 new Claim("iat", now.ToUnixTimeStamp().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
-                new Claim("exp", now.AddMinutes(10).ToUnixTimeStamp().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
+                new Claim("exp", now.AddMinutes(9).ToUnixTimeStamp().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer),
                 new Claim("iss", orgConfig.GitHubAppId, ClaimValueTypes.Integer)
             ],
             signingCredentials: creds);

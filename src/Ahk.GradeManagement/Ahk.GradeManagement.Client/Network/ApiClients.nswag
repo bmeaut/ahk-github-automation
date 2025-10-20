@@ -94,8 +94,8 @@
             "Ahk.GradeManagement.Shared.Dtos",
             "Ahk.GradeManagement.Shared.Dtos.Request",
             "Ahk.GradeManagement.Shared.Dtos.Response",
-            "Ahk.GradeManagement.Shared.Dtos.AssignmentEvents",
-            "Ahk.GradeManagement.Shared.Dtos.ErrorHandling"
+            "Ahk.GradeManagement.Shared.Dtos.ErrorHandling",
+            "Ahk.GradeManagement.Events"
         ],
       "additionalContractNamespaceUsages": [],
       "generateOptionalParameters": true,
