@@ -1,0 +1,26 @@
+<div class="login">
+  <h1>AHK sign in</h1>
+
+  <form (ngSubmit)="submit()" #f="ngForm">
+    <label>
+      Username
+      <input name="userName" [(ngModel)]="userName" required autocomplete="username" />
+    </label>
+    <label>
+      Password
+      <input name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
+    </label>
+
+    @if (error(); as e) {
+      <p class="error">{{ e }}</p>
+    }
+
+    <button type="submit" [disabled]="busy() || f.invalid">
+      {{ busy() ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+
+  <div class="divider">or</div>
+
+  <button type="button" class="oidc" (click)="loginWithOidc()">Sign in with OIDC</button>
+</div>

@@ -1,0 +1,61 @@
+.login {
+  max-width: 20rem;
+  margin: 4rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  input {
+    padding: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+  }
+
+  button {
+    padding: 0.55rem;
+    border: 0;
+    border-radius: 4px;
+    background: #2563eb;
+    color: #fff;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    &.oidc {
+      background: #475569;
+    }
+  }
+
+  .error {
+    color: #dc2626;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .divider {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+}

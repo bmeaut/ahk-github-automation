@@ -1,0 +1,54 @@
+.dashboard {
+  max-width: 40rem;
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .hint {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+
+    li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #e2e8f0;
+
+      small {
+        color: #94a3b8;
+        margin-left: 0.5rem;
+      }
+
+      &.empty {
+        color: #94a3b8;
+        border: 0;
+      }
+    }
+  }
+
+  .new-note {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+
+    input {
+      flex: 1;
+      padding: 0.45rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 0.45rem 0.9rem;
+      border: 0;
+      border-radius: 4px;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+    }
+  }
+}

@@ -1,0 +1,24 @@
+<section class="dashboard">
+  <h1>
+    @if (courseContext.activeCourse(); as course) {
+      {{ course.name }}
+    } @else {
+      Course
+    }
+  </h1>
+
+  <p class="hint">Course-scoped probe notes (skeleton demo of course isolation):</p>
+
+  <ul>
+    @for (n of notes(); track n.id) {
+      <li>{{ n.text }} <small>{{ n.createdAt | date: 'short' }}</small></li>
+    } @empty {
+      <li class="empty">No notes for this course.</li>
+    }
+  </ul>
+
+  <form (ngSubmit)="add()" class="new-note">
+    <input name="text" placeholder="Add a note…" [(ngModel)]="text" />
+    <button type="submit">Add</button>
+  </form>
+</section>

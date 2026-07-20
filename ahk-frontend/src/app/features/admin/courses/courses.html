@@ -1,0 +1,32 @@
+<section class="admin-courses">
+  <h1>Courses</h1>
+
+  @if (error(); as e) {
+    <p class="error">{{ e }}</p>
+  }
+
+  <table>
+    <thead>
+      <tr><th>Slug</th><th>Name</th><th>GitHub org</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+      @for (c of courses(); track c.id) {
+        <tr>
+          <td>{{ c.slug }}</td>
+          <td>{{ c.name }}</td>
+          <td>{{ c.gitHubOrganization || '—' }}</td>
+          <td>{{ c.createdAt | date: 'short' }}</td>
+        </tr>
+      } @empty {
+        <tr><td colspan="4">No courses yet.</td></tr>
+      }
+    </tbody>
+  </table>
+
+  <h2>Add course</h2>
+  <form (ngSubmit)="create()" #f="ngForm" class="new-course">
+    <input name="slug" placeholder="slug (e.g. viaubc01)" [(ngModel)]="slug" required pattern="[a-z0-9-]{2,64}" />
+    <input name="name" placeholder="Course name" [(ngModel)]="name" required />
+    <button type="submit" [disabled]="f.invalid">Create</button>
+  </form>
+</section>

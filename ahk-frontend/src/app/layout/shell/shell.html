@@ -1,0 +1,36 @@
+<header class="topbar">
+  <span class="brand">AHK</span>
+
+  @if (courseContext.activeCourse(); as course) {
+    <span class="course">{{ course.name }}</span>
+  }
+
+  <nav class="switcher">
+    @if (courses().length > 0) {
+      <label for="course-switch">Course:</label>
+      <select
+        id="course-switch"
+        [value]="courseContext.activeSlug() ?? ''"
+        (change)="switch($any($event.target).value)"
+      >
+        @for (c of courses(); track c.slug) {
+          <option [value]="c.slug">{{ c.name }}</option>
+        }
+      </select>
+    }
+  </nav>
+
+  <span class="spacer"></span>
+
+  @if (isAdmin()) {
+    <a routerLink="/admin/courses" class="link">Admin</a>
+  }
+  @if (user(); as u) {
+    <span class="user">{{ u.displayName || u.userName }}</span>
+  }
+  <button type="button" (click)="logout()">Log out</button>
+</header>
+
+<main class="content">
+  <router-outlet />
+</main>

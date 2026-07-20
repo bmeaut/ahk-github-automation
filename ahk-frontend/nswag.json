@@ -1,0 +1,33 @@
+{
+  "runtime": "Net100",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "https://localhost:7443/swagger/v1/swagger.json"
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "className": "{controller}Client",
+      "moduleName": "",
+      "namespace": "",
+      "typeScriptVersion": 5.2,
+      "template": "Angular",
+      "httpClass": "HttpClient",
+      "withCredentials": true,
+      "useSingletonProvider": true,
+      "injectionTokenType": "InjectionToken",
+      "rxJsVersion": 7.0,
+      "dateTimeType": "Date",
+      "generateClientClasses": true,
+      "generateClientInterfaces": true,
+      "generateDtoTypes": true,
+      "operationGenerationMode": "MultipleClientsFromFirstTagAndOperationName",
+      "markOptionalProperties": true,
+      "generateOptionalParameters": true,
+      "typeStyle": "Interface",
+      "enumStyle": "StringLiteral",
+      "output": "src/app/api/api-client.ts"
+    }
+  }
+}

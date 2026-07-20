@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add *)",
+      "Bash(echo \"Moq added \\($?\\)\")",
+      "Bash(echo \"Mvc.Testing added \\($?\\)\")",
+      "Bash(echo \"EF InMemory added \\($?\\)\")",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet ef *)",
+      "Bash(sqllocaldb info *)",
+      "Bash(npm run *)",
+      "Bash(curl -sk -o /dev/null -w \"backend /api/auth/me → HTTP %{http_code}\\\\n\" https://localhost:7443/api/auth/me)",
+      "Bash(curl -sk -o /dev/null -w 'GET / → HTTP %{http_code}\\\\n' https://localhost:4200/)",
+      "Bash(curl -sk -o /dev/null -w 'HTTP %{http_code}\\\\n' https://localhost:4200/api/auth/me)",
+      "Bash(curl -sk -c C:/Users/beny314/AppData/Local/Temp/claude/c--Source-ahk-github-automation/8d87f62d-6109-437b-91ea-1cb12635e036/scratchpad/proxy_cookies.txt -X POST https://localhost:4200/api/auth/login -H 'Content-Type: application/json' -d '{\"userName\":\"instructor\",\"password\":\"Instructor123!\"}' -D - -o /dev/null)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(MEM=\"C:/Users/beny314/.claude/projects/c--Source-ahk-github-automation/memory\"; ls -la \"$MEM\" 2>/dev/null && echo \"--- MEMORY.md ---\" && cat \"$MEM/MEMORY.md\" 2>/dev/null || echo \"no MEMORY.md yet\")",
+      "Read(//c/Users/beny314/.claude/projects/c--Source-ahk-github-automation/memory/**)",
+      "Bash(echo \"=== remaining in memory dir ===\")",
+      "Bash(ls -A C:/Users/beny314/.claude/projects/c--Source-ahk-github-automation/memory)",
+      "Bash(echo \"\\(empty\\)\")"
+    ]
+  }
+}
