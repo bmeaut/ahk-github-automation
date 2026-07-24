@@ -5,19 +5,23 @@ per-course Azure Functions deployments with a single site whose domain data is a
 **Courses**. Provides ASP.NET Identity authentication (local username/password + generic OIDC,
 cookie-based) and course-scoped, membership-authorized endpoints.
 
-> Skeleton milestone: auth + course-scoping plumbing + OpenAPI. The github-monitor /
-> grade-management functionality is ported in a later milestone. See the architecture plan for the
-> full design.
+> Milestone status: auth, course-scoping, the domain model and services, the read endpoints, and the
+> site administration surface (courses, GitHub integration, CI callback tokens, users, health checks)
+> are in place. The write-side entry points — the GitHub webhook receiver, `/ahk ok` chatops and the
+> HMAC-verified CI callback — are ported in a later milestone. See the architecture plan for the full
+> design.
 
 ## Projects
 
 - **Ahk.Web.Server** — Web API host: `Program.cs` wiring, `Auth/` (local + OIDC controllers),
-  `Admin/` (host-context course management), `Courses/` (course-context endpoints),
+  `Admin/` (host-context course, user and health management), `Courses/` (course-context endpoints),
   `CourseContext/` (course resolution middleware + membership authorization).
+- **Ahk.Web.Services** — domain logic: grading, status tracking, submission resolution, course
+  resolution, CI callback tokens, and `Health/` (the course health checks).
 - **Ahk.Web.Data** — EF Core `ApplicationDbContext` (Identity + `Course`/`CourseMembership` +
   `ICourseScoped` global query filter), migrations, and the dev data seeder.
-- **Ahk.Web.Server.Tests** — xUnit tests (course-scoping unit tests + API smoke tests via
-  `WebApplicationFactory`).
+- **Ahk.Web.Server.Tests** — xUnit tests (course-scoping unit tests, health-check tests, grade parity
+  tests + API smoke tests via `WebApplicationFactory`).
 
 ## Run
 
@@ -36,19 +40,103 @@ Dev data seeder (Development env only) creates:
 
 - site admin — `admin` / `Admin123!`
 - instructor (member of `viaubc01` only) — `instructor` / `Instructor123!`
-- sample courses `viaubc01`, `viaubb01`
+- sample courses `viaubc01`, `viaubb01` — deliberately configured differently so the health dashboard
+  shows a mix of states
 
-## Configuration (`AHK`-style keys under `Authentication`/`ConnectionStrings`)
+## Configuration (keys under `Authentication`/`ConnectionStrings`)
 
 - `ConnectionStrings:Default` — MSSQL connection string.
-- `Authentication:Oidc:{Authority,ClientId,ClientSecret,Scopes}` — generic OIDC provider. When
-  `Authority`/`ClientId` are empty, OIDC is disabled and the app runs with local login only.
+- `Authentication:Oidc:*` — OIDC provider. When `Authority`/`ClientId` are empty, OIDC is disabled and
+  the app runs with local login only.
+
+### OIDC against the BME IdP
+
+Registered as client `AUTAhkClient` at `https://idp.bme.hu` (Shibboleth). The defaults in
+`Configuration/OidcOptions.cs` encode constraints of that provider — changing them breaks login:
+
+| Setting | Value | Why |
+|---|---|---|
+| `Scopes` | `openid email userinfo` | Exactly what is registered; `profile` is **not** registered |
+| `UsePkce` | `false` | IdP does not advertise `code_challenge_methods_supported` |
+| `ResponseMode` | `query` | `form_post` would drop the correlation cookie (SameSite=Lax) |
+| `EndSessionEndpoint` | empty | IdP advertises none → logout is local-only |
+
+`neptun_code` and `eduperson_scoped_affiliation` arrive from the **userinfo** endpoint and are mapped
+explicitly in `Program.cs` (ASP.NET maps no standard claims by default), then persisted onto
+`ApplicationUser` by `Auth/ExternalClaimsMapper.cs` on every login.
+
+**The client secret is never committed**: use `dotnet user-secrets set "Authentication:Oidc:ClientSecret" "…"`
+locally and the `Authentication__Oidc__ClientSecret` environment variable in production.
+
+### Local OIDC development
+
+Only the production redirect URI (`https://ahk.aut.bme.hu/signin-oidc`) is registered, so localhost
+cannot talk to the real IdP. Development instead uses the in-app mock provider (`MockOidc/`), enabled by
+`Authentication:Oidc:UseMockProvider` — it serves discovery/authorize/token/userinfo/JWKS under
+`/mock-oidc` and signs real RS256 id_tokens, so the genuine validation path is exercised.
+
+```bash
+# choose which fixed persona the next login returns
+curl -k "https://localhost:7443/mock-oidc/persona?user=student"   # instructor | student | noclaims
+```
+
+## Site administration API
+
+All under `/api/admin/...`, all requiring the site-level `Admin` role. This is the surface the SPA's
+admin console is built on.
+
+| Route | Purpose |
+|---|---|
+| `GET/POST /courses`, `GET/PUT/DELETE /courses/{id}` | The course register. `DELETE` requires `?confirmSlug=` to match, and cascades to the course's students, submissions, events, grades, tokens and staff |
+| `GET/PUT /courses/{id}/github` | GitHub integration: App ID + private key, access token, webhook secret, workflow-run limit, on/off |
+| `GET/PUT/DELETE /courses/{id}/members[/{userId}]` | Course staff and the role each holds |
+| `GET/POST/DELETE /courses/{id}/tokens[/{tokenId}]` | CI callback tokens. The creating response is the only place a token's secret appears |
+| `GET /users`, `POST /users`, `GET/PUT/DELETE /users/{id}` | Accounts. Search by name/username/email/Neptun, filter by course |
+| `PUT /users/{id}/roles` | Site roles. An admin cannot remove their own `Admin` role |
+| `PUT/DELETE /users/{id}/courses[/{courseId}]` | Course assignments |
+| `POST /users/{id}/password` | Set a local account's password |
+| `GET /health`, `GET /health/{courseId}` | Run the course health checks |
+
+**Stored credentials are never returned.** The GitHub config DTO reports only whether each credential
+is present (plus a last-four hint for the access token). On update, each credential field follows one
+rule: `null` leaves the stored value alone, `""` clears it, anything else replaces it — so saving an
+untouched form cannot wipe a secret the browser was never shown.
+
+## Course health checks
+
+`Ahk.Web.Services/Health/` answers "is this course's integration actually wired up?". Each check is an
+`ICourseHealthCheck` registered in DI and discovered by `CourseHealthService`, so **adding a check is
+one class plus one registration line** — the controller and the UI need no change.
+
+| Check | What it verifies |
+|---|---|
+| `github-webhook-config` | The course has an organization to route deliveries from, a secret to validate their signature, and the integration is on. Local |
+| `github-access-token` | `GET /user` and `GET /orgs/{org}` against api.github.com with the stored token. Network, 10s timeout |
+| `ci-callback-token` | At least one non-revoked `CourseWebhookToken` exists, so evaluation results are still accepted |
+
+Results carry a status (`Healthy` / `Warning` / `Failed` / `NotConfigured`), a message, and a
+remediation line; a course's overall status is the worst of its checks. Checks must not throw — a
+failure is a `Failed` result, so one unreachable course cannot take the dashboard down.
 
 ## Auth model
 
 - Cookie-based ASP.NET Identity (the API returns 401/403 rather than redirecting). We intentionally
   do **not** use `MapIdentityApi` — see the architecture plan for the rationale (no OIDC support,
   bearer-token focus, fixed shapes).
+- **The auth cookies are named `ahk.auth` / `ahk.auth.external`** (`Program.ApplicationCookieName`),
+  not the framework defaults. Browsers scope cookies by host and ignore the port, so on `localhost`
+  every ASP.NET Identity app would otherwise share `.AspNetCore.Identity.Application`; a cookie from
+  another project carrying a GUID user id crashes this int-keyed app inside `SecurityStampValidator`,
+  500-ing every request including login. `OnValidatePrincipal` additionally wraps the stamp validator
+  so an unreadable cookie signs the caller out rather than throwing. Do not revert either.
+- `POST /api/auth/login` distinguishes its failures: the 401 body carries a `LoginFailureResponse`
+  with `reason` = `InvalidCredentials` / `LockedOut` / `NotAllowed`. Sign-in uses
+  `lockoutOnFailure: true`, so five wrong attempts lock the account for five minutes — without the
+  distinction that is indistinguishable from a typo.
 - Course context: `/api/{course}/...` routes are resolved to a `Course` and gated by the
   `CourseMember` policy. Host/admin routes live under `/api/admin/...`. Machine-to-machine webhook
   endpoints (added in the port) resolve their course from the payload/token, not the path segment.
+- **Site admins can open any course.** `CourseMembershipAuthorizationHandler` grants the
+  `CourseMember` policy to the `Admin` role, and `GET /api/auth/me` therefore lists *every* course for
+  an admin — marked `viaSiteAdmin: true` where there is no membership record — so the SPA's course
+  switcher and route guard need no special case for them.

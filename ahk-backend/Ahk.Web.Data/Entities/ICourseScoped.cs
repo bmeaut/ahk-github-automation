@@ -7,5 +7,5 @@ namespace Ahk.Web.Data.Entities;
 /// </summary>
 public interface ICourseScoped
 {
-    Guid CourseId { get; }
+    int CourseId { get; }
 }

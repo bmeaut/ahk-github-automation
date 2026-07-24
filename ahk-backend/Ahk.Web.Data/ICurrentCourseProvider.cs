@@ -6,11 +6,11 @@ namespace Ahk.Web.Data;
 /// </summary>
 public interface ICurrentCourseProvider
 {
-    Guid? CurrentCourseId { get; }
+    int? CurrentCourseId { get; }
 }
 
 /// <summary>No-op provider (no active course). Used at design time and in host/admin contexts.</summary>
 public sealed class NullCurrentCourseProvider : ICurrentCourseProvider
 {
-    public Guid? CurrentCourseId => null;
+    public int? CurrentCourseId => null;
 }

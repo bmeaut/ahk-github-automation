@@ -3,9 +3,9 @@ namespace Ahk.Web.Data.Entities;
 /// <summary>Assigns a user to a course with a course-level role. A user may belong to many courses.</summary>
 public class CourseMembership
 {
-    public string UserId { get; set; } = string.Empty;
+    public int UserId { get; set; }
 
-    public Guid CourseId { get; set; }
+    public int CourseId { get; set; }
 
     public CourseRole Role { get; set; } = CourseRole.Instructor;
 

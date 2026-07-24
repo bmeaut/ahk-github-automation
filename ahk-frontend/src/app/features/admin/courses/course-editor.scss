@@ -1,0 +1,110 @@
+textarea {
+  font-size: 0.75rem;
+  resize: vertical;
+}
+
+.warn-text {
+  color: var(--warn);
+}
+
+/* A "Remove it" affordance that lives inside a hint sentence, so it reads as prose, not a control. */
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.grow-input {
+  flex: 1 1 16rem;
+}
+
+.card-foot.stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.add-member {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.issued {
+  border-bottom: 1px solid var(--rule);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+
+  dt {
+    font-family: var(--font-ui);
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  dd {
+    margin: 0;
+    word-break: break-all;
+  }
+}
+
+.candidates {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  width: 100%;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+    font-size: 0.8125rem;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.danger-zone {
+  border-color: color-mix(in srgb, var(--bad) 30%, var(--rule));
+
+  > header {
+    border-bottom-color: color-mix(in srgb, var(--bad) 30%, var(--rule));
+  }
+
+  h2 {
+    color: var(--bad);
+  }
+
+  .card-foot {
+    background: var(--bad-wash);
+    border-top-color: color-mix(in srgb, var(--bad) 30%, var(--rule));
+  }
+}
+
+select {
+  width: auto;
+  min-width: 10rem;
+}

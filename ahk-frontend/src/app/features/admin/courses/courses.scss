@@ -1,46 +1,13 @@
-.admin-courses {
-  max-width: 48rem;
+.strong {
+  font-weight: 600;
+}
 
-  h1 {
-    font-size: 1.4rem;
-  }
+td .muted {
+  font-size: 0.75rem;
+}
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1.5rem;
-
-    th,
-    td {
-      text-align: left;
-      padding: 0.4rem 0.6rem;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 0.9rem;
-    }
-  }
-
-  .new-course {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-
-    input {
-      padding: 0.45rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-    }
-
-    button {
-      padding: 0.45rem 0.9rem;
-      border: 0;
-      border-radius: 4px;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-    }
-  }
-
-  .error {
-    color: #dc2626;
-  }
+/* The verdict plus the names of the failing checks; the full chain lives on the health page. */
+.health-cell {
+  min-width: 12rem;
+  max-width: 20rem;
 }

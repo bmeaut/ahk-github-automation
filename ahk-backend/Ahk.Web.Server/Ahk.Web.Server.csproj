@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ahk.Web.Data\Ahk.Web.Data.csproj" />
+    <ProjectReference Include="..\Ahk.Web.Services\Ahk.Web.Services.csproj" />
   </ItemGroup>
 
 </Project>

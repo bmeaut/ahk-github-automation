@@ -1,0 +1,14 @@
+<main class="no-access">
+  <span class="eyebrow">Signed in</span>
+  <h1>You are not assigned to a course</h1>
+  <p class="lede">
+    Your account works, but no course has been assigned to it yet, so there is nothing to show. Ask the
+    administrator of your course to add
+    <span class="mono">{{ user()?.userName }}</span>
+    as staff.
+  </p>
+
+  <div class="btn-row">
+    <button type="button" class="btn" (click)="logout()">Sign out</button>
+  </div>
+</main>

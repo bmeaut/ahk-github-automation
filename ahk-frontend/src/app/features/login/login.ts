@@ -4,7 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 
-/** Local username/password login plus an "OIDC login" entry point (navigates to the backend challenge). */
+/**
+ * Sign-in screen. eduID (the institutional federated login) is the primary and expected path, so it leads.
+ * Local username/password is for the handful of administrator-issued accounts, so it stays collapsed behind a
+ * link and only appears when asked for.
+ */
 @Component({
   selector: 'app-login',
   imports: [FormsModule],
@@ -21,34 +25,33 @@ export class Login {
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
 
+  /** The local username/password form is hidden until the user says they have no eduID account. */
+  protected readonly showLocal = signal(false);
+
+  protected loginWithEduId(): void {
+    // Full-page navigation so the browser follows the OIDC redirect chain; proxied to the backend in dev.
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
+    window.location.href = `/api/auth/external/challenge?returnUrl=${encodeURIComponent(returnUrl)}`;
+  }
+
+  protected revealLocal(): void {
+    this.showLocal.set(true);
+  }
+
   protected submit(): void {
     this.error.set(null);
     this.busy.set(true);
-    this.auth.login(this.userName, this.password).subscribe((ok) => {
+    this.auth.login(this.userName, this.password).subscribe((failure) => {
       this.busy.set(false);
-      if (ok) {
-        this.router.navigateByUrl(this.landingUrl());
+      if (failure) {
+        this.error.set(failure);
       } else {
-        this.error.set('Invalid username or password.');
+        this.router.navigateByUrl(this.landingUrl());
       }
     });
   }
 
-  protected loginWithOidc(): void {
-    // Full-page navigation so the browser follows the OIDC redirect chain; proxied to the backend in dev.
-    const returnUrl = this.landingUrl();
-    window.location.href = `/api/auth/external/challenge?returnUrl=${encodeURIComponent(returnUrl)}`;
-  }
-
   private landingUrl(): string {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    if (returnUrl) {
-      return returnUrl;
-    }
-    if (this.auth.isAdmin()) {
-      return '/admin/courses';
-    }
-    const first = this.auth.courses()[0];
-    return first ? `/${first.slug}/dashboard` : '/login';
+    return this.route.snapshot.queryParamMap.get('returnUrl') ?? this.auth.landingUrl();
   }
 }

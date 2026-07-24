@@ -24,8 +24,11 @@ namespace Ahk.Web.Data.Migrations
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.ApplicationRole", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -51,18 +54,26 @@ namespace Ahk.Web.Data.Migrations
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.ApplicationUser", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("Affiliation")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DisplayName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -76,6 +87,10 @@ namespace Ahk.Web.Data.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NeptunCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -106,6 +121,8 @@ namespace Ahk.Web.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("NeptunCode");
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -119,18 +136,25 @@ namespace Ahk.Web.Data.Migrations
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.Course", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("GitHubOrganization")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("RepoNamePrefix")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -141,19 +165,66 @@ namespace Ahk.Web.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GitHubOrganization");
+
+                    b.HasIndex("RepoNamePrefix");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("Ahk.Web.Data.Entities.CourseGitHubConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("GitHubAccessToken")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("GitHubAppId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("GitHubAppPrivateKey")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GitHubWebhookSecret")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("WorkflowRunThreshold")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId")
+                        .IsUnique();
+
+                    b.ToTable("CourseGitHubConfigs");
+                });
+
             modelBuilder.Entity("Ahk.Web.Data.Entities.CourseMembership", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
@@ -165,31 +236,251 @@ namespace Ahk.Web.Data.Migrations
                     b.ToTable("CourseMemberships");
                 });
 
-            modelBuilder.Entity("Ahk.Web.Data.Entities.CourseNote", b =>
+            modelBuilder.Entity("Ahk.Web.Data.Entities.CourseWebhookToken", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uniqueidentifier");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Text")
+                    b.Property<string>("Description")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Secret")
                         .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("nvarchar(1024)");
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseNotes");
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("CourseWebhookTokens");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Ahk.Web.Data.Entities.GradeExercisePoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GradeRecordId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Point")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradeRecordId");
+
+                    b.ToTable("GradeExercisePoints");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.GradeRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Actor")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("Confirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("Date")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Neptun")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Origin")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int?>("PrNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int?>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubmissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("CourseId", "Confirmed", "Date");
+
+                    b.HasIndex("CourseId", "SubmissionId", "PrNumber", "Date");
+
+                    b.ToTable("GradeRecords");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Student", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("GitHubUsername")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Neptun")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId", "Neptun")
+                        .IsUnique();
+
+                    b.ToTable("Students");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Submission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("GitHubRepoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("GitHubRepoName")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<DateTimeOffset?>("LastEventAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("CourseId", "GitHubRepoName")
+                        .IsUnique();
+
+                    b.HasIndex("CourseId", "StudentId");
+
+                    b.ToTable("Submissions");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.SubmissionEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("nvarchar(34)");
+
+                    b.Property<string>("GitHubDeliveryId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("SubmissionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GitHubDeliveryId")
+                        .IsUnique()
+                        .HasFilter("[GitHubDeliveryId] IS NOT NULL");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("CourseId", "SubmissionId", "Timestamp");
+
+                    b.ToTable("SubmissionEvents");
+
+                    b.HasDiscriminator<string>("EventType").HasValue("SubmissionEvent");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -203,9 +494,8 @@ namespace Ahk.Web.Data.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -214,7 +504,7 @@ namespace Ahk.Web.Data.Migrations
                     b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -228,9 +518,8 @@ namespace Ahk.Web.Data.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -239,7 +528,7 @@ namespace Ahk.Web.Data.Migrations
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.Property<string>("LoginProvider")
                         .HasColumnType("nvarchar(450)");
@@ -250,9 +539,8 @@ namespace Ahk.Web.Data.Migrations
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -261,13 +549,13 @@ namespace Ahk.Web.Data.Migrations
                     b.ToTable("AspNetUserLogins", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -276,10 +564,10 @@ namespace Ahk.Web.Data.Migrations
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.Property<string>("LoginProvider")
                         .HasColumnType("nvarchar(450)");
@@ -293,6 +581,74 @@ namespace Ahk.Web.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.BranchCreatedEvent", b =>
+                {
+                    b.HasBaseType("Ahk.Web.Data.Entities.SubmissionEvent");
+
+                    b.Property<string>("Branch")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.HasDiscriminator().HasValue("BranchCreatedEvent");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.PullRequestEvent", b =>
+                {
+                    b.HasBaseType("Ahk.Web.Data.Entities.SubmissionEvent");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.PrimitiveCollection<string>("Assignees")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HtmlUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("Neptun")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.HasDiscriminator().HasValue("PullRequestEvent");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.RepositoryCreatedEvent", b =>
+                {
+                    b.HasBaseType("Ahk.Web.Data.Entities.SubmissionEvent");
+
+                    b.HasDiscriminator().HasValue("RepositoryCreatedEvent");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.WorkflowRunEvent", b =>
+                {
+                    b.HasBaseType("Ahk.Web.Data.Entities.SubmissionEvent");
+
+                    b.Property<string>("Conclusion")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasDiscriminator().HasValue("WorkflowRunEvent");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.CourseGitHubConfig", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithOne("GitHubConfig")
+                        .HasForeignKey("Ahk.Web.Data.Entities.CourseGitHubConfig", "CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
                 });
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.CourseMembership", b =>
@@ -314,7 +670,7 @@ namespace Ahk.Web.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Ahk.Web.Data.Entities.CourseNote", b =>
+            modelBuilder.Entity("Ahk.Web.Data.Entities.CourseWebhookToken", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
                         .WithMany()
@@ -325,7 +681,92 @@ namespace Ahk.Web.Data.Migrations
                     b.Navigation("Course");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Ahk.Web.Data.Entities.GradeExercisePoint", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.GradeRecord", "GradeRecord")
+                        .WithMany("Points")
+                        .HasForeignKey("GradeRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GradeRecord");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.GradeRecord", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Ahk.Web.Data.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Ahk.Web.Data.Entities.Submission", "Submission")
+                        .WithMany("Grades")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Student", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Submission", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ahk.Web.Data.Entities.Student", "Student")
+                        .WithMany("Submissions")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.SubmissionEvent", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Ahk.Web.Data.Entities.Submission", "Submission")
+                        .WithMany("Events")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.ApplicationRole", null)
                         .WithMany()
@@ -334,7 +775,7 @@ namespace Ahk.Web.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.ApplicationUser", null)
                         .WithMany()
@@ -343,7 +784,7 @@ namespace Ahk.Web.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.ApplicationUser", null)
                         .WithMany()
@@ -352,7 +793,7 @@ namespace Ahk.Web.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.ApplicationRole", null)
                         .WithMany()
@@ -367,7 +808,7 @@ namespace Ahk.Web.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.ApplicationUser", null)
                         .WithMany()
@@ -383,7 +824,26 @@ namespace Ahk.Web.Data.Migrations
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.Course", b =>
                 {
+                    b.Navigation("GitHubConfig");
+
                     b.Navigation("Memberships");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.GradeRecord", b =>
+                {
+                    b.Navigation("Points");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Student", b =>
+                {
+                    b.Navigation("Submissions");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Submission", b =>
+                {
+                    b.Navigation("Events");
+
+                    b.Navigation("Grades");
                 });
 #pragma warning restore 612, 618
         }

@@ -8,7 +8,7 @@ namespace Ahk.Web.Server.CourseContext;
 /// </summary>
 public sealed class CurrentCourseProvider : ICurrentCourseProvider
 {
-    public Guid? CurrentCourseId { get; private set; }
+    public int? CurrentCourseId { get; private set; }
 
-    public void Set(Guid courseId) => CurrentCourseId = courseId;
+    public void Set(int courseId) => CurrentCourseId = courseId;
 }

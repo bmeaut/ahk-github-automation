@@ -8,7 +8,7 @@ namespace Ahk.Web.Data.Entities;
 /// </summary>
 public class Course
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public int Id { get; set; }
 
     /// <summary>URL-safe unique identifier used in the path segment: ahk.aut.bme.hu/{Slug}/...</summary>
     public string Slug { get; set; } = string.Empty;
@@ -17,10 +17,21 @@ public class Course
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    // --- Placeholders for the GitHub-environment config ported from the per-course Azure deployments. ---
-    // Populated in the porting milestone (GitHub App id/private key, webhook secret, queue/connection
-    // settings, etc.). Kept nullable so the skeleton runs before the port.
+    // --- Repository routing ---
+    // These two live on Course (not CourseGitHubConfig) because machine-to-machine entry points resolve
+    // the course from them, and CourseResolutionMiddleware loads Course on every course-scoped request.
+    // Credentials deliberately live in CourseGitHubConfig so they are not on that hot path.
+
+    /// <summary>GitHub organization owning this course's repositories — the primary resolution key.</summary>
     public string? GitHubOrganization { get; set; }
+
+    /// <summary>
+    /// Optional repository-name prefix, used to disambiguate when one organization hosts several courses.
+    /// This is the explicit form of what used to be the implicit "repo prefix = course" convention.
+    /// </summary>
+    public string? RepoNamePrefix { get; set; }
+
+    public CourseGitHubConfig? GitHubConfig { get; set; }
 
     public ICollection<CourseMembership> Memberships { get; } = new List<CourseMembership>();
 }

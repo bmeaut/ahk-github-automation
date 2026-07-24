@@ -25,7 +25,7 @@ public sealed class CourseMembershipAuthorizationHandler : AuthorizationHandler<
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, CourseMembershipRequirement requirement)
     {
-        if (currentCourse.CurrentCourseId is not Guid courseId)
+        if (currentCourse.CurrentCourseId is not int courseId)
             return;
 
         if (context.User.Identity?.IsAuthenticated != true)
@@ -37,8 +37,7 @@ public sealed class CourseMembershipAuthorizationHandler : AuthorizationHandler<
             return;
         }
 
-        var userId = userManager.GetUserId(context.User);
-        if (userId is null)
+        if (!int.TryParse(userManager.GetUserId(context.User), out var userId))
             return;
 
         var isMember = await db.CourseMemberships.AsNoTracking()

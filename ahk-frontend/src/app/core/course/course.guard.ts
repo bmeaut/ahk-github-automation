@@ -6,9 +6,10 @@ import { AuthService } from '../auth/auth.service';
 import { CourseContextService } from './course-context.service';
 
 /**
- * Guards /{course}/... routes: the user must be a member of the course (or a site admin). On success the
- * course context is set so the shell can display it. Backend authorization is the real gate; this avoids
- * navigating into a course the user cannot access.
+ * Guards /{course}/... routes: the course must be one the user can open. Site admins can open every course,
+ * which the API already reflects in the list this reads, so no special case is needed here. On success the
+ * course context is set so the shell can display it. Backend authorization is the real gate; this just avoids
+ * navigating into a course that would only return 403.
  */
 export const courseGuard: CanActivateFn = (route) => {
   const auth = inject(AuthService);
@@ -25,7 +26,7 @@ export const courseGuard: CanActivateFn = (route) => {
         courseContext.setActiveSlug(slug);
         return true;
       }
-      return router.createUrlTree(['/login']);
+      return router.createUrlTree([auth.landingUrl()]);
     }),
   );
 };

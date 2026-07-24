@@ -6,14 +6,15 @@ using Xunit;
 namespace Ahk.Web.Server.Tests;
 
 /// <summary>
-/// Verifies the EF Core course query filter: a request scoped to one course only sees that course's rows.
-/// This is the core isolation mechanism, so it is exercised directly against the DbContext.
+/// Verifies the EF Core course query filter across the domain entities: a request scoped to one course only
+/// sees that course's rows. This is the isolation mechanism the whole portal relies on, so it is exercised
+/// directly against the DbContext.
 /// </summary>
 public class CourseScopingTests
 {
     private sealed class MutableCourseProvider : ICurrentCourseProvider
     {
-        public Guid? CurrentCourseId { get; set; }
+        public int? CurrentCourseId { get; set; }
     }
 
     private static ApplicationDbContext CreateContext(ICurrentCourseProvider provider, string dbName)
@@ -24,50 +25,94 @@ public class CourseScopingTests
         return new ApplicationDbContext(options, provider);
     }
 
-    [Fact]
-    public async Task CourseNotes_AreFilteredToTheCurrentCourse()
+    private const int CourseA = 1;
+    private const int CourseB = 2;
+
+    /// <summary>Seeds one submission with an event and a grade for each of two courses.</summary>
+    private static async Task SeedTwoCoursesAsync(string dbName)
     {
-        var dbName = Guid.NewGuid().ToString();
-        var courseA = Guid.NewGuid();
-        var courseB = Guid.NewGuid();
+        await using var db = CreateContext(new MutableCourseProvider { CurrentCourseId = null }, dbName);
 
-        // Seed notes for two courses using an unscoped provider (null → filter matches nothing, so use raw add).
-        var seedProvider = new MutableCourseProvider { CurrentCourseId = null };
-        await using (var seed = CreateContext(seedProvider, dbName))
+        foreach (var (courseId, repo, neptun) in new[] { (CourseA, "org/a-hw1-abc123", "ABC123"), (CourseB, "org/b-hw1-xyz789", "XYZ789") })
         {
-            seed.CourseNotes.Add(new CourseNote { CourseId = courseA, Text = "A1" });
-            seed.CourseNotes.Add(new CourseNote { CourseId = courseA, Text = "A2" });
-            seed.CourseNotes.Add(new CourseNote { CourseId = courseB, Text = "B1" });
-            await seed.SaveChangesAsync();
-        }
+            var student = new Student { CourseId = courseId, Neptun = neptun };
+            db.Students.Add(student);
+            await db.SaveChangesAsync();
 
-        var provider = new MutableCourseProvider { CurrentCourseId = courseA };
-        await using (var scoped = CreateContext(provider, dbName))
-        {
-            var notes = await scoped.CourseNotes.ToListAsync();
-            Assert.Equal(2, notes.Count);
-            Assert.All(notes, n => Assert.Equal(courseA, n.CourseId));
-        }
+            var submission = new Submission { CourseId = courseId, StudentId = student.Id, GitHubRepoName = repo };
+            db.Submissions.Add(submission);
+            await db.SaveChangesAsync();
 
-        provider.CurrentCourseId = courseB;
-        await using (var scoped = CreateContext(provider, dbName))
-        {
-            var notes = await scoped.CourseNotes.ToListAsync();
-            Assert.Single(notes);
-            Assert.Equal("B1", notes[0].Text);
+            db.SubmissionEvents.Add(new BranchCreatedEvent
+            {
+                CourseId = courseId,
+                SubmissionId = submission.Id,
+                Timestamp = DateTimeOffset.UtcNow,
+                Branch = "solution",
+            });
+
+            var grade = new GradeRecord
+            {
+                CourseId = courseId,
+                SubmissionId = submission.Id,
+                StudentId = student.Id,
+                Neptun = neptun,
+                Date = DateTimeOffset.UtcNow,
+                Confirmed = true,
+            };
+            grade.Points.Add(new GradeExercisePoint { Name = "ex0", Point = 1, Order = 0 });
+            db.GradeRecords.Add(grade);
+
+            await db.SaveChangesAsync();
         }
     }
 
-    [Fact]
-    public async Task CourseNotes_AreHiddenWhenNoCourseIsResolved()
+    [Theory]
+    [InlineData(CourseA, "org/a-hw1-abc123")]
+    [InlineData(CourseB, "org/b-hw1-xyz789")]
+    public async Task Submissions_AreFilteredToTheCurrentCourse(int courseId, string expectedRepo)
     {
         var dbName = Guid.NewGuid().ToString();
-        var provider = new MutableCourseProvider { CurrentCourseId = null };
-        await using var db = CreateContext(provider, dbName);
+        await SeedTwoCoursesAsync(dbName);
 
-        db.CourseNotes.Add(new CourseNote { CourseId = Guid.NewGuid(), Text = "orphan" });
-        await db.SaveChangesAsync();
+        await using var db = CreateContext(new MutableCourseProvider { CurrentCourseId = courseId }, dbName);
 
-        Assert.Empty(await db.CourseNotes.ToListAsync());
+        var submissions = await db.Submissions.ToListAsync();
+        Assert.Single(submissions);
+        Assert.Equal(expectedRepo, submissions[0].GitHubRepoName);
+    }
+
+    [Fact]
+    public async Task Students_Events_AndGrades_AreFilteredToTheCurrentCourse()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        await SeedTwoCoursesAsync(dbName);
+
+        await using var db = CreateContext(new MutableCourseProvider { CurrentCourseId = CourseA }, dbName);
+
+        Assert.All(await db.Students.ToListAsync(), s => Assert.Equal(CourseA, s.CourseId));
+        Assert.All(await db.SubmissionEvents.ToListAsync(), e => Assert.Equal(CourseA, e.CourseId));
+        Assert.All(await db.GradeRecords.ToListAsync(), g => Assert.Equal(CourseA, g.CourseId));
+
+        Assert.Single(await db.GradeRecords.ToListAsync());
+    }
+
+    /// <summary>
+    /// Guards the trap called out in the plan: with no course resolved (machine-to-machine paths, the importer)
+    /// the filter matches nothing, so such callers must set a provider or use IgnoreQueryFilters.
+    /// </summary>
+    [Fact]
+    public async Task NoCurrentCourse_HidesAllCourseScopedRows()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        await SeedTwoCoursesAsync(dbName);
+
+        await using var db = CreateContext(new MutableCourseProvider { CurrentCourseId = null }, dbName);
+
+        Assert.Empty(await db.Submissions.ToListAsync());
+        Assert.Empty(await db.GradeRecords.ToListAsync());
+
+        // ...but the rows are there when the filter is bypassed.
+        Assert.Equal(2, await db.Submissions.IgnoreQueryFilters().CountAsync());
     }
 }

@@ -1,32 +1,149 @@
-<section class="admin-courses">
-  <h1>Courses</h1>
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Site administration</span>
+      <h1>Courses</h1>
+      <p class="lede">
+        Every course runs its own GitHub organization, credentials and callback token. This is the register of
+        them, and the state of each one's integration.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn" (click)="recheck()" [disabled]="checking() || loading()">
+        {{ checking() ? 'Checking…' : 'Re-check health' }}
+      </button>
+      <button type="button" class="btn primary" (click)="startAdding()">Add course</button>
+    </div>
+  </div>
 
   @if (error(); as e) {
-    <p class="error">{{ e }}</p>
+    <p class="notice error">{{ e }}</p>
   }
 
-  <table>
-    <thead>
-      <tr><th>Slug</th><th>Name</th><th>GitHub org</th><th>Created</th></tr>
-    </thead>
-    <tbody>
-      @for (c of courses(); track c.id) {
-        <tr>
-          <td>{{ c.slug }}</td>
-          <td>{{ c.name }}</td>
-          <td>{{ c.gitHubOrganization || '—' }}</td>
-          <td>{{ c.createdAt | date: 'short' }}</td>
-        </tr>
-      } @empty {
-        <tr><td colspan="4">No courses yet.</td></tr>
-      }
-    </tbody>
-  </table>
+  @if (!loading() && failingCount() > 0) {
+    <p class="notice warn">
+      {{ failingCount() }} {{ failingCount() === 1 ? 'course is' : 'courses are' }} failing a health check.
+      Open the course to see which link is broken.
+    </p>
+  }
 
-  <h2>Add course</h2>
-  <form (ngSubmit)="create()" #f="ngForm" class="new-course">
-    <input name="slug" placeholder="slug (e.g. viaubc01)" [(ngModel)]="slug" required pattern="[a-z0-9-]{2,64}" />
-    <input name="name" placeholder="Course name" [(ngModel)]="name" required />
-    <button type="submit" [disabled]="f.invalid">Create</button>
-  </form>
+  @if (adding()) {
+    <div class="card">
+      <header>
+        <div class="grow">
+          <h2>Add course</h2>
+          <p>The slug becomes the course's URL and cannot contain spaces or capitals.</p>
+        </div>
+      </header>
+      <form (ngSubmit)="create()" #f="ngForm">
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label for="new-slug">Slug</label>
+              <input
+                id="new-slug"
+                name="slug"
+                type="text"
+                [(ngModel)]="slug"
+                required
+                pattern="[a-z0-9-]{2,64}"
+                placeholder="viaubc01"
+              />
+              <span class="hint">Lowercase letters, digits and hyphens. Used as /viaubc01/…</span>
+            </div>
+            <div class="field">
+              <label for="new-name">Course name</label>
+              <input
+                id="new-name"
+                name="name"
+                type="text"
+                [(ngModel)]="name"
+                required
+                placeholder="Software Architectures"
+              />
+            </div>
+            <div class="field">
+              <label for="new-org">GitHub organization</label>
+              <input id="new-org" name="organization" type="text" [(ngModel)]="organization" placeholder="ahk-viaubc01" />
+              <span class="hint">Optional now; you can set it with the rest of the integration.</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <button type="submit" class="btn primary" [disabled]="f.invalid || saving()">
+            {{ saving() ? 'Creating…' : 'Create course' }}
+          </button>
+          <button type="button" class="btn quiet" (click)="cancelAdding()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <div class="card">
+    @if (loading()) {
+      <p class="empty">Loading courses…</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>GitHub</th>
+              <th class="num">Students</th>
+              <th class="num">Submissions</th>
+              <th class="num">Staff</th>
+              <th>Integration</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of courses(); track c.id) {
+              <tr>
+                <td>
+                  <a class="mono strong" [routerLink]="['/admin/courses', c.id]">{{ c.slug }}</a>
+                  <div class="muted">{{ c.name }}</div>
+                </td>
+                <td class="mono">
+                  {{ c.gitHubOrganization || '—' }}
+                  @if (c.repoNamePrefix) {
+                    <div class="muted">prefix {{ c.repoNamePrefix }}</div>
+                  }
+                </td>
+                <td class="num">{{ c.studentCount }}</td>
+                <td class="num">{{ c.submissionCount }}</td>
+                <td class="num">{{ c.memberCount }}</td>
+                <td class="health-cell">
+                  @if (reportFor(c); as report) {
+                    <span
+                      class="badge"
+                      [class.ok]="tone(report.status) === 'ok'"
+                      [class.warn]="tone(report.status) === 'warn'"
+                      [class.bad]="tone(report.status) === 'bad'"
+                    >{{ verdict(report.status) }}</span>
+                    @if (problems(report); as p) {
+                      <div class="muted">{{ p }}</div>
+                    }
+                  } @else {
+                    <span class="muted">Not checked</span>
+                  }
+                </td>
+                <td class="muted">{{ c.createdAt | date: 'yyyy-MM-dd' }}</td>
+                <td class="actions">
+                  <a class="btn quiet" [routerLink]="['/', c.slug, 'dashboard']">Open</a>
+                  <a class="btn quiet" [routerLink]="['/admin/courses', c.id]">Edit</a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="empty">
+                  No courses yet. Add one to start receiving submissions.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 </section>

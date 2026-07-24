@@ -1,26 +1,64 @@
-<div class="login">
-  <h1>AHK sign in</h1>
+<main class="login">
+  <div class="mark">
+    <img
+      src="bme-aut-logo.png"
+      alt="BME Department of Automation and Applied Informatics"
+      class="logo"
+    />
+    <h1 class="product">AHK — Automated homework evaluation</h1>
+  </div>
 
-  <form (ngSubmit)="submit()" #f="ngForm">
-    <label>
-      Username
-      <input name="userName" [(ngModel)]="userName" required autocomplete="username" />
-    </label>
-    <label>
-      Password
-      <input name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
-    </label>
+  <div class="card">
+    <div class="card-body">
+      <h2>Sign in</h2>
+      <p class="lede">Use your eduID account — the same login you use across the university.</p>
 
-    @if (error(); as e) {
-      <p class="error">{{ e }}</p>
-    }
+      <!-- eduID is the primary path: the button follows the eduID brand, with English wording. -->
+      <button type="button" class="eduid-btn" (click)="loginWithEduId()">
+        <img class="eduid-logo" src="eduid-logo.png" alt="eduID" />
+        <span class="eduid-label">Login</span>
+      </button>
 
-    <button type="submit" [disabled]="busy() || f.invalid">
-      {{ busy() ? 'Signing in…' : 'Sign in' }}
-    </button>
-  </form>
+      @if (!showLocal()) {
+        <button type="button" class="linkish" (click)="revealLocal()">
+          I don't have an eduID account
+        </button>
+      } @else {
+        <div class="divider"><span>local account</span></div>
 
-  <div class="divider">or</div>
+        <form (ngSubmit)="submit()" #f="ngForm">
+          <div class="field">
+            <label for="userName">Username</label>
+            <input
+              id="userName"
+              name="userName"
+              type="text"
+              [(ngModel)]="userName"
+              required
+              autocomplete="username"
+            />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              [(ngModel)]="password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
 
-  <button type="button" class="oidc" (click)="loginWithOidc()">Sign in with OIDC</button>
-</div>
+          @if (error(); as e) {
+            <p class="notice error">{{ e }}</p>
+          }
+
+          <button type="submit" class="btn wide" [disabled]="busy() || f.invalid">
+            {{ busy() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+</main>

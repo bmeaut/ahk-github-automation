@@ -1,1 +1,554 @@
-/* You can add global styles to this file, and also import other style files */
+/* =============================================================================
+   AHK portal — global design system, in the BME AUT visual identity.
+   Component stylesheets are scoped by Angular, so everything shared lives here:
+   tokens, base elements, and the handful of classes the screens compose from
+   (page, card, field, btn, table, badge).
+
+   The palette and typography come from aut.bme.hu, so the portal reads as a
+   department system rather than a standalone tool. Provenance of every value is
+   recorded in brand/README.md, next to the logo masters.
+
+   Type does three jobs and uses three faces: Georgia for headings (the AUT
+   house style), Verdana for labels and controls, and monospace for machine
+   identifiers — slugs, organizations, repositories, Neptun codes, tokens —
+   because comparing those character by character is the actual work.
+   ============================================================================= */
+
+:root {
+  /* --- BME AUT identity --------------------------------------------------
+     Three different reds, deliberately. Collapsing them loses information:
+     --brand marks headings and primary actions, --link is for navigation, and
+     --bad means something is broken. aut.bme.hu makes the same distinction. */
+  --brand: #a4001e; /* aut.bme.hu heading + accent crimson */
+  --brand-deep: #900028; /* the logo's own crimson (PANTONE 202) */
+  --brand-dark: #88000f; /* aut.bme.hu active-navigation marker */
+
+  /* Kept as --accent so every component that already reads it follows along. */
+  --accent: var(--brand);
+  --accent-ink: #7d0017;
+  --accent-wash: #f6e6e9;
+
+  /* Navy, not crimson: aut.bme.hu sets a[href] { color:#074371 }. */
+  --link: #074371;
+  --link-hover: #052f50;
+
+  /* Warm neutrals from aut.bme.hu's grid views. */
+  --parchment: #dbd9c0;
+  --parchment-2: #f7f5dc;
+
+  /* Ink + paper */
+  --ink: #1a1a1a;
+  --ink-2: #4a4a4a;
+  --ink-3: #767676; /* not AUT's #999, which is 2.8:1 on white and fails WCAG AA */
+  --paper: #dedddb; /* AUT's #ddd, warmed to sit with the parchment */
+  --surface: #ffffff;
+  --surface-2: #f7f6f2;
+  --rule: #d5d3cc;
+  --rule-strong: #bcb9ae;
+
+  /* Status. These carry the meaning in this product, so they are the loud ones.
+     --bad is AUT's own error red, browner and darker than --brand, so a failing
+     badge cannot be mistaken for brand chrome. */
+  --ok: #1f7a4d;
+  --ok-wash: #e2f2e8;
+  --warn: #a86414;
+  --warn-wash: #f8eddc;
+  --bad: #801b1b;
+  --bad-wash: #ffcfcf;
+  --bad-rule: #e5a3a3;
+  --idle: #767676;
+  --idle-wash: #ececea;
+
+  --font-display: Georgia, 'Times New Roman', Times, serif;
+  --font-ui: Verdana, Arial, Helvetica, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  --radius: 3px;
+  --shadow: 0 1px 2px rgb(26 26 26 / 6%), 0 1px 12px rgb(26 26 26 / 4%);
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+
+  /* Verdana runs wide, so the base drops a step to keep the dense tables legible.
+     aut.bme.hu does the same thing with font-size: 70%. */
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Crimson serif at normal weight — the single rule that makes a page read as AUT. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: normal;
+  color: var(--brand);
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.125rem;
+}
+
+h3 {
+  font-size: 0.9375rem;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* A link that is a heading keeps the heading's crimson (AUT: h3 a[href] { color:#a4001e }). */
+h1 a,
+h2 a,
+h3 a {
+  color: var(--brand);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---- Page scaffolding ------------------------------------------------- */
+
+.page {
+  max-width: 74rem;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.page-head .grow {
+  flex: 1 1 16rem;
+}
+
+/* Small tracked label above a heading or beside a value. */
+.eyebrow {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.25rem;
+}
+
+.lede {
+  color: var(--ink-2);
+  margin: 0.375rem 0 0;
+  max-width: 56ch;
+}
+
+.muted {
+  color: var(--ink-2);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ---- Card ------------------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1.25rem;
+}
+
+.card > header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.card > header .grow {
+  flex: 1 1 auto;
+}
+
+.card > header p {
+  margin: 0.125rem 0 0;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
+.card-body {
+  padding: 1.125rem;
+}
+
+.card-body > :first-child {
+  margin-top: 0;
+}
+
+.card-body > :last-child {
+  margin-bottom: 0;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1.125rem;
+  border-top: 1px solid var(--rule);
+  background: var(--surface-2);
+}
+
+/* ---- Forms ------------------------------------------------------------ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  margin-bottom: 0.875rem;
+}
+
+.field > label {
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.field .hint {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0 1rem;
+}
+
+/* Monospace, because these hold identifiers — slugs, organizations, tokens. */
+input[type='text'],
+input[type='password'],
+input[type='email'],
+input[type='number'],
+input[type='search'],
+select,
+textarea {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 0.4375rem 0.5625rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  width: 100%;
+  min-width: 0;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+input::placeholder {
+  color: var(--ink-3);
+}
+
+input:disabled,
+select:disabled {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+input.ng-invalid.ng-touched {
+  border-color: var(--bad);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.check input {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+/* ---- Buttons ---------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--ink-3);
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+}
+
+.btn.danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 35%, var(--rule));
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: var(--bad-wash);
+  border-color: var(--bad);
+}
+
+.btn.quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.btn.quiet:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--rule);
+  color: var(--ink);
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---- Tables ----------------------------------------------------------- */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+/* Parchment header band — the most recognisable AUT table cue (.gridViewHeader). */
+table.data th {
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: bold;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: var(--parchment);
+  border-bottom: 1px solid var(--rule-strong);
+  white-space: nowrap;
+}
+
+table.data td {
+  padding: 0.5625rem 0.75rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+table.data tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table.data tbody tr:hover td {
+  background: var(--surface-2);
+}
+
+table.data th.num,
+table.data td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+table.data td.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 2rem 1.125rem;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+/* ---- Badges + status -------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  padding: 0.0625rem 0.375rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: var(--idle-wash);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.badge.ok {
+  background: var(--ok-wash);
+  color: var(--ok);
+}
+
+.badge.warn {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+.badge.bad {
+  background: var(--bad-wash);
+  border-color: var(--bad-rule);
+  color: var(--bad);
+}
+
+.badge.accent {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+
+/* Status dot, for inline use in lists. */
+.dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--idle);
+  flex: none;
+}
+
+.dot.ok {
+  background: var(--ok);
+}
+
+.dot.warn {
+  background: var(--warn);
+}
+
+.dot.bad {
+  background: var(--bad);
+}
+
+/* ---- Notices ---------------------------------------------------------- */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--rule-strong);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  margin-bottom: 1rem;
+}
+
+/* Matches aut.bme.hu's .errorBox: dark red on a pale wash, with its own rule colour. */
+.notice.error {
+  border-color: var(--bad-rule);
+  border-left-color: var(--bad);
+  background: var(--bad-wash);
+  color: var(--bad);
+  font-weight: bold;
+}
+
+.notice.success {
+  border-color: var(--ok);
+  background: var(--ok-wash);
+  color: var(--ok);
+}
+
+.notice.warn {
+  border-color: var(--warn);
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+.notice.info {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+
+/* ---- Reduced motion --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

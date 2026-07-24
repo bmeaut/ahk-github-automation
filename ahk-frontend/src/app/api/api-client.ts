@@ -14,15 +14,15 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
-export interface ICourseProbeClient {
-    getNotes(course: string): Observable<CourseNoteDto[]>;
-    addNote(request: CreateCourseNoteRequest, course: string): Observable<CourseNoteDto>;
+export interface IGradesClient {
+    list(course: string): Observable<FinalStudentGrade[]>;
+    exportCsv(course: string): Observable<string>;
 }
 
 @Injectable({
     providedIn: 'root'
 })
-export class CourseProbeClient implements ICourseProbeClient {
+export class GradesClient implements IGradesClient {
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
@@ -32,8 +32,8 @@ export class CourseProbeClient implements ICourseProbeClient {
         this.baseUrl = baseUrl ?? "https://localhost:7443";
     }
 
-    getNotes(course: string): Observable<CourseNoteDto[]> {
-        let url_ = this.baseUrl + "/api/{course}/probe/notes";
+    list(course: string): Observable<FinalStudentGrade[]> {
+        let url_ = this.baseUrl + "/api/{course}/grades";
         if (course === undefined || course === null)
             throw new globalThis.Error("The parameter 'course' must be defined.");
         url_ = url_.replace("{course}", encodeURIComponent("" + course));
@@ -49,20 +49,20 @@ export class CourseProbeClient implements ICourseProbeClient {
         };
 
         return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetNotes(response_);
+            return this.processList(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processGetNotes(response_ as any);
+                    return this.processList(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CourseNoteDto[]>;
+                    return _observableThrow(e) as any as Observable<FinalStudentGrade[]>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CourseNoteDto[]>;
+                return _observableThrow(response_) as any as Observable<FinalStudentGrade[]>;
         }));
     }
 
-    protected processGetNotes(response: HttpResponseBase): Observable<CourseNoteDto[]> {
+    protected processList(response: HttpResponseBase): Observable<FinalStudentGrade[]> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -72,7 +72,7 @@ export class CourseProbeClient implements ICourseProbeClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseNoteDto[];
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FinalStudentGrade[];
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -83,41 +83,37 @@ export class CourseProbeClient implements ICourseProbeClient {
         return _observableOf(null as any);
     }
 
-    addNote(request: CreateCourseNoteRequest, course: string): Observable<CourseNoteDto> {
-        let url_ = this.baseUrl + "/api/{course}/probe/notes";
+    exportCsv(course: string): Observable<string> {
+        let url_ = this.baseUrl + "/api/{course}/grades/csv";
         if (course === undefined || course === null)
             throw new globalThis.Error("The parameter 'course' must be defined.");
         url_ = url_.replace("{course}", encodeURIComponent("" + course));
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(request);
-
         let options_ : any = {
-            body: content_,
             observe: "response",
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
-                "Content-Type": "application/json",
                 "Accept": "application/json"
             })
         };
 
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processAddNote(response_);
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processExportCsv(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processAddNote(response_ as any);
+                    return this.processExportCsv(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CourseNoteDto>;
+                    return _observableThrow(e) as any as Observable<string>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CourseNoteDto>;
+                return _observableThrow(response_) as any as Observable<string>;
         }));
     }
 
-    protected processAddNote(response: HttpResponseBase): Observable<CourseNoteDto> {
+    protected processExportCsv(response: HttpResponseBase): Observable<string> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -127,7 +123,76 @@ export class CourseProbeClient implements ICourseProbeClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseNoteDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface ISubmissionStatusesClient {
+    list(course: string): Observable<RepositoryStatus[]>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class SubmissionStatusesClient implements ISubmissionStatusesClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "https://localhost:7443";
+    }
+
+    list(course: string): Observable<RepositoryStatus[]> {
+        let url_ = this.baseUrl + "/api/{course}/statuses";
+        if (course === undefined || course === null)
+            throw new globalThis.Error("The parameter 'course' must be defined.");
+        url_ = url_.replace("{course}", encodeURIComponent("" + course));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RepositoryStatus[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RepositoryStatus[]>;
+        }));
+    }
+
+    protected processList(response: HttpResponseBase): Observable<RepositoryStatus[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RepositoryStatus[];
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -141,7 +206,7 @@ export class CourseProbeClient implements ICourseProbeClient {
 
 export interface IAuthClient {
     login(request: LoginRequest): Observable<CurrentUserResponse>;
-    logout(): Observable<void>;
+    logout(): Observable<LogoutResponse>;
     register(request: RegisterRequest): Observable<CurrentUserResponse>;
     me(): Observable<CurrentUserResponse>;
 }
@@ -206,7 +271,7 @@ export class AuthClient implements IAuthClient {
         } else if (status === 401) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result401: any = null;
-            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LoginFailureResponse;
             return throwException("A server side error occurred.", status, _responseText, _headers, result401);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -217,7 +282,7 @@ export class AuthClient implements IAuthClient {
         return _observableOf(null as any);
     }
 
-    logout(): Observable<void> {
+    logout(): Observable<LogoutResponse> {
         let url_ = this.baseUrl + "/api/auth/logout";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -226,6 +291,7 @@ export class AuthClient implements IAuthClient {
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -236,23 +302,25 @@ export class AuthClient implements IAuthClient {
                 try {
                     return this.processLogout(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<LogoutResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<LogoutResponse>;
         }));
     }
 
-    protected processLogout(response: HttpResponseBase): Observable<void> {
+    protected processLogout(response: HttpResponseBase): Observable<LogoutResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
+        if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LogoutResponse;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -378,6 +446,7 @@ export class AuthClient implements IAuthClient {
 export interface IExternalAuthClient {
     challenge(returnUrl?: string | null | undefined): Observable<FileResponse>;
     callback(returnUrl?: string | null | undefined): Observable<FileResponse>;
+    signedOut(returnUrl?: string | null | undefined): Observable<FileResponse>;
 }
 
 @Injectable({
@@ -502,12 +571,201 @@ export class ExternalAuthClient implements IExternalAuthClient {
         }
         return _observableOf(null as any);
     }
+
+    signedOut(returnUrl?: string | null | undefined): Observable<FileResponse> {
+        let url_ = this.baseUrl + "/signout-callback-oidc?";
+        if (returnUrl !== undefined && returnUrl !== null)
+            url_ += "returnUrl=" + encodeURIComponent("" + returnUrl) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/octet-stream"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSignedOut(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSignedOut(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FileResponse>;
+        }));
+    }
+
+    protected processSignedOut(response: HttpResponseBase): Observable<FileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return _observableOf({ fileName: fileName, data: responseBlob as any, status: status, headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface ICourseHealthAdminClient {
+    checkAll(): Observable<CourseHealthReport[]>;
+    checkCourse(courseId: number): Observable<CourseHealthReport>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class CourseHealthAdminClient implements ICourseHealthAdminClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "https://localhost:7443";
+    }
+
+    checkAll(): Observable<CourseHealthReport[]> {
+        let url_ = this.baseUrl + "/api/admin/health";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCheckAll(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCheckAll(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CourseHealthReport[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CourseHealthReport[]>;
+        }));
+    }
+
+    protected processCheckAll(response: HttpResponseBase): Observable<CourseHealthReport[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseHealthReport[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    checkCourse(courseId: number): Observable<CourseHealthReport> {
+        let url_ = this.baseUrl + "/api/admin/health/{courseId}";
+        if (courseId === undefined || courseId === null)
+            throw new globalThis.Error("The parameter 'courseId' must be defined.");
+        url_ = url_.replace("{courseId}", encodeURIComponent("" + courseId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCheckCourse(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCheckCourse(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CourseHealthReport>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CourseHealthReport>;
+        }));
+    }
+
+    protected processCheckCourse(response: HttpResponseBase): Observable<CourseHealthReport> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseHealthReport;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export interface ICoursesAdminClient {
     list(): Observable<CourseDto[]>;
-    create(request: CreateCourseRequest): Observable<CourseDto>;
-    get(id: string): Observable<CourseDto>;
+    create(request: CreateCourseRequest): Observable<CourseDetailDto>;
+    get(id: number): Observable<CourseDetailDto>;
+    update(id: number, request: UpdateCourseRequest): Observable<void>;
+    delete(id: number, confirmSlug?: string | null | undefined): Observable<void>;
+    getGitHubConfig(id: number): Observable<CourseGitHubConfigDto>;
+    updateGitHubConfig(id: number, request: UpdateCourseGitHubConfigRequest): Observable<CourseGitHubConfigDto>;
+    listMembers(id: number): Observable<CourseMemberDto[]>;
+    upsertMember(id: number, request: UpsertCourseMemberRequest): Observable<void>;
+    removeMember(id: number, userId: number): Observable<void>;
+    listTokens(id: number): Observable<WebhookTokenDto[]>;
+    createToken(id: number, request: CreateWebhookTokenRequest): Observable<WebhookTokenDto>;
+    revokeToken(id: number, tokenId: number): Observable<void>;
 }
 
 @Injectable({
@@ -571,7 +829,7 @@ export class CoursesAdminClient implements ICoursesAdminClient {
         return _observableOf(null as any);
     }
 
-    create(request: CreateCourseRequest): Observable<CourseDto> {
+    create(request: CreateCourseRequest): Observable<CourseDetailDto> {
         let url_ = this.baseUrl + "/api/admin/courses";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -595,14 +853,14 @@ export class CoursesAdminClient implements ICoursesAdminClient {
                 try {
                     return this.processCreate(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CourseDto>;
+                    return _observableThrow(e) as any as Observable<CourseDetailDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CourseDto>;
+                return _observableThrow(response_) as any as Observable<CourseDetailDto>;
         }));
     }
 
-    protected processCreate(response: HttpResponseBase): Observable<CourseDto> {
+    protected processCreate(response: HttpResponseBase): Observable<CourseDetailDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -612,7 +870,7 @@ export class CoursesAdminClient implements ICoursesAdminClient {
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
-            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseDto;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseDetailDto;
             return _observableOf(result201);
             }));
         } else if (status === 409) {
@@ -629,7 +887,7 @@ export class CoursesAdminClient implements ICoursesAdminClient {
         return _observableOf(null as any);
     }
 
-    get(id: string): Observable<CourseDto> {
+    get(id: number): Observable<CourseDetailDto> {
         let url_ = this.baseUrl + "/api/admin/courses/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -652,14 +910,14 @@ export class CoursesAdminClient implements ICoursesAdminClient {
                 try {
                     return this.processGet(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CourseDto>;
+                    return _observableThrow(e) as any as Observable<CourseDetailDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CourseDto>;
+                return _observableThrow(response_) as any as Observable<CourseDetailDto>;
         }));
     }
 
-    protected processGet(response: HttpResponseBase): Observable<CourseDto> {
+    protected processGet(response: HttpResponseBase): Observable<CourseDetailDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -669,8 +927,587 @@ export class CoursesAdminClient implements ICoursesAdminClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseDetailDto;
             return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    update(id: number, request: UpdateCourseRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdate(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status === 409) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    delete(id: number, confirmSlug?: string | null | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}?";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (confirmSlug !== undefined && confirmSlug !== null)
+            url_ += "confirmSlug=" + encodeURIComponent("" + confirmSlug) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDelete(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDelete(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDelete(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getGitHubConfig(id: number): Observable<CourseGitHubConfigDto> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/github";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetGitHubConfig(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetGitHubConfig(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CourseGitHubConfigDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CourseGitHubConfigDto>;
+        }));
+    }
+
+    protected processGetGitHubConfig(response: HttpResponseBase): Observable<CourseGitHubConfigDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseGitHubConfigDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateGitHubConfig(id: number, request: UpdateCourseGitHubConfigRequest): Observable<CourseGitHubConfigDto> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/github";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateGitHubConfig(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateGitHubConfig(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CourseGitHubConfigDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CourseGitHubConfigDto>;
+        }));
+    }
+
+    protected processUpdateGitHubConfig(response: HttpResponseBase): Observable<CourseGitHubConfigDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseGitHubConfigDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    listMembers(id: number): Observable<CourseMemberDto[]> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/members";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processListMembers(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processListMembers(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CourseMemberDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CourseMemberDto[]>;
+        }));
+    }
+
+    protected processListMembers(response: HttpResponseBase): Observable<CourseMemberDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseMemberDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    upsertMember(id: number, request: UpsertCourseMemberRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/members";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpsertMember(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpsertMember(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpsertMember(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    removeMember(id: number, userId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/members/{userId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (userId === undefined || userId === null)
+            throw new globalThis.Error("The parameter 'userId' must be defined.");
+        url_ = url_.replace("{userId}", encodeURIComponent("" + userId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRemoveMember(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRemoveMember(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRemoveMember(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    listTokens(id: number): Observable<WebhookTokenDto[]> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/tokens";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processListTokens(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processListTokens(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WebhookTokenDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WebhookTokenDto[]>;
+        }));
+    }
+
+    protected processListTokens(response: HttpResponseBase): Observable<WebhookTokenDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WebhookTokenDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createToken(id: number, request: CreateWebhookTokenRequest): Observable<WebhookTokenDto> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/tokens";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateToken(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateToken(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WebhookTokenDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WebhookTokenDto>;
+        }));
+    }
+
+    protected processCreateToken(response: HttpResponseBase): Observable<WebhookTokenDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WebhookTokenDto;
+            return _observableOf(result201);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    revokeToken(id: number, tokenId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/tokens/{tokenId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (tokenId === undefined || tokenId === null)
+            throw new globalThis.Error("The parameter 'tokenId' must be defined.");
+        url_ = url_.replace("{tokenId}", encodeURIComponent("" + tokenId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRevokeToken(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRevokeToken(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRevokeToken(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status === 404) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -687,18 +1524,615 @@ export class CoursesAdminClient implements ICoursesAdminClient {
     }
 }
 
-export interface CourseNoteDto {
-    id?: string;
-    text?: string;
-    createdAt?: Date;
+export interface IUsersAdminClient {
+    list(search?: string | null | undefined, courseId?: number | null | undefined, skip?: number | undefined, take?: number | undefined): Observable<UserListResponse>;
+    create(request: CreateUserRequest): Observable<UserDto>;
+    get(id: number): Observable<UserDto>;
+    update(id: number, request: UpdateUserRequest): Observable<UserDto>;
+    delete(id: number): Observable<void>;
+    updateRoles(id: number, request: UpdateUserRolesRequest): Observable<UserDto>;
+    upsertCourse(id: number, request: UpsertUserCourseRequest): Observable<UserDto>;
+    removeCourse(id: number, courseId: number): Observable<UserDto>;
+    setPassword(id: number, request: SetPasswordRequest): Observable<void>;
 }
 
-export interface CreateCourseNoteRequest {
-    text?: string;
+@Injectable({
+    providedIn: 'root'
+})
+export class UsersAdminClient implements IUsersAdminClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "https://localhost:7443";
+    }
+
+    list(search?: string | null | undefined, courseId?: number | null | undefined, skip?: number | undefined, take?: number | undefined): Observable<UserListResponse> {
+        let url_ = this.baseUrl + "/api/admin/users?";
+        if (search !== undefined && search !== null)
+            url_ += "search=" + encodeURIComponent("" + search) + "&";
+        if (courseId !== undefined && courseId !== null)
+            url_ += "courseId=" + encodeURIComponent("" + courseId) + "&";
+        if (skip === null)
+            throw new globalThis.Error("The parameter 'skip' cannot be null.");
+        else if (skip !== undefined)
+            url_ += "skip=" + encodeURIComponent("" + skip) + "&";
+        if (take === null)
+            throw new globalThis.Error("The parameter 'take' cannot be null.");
+        else if (take !== undefined)
+            url_ += "take=" + encodeURIComponent("" + take) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserListResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserListResponse>;
+        }));
+    }
+
+    protected processList(response: HttpResponseBase): Observable<UserListResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserListResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create(request: CreateUserRequest): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processCreate(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    get(id: number): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processGet(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    update(id: number, request: UpdateUserRequest): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processUpdate(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    delete(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDelete(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDelete(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDelete(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateRoles(id: number, request: UpdateUserRolesRequest): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/roles";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateRoles(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateRoles(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processUpdateRoles(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    upsertCourse(id: number, request: UpsertUserCourseRequest): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/courses";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpsertCourse(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpsertCourse(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processUpsertCourse(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    removeCourse(id: number, courseId: number): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/courses/{courseId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (courseId === undefined || courseId === null)
+            throw new globalThis.Error("The parameter 'courseId' must be defined.");
+        url_ = url_.replace("{courseId}", encodeURIComponent("" + courseId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRemoveCourse(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRemoveCourse(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processRemoveCourse(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setPassword(id: number, request: SetPasswordRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/password";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetPassword(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetPassword(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetPassword(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface FinalStudentGrade {
+    neptun?: string;
+    repo?: string;
+    prUrl?: string | undefined;
+    points?: { [key: string]: number; };
+}
+
+export interface RepositoryStatus {
+    repository?: string;
+    neptun?: string;
+    branches?: string[];
+    pullRequests?: PullRequestStatus[];
+    workflowRuns?: WorkflowRunsStatus;
+}
+
+export interface PullRequestStatus {
+    number?: number;
+    htmlUrl?: string | undefined;
+    status?: string | undefined;
+    assignee?: string | undefined;
+}
+
+export interface WorkflowRunsStatus {
+    count?: number;
+    lastStatus?: string | undefined;
 }
 
 export interface CurrentUserResponse {
-    userId?: string;
+    userId?: number;
     userName?: string;
     email?: string | undefined;
     displayName?: string | undefined;
@@ -710,6 +2144,22 @@ export interface CourseMembershipDto {
     slug?: string;
     name?: string;
     role?: string;
+    viaSiteAdmin?: boolean;
+}
+
+export interface LoginFailureResponse {
+    reason?: string;
+    error?: string;
+}
+
+export interface LoginRequest {
+    userName: string;
+    password: string;
+    rememberMe?: boolean;
+}
+
+export interface LogoutResponse {
+    endSessionUrl?: string | undefined;
 }
 
 export interface ProblemDetails {
@@ -722,12 +2172,6 @@ export interface ProblemDetails {
     [key: string]: any;
 }
 
-export interface LoginRequest {
-    userName: string;
-    password: string;
-    rememberMe?: boolean;
-}
-
 export interface RegisterRequest {
     userName: string;
     email: string;
@@ -735,18 +2179,164 @@ export interface RegisterRequest {
     displayName?: string | undefined;
 }
 
+export interface CourseHealthReport {
+    courseId?: number;
+    courseSlug?: string;
+    courseName?: string;
+    checkedAt?: Date;
+    checks?: HealthCheckResult[];
+    status?: HealthStatus;
+}
+
+export interface HealthCheckResult {
+    checkId?: string;
+    title?: string;
+    status?: HealthStatus;
+    message?: string;
+    remediation?: string | undefined;
+    durationMs?: number;
+}
+
+export type HealthStatus = "NotConfigured" | "Healthy" | "Warning" | "Failed";
+
 export interface CourseDto {
-    id?: string;
+    id?: number;
     slug?: string;
     name?: string;
     gitHubOrganization?: string | undefined;
+    repoNamePrefix?: string | undefined;
     createdAt?: Date;
+    integrationEnabled?: boolean;
+    memberCount?: number;
+    studentCount?: number;
+    submissionCount?: number;
+}
+
+export interface CourseDetailDto {
+    id?: number;
+    slug?: string;
+    name?: string;
+    gitHubOrganization?: string | undefined;
+    repoNamePrefix?: string | undefined;
+    createdAt?: Date;
+    studentCount?: number;
+    submissionCount?: number;
+    gitHubConfig?: CourseGitHubConfigDto;
+    members?: CourseMemberDto[];
+    webhookTokens?: WebhookTokenDto[];
+}
+
+export interface CourseGitHubConfigDto {
+    gitHubAppId?: string | undefined;
+    hasAppPrivateKey?: boolean;
+    hasAccessToken?: boolean;
+    accessTokenHint?: string | undefined;
+    hasWebhookSecret?: boolean;
+    workflowRunThreshold?: number;
+    enabled?: boolean;
+    updatedAt?: Date | undefined;
+}
+
+export interface CourseMemberDto {
+    userId?: number;
+    userName?: string;
+    displayName?: string | undefined;
+    email?: string | undefined;
+    role?: CourseRole;
+}
+
+export type CourseRole = "Instructor" | "Admin";
+
+export interface WebhookTokenDto {
+    id?: number;
+    token?: string;
+    secret?: string | undefined;
+    description?: string | undefined;
+    createdAt?: Date;
+    revokedAt?: Date | undefined;
 }
 
 export interface CreateCourseRequest {
     slug: string;
     name: string;
     gitHubOrganization?: string | undefined;
+    repoNamePrefix?: string | undefined;
+}
+
+export interface UpdateCourseRequest {
+    slug: string;
+    name: string;
+    gitHubOrganization?: string | undefined;
+    repoNamePrefix?: string | undefined;
+}
+
+export interface UpdateCourseGitHubConfigRequest {
+    gitHubAppId?: string | undefined;
+    gitHubAppPrivateKey?: string | undefined;
+    gitHubAccessToken?: string | undefined;
+    gitHubWebhookSecret?: string | undefined;
+    workflowRunThreshold?: number;
+    enabled?: boolean;
+}
+
+export interface UpsertCourseMemberRequest {
+    userId: number;
+    role?: CourseRole;
+}
+
+export interface CreateWebhookTokenRequest {
+    description?: string | undefined;
+}
+
+export interface UserListResponse {
+    items?: UserDto[];
+    total?: number;
+}
+
+export interface UserDto {
+    id?: number;
+    userName?: string;
+    email?: string | undefined;
+    displayName?: string | undefined;
+    neptunCode?: string | undefined;
+    affiliation?: string | undefined;
+    roles?: string[];
+    courses?: UserCourseDto[];
+    isExternal?: boolean;
+    isLockedOut?: boolean;
+}
+
+export interface UserCourseDto {
+    courseId?: number;
+    slug?: string;
+    name?: string;
+    role?: CourseRole;
+}
+
+export interface CreateUserRequest {
+    userName: string;
+    email?: string | undefined;
+    displayName?: string | undefined;
+    password: string;
+}
+
+export interface UpdateUserRequest {
+    email?: string | undefined;
+    displayName?: string | undefined;
+    neptunCode?: string | undefined;
+}
+
+export interface UpdateUserRolesRequest {
+    roles?: string[];
+}
+
+export interface UpsertUserCourseRequest {
+    courseId: number;
+    role?: CourseRole;
+}
+
+export interface SetPasswordRequest {
+    newPassword: string;
 }
 
 export interface FileResponse {
