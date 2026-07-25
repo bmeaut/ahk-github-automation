@@ -41,6 +41,20 @@ export class AuthService {
   }
 
   /**
+   * Re-fetches the session, ignoring the cache. Needed after the user changes something the session carries —
+   * their GitHub username, for one — so the rest of the app does not keep showing the stale value.
+   */
+  reload(): Observable<CurrentUserResponse | null> {
+    return this.authClient.me().pipe(
+      tap((u) => this.setUser(u)),
+      catchError(() => {
+        this.setLoggedOut();
+        return of(null);
+      }),
+    );
+  }
+
+  /**
    * Signs in. Resolves to null on success, or to the reason it failed — the API's own message for a bad
    * password or a locked-out account, and a distinct one when the backend cannot be reached at all.
    */
@@ -78,13 +92,17 @@ export class AuthService {
     return this.courses().some((c) => c.slug === slug);
   }
 
-  /** Where signing in should land: the admin console for admins, otherwise the first course they can open. */
+  /**
+   * Where signing in should land: the admin console for admins, then the first course they staff. Everyone
+   * else is a student, so they go to their own repositories — which doubles as the "you have nothing yet"
+   * screen and tells them to ask for an invite link.
+   */
   landingUrl(): string {
     if (this.isAdmin()) {
       return '/admin/courses';
     }
     const first = this.courses()[0];
-    return first ? `/${first.slug}/dashboard` : '/no-access';
+    return first ? `/${first.slug}/dashboard` : '/my';
   }
 
   private setUser(u: CurrentUserResponse): void {

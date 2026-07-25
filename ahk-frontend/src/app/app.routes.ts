@@ -10,11 +10,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
   },
   {
-    // Signed in, but assigned to nothing yet. Without this the guards would bounce such a user back to the
-    // login screen they just came from, with no explanation.
-    path: 'no-access',
+    // A student's own repositories, across every course, and where signing in lands anyone who staffs none.
+    // Its empty state explains what to do next, which is why there is no separate "no access" screen: a user
+    // with no courses is a student who has not accepted an assignment yet, not an error.
+    path: 'my',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/no-access/no-access').then((m) => m.NoAccess),
+    loadComponent: () => import('./features/my/my-assignments').then((m) => m.MyAssignments),
   },
   {
     // Host/admin context (no course segment).
@@ -42,6 +43,14 @@ export const routes: Routes = [
     ],
   },
   {
+    // The assignment invite link. Deliberately outside the course shell and guarded only by authGuard:
+    // students are members of no course, and accepting is how they first appear in one at all — courseGuard
+    // would bounce every one of them. Declared before ':course' so the match is unambiguous.
+    path: ':course/invite/:token',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/invite/invite').then((m) => m.Invite),
+  },
+  {
     // Course context: /{course}/...
     path: ':course',
     component: Shell,
@@ -50,6 +59,10 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./features/course/dashboard/dashboard').then((m) => m.CourseDashboard),
+      },
+      {
+        path: 'assignments',
+        loadComponent: () => import('./features/course/assignments/assignments').then((m) => m.CourseAssignments),
       },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

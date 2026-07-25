@@ -178,13 +178,15 @@ public sealed class CoursesAdminController : ControllerBase
         if (!string.Equals(course.Slug, confirmSlug, StringComparison.Ordinal))
             return BadRequest(new { error = $"Type the course slug '{course.Slug}' to confirm deletion." });
 
-        // GradeRecord and SubmissionEvent point at Course with NoAction (SQL Server rejects the extra cascade
-        // paths), so they are removed explicitly before the course goes.
+        // GradeRecord, SubmissionEvent and AssignmentAcceptance point at Course with NoAction (SQL Server
+        // rejects the extra cascade paths), so they are removed explicitly before the course goes.
         await db.GradeExercisePoints.IgnoreQueryFilters()
             .Where(p => p.GradeRecord!.CourseId == id).ExecuteDeleteAsync(cancellationToken);
         await db.GradeRecords.IgnoreQueryFilters().Where(g => g.CourseId == id).ExecuteDeleteAsync(cancellationToken);
         await db.SubmissionEvents.IgnoreQueryFilters().Where(e => e.CourseId == id).ExecuteDeleteAsync(cancellationToken);
         await db.Submissions.IgnoreQueryFilters().Where(s => s.CourseId == id).ExecuteDeleteAsync(cancellationToken);
+        await db.AssignmentAcceptances.IgnoreQueryFilters().Where(a => a.CourseId == id).ExecuteDeleteAsync(cancellationToken);
+        await db.Assignments.IgnoreQueryFilters().Where(a => a.CourseId == id).ExecuteDeleteAsync(cancellationToken);
 
         db.Courses.Remove(course);
         await db.SaveChangesAsync(cancellationToken);

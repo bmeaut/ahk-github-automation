@@ -65,6 +65,38 @@ public static class DevDataSeeder
         }
 
         await EnsureSampleDomainDataAsync(db, courseA);
+        await EnsureSampleAssignmentsAsync(db, courseA);
+    }
+
+    /// <summary>
+    /// One open and one archived assignment, so the instructor listing, the "show archived" toggle and the
+    /// closed-invite branch all have something to render.
+    /// </summary>
+    private static async Task EnsureSampleAssignmentsAsync(ApplicationDbContext db, Course course)
+    {
+        if (await db.Assignments.IgnoreQueryFilters().AnyAsync(a => a.CourseId == course.Id))
+            return;
+
+        db.Assignments.AddRange(
+            new Assignment
+            {
+                CourseId = course.Id,
+                Name = "Homework 1 — Data access",
+                Description = "Implement the repository layer and open a pull request from the solution branch.",
+                TemplateRepoName = Normalize.RepoName($"{course.GitHubOrganization}/{course.Slug}-hw1"),
+                InviteToken = $"dev-invite-{course.Slug}-hw1",
+            },
+            new Assignment
+            {
+                CourseId = course.Id,
+                Name = "Homework 0 — Warm-up (archived)",
+                Description = "Last semester's warm-up assignment. Archived: the invite link no longer accepts students.",
+                TemplateRepoName = Normalize.RepoName($"{course.GitHubOrganization}/{course.Slug}-hw0"),
+                InviteToken = $"dev-invite-{course.Slug}-hw0",
+                ArchivedAt = DateTimeOffset.UtcNow.AddDays(-30),
+            });
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task<Course> EnsureCourseAsync(ApplicationDbContext db, string slug, string name, string org, string? webhookSecret)

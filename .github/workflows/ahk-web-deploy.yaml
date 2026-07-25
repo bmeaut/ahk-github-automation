@@ -1,0 +1,181 @@
+name: AHK Web - build, test & deploy to Mezga
+
+# Manual trigger only: this deploys to the on-prem IIS server behind the BME VPN.
+on: [workflow_dispatch]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION: "24"
+  BACKEND_PROJECT: ahk-backend/Ahk.Web.Server/Ahk.Web.Server.csproj
+  SOLUTION: ahk-backend/Ahk.Web.slnx
+  DATA_PROJECT: ahk-backend/Ahk.Web.Data
+  FRONTEND_DIR: ahk-frontend
+  OFFLINE_PAGE: ahk-backend/Ahk.Web.Server/app_offline.htm
+  MOUNT_POINT: /mnt/deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # The Mezga environment holds the VPN_ADDRESS / DEPLOYMENT_PATH variables and every secret, and
+    # gates the run behind whatever protection rules the environment defines.
+    environment: Mezga
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+
+      # ---- A. Build & test (fail-fast: nothing below runs if a test fails) ----
+
+      - name: Backend tests
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release
+
+      - name: Install frontend dependencies
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm ci
+
+      - name: Frontend tests
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npx ng test --watch=false
+
+      # ---- B. Produce artifacts ----
+
+      - name: Publish backend (self-contained win-x64 via Mezga profile)
+        run: dotnet publish ${{ env.BACKEND_PROJECT }} -p:PublishProfile=Mezga -o publish
+
+      - name: Build frontend (production)
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npx ng build --configuration production
+
+      - name: Copy SPA into backend wwwroot
+        run: |
+          mkdir -p publish/wwwroot
+          cp -r ${{ env.FRONTEND_DIR }}/dist/ahk-frontend/browser/. publish/wwwroot/
+
+      - name: Stage offline page alongside the publish output
+        run: cp ${{ env.OFFLINE_PAGE }} publish/app_offline.htm
+
+      - name: Generate idempotent migration script (artifact only — applied manually)
+        run: |
+          dotnet tool install --global dotnet-ef
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef migrations script --idempotent \
+            --project ${{ env.DATA_PROJECT }} \
+            --startup-project ${{ env.DATA_PROJECT }} \
+            -o migrate.sql
+
+      - name: Upload migration script
+        uses: actions/upload-artifact@v4
+        with:
+          name: migrate-sql
+          path: migrate.sql
+
+      # ---- C. Inject production config (never committed) ----
+
+      - name: Inject connection string and OIDC client secret
+        env:
+          DATABASE_CONNECTIONSTRING: ${{ secrets.DATABASE_CONNECTIONSTRING }}
+          OIDC_CLIENTSECRET: ${{ secrets.OIDC_CLIENTSECRET }}
+        run: |
+          jq --arg cs "$DATABASE_CONNECTIONSTRING" --arg secret "$OIDC_CLIENTSECRET" \
+            '.ConnectionStrings.Default = $cs | .Authentication.Oidc.ClientSecret = $secret' \
+            publish/appsettings.json > publish/appsettings.json.tmp
+          mv publish/appsettings.json.tmp publish/appsettings.json
+
+      # ---- D. VPN (SSTP) up ----
+
+      - name: Install SSTP client
+        run: sudo apt-get update && sudo apt-get install -y sstp-client ppp cifs-utils
+
+      - name: Connect SSTP VPN
+        id: vpn
+        env:
+          VPN_ADDRESS: ${{ vars.VPN_ADDRESS }}
+          VPN_USER: ${{ secrets.VPN_USER }}
+          VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
+          # Optional: PEM of the CA that signed the VPN server cert (or the self-signed cert itself).
+          # Set this if the endpoint does not present a publicly-trusted certificate. When unset, sstpc
+          # validates against the system CA store. Never use --cert-warn: that downgrades a failed
+          # server-certificate check to a warning and lets a MITM harvest these credentials.
+          VPN_CA_CERT: ${{ secrets.VPN_CA_CERT }}
+        run: |
+          CERT_ARGS=()
+          if [ -n "$VPN_CA_CERT" ]; then
+            echo "$VPN_CA_CERT" > /tmp/vpn-ca.crt
+            CERT_ARGS=(--ca-cert /tmp/vpn-ca.crt)
+          fi
+          sudo sstpc --log-stderr "${CERT_ARGS[@]}" \
+            --user "$VPN_USER" --password "$VPN_PASSWORD" \
+            "$VPN_ADDRESS" \
+            usepeerdns require-mschap-v2 noauth noipdefault defaultroute refuse-eap \
+            unit 0 &
+          # Wait (up to ~60s) for the ppp0 interface to acquire an address.
+          for i in $(seq 1 30); do
+            if ip -4 addr show ppp0 2>/dev/null | grep -q 'inet '; then
+              echo "VPN up:"; ip -4 addr show ppp0
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::SSTP VPN did not come up within timeout"
+          exit 1
+
+      # ---- E. Mount share, swap site ----
+
+      - name: Mount deployment share
+        env:
+          DEPLOYMENT_PATH: ${{ vars.DEPLOYMENT_PATH }}
+          FILE_USER: ${{ secrets.FILE_USER }}
+          FILE_PASSWORD: ${{ secrets.FILE_PASSWORD }}
+        run: |
+          sudo mkdir -p "$MOUNT_POINT"
+          sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
+            -o username="$FILE_USER",password="$FILE_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
+
+      - name: Stop site (drop app_offline.htm)
+        run: |
+          cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
+          # Give IIS a moment to notice and release file locks before mirroring.
+          sleep 5
+
+      - name: Mirror new files (keep app_offline.htm)
+        run: |
+          ok=0
+          for i in $(seq 1 10); do
+            if rsync -a --delete --exclude 'app_offline.htm' publish/ "$MOUNT_POINT/"; then
+              ok=1; break
+            fi
+            echo "rsync attempt $i failed (likely a locked file); retrying..."
+            sleep 2
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::Mirroring the deployment failed after retries"
+            exit 1
+          fi
+
+      - name: Wake site (remove app_offline.htm)
+        run: rm -f "$MOUNT_POINT/app_offline.htm"
+
+      - name: Warm up and verify
+        run: curl --fail --show-error --retry 5 --retry-delay 3 https://ahk.aut.bme.hu/
+
+      # ---- F. Teardown (always) ----
+
+      - name: Unmount share
+        if: always()
+        run: sudo umount "$MOUNT_POINT" || true
+
+      - name: Disconnect VPN
+        if: always()
+        run: sudo pkill -f sstpc || true

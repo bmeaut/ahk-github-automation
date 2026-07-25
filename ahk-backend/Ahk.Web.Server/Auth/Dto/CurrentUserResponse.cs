@@ -11,6 +11,15 @@ public sealed class CurrentUserResponse
 
     public string? DisplayName { get; set; }
 
+    /// <summary>
+    /// From the IdP's <c>neptun_code</c> claim. The invite flow needs it to name a student's repository, and
+    /// the SPA needs to know whether it is there before offering to accept an assignment.
+    /// </summary>
+    public string? NeptunCode { get; set; }
+
+    /// <summary>Verified GitHub login, or null while the user has not supplied one.</summary>
+    public string? GitHubUsername { get; set; }
+
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
 
     /// <summary>

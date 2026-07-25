@@ -1,0 +1,56 @@
+/* Same standalone, centred frame as the login screen: a student following an invite link has no course
+   context yet, so there is no rail and no switcher to sit inside. */
+.invite {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+}
+
+.mark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+
+  .logo {
+    display: block;
+    width: 100%;
+    max-width: 17rem;
+    height: auto;
+  }
+}
+
+.product {
+  font-size: 1rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+.lede {
+  font-size: 0.9375rem;
+}
+
+/* The repository is the thing the student came for — give it room and set it in the machine face. */
+.repo {
+  margin: 0.75rem 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+
+  a {
+    color: var(--link);
+
+    &:hover {
+      color: var(--link-hover);
+    }
+  }
+}
+
+.btn-row {
+  margin-top: 1.25rem;
+}

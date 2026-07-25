@@ -244,6 +244,11 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        // Serve the Angular SPA (published into wwwroot). Same-origin with the API, so the generated
+        // clients' empty API_BASE_URL keeps issuing relative /api/... requests. Must run before routing.
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
+
         app.UseRouting();
         app.UseAuthentication();
         app.UseMiddleware<CourseResolutionMiddleware>();
@@ -254,5 +259,9 @@ public class Program
             app.MapMockOidcProvider();
 
         app.MapControllers();
+
+        // Client-side routes (e.g. /admin/courses) have no server endpoint; hand them index.html and let
+        // the Angular router take over. Matched controller/static routes win first, so /api/... is untouched.
+        app.MapFallbackToFile("index.html");
     }
 }

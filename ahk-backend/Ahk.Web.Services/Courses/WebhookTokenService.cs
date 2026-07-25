@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -75,8 +74,8 @@ public sealed class WebhookTokenService : IWebhookTokenService
         var entity = new CourseWebhookToken
         {
             CourseId = courseId,
-            Token = GenerateSecret(24),
-            Secret = GenerateSecret(32),
+            Token = TokenGenerator.UrlSafe(24),
+            Secret = TokenGenerator.UrlSafe(32),
             Description = description,
         };
 
@@ -106,11 +105,4 @@ public sealed class WebhookTokenService : IWebhookTokenService
     }
 
     private static string CacheKey(string token) => $"secrettotoken{token}";
-
-    /// <summary>URL-safe random string — these travel in an HTTP header and a workflow secret.</summary>
-    private static string GenerateSecret(int byteLength) =>
-        Convert.ToBase64String(RandomNumberGenerator.GetBytes(byteLength))
-            .Replace('+', '-')
-            .Replace('/', '_')
-            .TrimEnd('=');
 }

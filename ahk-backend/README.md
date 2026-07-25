@@ -5,11 +5,12 @@ per-course Azure Functions deployments with a single site whose domain data is a
 **Courses**. Provides ASP.NET Identity authentication (local username/password + generic OIDC,
 cookie-based) and course-scoped, membership-authorized endpoints.
 
-> Milestone status: auth, course-scoping, the domain model and services, the read endpoints, and the
+> Milestone status: auth, course-scoping, the domain model and services, the read endpoints, the
 > site administration surface (courses, GitHub integration, CI callback tokens, users, health checks)
-> are in place. The write-side entry points — the GitHub webhook receiver, `/ahk ok` chatops and the
-> HMAC-verified CI callback — are ported in a later milestone. See the architecture plan for the full
-> design.
+> and **assignments** (the GitHub Classroom replacement: template repositories, invite links, student
+> self-service) are in place. The write-side entry points — the GitHub webhook receiver, `/ahk ok`
+> chatops and the HMAC-verified CI callback — are ported in a later milestone. See the architecture
+> plan for the full design.
 
 ## Projects
 
@@ -17,7 +18,9 @@ cookie-based) and course-scoped, membership-authorized endpoints.
   `Admin/` (host-context course, user and health management), `Courses/` (course-context endpoints),
   `CourseContext/` (course resolution middleware + membership authorization).
 - **Ahk.Web.Services** — domain logic: grading, status tracking, submission resolution, course
-  resolution, CI callback tokens, and `Health/` (the course health checks).
+  resolution, CI callback tokens, `Assignments/` (assignment administration and the student invite
+  flow), `GitHub/` (the App installation-token provider and the REST calls it authenticates), and
+  `Health/` (the course health checks).
 - **Ahk.Web.Data** — EF Core `ApplicationDbContext` (Identity + `Course`/`CourseMembership` +
   `ICourseScoped` global query filter), migrations, and the dev data seeder.
 - **Ahk.Web.Server.Tests** — xUnit tests (course-scoping unit tests, health-check tests, grade parity
@@ -112,11 +115,44 @@ one class plus one registration line** — the controller and the UI need no cha
 |---|---|
 | `github-webhook-config` | The course has an organization to route deliveries from, a secret to validate their signature, and the integration is on. Local |
 | `github-access-token` | `GET /user` and `GET /orgs/{org}` against api.github.com with the stored token. Network, 10s timeout |
+| `github-app-installation` | The App credentials mint an installation token, the installation covers **all** repositories, and it was granted `administration: write` — without which assignments cannot create repositories. Network, 10s timeout |
 | `ci-callback-token` | At least one non-revoked `CourseWebhookToken` exists, so evaluation results are still accepted |
 
 Results carry a status (`Healthy` / `Warning` / `Failed` / `NotConfigured`), a message, and a
 remediation line; a course's overall status is the worst of its checks. Checks must not throw — a
 failure is a `Failed` result, so one unreachable course cannot take the dashboard down.
+
+## Assignments (the GitHub Classroom replacement)
+
+Instructors define assignments against a template repository and hand out an invite link; students
+follow it and the portal creates their repository. **`docs/github-app.md` is the reference for the
+GitHub App this depends on** — registration, permissions, installation scope and troubleshooting.
+
+| Route | Authorization | Purpose |
+|---|---|---|
+| `/api/{course}/assignments` | `CourseMember` | Instructor CRUD, archive/unarchive, regenerate invite link, acceptance roster |
+| `/api/{course}/invite/{token}` | **`[Authorize]` only** | The student flow: state, then `POST accept` |
+| `/api/my/assignments` | `[Authorize]` | Every repository the caller holds, across courses, plus `POST {id}/resend-invitation` |
+| `/api/profile/github` | `[Authorize]` | Records the caller's GitHub username after verifying it exists |
+
+Three things about this are deliberate and easy to break:
+
+- **The invite and `/my` endpoints must not require course membership.** Accepting an assignment is
+  how a student first appears in a course at all, so gating them on `CourseMember` locks every
+  student out of the only endpoints meant for them. The invite *token* is the capability.
+- **`/api/my/...` has no `{course}` segment**, so no current course is resolved and the course query
+  filter matches nothing. `StudentAssignmentService` reads with `IgnoreQueryFilters()` and filters on
+  the user id; a "helpful" cleanup that removes those calls silently returns zero rows.
+- **Assignments are additive.** Repositories created outside the portal keep working exactly as
+  before — nothing in grading or status tracking may start requiring an `Assignment` row.
+
+Accepting is idempotent: the repository is looked up on GitHub before it is created, and a unique
+index on `(AssignmentId, UserId)` settles the double-click race. Student repositories are private and
+named `{template repository name}-{neptun}`, lower-cased like every other repository name in the model.
+
+Students who are not organization members receive a GitHub *invitation* rather than direct access, and
+invitations expire. That state is tracked per acceptance and re-sendable from `/my`; the expiry is read
+from GitHub's own `expired` flag, never computed here.
 
 ## Auth model
 

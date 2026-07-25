@@ -41,6 +41,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<GradeExercisePoint> GradeExercisePoints => Set<GradeExercisePoint>();
 
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+
+    public DbSet<AssignmentAcceptance> AssignmentAcceptances => Set<AssignmentAcceptance>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -50,6 +54,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             e.Property(u => u.DisplayName).HasMaxLength(256);
             e.Property(u => u.NeptunCode).HasMaxLength(32);
             e.Property(u => u.Affiliation).HasMaxLength(256);
+            e.Property(u => u.GitHubUsername).HasMaxLength(128);
 
             // Not unique: directory accounts may have no neptun code, and it is a lookup key, not an identity.
             e.HasIndex(u => u.NeptunCode);
@@ -180,6 +185,46 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         {
             e.Property(p => p.Name).HasMaxLength(256).IsRequired();
             e.HasOne(p => p.GradeRecord).WithMany(g => g!.Points).HasForeignKey(p => p.GradeRecordId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Assignment>(e =>
+        {
+            e.Property(a => a.Name).HasMaxLength(256).IsRequired();
+            e.Property(a => a.Description).HasMaxLength(1024);
+            e.Property(a => a.TemplateRepoName).HasMaxLength(400).IsRequired();
+            e.Property(a => a.InviteToken).HasMaxLength(128).IsRequired();
+
+            // Globally unique: the invite link carries the token as its only identifier of the assignment, and
+            // it is the capability that lets a stranger provision a repository — collisions are not an option.
+            e.HasIndex(a => a.InviteToken).IsUnique();
+
+            // The instructor listing reads "this course's open assignments".
+            e.HasIndex(a => new { a.CourseId, a.ArchivedAt });
+
+            e.HasOne(a => a.Course).WithMany().HasForeignKey(a => a.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasQueryFilter(a => a.CourseId == this.currentCourse.CurrentCourseId);
+        });
+
+        builder.Entity<AssignmentAcceptance>(e =>
+        {
+            e.Property(a => a.GitHubRepoName).HasMaxLength(400).IsRequired();
+            e.Property(a => a.RepoUrl).HasMaxLength(1024).IsRequired();
+            e.Property(a => a.GitHubUsername).HasMaxLength(128).IsRequired();
+
+            // One repository per student per assignment. This index is the concurrency guard: a double click or
+            // a second tab loses the race here rather than creating a second repository on GitHub.
+            e.HasIndex(a => new { a.AssignmentId, a.UserId }).IsUnique();
+            e.HasIndex(a => new { a.CourseId, a.GitHubRepoName });
+
+            // The student home page reads every acceptance of one user across all courses.
+            e.HasIndex(a => a.UserId);
+
+            // NoAction on Course: Course cascades to Assignment which cascades to here, and SQL Server rejects
+            // the second path. CoursesAdminController.Delete removes these rows explicitly because of it.
+            e.HasOne(a => a.Course).WithMany().HasForeignKey(a => a.CourseId).OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(a => a.Assignment).WithMany(x => x!.Acceptances).HasForeignKey(a => a.AssignmentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasQueryFilter(a => a.CourseId == this.currentCourse.CurrentCourseId);
         });
     }
 }

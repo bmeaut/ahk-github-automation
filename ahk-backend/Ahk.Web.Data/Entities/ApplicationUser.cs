@@ -23,5 +23,15 @@ public class ApplicationUser : IdentityUser<int>
     /// </summary>
     public string? Affiliation { get; set; }
 
+    /// <summary>
+    /// GitHub login, verified against the GitHub API when the user first supplies it. Site-wide rather than
+    /// per-course: a person has one GitHub account, so once it is known no course asks for it again.
+    /// Copied onto <see cref="Student.GitHubUsername"/> when an assignment is accepted.
+    /// </summary>
+    public string? GitHubUsername { get; set; }
+
+    /// <summary>GitHub's numeric account id — stable across a rename, which the login is not.</summary>
+    public long? GitHubUserId { get; set; }
+
     public ICollection<CourseMembership> CourseMemberships { get; } = new List<CourseMembership>();
 }

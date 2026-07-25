@@ -167,6 +167,8 @@ public sealed class AuthController : ControllerBase
             UserName = user.UserName ?? string.Empty,
             Email = user.Email,
             DisplayName = user.DisplayName,
+            NeptunCode = user.NeptunCode,
+            GitHubUsername = user.GitHubUsername,
             Roles = roles.ToList(),
             Courses = courses,
         };

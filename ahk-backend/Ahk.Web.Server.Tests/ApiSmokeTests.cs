@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Net;
 using Ahk.Web.Data;
+using Ahk.Web.Data.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -83,6 +84,30 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    /// <summary>
+    /// The student-facing surfaces need a session, but nothing more. They are reachable by people who are not
+    /// members of any course — that is the point of an invite link — so they must sit behind plain
+    /// authentication rather than the CourseMember policy.
+    /// </summary>
+    [Theory]
+    [InlineData("/api/my/assignments")]
+    [InlineData("/api/viaubc01/invite/some-token")]
+    public async Task StudentEndpoints_WithoutAuth_Return401(string url)
+    {
+        var client = factory.CreateClient();
+        var response = await client.GetAsync(url);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>Assignment administration stays behind course membership, unlike the invite endpoint.</summary>
+    [Fact]
+    public async Task AssignmentAdministration_WithoutAuth_Returns401()
+    {
+        var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/viaubc01/assignments");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     public sealed class TestAppFactory : WebApplicationFactory<Program>
     {
         protected override IHost CreateHost(IHostBuilder builder)
@@ -105,7 +130,22 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
                 services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("ApiSmokeTests"));
             });
 
-            return base.CreateHost(builder);
+            var host = base.CreateHost(builder);
+
+            // CourseResolutionMiddleware 404s an unknown {course} slug before authorization ever runs, so the
+            // course-scoped tests need a real course to aim at — otherwise they would assert 404 and prove
+            // nothing about the policy on the endpoint.
+            using (var scope = host.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                if (!db.Courses.Any(c => c.Slug == "viaubc01"))
+                {
+                    db.Courses.Add(new Course { Slug = "viaubc01", Name = "Sample Course" });
+                    db.SaveChanges();
+                }
+            }
+
+            return host;
         }
     }
 }
