@@ -102,24 +102,19 @@ jobs:
         id: vpn
         env:
           VPN_ADDRESS: ${{ vars.VPN_ADDRESS }}
-          VPN_USER: ${{ secrets.VPN_USER }}
+          VPN_USER: ${{ vars.VPN_USER }}
           VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
-          # Optional: PEM of the CA that signed the VPN server cert (or the self-signed cert itself).
-          # Set this if the endpoint does not present a publicly-trusted certificate. When unset, sstpc
-          # validates against the system CA store. Never use --cert-warn: that downgrades a failed
-          # server-certificate check to a warning and lets a MITM harvest these credentials.
-          VPN_CA_CERT: ${{ secrets.VPN_CA_CERT }}
         run: |
-          CERT_ARGS=()
-          if [ -n "$VPN_CA_CERT" ]; then
-            echo "$VPN_CA_CERT" > /tmp/vpn-ca.crt
-            CERT_ARGS=(--ca-cert /tmp/vpn-ca.crt)
-          fi
-          sudo sstpc --log-stderr "${CERT_ARGS[@]}" \
+          # sstpc is a daemon that never returns. Background it AND redirect its stdout/stderr to a
+          # logfile: otherwise the backgrounded process keeps this step's output pipe open and the step
+          # hangs forever despite the '&'. No --cert-warn — the endpoint's cert validates against the
+          # system CA store. No 'defaultroute' — it is inert here (the runner's eth0 default wins), which
+          # is why internal traffic was not tunneled; the explicit host route in the next step handles it.
+          sudo sstpc --log-stderr \
             --user "$VPN_USER" --password "$VPN_PASSWORD" \
             "$VPN_ADDRESS" \
-            usepeerdns require-mschap-v2 noauth noipdefault defaultroute refuse-eap \
-            unit 0 &
+            usepeerdns require-mschap-v2 noauth noipdefault refuse-eap \
+            unit 0 > /tmp/sstpc.log 2>&1 &
           # Wait (up to ~60s) for the ppp0 interface to acquire an address.
           for i in $(seq 1 30); do
             if ip -4 addr show ppp0 2>/dev/null | grep -q 'inet '; then
@@ -129,19 +124,34 @@ jobs:
             sleep 2
           done
           echo "::error::SSTP VPN did not come up within timeout"
+          cat /tmp/sstpc.log || true
           exit 1
+
+      - name: Route BME-internal hosts through the tunnel
+        env:
+          VPN_ROUTES: ${{ vars.VPN_ROUTES }}
+        run: |
+          # Split tunnel: only the configured internal hosts (e.g. mezga 152.66.188.8/32) go through
+          # ppp0. The runner->GitHub control channel and the public ahk.aut.bme.hu warm-up stay on the
+          # runner's default route. Automates the manual `ip route replace` from the first live run.
+          for cidr in $VPN_ROUTES; do
+            echo "Routing $cidr via ppp0"
+            sudo ip route replace "$cidr" dev ppp0
+          done
+          ip route show
 
       # ---- E. Mount share, swap site ----
 
       - name: Mount deployment share
         env:
           DEPLOYMENT_PATH: ${{ vars.DEPLOYMENT_PATH }}
-          FILE_USER: ${{ secrets.FILE_USER }}
+          FILE_USERNAME: ${{ vars.FILE_USERNAME }}
+          FILE_USERDOMAIN: ${{ vars.FILE_USERDOMAIN }}
           FILE_PASSWORD: ${{ secrets.FILE_PASSWORD }}
         run: |
           sudo mkdir -p "$MOUNT_POINT"
           sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
-            -o username="$FILE_USER",password="$FILE_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
+           -o username="$FILE_USERNAME",domain="$FILE_USERDOMAIN",password="$FILE_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
 
       - name: Stop site (drop app_offline.htm)
         run: |
