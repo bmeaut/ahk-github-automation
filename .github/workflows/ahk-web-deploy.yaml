@@ -1,4 +1,4 @@
-name: AHK Web - build, test & deploy to Mezga
+name: AHK Web - Deploy to Mezga
 
 # Manual trigger only: this deploys to the on-prem IIS server behind the BME VPN.
 on: [workflow_dispatch]
@@ -150,8 +150,24 @@ jobs:
           FILE_PASSWORD: ${{ secrets.FILE_PASSWORD }}
         run: |
           sudo mkdir -p "$MOUNT_POINT"
-          sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
-           -o username="$FILE_USERNAME",domain="$FILE_USERDOMAIN",password="$FILE_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
+          # Pass credentials via a file, not inline -o. mount.cifs splits -o on commas, so a comma or
+          # other special char in the password is parsed as an option separator, silently truncating the
+          # password and failing auth with mount error(13) Permission denied. The file sidesteps that.
+          CREDS=$(mktemp)
+          chmod 600 "$CREDS"
+          {
+            echo "username=$FILE_USERNAME"
+            echo "password=$FILE_PASSWORD"
+            echo "domain=$FILE_USERDOMAIN"
+          } > "$CREDS"
+          if ! sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
+              -o credentials="$CREDS",vers=3.0,sec=ntlmssp,uid=$(id -u),gid=$(id -g); then
+            echo "::error::CIFS mount failed; recent kernel (dmesg) messages:"
+            sudo dmesg | tail -30 || true
+            rm -f "$CREDS"
+            exit 1
+          fi
+          rm -f "$CREDS"
 
       - name: Stop site (drop app_offline.htm)
         run: |
