@@ -128,7 +128,9 @@ namespace Ahk.Web.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NeptunCode");
+                    b.HasIndex("NeptunCode")
+                        .IsUnique()
+                        .HasFilter("[NeptunCode] IS NOT NULL");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");

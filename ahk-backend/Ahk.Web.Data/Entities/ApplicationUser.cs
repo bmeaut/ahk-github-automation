@@ -11,9 +11,10 @@ public class ApplicationUser : IdentityUser<int>
     public string? DisplayName { get; set; }
 
     /// <summary>
-    /// Neptun code from the IdP's <c>neptun_code</c> claim. Not unique here (a directory account may exist
-    /// without one), but it is the key of the domain model, so storing it allows linking a signed-in user to
-    /// their <see cref="Student"/> rows later.
+    /// Neptun code — from the IdP's <c>neptun_code</c> claim, or set by an admin when creating the account.
+    /// The key of the domain model: it links a signed-in user to their <see cref="Student"/> rows and is how
+    /// an eduID login is matched to a pre-provisioned account. Unique when present (filtered unique index);
+    /// <c>null</c> means "no code" and may repeat.
     /// </summary>
     public string? NeptunCode { get; set; }
 

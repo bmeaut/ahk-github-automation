@@ -32,7 +32,11 @@ namespace Ahk.Web.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DisplayName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NeptunCode = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: true),
+                    Affiliation = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    GitHubUsername = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    GitHubUserId = table.Column<long>(type: "bigint", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -177,6 +181,31 @@ namespace Ahk.Web.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Assignments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CourseId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    TemplateRepoName = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
+                    InviteToken = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    ArchivedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Assignments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Assignments_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CourseGitHubConfigs",
                 columns: table => new
                 {
@@ -185,9 +214,11 @@ namespace Ahk.Web.Data.Migrations
                     CourseId = table.Column<int>(type: "int", nullable: false),
                     GitHubAppId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
                     GitHubAppPrivateKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GitHubAccessToken = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
                     GitHubWebhookSecret = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
                     WorkflowRunThreshold = table.Column<int>(type: "int", nullable: false),
-                    Enabled = table.Column<bool>(type: "bit", nullable: false)
+                    Enabled = table.Column<bool>(type: "bit", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -270,6 +301,45 @@ namespace Ahk.Web.Data.Migrations
                         principalTable: "Courses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AssignmentAcceptances",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CourseId = table.Column<int>(type: "int", nullable: false),
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    GitHubRepoName = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
+                    RepoUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
+                    GitHubUsername = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    AcceptedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    InvitationPending = table.Column<bool>(type: "bit", nullable: false),
+                    InvitationId = table.Column<long>(type: "bigint", nullable: true),
+                    InvitationSentAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AssignmentAcceptances", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AssignmentAcceptances_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AssignmentAcceptances_Assignments_AssignmentId",
+                        column: x => x.AssignmentId,
+                        principalTable: "Assignments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AssignmentAcceptances_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -429,11 +499,45 @@ namespace Ahk.Web.Data.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_NeptunCode",
+                table: "AspNetUsers",
+                column: "NeptunCode",
+                unique: true,
+                filter: "[NeptunCode] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AssignmentAcceptances_AssignmentId_UserId",
+                table: "AssignmentAcceptances",
+                columns: new[] { "AssignmentId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AssignmentAcceptances_CourseId_GitHubRepoName",
+                table: "AssignmentAcceptances",
+                columns: new[] { "CourseId", "GitHubRepoName" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AssignmentAcceptances_UserId",
+                table: "AssignmentAcceptances",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Assignments_CourseId_ArchivedAt",
+                table: "Assignments",
+                columns: new[] { "CourseId", "ArchivedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Assignments_InviteToken",
+                table: "Assignments",
+                column: "InviteToken",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CourseGitHubConfigs_CourseId",
@@ -557,6 +661,9 @@ namespace Ahk.Web.Data.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "AssignmentAcceptances");
+
+            migrationBuilder.DropTable(
                 name: "CourseGitHubConfigs");
 
             migrationBuilder.DropTable(
@@ -573,6 +680,9 @@ namespace Ahk.Web.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Assignments");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

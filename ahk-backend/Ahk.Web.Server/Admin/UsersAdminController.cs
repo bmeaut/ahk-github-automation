@@ -108,11 +108,16 @@ public sealed class UsersAdminController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
     {
+        var neptun = NormalizeNeptun(request.NeptunCode);
+        if (neptun is not null && await IsNeptunTakenAsync(neptun, excludeUserId: null, cancellationToken))
+            return BadRequest(new { error = $"The Neptun code {neptun} is already assigned to another user." });
+
         var user = new ApplicationUser
         {
             UserName = request.UserName.Trim(),
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             DisplayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim(),
+            NeptunCode = neptun,
             EmailConfirmed = true,
         };
 
@@ -133,8 +138,12 @@ public sealed class UsersAdminController : ControllerBase
         if (user is null)
             return NotFound();
 
+        var neptun = NormalizeNeptun(request.NeptunCode);
+        if (neptun is not null && await IsNeptunTakenAsync(neptun, excludeUserId: user.Id, cancellationToken))
+            return BadRequest(new { error = $"The Neptun code {neptun} is already assigned to another user." });
+
         user.DisplayName = Trimmed(request.DisplayName);
-        user.NeptunCode = request.NeptunCode is null ? null : Normalize.Neptun(request.NeptunCode);
+        user.NeptunCode = neptun;
 
         var email = Trimmed(request.Email);
         if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
@@ -307,4 +316,13 @@ public sealed class UsersAdminController : ControllerBase
     };
 
     private static string? Trimmed(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>Canonical Neptun code, or null for a blank one — never "", so the filtered unique index treats
+    /// "no code" as absent rather than a shared value.</summary>
+    private static string? NormalizeNeptun(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : Normalize.Neptun(value);
+
+    /// <summary>True when another user already holds this (already-normalized) Neptun code.</summary>
+    private Task<bool> IsNeptunTakenAsync(string neptun, int? excludeUserId, CancellationToken cancellationToken) =>
+        db.Users.AnyAsync(u => u.NeptunCode == neptun && (excludeUserId == null || u.Id != excludeUserId), cancellationToken);
 }

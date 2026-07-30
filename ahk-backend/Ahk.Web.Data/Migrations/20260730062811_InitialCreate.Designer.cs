@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Ahk.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260722162506_OidcUserClaims")]
-    partial class OidcUserClaims
+    [Migration("20260730062811_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -85,6 +85,13 @@ namespace Ahk.Web.Data.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<long?>("GitHubUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("GitHubUsername")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -124,7 +131,9 @@ namespace Ahk.Web.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NeptunCode");
+                    b.HasIndex("NeptunCode")
+                        .IsUnique()
+                        .HasFilter("[NeptunCode] IS NOT NULL");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -135,6 +144,108 @@ namespace Ahk.Web.Data.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Assignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("InviteToken")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("TemplateRepoName")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InviteToken")
+                        .IsUnique();
+
+                    b.HasIndex("CourseId", "ArchivedAt");
+
+                    b.ToTable("Assignments");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.AssignmentAcceptance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("AcceptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GitHubRepoName")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("GitHubUsername")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<long?>("InvitationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("InvitationPending")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("InvitationSentAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("RepoUrl")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("AssignmentId", "UserId")
+                        .IsUnique();
+
+                    b.HasIndex("CourseId", "GitHubRepoName");
+
+                    b.ToTable("AssignmentAcceptances");
                 });
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.Course", b =>
@@ -192,6 +303,10 @@ namespace Ahk.Web.Data.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("bit");
 
+                    b.Property<string>("GitHubAccessToken")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<string>("GitHubAppId")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
@@ -202,6 +317,9 @@ namespace Ahk.Web.Data.Migrations
                     b.Property<string>("GitHubWebhookSecret")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("WorkflowRunThreshold")
                         .HasColumnType("int");
@@ -636,6 +754,44 @@ namespace Ahk.Web.Data.Migrations
                     b.HasDiscriminator().HasValue("WorkflowRunEvent");
                 });
 
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Assignment", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.AssignmentAcceptance", b =>
+                {
+                    b.HasOne("Ahk.Web.Data.Entities.Assignment", "Assignment")
+                        .WithMany("Acceptances")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Ahk.Web.Data.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Ahk.Web.Data.Entities.CourseGitHubConfig", b =>
                 {
                     b.HasOne("Ahk.Web.Data.Entities.Course", "Course")
@@ -816,6 +972,11 @@ namespace Ahk.Web.Data.Migrations
             modelBuilder.Entity("Ahk.Web.Data.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("CourseMemberships");
+                });
+
+            modelBuilder.Entity("Ahk.Web.Data.Entities.Assignment", b =>
+                {
+                    b.Navigation("Acceptances");
                 });
 
             modelBuilder.Entity("Ahk.Web.Data.Entities.Course", b =>

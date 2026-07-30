@@ -56,8 +56,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             e.Property(u => u.Affiliation).HasMaxLength(256);
             e.Property(u => u.GitHubUsername).HasMaxLength(128);
 
-            // Not unique: directory accounts may have no neptun code, and it is a lookup key, not an identity.
-            e.HasIndex(u => u.NeptunCode);
+            // Filtered unique index: a Neptun code identifies a person, so no two accounts may share one.
+            // NULL means "no code" (directory/local accounts may have none) and is allowed many times —
+            // which is why the admin controllers store null, never "", for a blank code.
+            e.HasIndex(u => u.NeptunCode).IsUnique().HasFilter("[NeptunCode] IS NOT NULL");
         });
 
         builder.Entity<Course>(e =>

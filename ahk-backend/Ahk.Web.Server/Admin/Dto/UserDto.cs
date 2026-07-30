@@ -63,6 +63,10 @@ public sealed class CreateUserRequest
     [MaxLength(256)]
     public string? DisplayName { get; set; }
 
+    /// <summary>Optional Neptun code. Must be empty, or unique across users.</summary>
+    [MaxLength(32)]
+    public string? NeptunCode { get; set; }
+
     [Required]
     [MinLength(6)]
     public string Password { get; set; } = string.Empty;

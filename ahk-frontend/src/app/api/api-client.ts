@@ -3344,6 +3344,7 @@ export interface CreateUserRequest {
     userName: string;
     email?: string | undefined;
     displayName?: string | undefined;
+    neptunCode?: string | undefined;
     password: string;
 }
 

@@ -51,6 +51,7 @@ export class AdminUsers implements OnInit {
   protected newUserName = '';
   protected newEmail = '';
   protected newDisplayName = '';
+  protected newNeptun = '';
   protected newPassword = '';
 
   protected readonly showingRange = computed(() => {
@@ -202,6 +203,7 @@ export class AdminUsers implements OnInit {
       userName: this.newUserName.trim(),
       email: this.newEmail.trim() || undefined,
       displayName: this.newDisplayName.trim() || undefined,
+      neptunCode: this.newNeptun.trim() || undefined,
       password: this.newPassword,
     };
 
@@ -224,6 +226,7 @@ export class AdminUsers implements OnInit {
     this.newUserName = '';
     this.newEmail = '';
     this.newDisplayName = '';
+    this.newNeptun = '';
     this.newPassword = '';
   }
 

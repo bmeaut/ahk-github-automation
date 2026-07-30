@@ -1,10 +1,12 @@
 using System.Security.Claims;
+using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Ahk.Web.Server.Auth;
@@ -67,17 +69,23 @@ public sealed class ExternalAuthController : ControllerBase
             return Redirect(SafeReturnUrl(returnUrl));
         }
 
-        // First time this external identity is seen: provision a local user and link the login.
-        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        // First time this external identity is seen. Identify the person by Neptun code — the domain key —
+        // not by email/username, so an account an admin pre-provisioned with just a Neptun code is linked
+        // rather than duplicated.
+        var neptunClaim = info.Principal.FindFirstValue(BmeClaimTypes.NeptunCode);
+        var neptun = string.IsNullOrWhiteSpace(neptunClaim) ? null : Normalize.Neptun(neptunClaim);
 
-        var user = (email is not null ? await userManager.FindByEmailAsync(email) : null)
-                   ?? new ApplicationUser { UserName = email ?? BuildUserName(info), EmailConfirmed = true };
+        var user = neptun is null
+            ? null
+            : await userManager.Users.FirstOrDefaultAsync(u => u.NeptunCode == neptun);
 
-        ExternalClaimsMapper.SyncFromClaims(user, info.Principal);
-
-        // Id is 0 until the row is inserted, so this distinguishes a brand-new user from one found by email.
-        if (user.Id == 0)
+        if (user is null)
         {
+            // No account carries this Neptun code (or the IdP sent none): provision a fresh local user.
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            user = new ApplicationUser { UserName = email ?? BuildUserName(info), EmailConfirmed = true };
+            ExternalClaimsMapper.SyncFromClaims(user, info.Principal);
+
             var created = await userManager.CreateAsync(user);
             if (!created.Succeeded)
             {
@@ -92,7 +100,10 @@ public sealed class ExternalAuthController : ControllerBase
         }
         else
         {
-            await userManager.UpdateAsync(user);
+            // Existing account matched by Neptun code (e.g. admin-created): attach this login to it. The
+            // username is never written by the claim sync, so it is preserved; email is refreshed.
+            if (ExternalClaimsMapper.SyncFromClaims(user, info.Principal))
+                await userManager.UpdateAsync(user);
         }
 
         await userManager.AddLoginAsync(user, info);

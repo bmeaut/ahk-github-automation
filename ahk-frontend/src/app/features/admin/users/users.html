@@ -39,6 +39,11 @@
               <label for="new-display">Display name</label>
               <input id="new-display" name="displayName" type="text" [(ngModel)]="newDisplayName" />
             </div>
+            <div class="field">
+              <label for="new-neptun">Neptun code</label>
+              <input id="new-neptun" name="neptunCode" type="text" class="mono" [(ngModel)]="newNeptun" maxlength="32" />
+              <span class="hint">Optional. Must be unique; links an eduID login to this account.</span>
+            </div>
           </div>
           <div class="field-row">
             <div class="field">
