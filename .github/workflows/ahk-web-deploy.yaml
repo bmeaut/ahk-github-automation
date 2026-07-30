@@ -1,7 +1,13 @@
 name: AHK Web - Deploy to Mezga
 
 # Manual trigger only: this deploys to the on-prem IIS server behind the BME VPN.
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      force_full:
+        description: "Ignore the stored deployment manifest and copy everything (use after a manual change on the server)"
+        type: boolean
+        default: false
 
 env:
   DOTNET_VERSION: "10.0.x"
@@ -12,6 +18,10 @@ env:
   FRONTEND_DIR: ahk-frontend
   OFFLINE_PAGE: ahk-backend/Ahk.Web.Server/app_offline.htm
   MOUNT_POINT: /mnt/deploy
+  # Lives at the CIFS mount's root — a sibling of wwwroot/, the .exe and appsettings.json, never inside
+  # the ASP.NET Core app's own static-file root, so it is never web-reachable and never touched by the
+  # targeted copy/delete steps below.
+  MANIFEST_NAME: .deploy-manifest.sha256
 
 jobs:
   deploy:
@@ -63,9 +73,6 @@ jobs:
           mkdir -p publish/wwwroot
           cp -r ${{ env.FRONTEND_DIR }}/dist/ahk-frontend/browser/. publish/wwwroot/
 
-      - name: Stage offline page alongside the publish output
-        run: cp ${{ env.OFFLINE_PAGE }} publish/app_offline.htm
-
       - name: Generate idempotent migration script (artifact only — applied manually)
         run: |
           dotnet tool install --global dotnet-ef
@@ -93,6 +100,11 @@ jobs:
             publish/appsettings.json > publish/appsettings.json.tmp
           mv publish/appsettings.json.tmp publish/appsettings.json
 
+      # Last content-mutating step before the diff: hashing anything after this point (e.g. re-injecting
+      # config) would make the manifest describe a tree that no longer matches what gets copied.
+      - name: Compute local deployment manifest
+        run: (cd publish && find . -type f -printf '%P\0' | sort -z | xargs -0 sha256sum) > new.manifest
+
       # ---- D. VPN (SSTP) up ----
 
       - name: Install SSTP client
@@ -105,11 +117,6 @@ jobs:
           VPN_USER: ${{ vars.VPN_USER }}
           VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
         run: |
-          # sstpc is a daemon that never returns. Background it AND redirect its stdout/stderr to a
-          # logfile: otherwise the backgrounded process keeps this step's output pipe open and the step
-          # hangs forever despite the '&'. No --cert-warn — the endpoint's cert validates against the
-          # system CA store. No 'defaultroute' — it is inert here (the runner's eth0 default wins), which
-          # is why internal traffic was not tunneled; the explicit host route in the next step handles it.
           sudo sstpc --log-stderr \
             --user "$VPN_USER" --password "$VPN_PASSWORD" \
             "$VPN_ADDRESS" \
@@ -131,16 +138,13 @@ jobs:
         env:
           VPN_ROUTES: ${{ vars.VPN_ROUTES }}
         run: |
-          # Split tunnel: only the configured internal hosts (e.g. mezga 152.66.188.8/32) go through
-          # ppp0. The runner->GitHub control channel and the public ahk.aut.bme.hu warm-up stay on the
-          # runner's default route. Automates the manual `ip route replace` from the first live run.
           for cidr in $VPN_ROUTES; do
             echo "Routing $cidr via ppp0"
             sudo ip route replace "$cidr" dev ppp0
           done
           ip route show
 
-      # ---- E. Mount share, swap site ----
+      # ---- E. Mount share, diff against last deploy, swap site ----
 
       - name: Mount deployment share
         env:
@@ -169,32 +173,99 @@ jobs:
           fi
           rm -f "$CREDS"
 
+      # Reads exactly one small file from the share — regardless of link speed this is fast, unlike
+      # reading file content to compare it (the actual reason the old rsync mirror was slow).
+      - name: Fetch previous deployment manifest
+        env:
+          FORCE_FULL: ${{ inputs.force_full }}
+        run: |
+          if [ "$FORCE_FULL" = "true" ]; then
+            echo "force_full requested — treating the stored manifest as empty (full re-copy)."
+            : > old.manifest
+          elif [ -f "$MOUNT_POINT/$MANIFEST_NAME" ]; then
+            cp "$MOUNT_POINT/$MANIFEST_NAME" old.manifest
+          else
+            echo "No manifest found on the share yet — treating this as a first-time full deploy."
+            : > old.manifest
+          fi
+
+      # Pure local text processing — no network cost. sha256sum's format is 64 hex chars + two spaces +
+      # path, so "cut -c 67-" reliably extracts the path column regardless of spaces in a filename.
+      - name: Diff manifests
+        id: diff
+        run: |
+          sort old.manifest -o old.sorted
+          sort new.manifest -o new.sorted
+
+          # Changed or added: whole lines (hash+path) present in the new build but not the old one —
+          # covers both "hash changed at an existing path" and "brand-new path".
+          comm -13 old.sorted new.sorted | cut -c 67- > changed.list
+
+          # Removed: paths that existed before and are entirely absent from the new build — this is what
+          # correctly prunes Angular's abandoned content-hashed chunk files, unlike a size comparison.
+          cut -c 67- old.manifest | sort -u > old.paths
+          cut -c 67- new.manifest | sort -u > new.paths
+          comm -23 old.paths new.paths > removed.list
+
+          changed=$(wc -l < changed.list)
+          removed=$(wc -l < removed.list)
+          echo "Changed/added: $changed, removed: $removed"
+
+          if [ "$changed" -eq 0 ] && [ "$removed" -eq 0 ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Stop site (drop app_offline.htm)
+        if: steps.diff.outputs.has_changes == 'true'
         run: |
           cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
-          # Give IIS a moment to notice and release file locks before mirroring.
+          # Give IIS a moment to notice and release file locks before copying.
           sleep 5
 
-      - name: Mirror new files (keep app_offline.htm)
+      # Copies exactly the changed/added files (preserving their relative subdirectories) and deletes
+      # exactly the removed ones. --ignore-times/--whole-file/--inplace stop rsync from doing any of its
+      # own (CIFS-costly) comparison or delta-transfer logic — we already know these files need moving.
+      - name: Apply changed files
+        if: steps.diff.outputs.has_changes == 'true'
         run: |
-          ok=0
-          for i in $(seq 1 10); do
-            if rsync -a --delete --exclude 'app_offline.htm' publish/ "$MOUNT_POINT/"; then
-              ok=1; break
+          if [ -s changed.list ]; then
+            ok=0
+            for i in $(seq 1 10); do
+              if rsync -R --files-from=changed.list --ignore-times --whole-file --inplace \
+                  --no-perms --no-owner --no-group --no-times publish/ "$MOUNT_POINT/"; then
+                ok=1; break
+              fi
+              echo "rsync attempt $i failed (likely a locked file); retrying..."
+              sleep 2
+            done
+            if [ "$ok" -ne 1 ]; then
+              echo "::error::Copying changed files failed after retries"
+              exit 1
             fi
-            echo "rsync attempt $i failed (likely a locked file); retrying..."
-            sleep 2
-          done
-          if [ "$ok" -ne 1 ]; then
-            echo "::error::Mirroring the deployment failed after retries"
-            exit 1
+          fi
+
+          if [ -s removed.list ]; then
+            while IFS= read -r path; do
+              rm -f "$MOUNT_POINT/$path"
+            done < removed.list
           fi
 
       - name: Wake site (remove app_offline.htm)
+        if: steps.diff.outputs.has_changes == 'true'
         run: rm -f "$MOUNT_POINT/app_offline.htm"
 
       - name: Warm up and verify
         run: curl --fail --show-error --retry 5 --retry-delay 3 https://ahk.aut.bme.hu/
+
+      # Last content-mutating step, and only reached after the copy/delete above succeeded. A run that
+      # fails partway leaves the OLD manifest in place, so the next run still sees those files as
+      # "changed" and retries them — a failed run can only ever under-count what's already been done,
+      # never understate future work.
+      - name: Publish new deployment manifest
+        if: steps.diff.outputs.has_changes == 'true'
+        run: cp new.manifest "$MOUNT_POINT/$MANIFEST_NAME"
 
       # ---- F. Teardown (always) ----
 

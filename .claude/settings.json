@@ -83,7 +83,13 @@
       "Bash(rm -rf /tmp/ahk-webconfig-test && cd c:/Source/ahk-github-automation/ahk-backend && dotnet publish Ahk.Web.Server/Ahk.Web.Server.csproj -p:PublishProfile=Mezga -o /tmp/ahk-webconfig-test 2>&1 | tail -2 && echo \"=== published web.config ===\" && cat /tmp/ahk-webconfig-test/web.config)",
       "Bash(rm -rf /tmp/ahk-webconfig-test && echo cleaned)",
       "PowerShell(Get-NetTCPConnection -LocalPort 7443 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }; \"backend stopped\")",
-      "PowerShell(Get-NetTCPConnection -LocalPort 7443 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }; \"checked\")"
+      "PowerShell(Get-NetTCPConnection -LocalPort 7443 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }; \"checked\")",
+      "Bash(python -c \"import yaml; d=yaml.safe_load\\(open\\('.github/workflows/ahk-web-deploy.yaml'\\)\\); print\\('YAML OK'\\); print\\('inputs:', d['on']['workflow_dispatch']['inputs']\\)\")",
+      "Bash(awk '{print length\\($0\\)}')",
+      "Bash(where.exe rsync *)",
+      "Bash(wsl.exe rsync *)",
+      "Bash(wsl.exe -l -v)",
+      "Bash(wsl.exe bash -c ' *)"
     ],
     "additionalDirectories": [
       "\\tmp"
