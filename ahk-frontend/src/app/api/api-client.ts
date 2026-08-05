@@ -303,6 +303,7 @@ export interface IAssignmentsClient {
     get(id: number, course: string, checkTemplate?: boolean | undefined): Observable<AssignmentDetailDto>;
     update(id: number, request: SaveAssignmentRequest, course: string): Observable<AssignmentDto>;
     delete(id: number, course: string): Observable<void>;
+    checkTemplate(request: CheckTemplateRequest, course: string): Observable<TemplateCheckDto>;
     archive(id: number, course: string): Observable<AssignmentDto>;
     unarchive(id: number, course: string): Observable<AssignmentDto>;
     regenerateInvite(id: number, course: string): Observable<AssignmentDto>;
@@ -626,6 +627,61 @@ export class AssignmentsClient implements IAssignmentsClient {
             let result409: any = null;
             result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    checkTemplate(request: CheckTemplateRequest, course: string): Observable<TemplateCheckDto> {
+        let url_ = this.baseUrl + "/api/{course}/assignments/check-template";
+        if (course === undefined || course === null)
+            throw new globalThis.Error("The parameter 'course' must be defined.");
+        url_ = url_.replace("{course}", encodeURIComponent("" + course));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCheckTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCheckTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TemplateCheckDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TemplateCheckDto>;
+        }));
+    }
+
+    protected processCheckTemplate(response: HttpResponseBase): Observable<TemplateCheckDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TemplateCheckDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3109,6 +3165,10 @@ export interface TemplateCheckDto {
     isTemplate?: boolean;
     htmlUrl?: string | undefined;
     problem?: string | undefined;
+}
+
+export interface CheckTemplateRequest {
+    templateRepoName?: string | undefined;
 }
 
 export interface SaveAssignmentRequest {

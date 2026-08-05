@@ -22,6 +22,12 @@
   @if (saved(); as s) {
     <p class="notice success">{{ s }}</p>
   }
+  @if (templateWarning(); as w) {
+    <p class="notice warn">
+      Saved, but the template repository has a problem — students will not be able to accept until it is fixed:
+      {{ w }}
+    </p>
+  }
 
   @if (creating() || editingId() !== null) {
     <div class="card">
@@ -79,25 +85,29 @@
             <span class="hint">Optional. Shown under the assignment name on the accept screen.</span>
           </div>
 
-          <!-- Advisory: an assignment may be drafted before its template exists, so this never blocks saving. -->
-          @if (editingId() !== null) {
-            <div class="btn-row">
-              <button type="button" class="btn quiet" (click)="checkTemplate()" [disabled]="checkingTemplate()">
-                {{ checkingTemplate() ? 'Asking GitHub…' : 'Check the template on GitHub' }}
-              </button>
-            </div>
+          <!-- Advisory: an assignment may be drafted before its template exists, so this never blocks saving.
+               Available while creating as well as editing — it checks the name in the field, not a saved id. -->
+          <div class="btn-row">
+            <button
+              type="button"
+              class="btn quiet"
+              (click)="checkTemplate()"
+              [disabled]="checkingTemplate() || !templateRepoName.trim()"
+            >
+              {{ checkingTemplate() ? 'Asking GitHub…' : 'Check the template on GitHub' }}
+            </button>
+          </div>
 
-            @if (template(); as t) {
-              @if (t.problem) {
-                <p class="notice warn">{{ t.problem }}</p>
-              } @else {
-                <p class="notice success">
-                  The template is reachable and marked as a template repository.
-                  @if (t.htmlUrl) {
-                    <a [href]="t.htmlUrl" rel="noopener" target="_blank">Open it on GitHub</a>
-                  }
-                </p>
-              }
+          @if (template(); as t) {
+            @if (t.problem) {
+              <p class="notice warn">{{ t.problem }}</p>
+            } @else {
+              <p class="notice success">
+                The template is reachable and marked as a template repository.
+                @if (t.htmlUrl) {
+                  <a [href]="t.htmlUrl" rel="noopener" target="_blank">Open it on GitHub</a>
+                }
+              </p>
             }
           }
         </div>

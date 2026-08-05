@@ -77,6 +77,16 @@ public sealed class SaveAssignmentRequest
     public string TemplateRepoName { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// A template repository to look up on GitHub without saving an assignment first — lets the editor validate
+/// a name while creating, before an assignment id exists. A body (not a query param) because the name may
+/// contain a '/'.
+/// </summary>
+public sealed class CheckTemplateRequest
+{
+    public string? TemplateRepoName { get; set; }
+}
+
 /// <summary>One student's acceptance, as the instructor's roster of an assignment shows it.</summary>
 public sealed class AssignmentAcceptanceDto
 {

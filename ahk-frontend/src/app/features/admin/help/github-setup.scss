@@ -1,0 +1,77 @@
+/* The global .notice is display:flex to seat an optional leading icon. Our callouts carry rich inline content
+   (bold, mono spans) and no icon, so flex would split each run into its own column — force normal block flow. */
+.notice {
+  display: block;
+}
+
+/* Readable running text for the guide. Component-scoped, so it does not leak into other cards' bodies. */
+.prose {
+  font-size: 0.875rem;
+  line-height: 1.55;
+
+  p {
+    margin: 0 0 0.75rem;
+  }
+
+  ol,
+  ul {
+    margin: 0 0 0.75rem;
+    padding-left: 1.25rem;
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    ul {
+      margin: 0.4rem 0 0;
+    }
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  .notice {
+    margin: 0.5rem 0;
+  }
+}
+
+/* Guidance under the permissions table and the CI-token aside. */
+.hint {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  margin: 0.75rem 0 0;
+}
+
+/* GitHub value → portal field mapping. Mirrors the .kv in the course editor so the two read alike. */
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+
+  dt {
+    font-family: var(--font-ui);
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding-top: 0.15rem;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+@media (max-width: 40rem) {
+  .kv {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+
+    dd {
+      margin-bottom: 0.6rem;
+    }
+  }
+}

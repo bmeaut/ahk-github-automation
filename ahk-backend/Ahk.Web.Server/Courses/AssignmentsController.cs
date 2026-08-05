@@ -61,6 +61,23 @@ public sealed class AssignmentsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Advisory template check for a repository name the editor is still typing, before the assignment is saved.
+    /// Same GitHub lookup as <see cref="Get"/>'s <c>checkTemplate</c>, but keyed on a name rather than a stored
+    /// assignment — so the check is available while creating, not only while editing. Never blocks anything.
+    /// </summary>
+    [HttpPost("check-template")]
+    [ProducesResponseType(typeof(TemplateCheckDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TemplateCheckDto>> CheckTemplate([FromBody] CheckTemplateRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var course = CurrentCourse();
+        var check = await assignments.CheckTemplateAsync(course.Id, request.TemplateRepoName ?? string.Empty, cancellationToken);
+
+        return Ok(TemplateCheckDto.From(check));
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(AssignmentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

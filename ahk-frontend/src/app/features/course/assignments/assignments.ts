@@ -49,6 +49,8 @@ export class CourseAssignments implements OnInit {
   /** Advisory check of the template repository; costs a GitHub call, so it is only run on demand. */
   protected readonly template = signal<TemplateCheckDto | null>(null);
   protected readonly checkingTemplate = signal(false);
+  /** After a save, the template problem (if any) for the just-saved assignment, shown above the list. */
+  protected readonly templateWarning = signal<string | null>(null);
 
   // ---- Acceptance roster ----
   protected readonly expandedId = signal<number | null>(null);
@@ -133,6 +135,9 @@ export class CourseAssignments implements OnInit {
         );
         this.cancelEdit();
         this.load();
+        // Re-verify the template now that it is saved, so a tester who never opens the check still sees a
+        // problem before students hit it at accept time. Advisory: it never affects whether the save succeeded.
+        this.verifySavedTemplate(assignment.name ?? '', request.templateRepoName ?? '');
       },
       error: (err: unknown) => {
         this.savingForm.set(false);
@@ -143,21 +148,40 @@ export class CourseAssignments implements OnInit {
 
   /**
    * Asks GitHub whether the template repository exists and is marked as a template. Advisory only — an
-   * assignment may legitimately be drafted before its template does.
+   * assignment may legitimately be drafted before its template does. Works in both create and edit mode
+   * because it checks the name currently in the field, not a stored assignment.
    */
   protected checkTemplate(): void {
-    const id = this.editingId();
-    if (id === null) {
+    const repo = this.templateRepoName.trim();
+    if (!repo) {
       return;
     }
 
     this.checkingTemplate.set(true);
-    this.client.get(id, this.course, true).subscribe({
-      next: (detail) => {
-        this.template.set(detail.template ?? null);
+    this.client.checkTemplate({ templateRepoName: repo }, this.course).subscribe({
+      next: (result) => {
+        this.template.set(result);
         this.checkingTemplate.set(false);
       },
       error: () => this.checkingTemplate.set(false),
+    });
+  }
+
+  /** Runs the template check for a just-saved assignment and, if there is a problem, surfaces it above the list. */
+  private verifySavedTemplate(assignmentName: string, templateRepoName: string): void {
+    this.templateWarning.set(null);
+    if (!templateRepoName) {
+      return;
+    }
+
+    this.client.checkTemplate({ templateRepoName }, this.course).subscribe({
+      next: (result) => {
+        if (result.problem) {
+          this.templateWarning.set(`"${assignmentName}": ${result.problem}`);
+        }
+      },
+      // A failed advisory check must never look like a failed save; stay silent.
+      error: () => {},
     });
   }
 
@@ -256,5 +280,6 @@ export class CourseAssignments implements OnInit {
   private clearMessages(): void {
     this.error.set(null);
     this.saved.set(null);
+    this.templateWarning.set(null);
   }
 }

@@ -83,3 +83,18 @@ h3 {
   font-size: 0.75rem;
   margin: 0;
 }
+
+.password-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+
+  input {
+    flex: 1 1 auto;
+  }
+
+  .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}

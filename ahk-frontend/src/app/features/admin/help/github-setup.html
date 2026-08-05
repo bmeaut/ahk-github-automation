@@ -1,0 +1,305 @@
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow"><a routerLink="/admin/courses">Site administration</a> / Help</span>
+      <h1>Setting up the GitHub App</h1>
+      <p class="lede">
+        Every course acts on GitHub through a <strong>GitHub App installed on that course's organization</strong>.
+        This page walks through registering and installing one, and shows where each value the
+        <strong>GitHub integration</strong> form asks for comes from.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>Why an App, and one per organization</h2>
+      </div>
+    </header>
+    <div class="card-body prose">
+      <p>
+        Each course points at its own GitHub organization, administered by different people. A GitHub App is
+        owned by the organization rather than a person: its permissions are declared up front and visible to the
+        organization's owners, and it can be uninstalled at any time without touching any other course.
+      </p>
+      <p>
+        The App both receives webhooks (pushes, pull requests, comments, workflow runs) and creates student
+        repositories from an assignment's template. One App serves both — if the organization already has an App
+        for <span class="mono">github-monitor</span>, extend that one rather than registering a second.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>1 · Register the App</h2>
+        <p>Do this once per organization, as an organization owner.</p>
+      </div>
+      @if (org(); as o) {
+        <a
+          class="btn"
+          [href]="'https://github.com/organizations/' + o + '/settings/apps/new'"
+          target="_blank"
+          rel="noopener"
+        >
+          Open on GitHub ↗
+        </a>
+      }
+    </header>
+    <div class="card-body prose">
+      <ol>
+        <li>
+          Go to the organization's <strong>Settings → Developer settings → GitHub Apps → New GitHub App</strong>.
+        </li>
+        <li><strong>GitHub App name</strong> — something identifiable, e.g. <span class="mono">AHK viaubc01</span>.</li>
+        <li><strong>Homepage URL</strong> — <span class="mono">https://ahk.aut.bme.hu</span>.</li>
+        <li>
+          <strong>Webhook</strong> — tick <strong>Active</strong>, set the
+          <strong>Webhook URL</strong> to <span class="mono">https://ahk.aut.bme.hu/api/integrations/github</span>,
+          and generate a long random <strong>Webhook secret</strong> (you will paste this into the portal in
+          step 3, so keep it).
+          <p class="notice warn">
+            The portal's webhook receiver is <strong>not ported yet</strong>. Until it is, point the webhook at
+            the course's existing <span class="mono">github-monitor</span> Function URL instead, and keep using
+            that. Everything else on this page already applies.
+          </p>
+        </li>
+        <li>
+          <strong>Permissions</strong> — set exactly what the <a href="#permissions">table below</a> lists, and
+          nothing more.
+        </li>
+        <li>
+          <strong>Subscribe to events</strong> (webhook side only) — <em>Pull request</em>,
+          <em>Pull request review</em>, <em>Issue comment</em>, <em>Push</em>, <em>Create</em>,
+          <em>Repository</em>, <em>Workflow run</em>.
+        </li>
+        <li><strong>Where can this GitHub App be installed?</strong> — <em>Only on this account</em>.</li>
+        <li>
+          Create it. Then, on the App's page:
+          <ul>
+            <li>note the <strong>App ID</strong>;</li>
+            <li>
+              choose <strong>Generate a private key</strong> — GitHub downloads a <span class="mono">.pem</span>
+              file.
+            </li>
+          </ul>
+        </li>
+      </ol>
+      <p class="notice info">
+        The private key can only be downloaded <strong>once</strong>, at the moment you generate it. GitHub keeps
+        the public half and shows you the key only this one time — save the <span class="mono">.pem</span> before
+        leaving the page. If you lose it, generate a new one (the old one keeps working until you delete it).
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>2 · Install it on the organization</h2>
+      </div>
+    </header>
+    <div class="card-body prose">
+      <p>On the App's page choose <strong>Install App</strong> and pick the organization.</p>
+      <p class="notice info">
+        <strong>Repository access must be “All repositories”.</strong> Repositories created for students do not
+        exist when the App is installed, so under <em>Only select repositories</em> they fall outside the
+        installation — the portal creates the repository and then gets a <span class="mono">404</span> from the
+        very next call. The health check warns about this before it happens.
+      </p>
+    </div>
+  </div>
+
+  <div class="card" id="permissions">
+    <header>
+      <div class="grow">
+        <h2>3 · Permissions</h2>
+        <p>Set these under <strong>Repository permissions</strong>. Organization permissions are not needed.</p>
+      </div>
+    </header>
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Permission</th>
+              <th>Level</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Administration</strong></td>
+              <td class="mono">Read &amp; write</td>
+              <td>
+                Creating a repository from a template, adding a student as a collaborator, managing invitations,
+                and setting a repository's Actions permissions all sit behind this one.
+                <strong>This is the grant to add if the App already exists for github-monitor.</strong>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Metadata</strong></td>
+              <td class="mono">Read-only</td>
+              <td>Mandatory for every App. Also backs the check that a template repository exists.</td>
+            </tr>
+            <tr>
+              <td><strong>Contents</strong></td>
+              <td class="mono">Read-only</td>
+              <td>Reading the template repository. <span class="mono">github-monitor</span> needs Read &amp; write here for its own work.</td>
+            </tr>
+            <tr>
+              <td>Pull requests</td>
+              <td class="mono">Read &amp; write</td>
+              <td><span class="mono">github-monitor</span> only: comments, merges, assignees.</td>
+            </tr>
+            <tr>
+              <td>Issues</td>
+              <td class="mono">Read &amp; write</td>
+              <td><span class="mono">github-monitor</span> only: issue comments carry the <span class="mono">/ahk ok</span> chatops.</td>
+            </tr>
+            <tr>
+              <td>Actions</td>
+              <td class="mono">Read-only</td>
+              <td><span class="mono">github-monitor</span> only: counting workflow runs against the course threshold.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">
+        <strong>Administration: write is broad</strong> — it also permits changing repository settings and
+        deleting repositories. There is no narrower permission that covers creating repositories and adding
+        collaborators, so this is the floor, not a choice.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>4 · Where each value goes in the portal</h2>
+        <p>Back in <strong>Courses → <em>course</em> → GitHub integration</strong>, fill these three fields.</p>
+      </div>
+    </header>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>GitHub App ID</dt>
+        <dd>The <strong>App ID</strong> from the App's page (a number, e.g. <span class="mono">123456</span>).</dd>
+
+        <dt>App private key</dt>
+        <dd>
+          Paste the <strong>entire contents</strong> of the <span class="mono">.pem</span> file, the
+          <span class="mono">-----BEGIN</span> line included. The bare base64 body that
+          <span class="mono">github-monitor</span> holds is also accepted, so a course being migrated can paste
+          what it already has.
+        </dd>
+
+        <dt>Webhook secret</dt>
+        <dd>The random string you generated for the App's webhook in step 1.</dd>
+      </dl>
+      <p class="notice info">
+        Stored credentials are never shown again. Leaving a field <strong>empty</strong> means
+        <em>leave the stored value alone</em>; use the field's <strong>Clear</strong> toggle to remove one. That
+        is what makes saving an untouched form safe.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>The access token</h2>
+        <p>A separate personal access token — not part of the App above.</p>
+      </div>
+      <a class="btn" href="https://github.com/settings/tokens" target="_blank" rel="noopener">
+        Create a token ↗
+      </a>
+    </header>
+    <div class="card-body prose">
+      <p>
+        The <strong>Access token</strong> field on the integration form takes a GitHub <strong>personal access
+        token</strong>, created on your own GitHub account — it is independent of the course's GitHub App. Today
+        the portal uses it for one thing only: the <a routerLink="/admin/health">health check</a> calls
+        <span class="mono">GET /user</span> and <span class="mono">GET /orgs/&#123;org&#125;</span> with it to
+        confirm the portal can reach GitHub and see the course's organization. Leaving it blank simply leaves
+        that one check unconfigured; it does not affect the App.
+      </p>
+      <p>Create one under GitHub → <strong>Settings → Developer settings → Personal access tokens</strong>:</p>
+      <ul>
+        <li>
+          a <strong>classic</strong> token (<span class="mono">ghp_…</span>) with the
+          <span class="mono">read:org</span> and <span class="mono">repo</span> scopes, or
+        </li>
+        <li>
+          a <strong>fine-grained</strong> token (<span class="mono">github_pat_…</span>) scoped to the course's
+          organization with read access.
+        </li>
+      </ul>
+      <p>
+        Paste it into the <strong>Access token</strong> field. As with the App secrets, leaving it empty keeps
+        the stored value, and each save can Clear it.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>Not from GitHub: CI callback tokens</h2>
+      </div>
+    </header>
+    <div class="card-body prose">
+      <p>
+        The <strong>CI callback tokens</strong> card next to GitHub integration is a <strong>separate
+        concern</strong> — it has nothing to do with the App above. Those tokens are generated
+        <strong>here in the portal</strong>, not on GitHub. The evaluator workflow uses one to sign its result
+        submissions back to the portal (an HMAC in the <span class="mono">X-Ahk-Token</span> header), so the
+        portal can trust that a set of grades really came from that course's CI.
+      </p>
+      <p class="hint">
+        Do not confuse the <strong>webhook secret</strong> (a GitHub value, documented above) with a
+        <strong>CI callback token</strong> (issued by the portal). They protect traffic going in opposite
+        directions.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>When something's wrong</h2>
+      </div>
+    </header>
+    <div class="card-body prose">
+      <p>
+        Site administration → <a routerLink="/admin/health">Health</a> runs the per-course checks and points at
+        whichever of the steps above failed. The most common failures:
+      </p>
+      <ul>
+        <li>
+          <strong>401 from the token endpoint</strong> — wrong App ID, or the private key was revoked or pasted
+          incompletely. Generate a new key and store it again.
+        </li>
+        <li>
+          <strong>404 on the installation</strong> — the App is registered but not installed on that
+          organization, or the course's organization name is wrong.
+        </li>
+        <li>
+          <strong>“administration: write” not granted</strong> — GitHub does not apply added permissions until an
+          owner approves them on the organization's installation page. Changing the App alone is not enough.
+        </li>
+        <li>
+          <strong>“limited to selected repositories”</strong> — change the installation's repository access to
+          <em>All repositories</em> (step 2).
+        </li>
+        <li>
+          <strong>Access token rejected</strong> — a <span class="mono">401</span> means the personal access
+          token is invalid, revoked or expired: issue a new one and save it. A <span class="mono">403</span> or
+          “cannot read the organization” means it is missing the <span class="mono">read:org</span> and
+          <span class="mono">repo</span> scopes, or has no access to that organization.
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>

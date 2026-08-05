@@ -52,16 +52,23 @@
             </div>
             <div class="field">
               <label for="new-password">Password</label>
-              <input
-                id="new-password"
-                name="password"
-                type="password"
-                [(ngModel)]="newPassword"
-                required
-                minlength="6"
-                autocomplete="new-password"
-              />
-              <span class="hint">At least 6 characters. Tell the person to change it after signing in.</span>
+              <div class="password-row">
+                <input
+                  id="new-password"
+                  name="password"
+                  type="text"
+                  class="mono"
+                  [(ngModel)]="newPassword"
+                  required
+                  minlength="6"
+                  autocomplete="off"
+                />
+                <button type="button" class="btn quiet" (click)="generatePassword()">Generate</button>
+              </div>
+              <span class="hint">
+                At least 6 characters, shown in the clear so you can copy it. Tell the person to change it after
+                signing in.
+              </span>
             </div>
           </div>
         </div>

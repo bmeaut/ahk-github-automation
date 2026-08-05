@@ -39,6 +39,10 @@ export const routes: Routes = [
         path: 'health',
         loadComponent: () => import('./features/admin/health/health').then((m) => m.AdminHealth),
       },
+      {
+        path: 'help/github',
+        loadComponent: () => import('./features/admin/help/github-setup').then((m) => m.GitHubSetupHelp),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'courses' },
     ],
   },

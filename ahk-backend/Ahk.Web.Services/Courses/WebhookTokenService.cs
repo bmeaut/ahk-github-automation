@@ -9,13 +9,13 @@ public interface IWebhookTokenService
 {
     Task<string?> GetSecretForTokenAsync(string token, CancellationToken cancellationToken = default);
 
-    /// <summary>Lists a course's tokens, newest first. Secrets are not returned — they are shown once, at creation.</summary>
+    /// <summary>
+    /// Lists a course's tokens, newest first, including the plaintext secret. Every caller is an admin who could
+    /// mint an equivalent token anyway, so the console can copy an existing secret rather than re-issue.
+    /// </summary>
     Task<IReadOnlyList<CourseWebhookToken>> ListForCourseAsync(int courseId, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Issues a new token/secret pair for a course. The returned entity carries the plaintext secret; it is the
-    /// only time the caller can show it, so the admin UI surfaces it immediately.
-    /// </summary>
+    /// <summary>Issues a new token/secret pair for a course. The returned entity carries the plaintext secret.</summary>
     Task<CourseWebhookToken> CreateAsync(int courseId, string? description, CancellationToken cancellationToken = default);
 
     /// <summary>Revokes a token so callbacks signed with it are rejected. Returns false when it does not exist.</summary>

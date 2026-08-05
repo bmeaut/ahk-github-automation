@@ -221,6 +221,50 @@ export class AdminUsers implements OnInit {
     });
   }
 
+  /**
+   * Fill the password field with a fresh 16-character secret drawn from the CSPRNG. The character set spans
+   * upper/lower letters, digits and symbols; rejection sampling keeps the distribution uniform (a plain
+   * `% length` would bias toward the first characters). We seed one of each class up front so the result
+   * always satisfies a mixed-complexity policy, then shuffle so the class positions are not predictable.
+   */
+  protected generatePassword(): void {
+    const classes = [
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      'abcdefghijklmnopqrstuvwxyz',
+      '0123456789',
+      '!@#$%^&*()-_=+[]{};:,.?',
+    ];
+    const all = classes.join('');
+    const length = 16;
+
+    // Uniform integer in [0, bound) via rejection sampling — a plain `% bound` would bias toward small values.
+    const randomInt = (bound: number): number => {
+      const max = Math.floor(256 / bound) * bound;
+      const buf = new Uint8Array(1);
+      let byte: number;
+      do {
+        crypto.getRandomValues(buf);
+        byte = buf[0];
+      } while (byte >= max);
+      return byte % bound;
+    };
+
+    const pick = (set: string): string => set[randomInt(set.length)];
+
+    const chars = classes.map((set) => pick(set));
+    while (chars.length < length) {
+      chars.push(pick(all));
+    }
+
+    // Fisher–Yates with CSPRNG-drawn indices so the guaranteed one-per-class characters are not stuck at the front.
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = randomInt(i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+
+    this.newPassword = chars.join('');
+  }
+
   protected cancelAdding(): void {
     this.adding.set(false);
     this.newUserName = '';

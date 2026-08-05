@@ -101,6 +101,9 @@
             <h2>GitHub integration</h2>
             <p>Credentials this course uses to talk to GitHub. Stored values are never shown again.</p>
           </div>
+          <a class="btn" routerLink="/admin/help/github" [queryParams]="{ org: c.gitHubOrganization }">
+            Setup guide
+          </a>
         </header>
         <div class="card-body">
           <div class="field-row">
@@ -221,7 +224,10 @@
 
       @if (issuedToken(); as t) {
         <div class="card-body issued">
-          <p class="notice success">Token created. Copy the secret now — it is not shown again.</p>
+          <p class="notice success">
+            Token created. Its secret is shown here, and stays available — you can copy it again from the list
+            below at any time.
+          </p>
           <dl class="kv">
             <dt>Token</dt>
             <dd class="mono">{{ t.token }}</dd>
@@ -246,7 +252,12 @@
           <tbody>
             @for (t of c.webhookTokens; track t.id) {
               <tr>
-                <td class="mono">{{ t.token }}</td>
+                <td class="mono">
+                  {{ t.token }}
+                  @if (revealed().has(t.id ?? 0)) {
+                    <div class="secret-reveal">{{ t.secret }}</div>
+                  }
+                </td>
                 <td>{{ t.description || '—' }}</td>
                 <td class="muted">{{ t.createdAt | date: 'yyyy-MM-dd' }}</td>
                 <td>
@@ -257,9 +268,17 @@
                   }
                 </td>
                 <td class="actions">
-                  @if (!t.revokedAt) {
-                    <button type="button" class="btn danger" (click)="revokeToken(t)">Revoke</button>
-                  }
+                  <span class="token-actions">
+                    <button type="button" class="btn quiet" (click)="copySecret(t)">
+                      {{ copiedTokenId() === t.id ? 'Copied' : 'Copy secret' }}
+                    </button>
+                    <button type="button" class="btn quiet" (click)="toggleReveal(t)">
+                      {{ revealed().has(t.id ?? 0) ? 'Hide' : 'Show' }}
+                    </button>
+                    @if (!t.revokedAt) {
+                      <button type="button" class="btn danger" (click)="revokeToken(t)">Revoke</button>
+                    }
+                  </span>
                 </td>
               </tr>
             } @empty {

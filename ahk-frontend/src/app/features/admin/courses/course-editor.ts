@@ -71,6 +71,10 @@ export class CourseEditor implements OnInit {
   protected newTokenDescription = '';
   protected readonly issuedToken = signal<WebhookTokenDto | null>(null);
   protected readonly creatingToken = signal(false);
+  /** Token id most recently copied, for transient "Copied" feedback. */
+  protected readonly copiedTokenId = signal<number | null>(null);
+  /** Token ids whose secret is currently revealed inline. */
+  protected readonly revealed = signal<Set<number>>(new Set());
 
   // ---- Staff ----
   protected memberSearch = '';
@@ -240,6 +244,37 @@ export class CourseEditor implements OnInit {
 
   protected dismissIssuedToken(): void {
     this.issuedToken.set(null);
+  }
+
+  /** Copies a token's secret to the clipboard, with brief per-row "Copied" feedback. */
+  protected copySecret(token: WebhookTokenDto): void {
+    const secret = token.secret;
+    if (!secret) {
+      return;
+    }
+    navigator.clipboard.writeText(secret).then(
+      () => {
+        this.copiedTokenId.set(token.id ?? null);
+        setTimeout(() => {
+          if (this.copiedTokenId() === token.id) {
+            this.copiedTokenId.set(null);
+          }
+        }, 1500);
+      },
+      () => this.error.set('The secret could not be copied to the clipboard.'),
+    );
+  }
+
+  /** Reveals or hides a token's secret inline, so it can be read as well as copied. */
+  protected toggleReveal(token: WebhookTokenDto): void {
+    const id = token.id ?? 0;
+    const next = new Set(this.revealed());
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    this.revealed.set(next);
   }
 
   // ---- Staff ----

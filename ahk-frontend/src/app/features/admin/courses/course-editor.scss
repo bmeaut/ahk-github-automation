@@ -38,6 +38,22 @@ textarea {
   border-bottom: 1px solid var(--rule);
 }
 
+/* Token row actions: keep the copy/show/revoke buttons spaced and right-aligned in the nowrap actions cell. */
+.token-actions {
+  display: inline-flex;
+  gap: 0.375rem;
+  justify-content: flex-end;
+}
+
+/* The secret revealed under its token — smaller and dimmer than the token, and free to wrap. */
+.secret-reveal {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  word-break: break-all;
+  white-space: normal;
+}
+
 .kv {
   display: grid;
   grid-template-columns: auto 1fr;

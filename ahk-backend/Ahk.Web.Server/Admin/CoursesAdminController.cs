@@ -97,7 +97,7 @@ public sealed class CoursesAdminController : ControllerBase
             SubmissionCount = await db.Submissions.IgnoreQueryFilters().CountAsync(s => s.CourseId == id, cancellationToken),
             GitHubConfig = ToDto(course.GitHubConfig),
             Members = members,
-            WebhookTokens = tokens.Select(t => ToDto(t, includeSecret: false)).ToList(),
+            WebhookTokens = tokens.Select(ToDto).ToList(),
         });
     }
 
@@ -305,10 +305,10 @@ public sealed class CoursesAdminController : ControllerBase
     public async Task<ActionResult<IEnumerable<WebhookTokenDto>>> ListTokens(int id, CancellationToken cancellationToken)
     {
         var tokens = await webhookTokens.ListForCourseAsync(id, cancellationToken);
-        return Ok(tokens.Select(t => ToDto(t, includeSecret: false)).ToList());
+        return Ok(tokens.Select(ToDto).ToList());
     }
 
-    /// <summary>Issues a token. The response is the only place its secret appears.</summary>
+    /// <summary>Issues a token, returning its secret. The secret is also readable later via the list endpoint.</summary>
     [HttpPost("{id:int}/tokens")]
     [ProducesResponseType(typeof(WebhookTokenDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -318,7 +318,7 @@ public sealed class CoursesAdminController : ControllerBase
             return NotFound();
 
         var token = await webhookTokens.CreateAsync(id, Trimmed(request.Description), cancellationToken);
-        return CreatedAtAction(nameof(ListTokens), new { id }, ToDto(token, includeSecret: true));
+        return CreatedAtAction(nameof(ListTokens), new { id }, ToDto(token));
     }
 
     [HttpDelete("{id:int}/tokens/{tokenId:int}")]
@@ -357,11 +357,14 @@ public sealed class CoursesAdminController : ControllerBase
     private static string? Hint(string? secret) =>
         string.IsNullOrEmpty(secret) || secret.Length < 8 ? null : secret[^4..];
 
-    private static WebhookTokenDto ToDto(CourseWebhookToken token, bool includeSecret) => new()
+    // The CI callback secret is a plaintext column (the HMAC scheme needs the raw key), and every token endpoint
+    // here is admin-only. An admin who can mint a token can already obtain a working secret, so returning an
+    // existing one is no extra exposure — it lets the console copy a secret again rather than force a re-issue.
+    private static WebhookTokenDto ToDto(CourseWebhookToken token) => new()
     {
         Id = token.Id,
         Token = token.Token,
-        Secret = includeSecret ? token.Secret : null,
+        Secret = token.Secret,
         Description = token.Description,
         CreatedAt = token.CreatedAt,
         RevokedAt = token.RevokedAt,

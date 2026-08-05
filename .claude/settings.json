@@ -89,10 +89,21 @@
       "Bash(where.exe rsync *)",
       "Bash(wsl.exe rsync *)",
       "Bash(wsl.exe -l -v)",
-      "Bash(wsl.exe bash -c ' *)"
+      "Bash(wsl.exe bash -c ' *)",
+      "Bash(npm start *)",
+      "Bash(node shot.mjs)",
+      "Read(//c/Users/beny314/AppData/Local/Temp/claude/c--Source-ahk-github-automation/f74052ba-9e93-4760-8fe5-7c53f23ddecb/scratchpad/**)",
+      "Bash(sed 's#/admin/help/github?org=ahk-viaubc01#/admin/courses/1#; s/help-page.png/course-editor.png/' shot.mjs)",
+      "Bash(node shot2.mjs)",
+      "PowerShell(foreach \\($port in 7443,4200\\) { try { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction Stop | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } catch {} }; Write-Output \"stopped\")",
+      "Bash(node -e \"const {readFileSync}=require\\('fs'\\); const b=readFileSync\\('help-page.png'\\); console.log\\('png bytes:', b.length\\);\")",
+      "Bash(node shot3.mjs)",
+      "PowerShell(try { Get-NetTCPConnection -LocalPort 7443 -State Listen -ErrorAction Stop | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } catch {}; Write-Output \"backend stopped\")",
+      "Bash(node shot4.mjs)"
     ],
     "additionalDirectories": [
-      "\\tmp"
+      "\\tmp",
+      "C:\\Users\\beny314\\AppData\\Local\\Temp\\claude\\c--Source-ahk-github-automation\\f74052ba-9e93-4760-8fe5-7c53f23ddecb\\scratchpad"
     ]
   },
   "enabledPlugins": {
