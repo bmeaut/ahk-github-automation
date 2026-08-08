@@ -34,8 +34,13 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// The GitHub REST transport shared by the assignment flow: a named client based at api.github.com and the
-    /// per-course installation-token provider that authenticates it.
+    /// The GitHub transport: Octokit clients for every API call, plus the per-course installation-token
+    /// provider that authenticates them.
+    ///
+    /// The named <c>"github"</c> <see cref="HttpClient"/> registered here is *not* the API transport. It backs
+    /// only <see cref="CourseGitHubAppTokenProvider"/>'s App-JWT bootstrap (signing a JWT and exchanging it for
+    /// an installation token is not an API call, and converting it to Octokit would change the shape of the
+    /// permissions the health check reads).
     /// </summary>
     public static IServiceCollection AddAhkGitHubApi(this IServiceCollection services)
     {
@@ -52,6 +57,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<ICourseGitHubAppTokenProvider, CourseGitHubAppTokenProvider>();
+        services.AddScoped<ICourseGitHubClientFactory, CourseGitHubClientFactory>();
         services.AddScoped<IGitHubRepositoryService, GitHubRepositoryService>();
 
         return services;

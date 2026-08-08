@@ -1,7 +1,5 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
+using Octokit;
 
 namespace Ahk.Web.Services.GitHub;
 
@@ -47,216 +45,187 @@ public interface IGitHubRepositoryService
 }
 
 /// <summary>
-/// The GitHub REST calls the assignment flow needs, over the shared named <see cref="HttpClient"/>. Deliberately
-/// raw <c>HttpClient</c> + <c>System.Text.Json</c> rather than Octokit: this is the idiom the portal already
-/// uses (see <c>Health/GitHubAccessHealthCheck</c>) and a handful of endpoints does not justify a dependency.
+/// The GitHub REST calls the assignment flow needs, over Octokit.
+///
+/// The interface and its four record types are deliberately Octokit-free. They are narrow projections that keep
+/// <c>AssignmentInviteService</c> and every test double away from Octokit's large, awkward-to-construct models,
+/// and they are what lets <c>AssignmentInviteTests</c> mock this service strictly.
 ///
 /// Every method takes the caller's installation token explicitly rather than resolving a course itself, so the
 /// service stays a thin, testable transport with no ambient state.
 /// </summary>
 public sealed class GitHubRepositoryService : IGitHubRepositoryService
 {
-    private readonly IHttpClientFactory httpClientFactory;
+    private readonly ICourseGitHubClientFactory clientFactory;
 
-    public GitHubRepositoryService(IHttpClientFactory httpClientFactory) => this.httpClientFactory = httpClientFactory;
+    public GitHubRepositoryService(ICourseGitHubClientFactory clientFactory) => this.clientFactory = clientFactory;
 
-    public async Task<GitHubUser?> GetUserAsync(string login, string? token, CancellationToken cancellationToken = default)
+    public Task<GitHubUser?> GetUserAsync(string login, string? token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.GetAsync(Relative($"users/{Uri.EscapeDataString(login)}"), cancellationToken);
+        // GET /users/{login} works unauthenticated; the token only lifts the rate limit from 60 to 5000/hour.
+        var client = clientFactory.CreateForToken(token);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return null;
-
-        await EnsureSuccessAsync(response, $"looking up the GitHub user '{login}'", cancellationToken);
-
-        using var document = await ReadJsonAsync(response, cancellationToken);
-        return new GitHubUser(
-            document.RootElement.GetProperty("login").GetString() ?? login,
-            document.RootElement.GetProperty("id").GetInt64());
+        return ExecuteAsync<GitHubUser?>(
+            $"looking up the GitHub user '{login}'",
+            async () =>
+            {
+                var user = await client.User.Get(login);
+                return new GitHubUser(user.Login ?? login, user.Id);
+            },
+            notFound: () => null);
     }
 
-    public async Task<GitHubRepository?> GetRepositoryAsync(string owner, string name, string token, CancellationToken cancellationToken = default)
+    public Task<GitHubRepository?> GetRepositoryAsync(string owner, string name, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.GetAsync(Relative($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}"), cancellationToken);
+        var client = clientFactory.CreateForToken(token);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return null;
-
-        await EnsureSuccessAsync(response, $"reading the repository '{owner}/{name}'", cancellationToken);
-
-        using var document = await ReadJsonAsync(response, cancellationToken);
-        return ReadRepository(document.RootElement, $"{owner}/{name}");
+        return ExecuteAsync<GitHubRepository?>(
+            $"reading the repository '{owner}/{name}'",
+            async () => ToRepository(await client.Repository.Get(owner, name), $"{owner}/{name}"),
+            notFound: () => null);
     }
 
-    public async Task<GitHubRepository> GenerateFromTemplateAsync(string templateOwner, string templateName, string owner, string name, string token, CancellationToken cancellationToken = default)
+    public Task<GitHubRepository> GenerateFromTemplateAsync(string templateOwner, string templateName, string owner, string name, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
+        var client = clientFactory.CreateForToken(token);
 
-        // include_all_branches stays false: the student starts from the template's default branch, which is
-        // what the evaluator and the branch-protection rules assume.
-        var body = new
+        // include_all_branches is not sent, and GitHub defaults it to false: the student starts from the
+        // template's default branch, which is what the evaluator and the branch-protection rules assume.
+        var request = new NewRepositoryFromTemplate(name)
         {
-            owner,
-            name,
-            @private = true,
-            include_all_branches = false,
+            Owner = owner,
+            Private = true,
         };
 
-        using var response = await client.PostAsJsonAsync(
-            Relative($"repos/{Uri.EscapeDataString(templateOwner)}/{Uri.EscapeDataString(templateName)}/generate"),
-            body,
-            cancellationToken);
-
-        await EnsureSuccessAsync(response, $"creating '{owner}/{name}' from the template '{templateOwner}/{templateName}'", cancellationToken);
-
-        using var document = await ReadJsonAsync(response, cancellationToken);
-        return ReadRepository(document.RootElement, $"{owner}/{name}");
+        return ExecuteAsync(
+            $"creating '{owner}/{name}' from the template '{templateOwner}/{templateName}'",
+            async () => ToRepository(await client.Repository.Generate(templateOwner, templateName, request), $"{owner}/{name}"));
     }
 
-    public async Task EnsureActionsEnabledAsync(string owner, string name, string token, CancellationToken cancellationToken = default)
+    public Task EnsureActionsEnabledAsync(string owner, string name, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.PutAsJsonAsync(
-            Relative($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/actions/permissions"),
-            new { enabled = true },
-            cancellationToken);
+        var client = clientFactory.CreateForToken(token);
 
-        await EnsureSuccessAsync(response, $"enabling Actions on '{owner}/{name}'", cancellationToken);
+        // Octokit has no first-class client for the Actions permissions endpoint; Connection keeps it on the
+        // same authenticated client rather than opening a second transport for one call.
+        return ExecuteAsync(
+            $"enabling Actions on '{owner}/{name}'",
+            async () =>
+            {
+                await client.Connection.Put(
+                    new Uri($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/actions/permissions", UriKind.Relative),
+                    new { enabled = true });
+                return true;
+            });
     }
 
-    public async Task<CollaboratorResult> AddCollaboratorAsync(string owner, string name, string login, string token, CancellationToken cancellationToken = default)
+    public Task<CollaboratorResult> AddCollaboratorAsync(string owner, string name, string login, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.PutAsJsonAsync(
-            Relative($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/collaborators/{Uri.EscapeDataString(login)}"),
-            new { permission = "push" },
-            cancellationToken);
+        var client = clientFactory.CreateForToken(token);
 
-        await EnsureSuccessAsync(response, $"granting '{login}' access to '{owner}/{name}'", cancellationToken);
+        return ExecuteAsync(
+            $"granting '{login}' access to '{owner}/{name}'",
+            async () =>
+            {
+                // GitHub answers 204 when the login was added outright (they are already an organization
+                // member) and 201 with the invitation when it was not. Octokit surfaces that as null vs a
+                // RepositoryInvitation, so the null check *is* the 204/201 distinction.
+                var invitation = await client.Repository.Collaborator.Add(owner, name, login, new CollaboratorRequest("push"));
 
-        // 204 means the login was added outright (they are already an organization member). 201 means an
-        // invitation was created and the repository stays invisible to them until they accept it.
-        if (response.StatusCode == HttpStatusCode.NoContent)
-            return new CollaboratorResult(InvitationCreated: false, InvitationId: null);
-
-        using var document = await ReadJsonAsync(response, cancellationToken);
-        var id = document.RootElement.TryGetProperty("id", out var idElement) ? idElement.GetInt64() : (long?)null;
-        return new CollaboratorResult(InvitationCreated: true, InvitationId: id);
+                return invitation is null
+                    ? new CollaboratorResult(InvitationCreated: false, InvitationId: null)
+                    : new CollaboratorResult(InvitationCreated: true, InvitationId: invitation.Id);
+            });
     }
 
-    public async Task<bool> IsCollaboratorAsync(string owner, string name, string login, string token, CancellationToken cancellationToken = default)
+    public Task<bool> IsCollaboratorAsync(string owner, string name, string login, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.GetAsync(
-            Relative($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/collaborators/{Uri.EscapeDataString(login)}"),
-            cancellationToken);
+        var client = clientFactory.CreateForToken(token);
 
-        if (response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.OK)
-            return true;
-
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return false;
-
-        await EnsureSuccessAsync(response, $"checking whether '{login}' can access '{owner}/{name}'", cancellationToken);
-        return false;
+        return ExecuteAsync(
+            $"checking whether '{login}' can access '{owner}/{name}'",
+            () => client.Repository.Collaborator.IsCollaborator(owner, name, login),
+            notFound: () => false);
     }
 
-    public async Task<GitHubInvitation?> FindInvitationAsync(string owner, string name, string login, string token, CancellationToken cancellationToken = default)
+    public Task<GitHubInvitation?> FindInvitationAsync(string owner, string name, string login, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.GetAsync(
-            Relative($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/invitations"),
-            cancellationToken);
+        var client = clientFactory.CreateForToken(token);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return null;
+        // Octokit's invitation client is keyed by repository *id*, which would cost an extra repository read
+        // per call. Connection keeps it to the one request the REST API actually needs.
+        return ExecuteAsync<GitHubInvitation?>(
+            $"listing invitations of '{owner}/{name}'",
+            async () =>
+            {
+                var response = await client.Connection.Get<IReadOnlyList<RepositoryInvitation>>(
+                    new Uri($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/invitations", UriKind.Relative),
+                    parameters: null);
 
-        await EnsureSuccessAsync(response, $"listing invitations of '{owner}/{name}'", cancellationToken);
+                var invitation = response.Body?.FirstOrDefault(
+                    i => string.Equals(i.Invitee?.Login, login, StringComparison.OrdinalIgnoreCase));
 
-        using var document = await ReadJsonAsync(response, cancellationToken);
-        if (document.RootElement.ValueKind != JsonValueKind.Array)
-            return null;
+                if (invitation is null)
+                    return null;
 
-        foreach (var element in document.RootElement.EnumerateArray())
-        {
-            var invitee = element.TryGetProperty("invitee", out var inviteeElement) && inviteeElement.ValueKind == JsonValueKind.Object
-                ? inviteeElement.GetProperty("login").GetString()
-                : null;
-
-            if (!string.Equals(invitee, login, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // GitHub reports expiry itself. Never compute it here: the window is GitHub's policy to change,
-            // and a stale local constant would have the portal telling students something untrue.
-            var expired = element.TryGetProperty("expired", out var expiredElement)
-                && expiredElement.ValueKind == JsonValueKind.True;
-
-            var createdAt = element.TryGetProperty("created_at", out var createdElement)
-                && createdElement.TryGetDateTimeOffset(out var parsed)
-                    ? parsed
-                    : (DateTimeOffset?)null;
-
-            return new GitHubInvitation(element.GetProperty("id").GetInt64(), invitee, expired, createdAt);
-        }
-
-        return null;
+                // GitHub reports expiry itself. Never compute it here: the window is GitHub's policy to change,
+                // and a stale local constant would have the portal telling students something untrue.
+                return new GitHubInvitation(invitation.Id, invitation.Invitee?.Login, invitation.Expired, invitation.CreatedAt);
+            },
+            notFound: () => null);
     }
 
-    public async Task DeleteInvitationAsync(string owner, string name, long invitationId, string token, CancellationToken cancellationToken = default)
+    public Task DeleteInvitationAsync(string owner, string name, long invitationId, string token, CancellationToken cancellationToken = default)
     {
-        using var client = CreateClient(token);
-        using var response = await client.DeleteAsync(
-            Relative($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/invitations/{invitationId}"),
-            cancellationToken);
+        var client = clientFactory.CreateForToken(token);
 
-        // Already gone is the desired state, not a failure — the student may have accepted it meanwhile.
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return;
-
-        await EnsureSuccessAsync(response, $"withdrawing invitation {invitationId} on '{owner}/{name}'", cancellationToken);
+        return ExecuteAsync(
+            $"withdrawing invitation {invitationId} on '{owner}/{name}'",
+            async () =>
+            {
+                await client.Connection.Delete(
+                    new Uri($"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(name)}/invitations/{invitationId}", UriKind.Relative));
+                return true;
+            },
+            // Already gone is the desired state, not a failure — the student may have accepted it meanwhile.
+            notFound: () => true);
     }
 
-    private static Uri Relative(string path) => new(path, UriKind.Relative);
-
-    private static GitHubRepository ReadRepository(JsonElement element, string fallbackFullName)
+    private static GitHubRepository ToRepository(Repository repository, string fallbackFullName)
     {
-        var fullName = element.TryGetProperty("full_name", out var full) ? full.GetString() : null;
-        var htmlUrl = element.TryGetProperty("html_url", out var url) ? url.GetString() : null;
-        var isTemplate = element.TryGetProperty("is_template", out var template) && template.ValueKind == JsonValueKind.True;
-        var defaultBranch = element.TryGetProperty("default_branch", out var branch) ? branch.GetString() : null;
+        var fullName = string.IsNullOrEmpty(repository.FullName) ? fallbackFullName : repository.FullName;
 
         return new GitHubRepository(
-            fullName ?? fallbackFullName,
-            htmlUrl ?? $"https://github.com/{fullName ?? fallbackFullName}",
-            isTemplate,
-            defaultBranch);
+            fullName,
+            string.IsNullOrEmpty(repository.HtmlUrl) ? $"https://github.com/{fullName}" : repository.HtmlUrl,
+            repository.IsTemplate,
+            repository.DefaultBranch);
     }
 
-    private HttpClient CreateClient(string? token)
+    /// <summary>
+    /// Runs a GitHub call and translates Octokit's exceptions into <see cref="GitHubOperationException"/>, which
+    /// controllers surface as a 502 carrying GitHub's own explanation. <paramref name="notFound"/> turns a 404
+    /// into a value instead, for the calls where "absent" is an answer rather than a failure.
+    /// </summary>
+    private static async Task<T> ExecuteAsync<T>(string operation, Func<Task<T>> call, Func<T>? notFound = null)
     {
-        var client = httpClientFactory.CreateClient(GitHubApiDefaults.HttpClientName);
-
-        // GET /users/{login} works unauthenticated; it just drops from 5000 to 60 requests an hour.
-        if (!string.IsNullOrWhiteSpace(token))
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        return client;
-    }
-
-    private static async Task<JsonDocument> ReadJsonAsync(HttpResponseMessage response, CancellationToken cancellationToken)
-    {
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-    }
-
-    private static async Task EnsureSuccessAsync(HttpResponseMessage response, string operation, CancellationToken cancellationToken)
-    {
-        if (response.IsSuccessStatusCode)
-            return;
-
-        var message = await GitHubApiDefaults.ReadErrorMessageAsync(response, cancellationToken);
-        throw new GitHubOperationException(operation, response.StatusCode, message);
+        try
+        {
+            return await call();
+        }
+        catch (NotFoundException) when (notFound is not null)
+        {
+            return notFound();
+        }
+        catch (ApiException ex)
+        {
+            throw new GitHubOperationException(operation, ex.StatusCode, ex.ApiError?.Message);
+        }
+        catch (OperationCanceledException ex)
+        {
+            // Octokit surfaces its own request timeout as a cancellation, which would otherwise look like the
+            // caller giving up rather than GitHub being slow.
+            throw new GitHubOperationException(operation, HttpStatusCode.GatewayTimeout, ex.Message);
+        }
     }
 }
