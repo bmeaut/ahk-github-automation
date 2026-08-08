@@ -206,6 +206,7 @@ public sealed class AssignmentsController : ControllerBase
         Name = request.Name,
         Description = request.Description,
         TemplateRepoName = request.TemplateRepoName,
+        RepoNamePrefix = request.RepoNamePrefix,
     };
 
     private AssignmentDto ToDto(Assignment assignment, Course course, int acceptanceCount) => new()
@@ -214,6 +215,7 @@ public sealed class AssignmentsController : ControllerBase
         Name = assignment.Name,
         Description = assignment.Description,
         TemplateRepoName = assignment.TemplateRepoName,
+        RepoNamePrefix = assignment.RepoNamePrefix,
         InvitePath = $"/{course.Slug}/invite/{assignment.InviteToken}",
         IsArchived = assignment.ArchivedAt is not null,
         ArchivedAt = assignment.ArchivedAt,

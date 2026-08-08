@@ -28,6 +28,13 @@ public class Assignment : ICourseScoped
     public string TemplateRepoName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Prefix for the student repositories generated from this assignment: each clone is named
+    /// <c>{RepoNamePrefix}-{neptun}</c>. When blank, the template repository's own name is used instead (the
+    /// original behaviour), so assignments created before this field keep their naming unchanged.
+    /// </summary>
+    public string? RepoNamePrefix { get; set; }
+
+    /// <summary>
     /// Random, unguessable segment of the invite URL (<c>/{course}/invite/{token}</c>). A readable slug would
     /// let any signed-in user guess another course's assignment and provision themselves a repository, so the
     /// link itself is the capability. Regenerating it invalidates every copy already handed out.

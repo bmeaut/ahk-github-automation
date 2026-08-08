@@ -58,44 +58,31 @@
             </div>
             <div class="field">
               <label for="a-template">Template repository</label>
-              <input
-                id="a-template"
-                name="templateRepoName"
-                type="text"
-                [(ngModel)]="templateRepoName"
-                required
-                placeholder="viaubc01-hw1"
-              />
+              <!-- Validate sits with the field it acts on. Advisory: an assignment may be drafted before its
+                   template exists, so it never blocks saving; it checks the name in the field, not a saved id. -->
+              <div class="input-with-action">
+                <input
+                  id="a-template"
+                  name="templateRepoName"
+                  type="text"
+                  [(ngModel)]="templateRepoName"
+                  required
+                  placeholder="viaubc01-hw1"
+                />
+                <button
+                  type="button"
+                  class="btn accent"
+                  (click)="checkTemplate()"
+                  [disabled]="checkingTemplate() || !templateRepoName.trim()"
+                >
+                  {{ checkingTemplate() ? 'Checking…' : 'Validate' }}
+                </button>
+              </div>
               <span class="hint">
-                A bare name is taken to be in this course's organization. Student repositories are named
-                <span class="mono">&lt;this&gt;-&lt;neptun&gt;</span>.
+                A bare name is taken to be in this course's organization, and must be marked as a template on
+                GitHub.
               </span>
             </div>
-          </div>
-
-          <div class="field">
-            <label for="a-description">Description</label>
-            <input
-              id="a-description"
-              name="description"
-              type="text"
-              [(ngModel)]="description"
-              placeholder="What the student is expected to do"
-            />
-            <span class="hint">Optional. Shown under the assignment name on the accept screen.</span>
-          </div>
-
-          <!-- Advisory: an assignment may be drafted before its template exists, so this never blocks saving.
-               Available while creating as well as editing — it checks the name in the field, not a saved id. -->
-          <div class="btn-row">
-            <button
-              type="button"
-              class="btn quiet"
-              (click)="checkTemplate()"
-              [disabled]="checkingTemplate() || !templateRepoName.trim()"
-            >
-              {{ checkingTemplate() ? 'Asking GitHub…' : 'Check the template on GitHub' }}
-            </button>
           </div>
 
           @if (template(); as t) {
@@ -110,6 +97,34 @@
               </p>
             }
           }
+
+          <div class="field-row">
+            <div class="field">
+              <label for="a-description">Description</label>
+              <input
+                id="a-description"
+                name="description"
+                type="text"
+                [(ngModel)]="description"
+                placeholder="What the student is expected to do"
+              />
+              <span class="hint">Optional. Shown under the assignment name on the accept screen.</span>
+            </div>
+            <div class="field">
+              <label for="a-prefix">Repository name prefix</label>
+              <input
+                id="a-prefix"
+                name="repoNamePrefix"
+                type="text"
+                [(ngModel)]="repoNamePrefix"
+                placeholder="viaubc01-hw1"
+              />
+              <span class="hint">
+                Cloned student repositories are named <span class="mono">&lt;prefix&gt;-&lt;neptun&gt;</span>.
+                Leave blank to use the template repository's name.
+              </span>
+            </div>
+          </div>
         </div>
 
         <div class="card-foot">

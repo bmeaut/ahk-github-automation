@@ -3148,6 +3148,7 @@ export interface AssignmentDto {
     name?: string;
     description?: string | undefined;
     templateRepoName?: string;
+    repoNamePrefix?: string | undefined;
     invitePath?: string;
     isArchived?: boolean;
     archivedAt?: Date | undefined;
@@ -3175,6 +3176,7 @@ export interface SaveAssignmentRequest {
     name?: string;
     description?: string | undefined;
     templateRepoName?: string;
+    repoNamePrefix?: string | undefined;
 }
 
 export interface AssignmentAcceptanceDto {

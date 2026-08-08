@@ -14,6 +14,9 @@ public sealed class AssignmentInput
 
     /// <summary>Either "owner/name" or a bare repository name, which is taken to be in the course's organization.</summary>
     public string TemplateRepoName { get; set; } = string.Empty;
+
+    /// <summary>Prefix for generated student repositories (<c>{prefix}-{neptun}</c>); blank falls back to the template name.</summary>
+    public string? RepoNamePrefix { get; set; }
 }
 
 /// <summary>
@@ -106,6 +109,7 @@ public sealed class AssignmentService : IAssignmentService
             Name = input.Name.Trim(),
             Description = Trimmed(input.Description),
             TemplateRepoName = await QualifyRepoNameAsync(courseId, input.TemplateRepoName, cancellationToken),
+            RepoNamePrefix = NormalizedPrefix(input.RepoNamePrefix),
             InviteToken = TokenGenerator.UrlSafe(18),
         };
 
@@ -125,6 +129,7 @@ public sealed class AssignmentService : IAssignmentService
         assignment.Name = input.Name.Trim();
         assignment.Description = Trimmed(input.Description);
         assignment.TemplateRepoName = await QualifyRepoNameAsync(courseId, input.TemplateRepoName, cancellationToken);
+        assignment.RepoNamePrefix = NormalizedPrefix(input.RepoNamePrefix);
 
         await db.SaveChangesAsync(cancellationToken);
         return assignment;
@@ -249,4 +254,11 @@ public sealed class AssignmentService : IAssignmentService
     }
 
     private static string? Trimmed(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Stores the repo-name prefix normalized like every other repository name (lowercased, trimmed), or null
+    /// when blank so <see cref="AssignmentInviteService.BuildRepositoryName"/> falls back to the template name.
+    /// </summary>
+    private static string? NormalizedPrefix(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : Normalize.RepoName(value);
 }

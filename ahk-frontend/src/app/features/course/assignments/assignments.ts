@@ -45,6 +45,7 @@ export class CourseAssignments implements OnInit {
   protected name = '';
   protected description = '';
   protected templateRepoName = '';
+  protected repoNamePrefix = '';
 
   /** Advisory check of the template repository; costs a GitHub call, so it is only run on demand. */
   protected readonly template = signal<TemplateCheckDto | null>(null);
@@ -94,6 +95,7 @@ export class CourseAssignments implements OnInit {
     this.name = '';
     this.description = '';
     this.templateRepoName = '';
+    this.repoNamePrefix = '';
   }
 
   protected startEdit(assignment: AssignmentDto): void {
@@ -104,6 +106,7 @@ export class CourseAssignments implements OnInit {
     this.name = assignment.name ?? '';
     this.description = assignment.description ?? '';
     this.templateRepoName = assignment.templateRepoName ?? '';
+    this.repoNamePrefix = assignment.repoNamePrefix ?? '';
   }
 
   protected cancelEdit(): void {
@@ -120,6 +123,7 @@ export class CourseAssignments implements OnInit {
       name: this.name.trim(),
       description: this.description.trim() || undefined,
       templateRepoName: this.templateRepoName.trim(),
+      repoNamePrefix: this.repoNamePrefix.trim() || undefined,
     };
 
     const id = this.editingId();

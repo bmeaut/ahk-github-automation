@@ -62,6 +62,38 @@ h2 {
   font-size: 0.75rem;
 }
 
+/* The template field with its Validate button attached, so the action reads as part of the field. */
+.input-with-action {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .btn {
+    flex: none;
+    justify-content: center;
+  }
+}
+
+/* A crimson-outlined button — clearly a control, not the transparent "quiet" it replaced, but subordinate to
+   the solid crimson Save so the two never compete. */
+.btn.accent {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-wash);
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+  }
+}
+
 /* Prose-weight toggle for the acceptance list — a button here would compete with the card's real actions. */
 .linkish {
   border: 0;

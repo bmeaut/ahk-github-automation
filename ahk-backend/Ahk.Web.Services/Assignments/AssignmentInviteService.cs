@@ -158,7 +158,7 @@ public sealed class AssignmentInviteService : IAssignmentInviteService
         }
 
         var organization = course.GitHubOrganization!;
-        var repositoryName = BuildRepositoryName(assignment.TemplateRepoName, student.Neptun);
+        var repositoryName = BuildRepositoryName(assignment, student.Neptun);
         var fullName = Normalize.RepoName($"{organization}/{repositoryName}");
 
         var existing = await gitHub.GetRepositoryAsync(organization, repositoryName, token.Token, cancellationToken);
@@ -229,13 +229,19 @@ public sealed class AssignmentInviteService : IAssignmentInviteService
     }
 
     /// <summary>
-    /// The student's repository name: the template repository's own name with their Neptun code appended, the
-    /// convention the courses already use. Lowercased like every repository name in the model.
+    /// The student's repository name: the assignment's <see cref="Assignment.RepoNamePrefix"/> with their Neptun
+    /// code appended. When no prefix is set the template repository's own name is used instead — the original
+    /// convention, kept for assignments predating the prefix. Lowercased like every repository name in the model.
     /// </summary>
-    internal static string BuildRepositoryName(string templateRepoName, string neptun)
+    internal static string BuildRepositoryName(Assignment assignment, string neptun)
     {
-        var (_, name) = IAssignmentService.SplitRepoName(templateRepoName);
-        return Normalize.RepoName($"{name}-{neptun}");
+        ArgumentNullException.ThrowIfNull(assignment);
+
+        var prefix = assignment.RepoNamePrefix;
+        if (string.IsNullOrWhiteSpace(prefix))
+            (_, prefix) = IAssignmentService.SplitRepoName(assignment.TemplateRepoName);
+
+        return Normalize.RepoName($"{prefix}-{neptun}");
     }
 
     private InviteState Describe(Course course, Assignment assignment, ApplicationUser user, AssignmentAcceptance? acceptance)
@@ -276,7 +282,7 @@ public sealed class AssignmentInviteService : IAssignmentInviteService
             return state;
         }
 
-        state.RepositoryName = BuildRepositoryName(assignment.TemplateRepoName, Normalize.Neptun(user.NeptunCode));
+        state.RepositoryName = BuildRepositoryName(assignment, Normalize.Neptun(user.NeptunCode));
 
         if (string.IsNullOrWhiteSpace(user.GitHubUsername))
         {

@@ -292,9 +292,16 @@ public class AssignmentInviteTests
     }
 
     [Theory]
-    [InlineData("ahk-org/viaubc01-hw1", "ABC123", "viaubc01-hw1-abc123")]
-    [InlineData("org/hw", "xyz789", "hw-xyz789")]
-    [InlineData("no-owner", "ABC123", "no-owner-abc123")]
-    public void RepositoryName_IsTheTemplateNamePlusNeptun_Lowercased(string template, string neptun, string expected) =>
-        Assert.Equal(expected, AssignmentInviteService.BuildRepositoryName(template, neptun));
+    // No prefix set → falls back to the template repository's own name (the original behaviour).
+    [InlineData("ahk-org/viaubc01-hw1", null, "ABC123", "viaubc01-hw1-abc123")]
+    [InlineData("org/hw", null, "xyz789", "hw-xyz789")]
+    [InlineData("no-owner", null, "ABC123", "no-owner-abc123")]
+    // Prefix set → it is used instead of the template name, lowercased like every repository name.
+    [InlineData("ahk-org/viaubc01-hw1", "custom-prefix", "ABC123", "custom-prefix-abc123")]
+    [InlineData("ahk-org/viaubc01-hw1", "Custom", "xyz789", "custom-xyz789")]
+    public void RepositoryName_UsesPrefixOrFallsBackToTemplateName_Lowercased(string template, string? prefix, string neptun, string expected)
+    {
+        var assignment = new Assignment { TemplateRepoName = template, RepoNamePrefix = prefix };
+        Assert.Equal(expected, AssignmentInviteService.BuildRepositoryName(assignment, neptun));
+    }
 }

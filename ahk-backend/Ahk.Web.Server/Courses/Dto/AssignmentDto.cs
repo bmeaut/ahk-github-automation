@@ -14,6 +14,9 @@ public sealed class AssignmentDto
     /// <summary>Full "owner/name" of the template repository students are given a copy of.</summary>
     public string TemplateRepoName { get; set; } = string.Empty;
 
+    /// <summary>Prefix for generated student repositories (<c>{prefix}-{neptun}</c>); null falls back to the template name.</summary>
+    public string? RepoNamePrefix { get; set; }
+
     /// <summary>
     /// The invite link as a site-relative path (<c>/{course}/invite/{token}</c>). Deliberately not an absolute
     /// URL: the API would have to build one from the Host header, and the Angular dev proxy rewrites that to
@@ -75,6 +78,12 @@ public sealed class SaveAssignmentRequest
 
     /// <summary>"owner/name", or a bare repository name taken to be in the course's organization.</summary>
     public string TemplateRepoName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Prefix for generated student repositories (<c>{prefix}-{neptun}</c>). Blank/omitted falls back to the
+    /// template repository's name.
+    /// </summary>
+    public string? RepoNamePrefix { get; set; }
 }
 
 /// <summary>
