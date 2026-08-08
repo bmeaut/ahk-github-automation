@@ -2,6 +2,10 @@ using System.Net.Http.Headers;
 using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.Courses;
 using Ahk.Web.Services.GitHub;
+using Ahk.Web.Services.GitHubWebhooks;
+using Ahk.Web.Services.GitHubWebhooks.Handlers;
+using Ahk.Web.Services.GitHubWebhooks.Handlers.GradeComment;
+using Ahk.Web.Services.GitHubWebhooks.Handlers.StatusTracking;
 using Ahk.Web.Services.Grading;
 using Ahk.Web.Services.Health;
 using Ahk.Web.Services.StatusTracking;
@@ -24,6 +28,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IWebhookTokenService, WebhookTokenService>();
 
         services.AddAhkGitHubApi();
+        services.AddAhkGitHubWebhooks();
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<IAssignmentInviteService, AssignmentInviteService>();
         services.AddScoped<IStudentAssignmentService, StudentAssignmentService>();
@@ -59,6 +64,31 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICourseGitHubAppTokenProvider, CourseGitHubAppTokenProvider>();
         services.AddScoped<ICourseGitHubClientFactory, CourseGitHubClientFactory>();
         services.AddScoped<IGitHubRepositoryService, GitHubRepositoryService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// The GitHub webhook receiver: the dispatcher plus every handler, ported from <c>github-monitor</c>.
+    ///
+    /// Registration order is the dispatch order and is kept identical to that app's
+    /// <c>Startup.registerEventHandlers</c> — DI hands an <c>IEnumerable&lt;T&gt;</c> back in registration
+    /// order, which is why the explicit config builder it used is not needed here.
+    /// </summary>
+    public static IServiceCollection AddAhkGitHubWebhooks(this IServiceCollection services)
+    {
+        services.AddScoped<IGitHubWebhookDispatcher, GitHubWebhookDispatcher>();
+
+        services.AddScoped<IGitHubWebhookHandler, BranchProtectionRuleHandler>();
+        services.AddScoped<IGitHubWebhookHandler, IssueCommentEditDeleteHandler>();
+        services.AddScoped<IGitHubWebhookHandler, PullRequestOpenDuplicateHandler>();
+        services.AddScoped<IGitHubWebhookHandler, PullRequestReviewToAssigneeHandler>();
+        services.AddScoped<IGitHubWebhookHandler, GradeCommandIssueCommentHandler>();
+        services.AddScoped<IGitHubWebhookHandler, GradeCommandReviewCommentHandler>();
+        services.AddScoped<IGitHubWebhookHandler, ActionWorkflowRunHandler>();
+        services.AddScoped<IGitHubWebhookHandler, BranchCreateStatusTrackingHandler>();
+        services.AddScoped<IGitHubWebhookHandler, WorkflowRunStatusTrackingHandler>();
+        services.AddScoped<IGitHubWebhookHandler, PullRequestStatusTrackingHandler>();
 
         return services;
     }
