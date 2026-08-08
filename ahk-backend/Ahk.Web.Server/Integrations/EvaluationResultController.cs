@@ -73,7 +73,7 @@ public sealed class EvaluationResultController : ControllerBase
         var dateStr = Request.Headers[HeaderNames.Date].FirstOrDefault();
 
         logger.LogInformation(
-            "evaluation-result request with X-Ahk-Delivery='{DeliveryId}', X-Ahk-Token = '{Token}'", deliveryId, token);
+            "evaluation-result request with X-Ahk-Delivery='{DeliveryId}', X-Ahk-Token = '{Token}'", deliveryId, MaskToken(token));
 
         // Order and wording of these checks are the ported contract; the evaluator's logs are full of them.
         if (string.IsNullOrEmpty(dateStr))
@@ -125,7 +125,7 @@ public sealed class EvaluationResultController : ControllerBase
         {
             // Same message as an unknown token: a caller must not be able to tell a revoked token from one
             // whose course was deleted.
-            logger.LogWarning("evaluation-result token '{Token}' resolved to no course", token);
+            logger.LogWarning("evaluation-result token '{Token}' resolved to no course", MaskToken(token));
             return BadRequest(new { error = "X-Ahk-Token invalid" });
         }
 
@@ -158,6 +158,15 @@ public sealed class EvaluationResultController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.ToString() });
         }
     }
+
+    /// <summary>
+    /// A token is a live credential: it selects a course and is half of the pair that authenticates a grade
+    /// write. grade-management logged it whole, which put working credentials into any log the application
+    /// ships to. Only enough is kept to tell two tokens apart while diagnosing — the same last-four convention
+    /// the admin API uses when it reports a stored secret.
+    /// </summary>
+    private static string MaskToken(string? token)
+        => string.IsNullOrEmpty(token) ? "(none)" : $"…{token[^Math.Min(4, token.Length)..]}";
 
     private static EvaluationResultInput ToInput(EvaluationResultRequest payload)
         => new()

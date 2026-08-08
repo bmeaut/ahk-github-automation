@@ -23,11 +23,10 @@ public static class GitHubSignatureValidator
         var hash = hmac.ComputeHash(requestBytes);
         var expectedSignature = "sha256=" + ToHexString(hash);
 
-        // Compare length first, do not even try to compare content if these do not match.
-        if (receivedSignature.Length != expectedSignature.Length)
-            return false;
-
-        return receivedSignature.Equals(expectedSignature, StringComparison.Ordinal);
+        // Constant-time: github-monitor used string.Equals here, which returns at the first differing
+        // character and lets a forged signature be refined one character at a time by timing. See
+        // SignatureComparison.
+        return SignatureComparison.FixedTimeEquals(receivedSignature, expectedSignature);
     }
 
     private static string ToHexString(byte[] bytes)

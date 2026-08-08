@@ -32,11 +32,10 @@ public static class HmacSha256Validator
         var hash = hmac.ComputeHash(payloadSignedBytes);
         var expectedSignature = Convert.ToBase64String(hash);
 
-        // Compare length first, do not even try to compare content if these do not match.
-        if (receivedSignature.Length != expectedSignature.Length)
-            return false;
-
-        return receivedSignature.Equals(expectedSignature, StringComparison.Ordinal);
+        // Constant-time: grade-management used string.Equals here, which returns at the first differing
+        // character and lets a forged signature be refined one character at a time by timing. See
+        // SignatureComparison.
+        return SignatureComparison.FixedTimeEquals(receivedSignature, expectedSignature);
     }
 
     /// <summary>The signed string, exposed so a failing request can be diagnosed without leaking the secret.</summary>
