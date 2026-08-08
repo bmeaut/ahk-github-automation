@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Ahk.Web.Server;
@@ -213,6 +214,11 @@ public class Program
 
         // ---- Domain services (Ahk.Web.Services) ----
         builder.Services.AddMemoryCache();
+
+        // The CI callback rejects a request whose Date header has drifted more than ten minutes, so it needs a
+        // clock a test can move. TimeProvider is the framework's answer to grade-management's IDateTimeProvider.
+        builder.Services.TryAddSingleton(TimeProvider.System);
+
         builder.Services.AddAhkServices();
 
         // ---- MVC + OpenAPI (NSwag document consumed by the Angular code generator) ----
