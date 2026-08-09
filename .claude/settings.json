@@ -111,7 +111,8 @@
       "Bash(node -e ' *)",
       "Bash(python3 -c ' *)",
       "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness.sh __TRACKED_VAR__/apply-step.sh)",
-      "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness-edge.sh __TRACKED_VAR__/apply-step.sh)"
+      "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness-edge.sh __TRACKED_VAR__/apply-step.sh)",
+      "Bash(sort -t: -k3)"
     ],
     "additionalDirectories": [
       "\\tmp",

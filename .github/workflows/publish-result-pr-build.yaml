@@ -14,24 +14,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # setup-go v4 and later cache the module and build caches itself, keyed on the checksum file, which
       # is why the separate actions/cache step this workflow used to carry is gone. go.sum is not at the
       # repository root in this monorepo, so the path has to be given explicitly.
       - name: Go setup
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: "1.17"
-
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache-dependency-path: publish-results-pr/go.sum
 
       - name: Build
         working-directory: publish-results-pr
