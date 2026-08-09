@@ -54,7 +54,7 @@ func (r argsFromGitHubAction) GetArgs() (args *AppArgs, err error) {
 	resultsFile := getEnvOrDefault("INPUT_AHK_RESULTFILE", "result.txt")
 	imageExt := getEnvOrDefault("INPUT_AHK_IMAGEEXT", "")
 
-	ahkAppUrl := getEnvOrDefault("INPUT_AHK_APPURL", "https://ahk-grade-management.azurewebsites.net/api/evaluation-result")
+	ahkAppUrl := getEnvOrDefault("INPUT_AHK_APPURL", "https://ahk.aut.bme.hu/api/integrations/evaluation-result")
 	ahkAppToken := getEnvOrDefault("INPUT_AHK_APPTOKEN", "")
 	ahkAppSecret := getEnvOrDefault("INPUT_AHK_APPSECRET", "")
 
