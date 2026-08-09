@@ -16,6 +16,7 @@ import {
   UsersAdminClient,
   WebhookTokenDto,
 } from '../../../api/api-client';
+import { copyToClipboard } from '../../../core/clipboard';
 import { HealthChain } from '../../../shared/health-chain/health-chain';
 
 /**
@@ -66,15 +67,19 @@ export class CourseEditor implements OnInit {
   protected integrationEnabled = true;
   protected readonly savingIntegration = signal(false);
   protected readonly clearing = signal<Record<string, boolean>>({});
+  /** A typed or generated webhook secret is shown in the clear, because it has to be pasted into GitHub too. */
+  protected readonly webhookSecretVisible = signal(false);
 
   // ---- Tokens ----
   protected newTokenDescription = '';
   protected readonly issuedToken = signal<WebhookTokenDto | null>(null);
   protected readonly creatingToken = signal(false);
-  /** Token id most recently copied, for transient "Copied" feedback. */
-  protected readonly copiedTokenId = signal<number | null>(null);
   /** Token ids whose secret is currently revealed inline. */
   protected readonly revealed = signal<Set<number>>(new Set());
+
+  // ---- Clipboard ----
+  /** Key of the value most recently copied, so only the button pressed says "Copied". */
+  protected readonly copied = signal<string | null>(null);
 
   // ---- Staff ----
   protected memberSearch = '';
@@ -156,6 +161,26 @@ export class CourseEditor implements OnInit {
 
   // ---- GitHub integration ----
 
+  /**
+   * Mints a webhook secret and shows it, because the same value has to be pasted into the GitHub App's own
+   * Webhook secret field — one that cannot be read is of no use. It is an ordinary form edit: nothing is stored
+   * until the integration is saved.
+   */
+  protected generateWebhookSecret(): void {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    this.webhookSecret = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    this.webhookSecretVisible.set(true);
+
+    // Generating means replace, not remove, so it cancels a pending Clear on the same field.
+    if (this.isClearing('webhookSecret')) {
+      this.toggleClear('webhookSecret');
+    }
+  }
+
+  protected toggleWebhookSecretVisible(): void {
+    this.webhookSecretVisible.update((visible) => !visible);
+  }
+
   /** Marks a stored credential for removal; the input is then disabled until the change is saved or undone. */
   protected toggleClear(field: string): void {
     const next = { ...this.clearing() };
@@ -186,6 +211,7 @@ export class CourseEditor implements OnInit {
         this.appPrivateKey = '';
         this.accessToken = '';
         this.webhookSecret = '';
+        this.webhookSecretVisible.set(false);
         this.clearing.set({});
         this.saved.set('GitHub integration saved.');
         this.load();
@@ -246,25 +272,6 @@ export class CourseEditor implements OnInit {
     this.issuedToken.set(null);
   }
 
-  /** Copies a token's secret to the clipboard, with brief per-row "Copied" feedback. */
-  protected copySecret(token: WebhookTokenDto): void {
-    const secret = token.secret;
-    if (!secret) {
-      return;
-    }
-    navigator.clipboard.writeText(secret).then(
-      () => {
-        this.copiedTokenId.set(token.id ?? null);
-        setTimeout(() => {
-          if (this.copiedTokenId() === token.id) {
-            this.copiedTokenId.set(null);
-          }
-        }, 1500);
-      },
-      () => this.error.set('The secret could not be copied to the clipboard.'),
-    );
-  }
-
   /** Reveals or hides a token's secret inline, so it can be read as well as copied. */
   protected toggleReveal(token: WebhookTokenDto): void {
     const id = token.id ?? 0;
@@ -275,6 +282,29 @@ export class CourseEditor implements OnInit {
       next.add(id);
     }
     this.revealed.set(next);
+  }
+
+  // ---- Clipboard ----
+
+  /**
+   * Copies one value, with "Copied" feedback on the button that was pressed. The key identifies that button, so
+   * a token and its secret sitting next to each other never both claim to have been copied.
+   */
+  protected async copy(key: string, value: string | undefined): Promise<void> {
+    if (!value) {
+      return;
+    }
+
+    if (await copyToClipboard(value)) {
+      this.copied.set(key);
+      setTimeout(() => {
+        if (this.copied() === key) {
+          this.copied.set(null);
+        }
+      }, 2500);
+    } else {
+      this.error.set('That value could not be copied automatically — select it and copy it by hand.');
+    }
   }
 
   // ---- Staff ----

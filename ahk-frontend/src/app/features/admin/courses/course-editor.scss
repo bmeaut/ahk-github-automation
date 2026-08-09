@@ -22,6 +22,39 @@ textarea {
   flex: 1 1 16rem;
 }
 
+/* The webhook secret field with Generate/Copy/Show attached, so the actions read as part of the field.
+   Mirrors the template-repository field on the assignments page. */
+.input-with-action {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+
+  input {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
+
+  .btn {
+    flex: none;
+    justify-content: center;
+  }
+}
+
+/* A crimson-outlined button — clearly a control, but subordinate to the solid crimson Save. */
+.btn.accent {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-wash);
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+  }
+}
+
 .card-foot.stack {
   flex-direction: column;
   align-items: stretch;
@@ -52,6 +85,21 @@ textarea {
   color: var(--ink-2);
   word-break: break-all;
   white-space: normal;
+}
+
+/* A value with its Copy button alongside. The value wraps; the button keeps its own column. */
+.copy-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  span {
+    word-break: break-all;
+  }
+
+  .btn {
+    flex: none;
+  }
 }
 
 .kv {

@@ -36,6 +36,20 @@
   }
 }
 
+/* The permission groups' headings, each sitting directly on its own table. */
+.card-body > h3 {
+  margin: 1.25rem 0 0.5rem;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+/* "Read & write" is one value — the wide Why column must not squeeze it onto two lines. */
+#permissions table.data td.mono {
+  white-space: nowrap;
+}
+
 /* Guidance under the permissions table and the CI-token aside. */
 .hint {
   font-size: 0.8125rem;

@@ -69,9 +69,9 @@
           nothing more.
         </li>
         <li>
-          <strong>Subscribe to events</strong> (webhook side only) — <em>Pull request</em>,
-          <em>Pull request review</em>, <em>Issue comment</em>, <em>Push</em>, <em>Create</em>,
-          <em>Repository</em>, <em>Workflow run</em>.
+          <strong>Subscribe to events</strong> (webhook side only) — <em>Create</em>, <em>Issue comment</em>,
+          <em>Pull request</em>, <em>Pull request review</em>, <em>Push</em>, <em>Repository</em>,
+          <em>Workflow run</em>.
         </li>
         <li><strong>Where can this GitHub App be installed?</strong> — <em>Only on this account</em>.</li>
         <li>
@@ -114,13 +114,11 @@
     <header>
       <div class="grow">
         <h2>3 · Permissions</h2>
-        <p>
-          Set these under <strong>Repository permissions</strong>, plus the one
-          <strong>Organization permission</strong> below.
-        </p>
+        <p>Set exactly these, in the two sections GitHub's form shows.</p>
       </div>
     </header>
     <div class="card-body">
+      <h3>Repository permissions</h3>
       <div class="table-wrap">
         <table class="data">
           <thead>
@@ -132,7 +130,12 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>Administration</strong></td>
+              <td>Actions</td>
+              <td class="mono">Read-only</td>
+              <td><span class="mono">github-monitor</span> only: counting workflow runs against the course threshold.</td>
+            </tr>
+            <tr>
+              <td>Administration</td>
               <td class="mono">Read &amp; write</td>
               <td>
                 Creating a repository from a template, adding a student as a collaborator, managing invitations,
@@ -141,12 +144,7 @@
               </td>
             </tr>
             <tr>
-              <td><strong>Metadata</strong></td>
-              <td class="mono">Read-only</td>
-              <td>Mandatory for every App. Also backs the check that a template repository exists.</td>
-            </tr>
-            <tr>
-              <td><strong>Contents</strong></td>
+              <td>Contents</td>
               <td class="mono">Read &amp; write</td>
               <td>
                 Read covers the template repository, <span class="mono">.github/ahk-monitor.yml</span> and
@@ -157,6 +155,16 @@
               </td>
             </tr>
             <tr>
+              <td>Issues</td>
+              <td class="mono">Read &amp; write</td>
+              <td><span class="mono">github-monitor</span> only: issue comments carry the <span class="mono">/ahk ok</span> chatops.</td>
+            </tr>
+            <tr>
+              <td>Metadata</td>
+              <td class="mono">Read-only</td>
+              <td>Mandatory for every App. Also backs the check that a template repository exists.</td>
+            </tr>
+            <tr>
               <td>Pull requests</td>
               <td class="mono">Read &amp; write</td>
               <td>
@@ -164,18 +172,23 @@
                 — see Contents.
               </td>
             </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Organization permissions</h3>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
             <tr>
-              <td>Issues</td>
-              <td class="mono">Read &amp; write</td>
-              <td><span class="mono">github-monitor</span> only: issue comments carry the <span class="mono">/ahk ok</span> chatops.</td>
+              <th>Permission</th>
+              <th>Level</th>
+              <th>Why</th>
             </tr>
+          </thead>
+          <tbody>
             <tr>
-              <td>Actions</td>
-              <td class="mono">Read-only</td>
-              <td><span class="mono">github-monitor</span> only: counting workflow runs against the course threshold.</td>
-            </tr>
-            <tr>
-              <td><strong>Members</strong>&nbsp;<span class="muted">(Organization)</span></td>
+              <td>Members</td>
               <td class="mono">Read-only</td>
               <td>
                 Organization membership is how the portal decides who may grade.

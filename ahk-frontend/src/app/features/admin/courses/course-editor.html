@@ -76,7 +76,14 @@
             <div class="field">
               <label for="org">GitHub organization</label>
               <input id="org" name="organization" type="text" [(ngModel)]="organization" placeholder="bmeviaubc01" />
-              <span class="hint">Deliveries from this organization are routed to this course.</span>
+              <span class="hint">
+                Deliveries from this organization are routed to this course.
+                <!-- The saved value, not what is being typed, so the link never points at a half-typed name. -->
+                @if (c.gitHubOrganization; as org) {
+                  <span>&nbsp;·&nbsp;</span>
+                  <a [href]="'https://github.com/' + org" target="_blank" rel="noopener">Open on GitHub ↗</a>
+                }
+              </span>
             </div>
             <div class="field">
               <label for="prefix">Repository name prefix</label>
@@ -151,23 +158,40 @@
 
           <div class="field">
             <label for="webhook-secret">Webhook secret</label>
-            <input
-              id="webhook-secret"
-              name="webhookSecret"
-              type="password"
-              [(ngModel)]="webhookSecret"
-              autocomplete="off"
-              [disabled]="isClearing('webhookSecret')"
-              [placeholder]="c.gitHubConfig?.hasWebhookSecret ? 'Stored — type to replace' : 'Secret from the GitHub App'"
-            />
+            <!-- Generate sits with the field: the secret is invented here, and the same value has to be pasted
+                 into the GitHub App, so it is shown in the clear until the form is saved. -->
+            <div class="input-with-action">
+              <input
+                id="webhook-secret"
+                name="webhookSecret"
+                [type]="webhookSecretVisible() ? 'text' : 'password'"
+                [(ngModel)]="webhookSecret"
+                autocomplete="off"
+                [disabled]="isClearing('webhookSecret')"
+                [placeholder]="c.gitHubConfig?.hasWebhookSecret ? 'Stored — type to replace' : 'Secret from the GitHub App'"
+              />
+              <button type="button" class="btn accent" (click)="generateWebhookSecret()">Generate</button>
+              @if (webhookSecret) {
+                <button type="button" class="btn quiet" (click)="copy('webhook-secret', webhookSecret)">
+                  {{ copied() === 'webhook-secret' ? 'Copied' : 'Copy' }}
+                </button>
+                <button type="button" class="btn quiet" (click)="toggleWebhookSecretVisible()">
+                  {{ webhookSecretVisible() ? 'Hide' : 'Show' }}
+                </button>
+              }
+            </div>
             <span class="hint">
-              @if (c.gitHubConfig?.hasWebhookSecret) {
+              @if (webhookSecret) {
+                Paste this same value into the GitHub App's <strong>Webhook secret</strong> field — it is only
+                shown here until the integration is saved.
+              } @else if (c.gitHubConfig?.hasWebhookSecret) {
                 A secret is stored.
                 <button type="button" class="linkish" (click)="toggleClear('webhookSecret')">
                   {{ isClearing('webhookSecret') ? 'Keep it' : 'Remove it' }}
                 </button>
               } @else {
-                Validates the X-Hub-Signature-256 header on incoming deliveries.
+                Validates the X-Hub-Signature-256 header on incoming deliveries. Generate one and paste it into
+                the GitHub App as well.
               }
             </span>
           </div>
@@ -230,9 +254,19 @@
           </p>
           <dl class="kv">
             <dt>Token</dt>
-            <dd class="mono">{{ t.token }}</dd>
+            <dd class="mono copy-row">
+              <span>{{ t.token }}</span>
+              <button type="button" class="btn quiet" (click)="copy('issued-token', t.token)">
+                {{ copied() === 'issued-token' ? 'Copied' : 'Copy token' }}
+              </button>
+            </dd>
             <dt>Secret</dt>
-            <dd class="mono">{{ t.secret }}</dd>
+            <dd class="mono copy-row">
+              <span>{{ t.secret }}</span>
+              <button type="button" class="btn quiet" (click)="copy('issued-secret', t.secret)">
+                {{ copied() === 'issued-secret' ? 'Copied' : 'Copy secret' }}
+              </button>
+            </dd>
           </dl>
           <button type="button" class="btn quiet" (click)="dismissIssuedToken()">Done</button>
         </div>
@@ -269,8 +303,11 @@
                 </td>
                 <td class="actions">
                   <span class="token-actions">
-                    <button type="button" class="btn quiet" (click)="copySecret(t)">
-                      {{ copiedTokenId() === t.id ? 'Copied' : 'Copy secret' }}
+                    <button type="button" class="btn quiet" (click)="copy('row-' + t.id + '-token', t.token)">
+                      {{ copied() === 'row-' + t.id + '-token' ? 'Copied' : 'Copy token' }}
+                    </button>
+                    <button type="button" class="btn quiet" (click)="copy('row-' + t.id + '-secret', t.secret)">
+                      {{ copied() === 'row-' + t.id + '-secret' ? 'Copied' : 'Copy secret' }}
                     </button>
                     <button type="button" class="btn quiet" (click)="toggleReveal(t)">
                       {{ revealed().has(t.id ?? 0) ? 'Hide' : 'Show' }}

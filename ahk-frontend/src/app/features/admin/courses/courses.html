@@ -105,7 +105,11 @@
                   <div class="muted mono">{{ c.slug }}</div>
                 </td>
                 <td class="mono">
-                  {{ c.gitHubOrganization || '—' }}
+                  @if (c.gitHubOrganization; as org) {
+                    <a [href]="'https://github.com/' + org" target="_blank" rel="noopener">{{ org }}</a>
+                  } @else {
+                    —
+                  }
                   @if (c.repoNamePrefix) {
                     <div class="muted">prefix {{ c.repoNamePrefix }}</div>
                   }
