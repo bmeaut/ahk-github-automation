@@ -230,27 +230,111 @@ jobs:
       - name: Apply changed files
         if: steps.diff.outputs.has_changes == 'true'
         run: |
+          set -o pipefail
+
+          changed_count=$(wc -l < changed.list)
+          removed_count=$(wc -l < removed.list)
+
+          # Bytes about to cross the tunnel. A self-contained publish is a handful of very large files
+          # plus a long tail, so "which files" explains a slow run far better than "how many".
+          changed_bytes=0
+          if [ -s changed.list ]; then
+            changed_bytes=$(sed 's|^|publish/|' changed.list | tr '\n' '\0' \
+              | xargs -0 -r stat -c %s 2>/dev/null | awk '{s+=$1} END {print s+0}')
+          fi
+
+          echo "Copying $changed_count file(s), $(numfmt --to=iec --suffix=B "$changed_bytes"); deleting $removed_count."
+
+          if [ -s changed.list ]; then
+            echo "::group::Ten largest files in this transfer"
+            sed 's|^|publish/|' changed.list | tr '\n' '\0' \
+              | xargs -0 -r stat -c '%s %n' 2>/dev/null \
+              | sort -rn | head -10 \
+              | awk '{ size=$1; $1=""; sub(/^ /,""); printf "%10s  %s\n", size, $0 }' \
+              | numfmt --to=iec --suffix=B --field=1 || true
+            echo "::endgroup::"
+          fi
+
+          # Millisecond resolution: a fast deploy still has to report a throughput figure, otherwise
+          # there is no baseline to compare a slow one against.
+          copy_ms=0
+          attempts=0
           if [ -s changed.list ]; then
             ok=0
+            copy_start=$(date +%s%3N)
             for i in $(seq 1 10); do
+              attempts=$i
+              echo "::group::rsync attempt $i"
+              attempt_start=$(date +%s%3N)
+              # --out-format stamps every file with the wall-clock time it landed, which is what turns
+              # "the deploy was slow" into "it stalled for 90s on this one file". --stats reports the
+              # effective transfer rate over the tunnel.
               if rsync -R --files-from=changed.list --ignore-times --whole-file --inplace \
-                  --no-perms --no-owner --no-group --no-times publish/ "$MOUNT_POINT/"; then
-                ok=1; break
+                  --no-perms --no-owner --no-group --no-times \
+                  --stats --human-readable --out-format='%t  %12l  %n' \
+                  publish/ "$MOUNT_POINT/"; then
+                ok=1
+                echo "Attempt $i succeeded in $(( ($(date +%s%3N) - attempt_start) / 1000 ))s"
+                echo "::endgroup::"
+                break
               fi
-              echo "rsync attempt $i failed (likely a locked file); retrying..."
+              echo "::endgroup::"
+              echo "::warning::rsync attempt $i failed after $(( ($(date +%s%3N) - attempt_start) / 1000 ))s (likely a locked file); retrying..."
               sleep 2
             done
+            copy_ms=$(( $(date +%s%3N) - copy_start ))
+
             if [ "$ok" -ne 1 ]; then
-              echo "::error::Copying changed files failed after retries"
+              echo "::error::Copying changed files failed after $attempts attempts and $(( copy_ms / 1000 ))s"
               exit 1
             fi
           fi
 
+          # Deletes are one CIFS round-trip each, so a large prune is latency-bound rather than
+          # bandwidth-bound and is worth timing separately from the copy.
+          delete_ms=0
           if [ -s removed.list ]; then
+            delete_start=$(date +%s%3N)
             while IFS= read -r path; do
               rm -f "$MOUNT_POINT/$path"
             done < removed.list
+            delete_ms=$(( $(date +%s%3N) - delete_start ))
+            echo "Deleted $removed_count file(s) in $(( delete_ms / 1000 ))s"
           fi
+
+          # Both rates matter, and which one is poor says where the bottleneck is: low MB/s with
+          # healthy files/s means the link is the limit; low files/s with healthy MB/s means CIFS
+          # round-trip latency is, and the fix is fewer files rather than smaller ones.
+          summary=$(awk -v n="$changed_count" -v b="$changed_bytes" -v cms="$copy_ms" \
+                        -v dn="$removed_count" -v dms="$delete_ms" '
+            BEGIN {
+              mb = b / 1048576
+              cs = cms / 1000
+              ds = dms / 1000
+              printf "| Metric | Value |\n|---|---|\n"
+              printf "| Files copied | %d |\n", n
+              printf "| Bytes copied | %.1f MB |\n", mb
+              printf "| Copy time | %.1fs |\n", cs
+              if (cs > 0) {
+                printf "| Throughput | %.2f MB/s |\n", mb / cs
+                printf "| File rate | %.1f files/s |\n", n / cs
+              }
+              printf "| Files deleted | %d |\n", dn
+              printf "| Delete time | %.1fs |\n", ds
+              if (ds > 0) printf "| Delete rate | %.1f files/s |\n", dn / ds
+              printf "| Total | %.1fs |\n", cs + ds
+            }')
+
+          echo "$summary"
+          {
+            echo "### Applying changed files"
+            echo ""
+            echo "$summary"
+            if [ "$attempts" -gt 1 ]; then
+              echo ""
+              echo "⚠️ rsync needed **$attempts attempts** — retries re-send every file, so each one costs a full copy."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Wake site (remove app_offline.htm)
         if: steps.diff.outputs.has_changes == 'true'

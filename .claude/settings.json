@@ -107,7 +107,11 @@
       "Bash(curl -sk -o /dev/null -w \"\" https://localhost:7443/swagger/v1/swagger.json)",
       "Bash(break)",
       "Bash(curl -sk -X POST https://localhost:7443/api/integrations/github -H 'Content-Type: application/json' -d '{}' -w \"\\\\nHTTP %{http_code}\\\\n\")",
-      "Bash(curl -sk -X POST https://localhost:7443/api/integrations/evaluation-result -H 'Content-Type: application/json' -d '{}' -w \"\\\\nHTTP %{http_code}\\\\n\")"
+      "Bash(curl -sk -X POST https://localhost:7443/api/integrations/evaluation-result -H 'Content-Type: application/json' -d '{}' -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(node -e ' *)",
+      "Bash(python3 -c ' *)",
+      "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness.sh __TRACKED_VAR__/apply-step.sh)",
+      "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness-edge.sh __TRACKED_VAR__/apply-step.sh)"
     ],
     "additionalDirectories": [
       "\\tmp",
