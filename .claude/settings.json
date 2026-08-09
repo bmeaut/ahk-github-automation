@@ -103,7 +103,11 @@
       "Bash(wsl.exe bash *)",
       "Bash(node shot5.mjs)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(curl -sk -o /dev/null -w \"\" https://localhost:7443/swagger/v1/swagger.json)",
+      "Bash(break)",
+      "Bash(curl -sk -X POST https://localhost:7443/api/integrations/github -H 'Content-Type: application/json' -d '{}' -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(curl -sk -X POST https://localhost:7443/api/integrations/evaluation-result -H 'Content-Type: application/json' -d '{}' -w \"\\\\nHTTP %{http_code}\\\\n\")"
     ],
     "additionalDirectories": [
       "\\tmp",
