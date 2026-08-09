@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working in this repo
+
+⚠️ **Do not run git write commands.** No `git add`, `git commit`, `git checkout`, `git reset`, `git stash`, `git merge`, `git push` — the maintainer commits by hand, deliberately, and wants to review and stage the working tree themselves. Leave changes uncommitted in the working tree and say what you changed. Read-only inspection (`git status`, `git diff`, `git log`, `git show`) is fine and useful.
+
 ## What this is
 
 **Ahk** = automated homework evaluation. A toolset that automates homework submission, evaluation, and grading using GitHub, GitHub Classroom, and GitHub Actions. Concept docs: <https://akosdudas.github.io/automated-homework-evaluation/>
@@ -142,7 +146,6 @@ npm run generate-api   # regenerate src/app/api from the backend's OpenAPI (back
 - **No Docker in this environment** — dev dependencies are built in-app (e.g. the mock OIDC provider), not containerized.
 - **Verify UI changes by screenshotting the running app**, not by trusting the build. Chrome is at `/c/Program Files/Google/Chrome/Application/chrome.exe`. A plain `--headless=new --screenshot` fires before Angular hydrates and yields a near-empty page — add `--virtual-time-budget=4000`. For screens behind login, start Chrome with `--remote-debugging-port=9222` and drive the DevTools protocol from a Node script: Node 24 ships a built-in `WebSocket`, so this needs no npm dependency. Always pass `--ignore-certificate-errors` (self-signed dev cert). When reading a value back from `Runtime.evaluate`, the RemoteObject is doubly nested at `msg.result.result.value` — reading `msg.result.value` silently yields `undefined` (the clicks still fire, so screenshots look fine while probes read blank).
 - **Exercise the m2m endpoints by hand** against the running backend — faster than the GitHub UI and it works offline. Sign with `openssl`: ``SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac 'dev-webhook-secret' -hex | sed 's/.*= //')"``, then `curl -sk -X POST https://localhost:7443/api/integrations/github -H 'X-GitHub-Event: ping' -H "X-Hub-Signature-256: $SIG" -d "$BODY"`. The dev seeder's `viaubc01` is org **`ahk-viaubc01`**, secret **`dev-webhook-secret`**; `viaubb01` deliberately has **no** secret, so it exercises the 500 branch.
-- **Scope `git add` to the app directory.** `git add -A` at the repo root also stages `.claude/settings.json`, which the harness rewrites whenever a permission is granted — committing it silently shares those grants with everyone who clones (it is the checked-in project file; `settings.local.json` is the personal one).
 - **No image tooling** — no PIL, no ImageMagick. To read a PNG's pixels (sampling a brand colour, checking dimensions) decode it by hand with `zlib` + `struct`. EPS files are text-ish: `%%CMYKCustomColor` in the header carries the print colour spec.
 - **Prod hosting is same-origin**: the backend serves the Angular SPA — `UseDefaultFiles`/`UseStaticFiles` + `MapFallbackToFile("index.html")` in `Program.cs`, `ng build` output copied into `wwwroot`. Only dev uses the proxy.
 - **`web.config` is checked in with its SDK transform disabled** (`IsTransformWebConfigDisabled=true`): Mezga registers ANCM under the **V1** name `AspNetCoreModule`, so the SDK-generated V2 web.config fails to start the app there. Don't delete the file or re-enable the transform.
