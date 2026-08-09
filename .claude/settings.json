@@ -101,7 +101,9 @@
       "PowerShell(try { Get-NetTCPConnection -LocalPort 7443 -State Listen -ErrorAction Stop | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } catch {}; Write-Output \"backend stopped\")",
       "Bash(node shot4.mjs)",
       "Bash(wsl.exe bash *)",
-      "Bash(node shot5.mjs)"
+      "Bash(node shot5.mjs)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "\\tmp",

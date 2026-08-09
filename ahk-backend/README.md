@@ -5,12 +5,32 @@ per-course Azure Functions deployments with a single site whose domain data is a
 **Courses**. Provides ASP.NET Identity authentication (local username/password + generic OIDC,
 cookie-based) and course-scoped, membership-authorized endpoints.
 
-> Milestone status: auth, course-scoping, the domain model and services, the read endpoints, the
-> site administration surface (courses, GitHub integration, CI callback tokens, users, health checks)
-> and **assignments** (the GitHub Classroom replacement: template repositories, invite links, student
-> self-service) are in place. The write-side entry points — the GitHub webhook receiver, `/ahk ok`
-> chatops and the HMAC-verified CI callback — are ported in a later milestone. See the architecture
-> plan for the full design.
+> Milestone status: feature-complete against the original system. Auth, course-scoping, the domain
+> model and services, the read endpoints, the site administration surface, **assignments** (the GitHub
+> Classroom replacement) and now the write-side entry points — the **GitHub webhook receiver**, **`/ahk
+> ok` chatops** and the **HMAC-verified CI callback** — are all in place, so a course can run on the
+> portal with no Azure Functions. The four original apps remain in the repository, deployed, for
+> courses that have not migrated yet; see [Cutover per course](docs/github-app.md#cutover-per-course).
+
+## Machine-to-machine endpoints
+
+Two routes are called by machines rather than by the SPA. Both are anonymous — a signature is the
+authentication — and both are excluded from the OpenAPI document, so no TypeScript client is generated
+for them.
+
+| Route | Authenticated by | Resolves its course from |
+|---|---|---|
+| `POST /api/integrations/github` | `X-Hub-Signature-256`, against the course's own webhook secret | `repository.full_name` in the payload (organization, then repo-name prefix) |
+| `POST /api/integrations/evaluation-result` | `X-Ahk-Sha256` over verb + URL + date + body | the `X-Ahk-Token` header — the authenticated credential, not the caller-supplied repository name |
+
+Neither has a `{course}` path segment, which is why `ICourseResolutionService` exists. See
+[docs/github-app.md](docs/github-app.md) and [docs/ci-callback.md](docs/ci-callback.md).
+
+⚠️ The webhook secret is per course, and the only thing identifying the course is the repository name
+*inside* the body — so the receiver has to parse an unverified payload before it can verify it.
+Everything before the signature check is deliberately inert: one property is read from a `JsonDocument`
+that is then dropped, two indexed reads happen, and nothing is written, logged or called until the HMAC
+passes. Keep it that way.
 
 ## Projects
 
@@ -19,8 +39,15 @@ cookie-based) and course-scoped, membership-authorized endpoints.
   `CourseContext/` (course resolution middleware + membership authorization).
 - **Ahk.Web.Services** — domain logic: grading, status tracking, submission resolution, course
   resolution, CI callback tokens, `Assignments/` (assignment administration and the student invite
-  flow), `GitHub/` (the App installation-token provider and the REST calls it authenticates), and
-  `Health/` (the course health checks).
+  flow), `GitHub/` (the App installation-token provider and the REST calls it authenticates),
+  `GitHubWebhooks/` (the webhook dispatcher and the ten rule/status/chatops handlers ported from
+  `github-monitor`), `Integrations/` (the CI callback's HMAC scheme), and `Health/` (the course
+  health checks).
+
+  **Octokit** is the portal's GitHub API client — one client, built by `ICourseGitHubClientFactory`.
+  The single exception is `CourseGitHubAppTokenProvider`, which stays on a raw `HttpClient`: it signs
+  an App JWT and exchanges it for an installation token, which is the auth bootstrap rather than an
+  API call, and moving it would change the shape of the permissions the health check reads.
 - **Ahk.Web.Data** — EF Core `ApplicationDbContext` (Identity + `Course`/`CourseMembership` +
   `ICourseScoped` global query filter), migrations, and the dev data seeder.
 - **Ahk.Web.Server.Tests** — xUnit tests (course-scoping unit tests, health-check tests, grade parity

@@ -21,11 +21,12 @@ The App is used for two things:
 
 | Purpose | Status |
 |---|---|
-| Receiving webhooks (pushes, pull requests, comments, workflow runs) and enforcing the course's rules | Live today in `github-monitor`; the receiver is **not yet ported** to the portal |
-| Creating student repositories from an assignment's template and granting students access | Live in the portal (this feature) |
+| Receiving webhooks (pull requests, comments, workflow runs) and enforcing the course's rules | Live in the portal |
+| Creating student repositories from an assignment's template and granting students access | Live in the portal |
 
-One App can serve both. If the organization already has an App registered for `github-monitor`, extend that one
-rather than registering a second — see [Permissions](#permissions) for the single grant that has to be added.
+One App serves both. If the organization already has an App registered for `github-monitor`, extend that one
+rather than registering a second — see [Permissions](#permissions) for the grant that has to be added — and
+repoint its webhook URL as described in [Cutover per course](#cutover-per-course).
 
 ## Registering the App
 
@@ -36,14 +37,17 @@ Do this once per organization, as an organization owner.
 3. **Homepage URL** — `https://ahk.aut.bme.hu`.
 4. **Webhook**
    - Tick **Active**.
-   - **Webhook URL**: `https://ahk.aut.bme.hu/api/integrations/github`.
-     ⚠️ This path is reserved but **the receiver is not implemented in the portal yet**. Until it is, point the
-     webhook at the course's existing `github-monitor` Function URL instead, and keep using that.
+   - **Webhook URL**: `https://ahk.aut.bme.hu/api/integrations/github`
+   - **Content type**: `application/json`.
    - **Webhook secret**: generate a long random string. You will need it again in step 8.
+     There is no global secret — the receiver validates `X-Hub-Signature-256` against **that course's** stored
+     secret, and resolves which course a delivery belongs to from the repository name inside it.
 5. **Permissions** — set exactly what the [table below](#permissions) lists. Nothing more: an App with rights
    nobody uses is a liability, and organization owners are shown this list when they install it.
-6. **Subscribe to events** — only needed for the webhook side: *Pull request*, *Pull request review*,
-   *Issue comment*, *Push*, *Create*, *Repository*, *Workflow run*.
+6. **Subscribe to events** — the five the portal has handlers for: *Create*, *Issue comment*, *Pull request*,
+   *Pull request review*, *Workflow run*.
+   Subscribing to more is harmless — anything else is answered `200` with `Event X is not of interest` — but it
+   makes the delivery log noisier to read.
 7. **Where can this GitHub App be installed?** — *Only on this account*.
 8. Create it, then on the App's page:
    - Note the **App ID**.
@@ -66,12 +70,12 @@ Set these under **Repository permissions**. Organization permissions are not nee
 
 | Permission | Level | Why |
 |---|---|---|
-| **Administration** | **Read & write** | Creating a repository from a template (`POST /repos/{owner}/{repo}/generate`), adding a student as a collaborator (`PUT /repos/{owner}/{repo}/collaborators/{username}`), managing their invitations, and setting a repository's Actions permissions all sit behind this one. **This is the grant to add if the App already exists for `github-monitor`.** |
+| **Administration** | **Read & write** | Creating a repository from a template (`POST /repos/{owner}/{repo}/generate`), adding a student as a collaborator (`PUT /repos/{owner}/{repo}/collaborators/{username}`), managing their invitations, setting a repository's Actions permissions, and applying branch protection all sit behind this one. **This is the grant to add if the App already exists for `github-monitor`.** |
 | **Metadata** | Read-only | Mandatory for every App. Also backs `GET /repos/{owner}/{repo}`, which the portal uses to check the template exists and is marked as a template. |
-| **Contents** | Read-only | Reading the template repository. `github-monitor` needs **Read & write** here for its own work. |
-| Pull requests | Read & write | `github-monitor` only: comments, merges, assignees. |
-| Issues | Read & write | `github-monitor` only: issue comments carry the `/ahk ok` chatops. |
-| Actions | Read-only | `github-monitor` only: counting workflow runs against the course threshold. |
+| **Contents** | Read & write | Reading the template repository, and reading `.github/ahk-monitor.yml` and `neptun.txt` out of each student repository. |
+| Pull requests | Read & write | Comments, merges, assignees — the `/ahk ok` command approves and merges. |
+| Issues | Read & write | Issue comments carry the `/ahk ok` chatops and every warning the rules post. |
+| Actions | Read-only | Counting workflow runs against the course's threshold. |
 
 Note that **Administration: write is broad** — it also permits changing repository settings and deleting
 repositories. There is no narrower permission that covers creating repositories and adding collaborators, so
@@ -109,16 +113,44 @@ Each call runs as the App's *installation* on the course's organization:
 The App JWT never leaves step 1–3; every repository operation uses the installation token. The code is
 `Ahk.Web.Services/GitHub/CourseGitHubAppTokenProvider.cs`.
 
+Note the installation is looked up **from the organization**, not from the `installation.id` a webhook delivery
+carries. The course is resolved *by* organization, so the two are the same installation by construction — and
+deriving a credential from a payload field would be a weaker path to the same answer. A mismatch is logged as a
+warning and otherwise ignored.
+
+## Delivery responses
+
+What the receiver answers, and what each status means when you read it in **Advanced → Recent Deliveries**.
+Only the first two are normal.
+
+| Status | Body | Meaning |
+|---|---|---|
+| `200` | one line per handler | Delivered and processed. Read the lines: `no action needed` and `action not of interest` are both normal, and `event handler disabled: no ahk-monitor.yml or disabled` means the repository is not opted in. |
+| `202` | `repository '…' is not mapped to a course` | The repository's organization (and repo-name prefix) match no course. Normal for repositories in the organization that are not coursework. |
+| `202` | `GitHub integration is not configured` / `is turned off` | The course exists but has no GitHub integration saved, or it is switched off. **A course switched off silently ignores `/ahk ok`.** |
+| `400` | `Payload signature not valid` | The secret stored on the course does not match the one on the App. |
+| `400` | `X-GitHub-Event header missing` etc. | Something other than GitHub is posting, or the webhook is configured with the wrong content type. |
+| `500` | `GitHub secret not configured` | The course has an organization but no webhook secret stored. Finish *Storing the credentials* below. |
+| `500` | `GitHub App ID/Token not configured` | The App id or private key is missing or invalid, so no installation token could be minted. |
+
+Benign cases answer `202` rather than an error on purpose: GitHub colours every non-2xx red, and a delivery log
+full of red is a log nobody reads.
+
 ## Template repository requirements
 
 An assignment points at a template repository in the course's organization. It must:
 
 - be marked **Template repository** in its Settings (`is_template: true`) — without this GitHub refuses the
   generate call outright;
-- contain the evaluator workflow under `.github/workflows/`;
-- contain `.github/ahk-monitor.yml` with `enabled: true`, or `github-monitor` will ignore every event from the
-  repositories generated from it;
+- contain the evaluator workflow under `.github/workflows/`, with `AHK_APPURL` pointing at the portal (see
+  [ci-callback.md](ci-callback.md));
+- contain `.github/ahk-monitor.yml` with `enabled: true`, or **every event from repositories generated from it
+  is ignored**;
 - have the branch students should start from as its **default branch** — only that branch is copied.
+
+⚠️ The opt-in answer is cached for **12 hours** per repository. Adding `ahk-monitor.yml` to a repository that
+has already been seen therefore takes up to half a day to take effect; restarting the application is the only
+faster flush. This is the most common reason a correctly wired webhook appears to do nothing.
 
 The assignment editor checks the first point when you save, and reports it as a warning rather than blocking:
 an assignment may legitimately be drafted before its template exists.
@@ -165,3 +197,37 @@ Specific failures:
 - **“limited to selected repositories”** — change the installation's repository access to *All repositories*.
 - **Student says the repository 404s** — they almost certainly have an unaccepted invitation. Point them at
   `/my` on the portal.
+- **Every delivery is `405` with `Allow: GET, HEAD`** — the webhook URL points at the portal but not at
+  `/api/integrations/github`. The request fell through to the Angular single-page app's fallback route, which
+  only answers GET. Check the path, including that it has no trailing slash.
+- **Deliveries are `200` but nothing happens** — read the response body. `no ahk-monitor.yml or disabled` means
+  the repository is not opted in; mind the 12-hour cache noted above.
+- **No deliveries at all** — the App's installation is limited to *selected repositories*, so a repository
+  created after the installation falls outside it. Or the event is not one of the five subscribed.
+
+## Cutover per course
+
+⚠️ **A GitHub App has exactly one webhook URL, so for a single course this is a flip, not a parallel run.**
+Courses migrate independently — course A can stay on `github-monitor` while course B is on the portal — but one
+course cannot be served by both at once. Doing that would need a second App registration or an
+organization-level webhook.
+
+1. Store the App id, private key, webhook secret, `WorkflowRunThreshold` and **Enabled** under
+   **Site administration → Courses → *course* → GitHub integration**.
+2. Check all four health checks are green on **Site administration → Health**.
+3. Make sure the course has a non-revoked CI callback token (mint one, or import the legacy one — the
+   `Ahk.Web.Import` tool already imports tokens).
+4. Import the course's historical Cosmos data, if that has not been done.
+5. **Flip** the App's webhook URL to `https://ahk.aut.bme.hu/api/integrations/github` and trim the subscribed
+   events to the five listed above. Use the **Redeliver** button on a recent delivery to test without waiting
+   for a student.
+6. Smoke test on a scratch repository in the organization: push a branch (a branch event should appear under
+   the course's dashboard), open a pull request, and comment `/ahk ok 5` as an organization member — the pull
+   request should be approved and merged, and a grade should appear.
+7. Update the course's **template** repositories' evaluator workflow: `AHK_APPURL`, `AHK_APPTOKEN` and
+   `AHK_APPSECRET` (see [ci-callback.md](ci-callback.md)).
+8. ⚠️ **Student repositories already generated keep the old workflow** and go on posting results to
+   `grade-management`. Either leave that deployment running until the cohort finishes, or push a workflow
+   update across the existing student repositories. Decide this *before* step 7 and record the decision.
+9. Leave `github-monitor` and `grade-management` deployed until every course has migrated and the semester has
+   closed.

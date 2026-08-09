@@ -4,7 +4,13 @@
 
 Please refer to <https://akosdudas.github.io/automated-homework-evaluation/> for the concept and details.
 
-## Applications
+## The portal
+
+**[ahk-backend](./ahk-backend)** + **[ahk-frontend](./ahk-frontend)**: a single ASP.NET Core (.NET 10) site with an Angular front end, at `ahk.aut.bme.hu`, replacing the per-course Azure deployments below with one multi-course installation. It now hosts every entry point the original system had — the GitHub webhook receiver, the `/ahk ok` chatops commands and the HMAC-verified CI callback — as well as taking over from GitHub Classroom for handing out student repositories, so a course can run on it with **no Azure Functions**.
+
+The four applications below remain deployed for courses that have not migrated yet; courses move one at a time. See [Cutover per course](./ahk-backend/docs/github-app.md#cutover-per-course).
+
+## Applications (the original system)
 
 **[GitHub Monitor](./github-monitor)**: An Azure function written in .NET with an http webhook registered as a GitHub Application that manages the workflow of homework submissions. Performs automatic actions on repositories acting as submissions and monitors proper usage of pull requests.
 
