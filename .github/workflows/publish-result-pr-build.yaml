@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "publish-results-pr/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
