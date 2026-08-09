@@ -101,7 +101,7 @@ dotnet test --filter "Name=SomeTestMethod"     # single test method
 go build
 go test ./... -test.v
 ```
-Ships as a container (`Dockerfile`) published to `ghcr.io/akosdudas/ahk-publish-results-pr`, invoked as a GitHub Action step. `.devcontainer` is provided for development.
+Ships as a container (`Dockerfile`) published to `ghcr.io/bmeaut/ahk-publish-results-pr` (moved out of a former employee's personal namespace; **student repos generated before the move still reference `ghcr.io/akosdudas/...`** and need their `uses:` line edited), invoked as a GitHub Action step. `.devcontainer` is provided for development.
 
 ### ahk-backend (.NET 10)
 ```bash

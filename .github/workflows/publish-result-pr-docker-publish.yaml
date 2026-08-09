@@ -1,19 +1,84 @@
 name: Publish Result PR - Docker publish
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Moving tag to publish. Student repositories resolve this at run time, so publishing it changes every course at once."
+        type: string
+        default: "v1"
+
+env:
+  # Published under bmeaut, the organization that owns this source.
+  #
+  # It previously lived in a personal namespace (ghcr.io/akosdudas/...) belonging to someone who has since
+  # left the university, so the account — and with it every course's evaluation pipeline — was outside our
+  # control. Images built here are course-critical; they belong to the organization, not to a person.
+  #
+  # ⚠️ Student repositories generated before this move still reference the old image and keep working until
+  # that account's package disappears. Migrating them means editing the `uses:` line in each repository's
+  # workflow — the same pass that sets AHK_APPURL. See ahk-backend/docs/ci-callback.md.
+  IMAGE: ghcr.io/bmeaut/ahk-publish-results-pr
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
+    # GITHUB_TOKEN is read-only by default in many organizations; without packages:write the push fails
+    # with a permission error that reads like an authentication problem.
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Build and push to GHCR
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # The moving tag is what every student repository resolves at run time, so overwriting it changes
+      # behaviour everywhere simultaneously and there is no built-in way back. Park the outgoing image
+      # under a fixed name first, so a bad publish is one `docker buildx imagetools create` from undone.
+      - name: Preserve the outgoing image as :${{ inputs.tag }}-previous
+        run: |
+          if docker pull "$IMAGE:${{ inputs.tag }}"; then
+            docker tag "$IMAGE:${{ inputs.tag }}" "$IMAGE:${{ inputs.tag }}-previous"
+            docker push "$IMAGE:${{ inputs.tag }}-previous"
+            echo "Previous image preserved as $IMAGE:${{ inputs.tag }}-previous"
+          else
+            echo "No existing $IMAGE:${{ inputs.tag }} — nothing to preserve (first publish under this namespace)."
+          fi
+
+      - name: Build
         working-directory: publish-results-pr
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
-          docker build -t ghcr.io/akosdudas/ahk-publish-results-pr:v1 .
-          docker push ghcr.io/akosdudas/ahk-publish-results-pr:v1
-          docker logout https://ghcr.io
+          # Also tagged with the commit, which is immutable: it gives every publish a permanent rollback
+          # point, unlike the moving tag that student repositories follow.
+          docker build \
+            -t "$IMAGE:${{ inputs.tag }}" \
+            -t "$IMAGE:sha-${GITHUB_SHA::7}" \
+            .
+
+      - name: Push
+        run: |
+          docker push "$IMAGE:${{ inputs.tag }}"
+          docker push "$IMAGE:sha-${GITHUB_SHA::7}"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published"
+            echo ""
+            echo "| Tag | Purpose |"
+            echo "|---|---|"
+            echo "| \`$IMAGE:${{ inputs.tag }}\` | Moving tag student repositories follow |"
+            echo "| \`$IMAGE:sha-${GITHUB_SHA::7}\` | Immutable, this commit |"
+            echo "| \`$IMAGE:${{ inputs.tag }}-previous\` | The image this run replaced |"
+            echo ""
+            echo "Roll back with:"
+            echo ""
+            echo '```'
+            echo "docker buildx imagetools create -t $IMAGE:${{ inputs.tag }} $IMAGE:${{ inputs.tag }}-previous"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -26,7 +26,11 @@ The extension of image files (with leading dot). When specified, the images are 
 
 #### `AHK_APPURL`
 
-The URL of the _grade management_ application's webhook accepting the results for storing in a database. If not specified, publishing the data to the webhook is disabled.
+The URL of the webhook accepting the results for storing in a database — today `https://ahk.aut.bme.hu/api/integrations/evaluation-result` (see `ahk-backend/docs/ci-callback.md`).
+
+⚠️ **Unlike the two settings below, omitting this does not disable publishing.** When the input is absent the application falls back to a built-in default URL, so a workflow that leaves it out silently posts to whatever that default happens to be. Setting it to an empty string *does* disable publishing, because publishing requires all three of URL, token and secret to be non-empty.
+
+⚠️ The URL is part of the request signature, so it must match the receiving endpoint byte for byte — `https`, no trailing slash. Case is the only forgiving part.
 
 #### `AHK_APPTOKEN`
 
@@ -52,7 +56,7 @@ jobs:
         run: do-eval.sh
 
       - name: Publish results
-        uses: docker://ghcr.io/akosdudas/ahk-publish-results-pr:v1
+        uses: docker://ghcr.io/bmeaut/ahk-publish-results-pr:v1
         with:
           AHK_RESULTFILE: "result.txt"
           AHK_IMAGEEXT: ".png"

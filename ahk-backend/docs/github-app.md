@@ -66,7 +66,7 @@ made itself. The health check reports this as a warning before it happens.
 
 ## Permissions
 
-Set these under **Repository permissions**. Organization permissions are not needed at all.
+Set these under **Repository permissions**, plus the one **Organization permission** below.
 
 | Permission | Level | Why |
 |---|---|---|
@@ -76,6 +76,12 @@ Set these under **Repository permissions**. Organization permissions are not nee
 | Pull requests | Read & write | Comments, merges, assignees — the `/ahk ok` command approves and merges. |
 | Issues | Read & write | Issue comments carry the `/ahk ok` chatops and every warning the rules post. |
 | Actions | Read-only | Counting workflow runs against the course's threshold. |
+
+Under **Organization permissions**:
+
+| Permission | Level | Why |
+|---|---|---|
+| **Members** | Read-only | `GET /orgs/{org}/members/{login}` is how the portal decides who may grade. **`/ahk ok` is refused for everyone without this**, and the workflow-run rule cannot tell staff from students, so it warns staff too. |
 
 Note that **Administration: write is broad** — it also permits changing repository settings and deleting
 repositories. There is no narrower permission that covers creating repositories and adding collaborators, so
@@ -197,6 +203,10 @@ Specific failures:
 - **“limited to selected repositories”** — change the installation's repository access to *All repositories*.
 - **Student says the repository 404s** — they almost certainly have an unaccepted invitation. Point them at
   `/my` on the portal.
+- **`/ahk ok` answers "@you is not allowed to do that"**, even for an organization **owner** — the portal asks GitHub whether the commenting login is a member of the organization that owns the repository, and got "no". Usually this is a *visibility* problem rather than a membership one: an App installation is not itself an organization member, so without **Organization → Members: Read** GitHub answers as it would for any outsider and only confirms **public** memberships. Anyone whose membership is *Private* (GitHub's default) then reads as a non-member.
+  Grant the App **Members: Read** and have an owner **approve** the added permission on the installation page. To confirm the diagnosis in seconds without touching the App, set your own membership to Public at `https://github.com/orgs/<org>/people` and try again.
+  Other causes, if that is not it: the person really is an **outside collaborator** rather than a member (commenting on a pull request does not imply membership); or the repository lives under a *user* account rather than an organization, in which case grading can never be authorized.
+  ⚠️ The answer is cached for **one hour** per org+login. After any of these fixes, restart the application to flush it rather than waiting.
 - **Every delivery is `405` with `Allow: GET, HEAD`** — the webhook URL points at the portal but not at
   `/api/integrations/github`. The request fell through to the Angular single-page app's fallback route, which
   only answers GET. Check the path, including that it has no trailing slash.
