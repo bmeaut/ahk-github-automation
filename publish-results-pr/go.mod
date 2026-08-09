@@ -1,5 +1,5 @@
 module ahk/publishresultpr
-
+ 
 go 1.17
 
 require github.com/google/go-github/v39 v39.0.0
