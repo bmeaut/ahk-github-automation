@@ -1,0 +1,269 @@
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Site administration</span>
+      <h1>Users</h1>
+      <p class="lede">
+        Accounts that can sign in. BME accounts appear here after their first sign-on; local accounts are
+        created below.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn primary" (click)="adding.set(true)">Add local account</button>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+  @if (saved(); as s) {
+    <p class="notice success">{{ s }}</p>
+  }
+
+  @if (adding()) {
+    <div class="card">
+      <header>
+        <div class="grow">
+          <h2>Add local account</h2>
+          <p>For people without a BME account, or for service logins.</p>
+        </div>
+      </header>
+      <form (ngSubmit)="createUser()" #f="ngForm">
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label for="new-username">Username</label>
+              <input id="new-username" name="userName" type="text" [(ngModel)]="newUserName" required />
+            </div>
+            <div class="field">
+              <label for="new-display">Display name</label>
+              <input id="new-display" name="displayName" type="text" [(ngModel)]="newDisplayName" />
+            </div>
+            <div class="field">
+              <label for="new-neptun">Neptun code</label>
+              <input id="new-neptun" name="neptunCode" type="text" class="mono" [(ngModel)]="newNeptun" maxlength="32" />
+              <span class="hint">Optional. Must be unique; links an eduID login to this account.</span>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="new-email">Email</label>
+              <input id="new-email" name="email" type="email" [(ngModel)]="newEmail" />
+            </div>
+            <div class="field">
+              <label for="new-password">Password</label>
+              <div class="password-row">
+                <input
+                  id="new-password"
+                  name="password"
+                  type="text"
+                  class="mono"
+                  [(ngModel)]="newPassword"
+                  required
+                  minlength="6"
+                  autocomplete="off"
+                />
+                <button type="button" class="btn quiet" (click)="generatePassword()">Generate</button>
+              </div>
+              <span class="hint">
+                At least 6 characters, shown in the clear so you can copy it. Tell the person to change it after
+                signing in.
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <button type="submit" class="btn primary" [disabled]="f.invalid || savingNew()">
+            {{ savingNew() ? 'Creating…' : 'Create account' }}
+          </button>
+          <button type="button" class="btn quiet" (click)="cancelAdding()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <div class="card">
+    <header>
+      <input
+        type="search"
+        name="search"
+        [(ngModel)]="search"
+        (input)="onSearchChange()"
+        placeholder="Search name, username, email or Neptun code"
+        aria-label="Search users"
+        class="search"
+      />
+      <select
+        name="courseFilter"
+        [(ngModel)]="courseFilter"
+        (change)="onSearchChange()"
+        aria-label="Filter by course"
+        class="filter"
+      >
+        <option value="">All courses</option>
+        @for (c of courses(); track c.id) {
+          <option [value]="c.id">{{ c.slug }}</option>
+        }
+      </select>
+      <span class="grow"></span>
+      <span class="muted">
+        @if (total() > 0) {
+          {{ showingRange().from }}–{{ showingRange().to }} of {{ total() }}
+        }
+      </span>
+    </header>
+
+    @if (loading()) {
+      <p class="empty">Loading users…</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Sign-in</th>
+              <th>Site role</th>
+              <th>Courses</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users(); track u.id) {
+              <tr>
+                <td>
+                  <span class="mono">{{ u.userName }}</span>
+                  @if (u.displayName) {
+                    <div class="muted">{{ u.displayName }}</div>
+                  }
+                  @if (u.email) {
+                    <div class="muted">{{ u.email }}</div>
+                  }
+                </td>
+                <td>
+                  @if (u.isExternal) {
+                    <span class="badge">BME account</span>
+                  } @else {
+                    <span class="badge">Password</span>
+                  }
+                  @if (u.isLockedOut) {
+                    <div><span class="badge bad">Locked out</span></div>
+                  }
+                  @if (u.neptunCode) {
+                    <div class="muted mono">{{ u.neptunCode }}</div>
+                  }
+                </td>
+                <td>
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      [checked]="isSiteAdmin(u)"
+                      (change)="toggleSiteAdmin(u, $any($event.target).checked)"
+                      [attr.aria-label]="'Site admin: ' + u.userName"
+                    />
+                    Site admin
+                  </label>
+                </td>
+                <td>
+                  @if (u.courses?.length) {
+                    <div class="course-tags">
+                      @for (c of u.courses; track c.courseId) {
+                        <span class="badge" [class.accent]="c.role === 'Admin'">
+                          {{ c.slug }}
+                          @if (c.role === 'Admin') {
+                            · admin
+                          }
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="muted">None</span>
+                  }
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn quiet" (click)="toggleExpanded(u)">
+                    {{ expanded() === u.id ? 'Close' : 'Manage' }}
+                  </button>
+                </td>
+              </tr>
+
+              @if (expanded() === u.id) {
+                <tr class="drawer">
+                  <td colspan="5">
+                    <div class="drawer-inner">
+                      <div class="assign">
+                        <h3>Course assignments</h3>
+                        @if (u.courses?.length) {
+                          <ul class="assigned">
+                            @for (c of u.courses; track c.courseId) {
+                              <li>
+                                <span class="mono">{{ c.slug }}</span>
+                                <span class="muted">{{ c.name }}</span>
+                                <span class="spacer"></span>
+                                <select
+                                  [value]="c.role"
+                                  (change)="changeCourseRole(u, c.courseId ?? 0, $any($event.target).value)"
+                                  [attr.aria-label]="'Role in ' + c.slug"
+                                >
+                                  <option value="Instructor">Instructor</option>
+                                  <option value="Admin">Course admin</option>
+                                </select>
+                                <button type="button" class="btn danger" (click)="unassign(u, c.courseId ?? 0)">
+                                  Remove
+                                </button>
+                              </li>
+                            }
+                          </ul>
+                        } @else {
+                          <p class="muted">Not assigned to any course.</p>
+                        }
+
+                        @if (assignableCourses(u).length > 0) {
+                          <div class="add-course">
+                            <select #courseSelect aria-label="Course to assign">
+                              <option value="">Choose a course…</option>
+                              @for (c of assignableCourses(u); track c.id) {
+                                <option [value]="c.id">{{ c.slug }} — {{ c.name }}</option>
+                              }
+                            </select>
+                            <button type="button" class="btn" (click)="assign(u, courseSelect.value, 'Instructor')">
+                              Add as instructor
+                            </button>
+                            <button type="button" class="btn" (click)="assign(u, courseSelect.value, 'Admin')">
+                              Add as course admin
+                            </button>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="account">
+                        <h3>Account</h3>
+                        @if (u.affiliation) {
+                          <p class="muted">Affiliation: <span class="mono">{{ u.affiliation }}</span></p>
+                        }
+                        <button type="button" class="btn danger" (click)="deleteUser(u)">Delete account</button>
+                        <p class="muted small">
+                          Deleting removes the account and its course assignments. Grades already recorded stay.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty">No account matches this search.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (total() > users().length) {
+        <div class="card-foot">
+          <button type="button" class="btn" (click)="page(-1)" [disabled]="skip() === 0">Previous</button>
+          <button type="button" class="btn" (click)="page(1)" [disabled]="showingRange().to >= total()">Next</button>
+        </div>
+      }
+    }
+  </div>
+</section>

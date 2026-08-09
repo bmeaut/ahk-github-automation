@@ -1,0 +1,110 @@
+/* The one loud element in the product: the integration drawn as a chain of chevrons, each link tinted by its
+   check. Links overlap by the width of their notch so they read as one continuous run. */
+
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0;
+  font-family: var(--font-ui);
+}
+
+.link {
+  --notch: 0.6rem;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.0625rem;
+  min-width: 8.5rem;
+  padding: 0.375rem 0.75rem 0.375rem calc(0.75rem + var(--notch));
+  margin-right: calc(var(--notch) * -1 + 2px);
+  background: var(--idle-wash);
+  color: var(--ink-2);
+  clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% 50%, calc(100% - var(--notch)) 100%, 0 100%, var(--notch) 50%);
+}
+
+/* The run has a flat head, so the first link does not point into empty space. */
+.link:first-child {
+  padding-left: 0.75rem;
+  clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% 50%, calc(100% - var(--notch)) 100%, 0 100%);
+}
+
+.link.ok {
+  background: var(--ok-wash);
+  color: var(--ok);
+}
+
+.link.warn {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+.link.bad {
+  background: var(--bad-wash);
+  color: var(--bad);
+}
+
+.link-title {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.link-state {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Below ~40rem the chevrons would be unreadable; stack them as plain bars instead. */
+@media (max-width: 40rem) {
+  .link,
+  .link:first-child {
+    flex: 1 1 100%;
+    margin-right: 0;
+    margin-bottom: 2px;
+    padding-left: 0.75rem;
+    clip-path: none;
+    border-left: 3px solid currentcolor;
+  }
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) 1fr;
+  gap: 0.4375rem 1rem;
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.detail dt {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  font-family: var(--font-ui);
+  color: var(--ink-2);
+}
+
+.detail dd {
+  margin: 0;
+}
+
+.detail .fix {
+  display: block;
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  margin-top: 0.125rem;
+}
+
+@media (max-width: 34rem) {
+  .detail {
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
+
+  .detail dd {
+    margin-bottom: 0.625rem;
+  }
+}

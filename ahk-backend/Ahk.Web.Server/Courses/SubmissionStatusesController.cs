@@ -1,0 +1,30 @@
+using Ahk.Web.Data.Entities;
+using Ahk.Web.Server.CourseContext;
+using Ahk.Web.Services.StatusTracking;
+using Ahk.Web.Services.StatusTracking.Dto;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Ahk.Web.Server.Courses;
+
+/// <summary>
+/// Course-scoped submission status list — the port of the legacy <c>list-statuses/{*repoprefix}</c> function,
+/// with the repository prefix replaced by the {course} route segment.
+/// </summary>
+[ApiController]
+[Route("api/{course}/statuses")]
+[Authorize(Policy = CourseMembershipRequirement.PolicyName)]
+public sealed class SubmissionStatusesController : ControllerBase
+{
+    private readonly IStatusTrackingService statusTracking;
+
+    public SubmissionStatusesController(IStatusTrackingService statusTracking) => this.statusTracking = statusTracking;
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<RepositoryStatus>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<RepositoryStatus>>> List(CancellationToken cancellationToken)
+    {
+        var course = (Course)HttpContext.Items[CourseResolutionMiddleware.CourseItemKey]!;
+        return Ok(await statusTracking.ListStatusesAsync(course.Id, cancellationToken));
+    }
+}

@@ -1,0 +1,6 @@
+{
+  "_comment": "Copy this file to deploy.local.json (gitignored) and fill in real values. Never commit deploy.local.json.",
+  "deploymentPath": "",
+  "databaseConnectionString": "",
+  "oidcClientSecret": ""
+}

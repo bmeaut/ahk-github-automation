@@ -1,0 +1,77 @@
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Site administration</span>
+      <h1>Health</h1>
+      <p class="lede">
+        Every course's integration, checked now. The GitHub access token is verified against GitHub itself; the
+        rest is read from what is stored.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn primary" (click)="run()" [disabled]="loading()">
+        {{ loading() ? 'Checking…' : 'Run all checks' }}
+      </button>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+
+  @if (!loading() && reports().length > 0) {
+    <div class="tally">
+      <div class="tile" [class.bad]="counts().failed > 0">
+        <span class="n">{{ counts().failed }}</span>
+        <span class="l">Failing</span>
+      </div>
+      <div class="tile" [class.warn]="counts().warning > 0">
+        <span class="n">{{ counts().warning }}</span>
+        <span class="l">Need attention</span>
+      </div>
+      <div class="tile">
+        <span class="n">{{ counts().notConfigured }}</span>
+        <span class="l">Not set up</span>
+      </div>
+      <div class="tile" [class.ok]="counts().healthy > 0">
+        <span class="n">{{ counts().healthy }}</span>
+        <span class="l">Passing</span>
+      </div>
+      @if (checkedAt(); as at) {
+        <span class="stamp">Checked {{ at | date: 'medium' }}</span>
+      }
+    </div>
+  }
+
+  @if (loading() && reports().length === 0) {
+    <p class="empty">Running checks against every course…</p>
+  }
+
+  @for (r of sorted(); track r.courseId) {
+    <div class="card">
+      <header>
+        <span
+          class="dot"
+          [class.ok]="tone(r.status) === 'ok'"
+          [class.warn]="tone(r.status) === 'warn'"
+          [class.bad]="tone(r.status) === 'bad'"
+        ></span>
+        <div class="grow">
+          <h2>
+            <a [routerLink]="['/admin/courses', r.courseId]">{{ r.courseSlug }}</a>
+            <span class="course-name">{{ r.courseName }}</span>
+          </h2>
+          <p>{{ summaryFor(r) }}</p>
+        </div>
+        <a class="btn quiet" [routerLink]="['/admin/courses', r.courseId]">Fix in settings</a>
+      </header>
+      <div class="card-body">
+        <app-health-chain [checks]="r.checks ?? []" [detailed]="true" />
+      </div>
+    </div>
+  } @empty {
+    @if (!loading()) {
+      <p class="empty">There are no courses to check yet.</p>
+    }
+  }
+</section>

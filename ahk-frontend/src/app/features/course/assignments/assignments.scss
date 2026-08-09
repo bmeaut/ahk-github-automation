@@ -1,0 +1,114 @@
+.card + .card {
+  margin-top: 1.25rem;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.125rem;
+}
+
+/* An archived assignment stays legible but visibly steps back — it is history, not a current handout. */
+.assignment.archived {
+  header h2,
+  .card-body {
+    opacity: 0.72;
+  }
+}
+
+/* The invite link block: the one thing an instructor comes to this screen to get. */
+.invite {
+  margin-top: 1rem;
+
+  > label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-family: var(--font-ui);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .hint {
+    display: block;
+    margin-top: 0.375rem;
+    font-family: var(--font-ui);
+    font-size: 0.6875rem;
+    color: var(--ink-2);
+  }
+}
+
+.invite-row {
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.8125rem;
+  }
+
+  .btn {
+    flex: none;
+    min-width: 5.5rem;
+    justify-content: center;
+  }
+}
+
+.meta {
+  margin: 1rem 0 0;
+  font-size: 0.75rem;
+}
+
+/* The template field with its Validate button attached, so the action reads as part of the field. */
+.input-with-action {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .btn {
+    flex: none;
+    justify-content: center;
+  }
+}
+
+/* A crimson-outlined button — clearly a control, not the transparent "quiet" it replaced, but subordinate to
+   the solid crimson Save so the two never compete. */
+.btn.accent {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-wash);
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+  }
+}
+
+/* Prose-weight toggle for the acceptance list — a button here would compete with the card's real actions. */
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--link);
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--link-hover);
+  }
+}
+
+.table-wrap {
+  margin-top: 0.875rem;
+}

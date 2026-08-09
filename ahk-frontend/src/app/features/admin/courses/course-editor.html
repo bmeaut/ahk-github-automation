@@ -1,0 +1,427 @@
+@if (loading()) {
+  <p class="empty">Loading course…</p>
+} @else if (course(); as c) {
+  <section class="page">
+    <div class="page-head">
+      <div class="grow">
+        <span class="eyebrow"><a routerLink="/admin/courses">Courses</a> / {{ c.slug }}</span>
+        <h1>{{ c.name }}</h1>
+        <p class="lede">
+          {{ c.studentCount }} students, {{ c.submissionCount }} submissions. Created
+          {{ c.createdAt | date: 'longDate' }}.
+        </p>
+      </div>
+      <div class="btn-row">
+        <a class="btn" [routerLink]="['/', c.slug, 'dashboard']">Open submissions</a>
+      </div>
+    </div>
+
+    @if (error(); as e) {
+      <p class="notice error">{{ e }}</p>
+    }
+    @if (saved(); as s) {
+      <p class="notice success">{{ s }}</p>
+    }
+
+    <!-- Health -->
+    <div class="card">
+      <header>
+        <div class="grow">
+          <h2>Integration health</h2>
+          <p>Checked against the settings below, and against GitHub itself for the access token.</p>
+        </div>
+        <button type="button" class="btn" (click)="runHealthCheck()" [disabled]="checking()">
+          {{ checking() ? 'Checking…' : 'Run checks' }}
+        </button>
+      </header>
+      <div class="card-body">
+        @if (report(); as r) {
+          <app-health-chain [checks]="r.checks ?? []" [detailed]="true" />
+        } @else if (checking()) {
+          <p class="muted">Running checks…</p>
+        } @else {
+          <p class="muted">The checks could not be run.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <form (ngSubmit)="saveSettings()" #settingsForm="ngForm">
+      <div class="card">
+        <header>
+          <div class="grow">
+            <h2>Course settings</h2>
+            <p>How this course is identified, and which repositories belong to it.</p>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label for="slug">Slug</label>
+              <input id="slug" name="slug" type="text" [(ngModel)]="slug" required pattern="[a-z0-9-]{2,64}" />
+              @if (slugChanged()) {
+                <span class="hint warn-text">
+                  Changing the slug changes every URL for this course. Existing links will stop working.
+                </span>
+              } @else {
+                <span class="hint">Used in the address: /{{ c.slug }}/dashboard</span>
+              }
+            </div>
+            <div class="field">
+              <label for="name">Course name</label>
+              <input id="name" name="name" type="text" [(ngModel)]="name" required />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="org">GitHub organization</label>
+              <input id="org" name="organization" type="text" [(ngModel)]="organization" placeholder="ahk-viaubc01" />
+              <span class="hint">Deliveries from this organization are routed to this course.</span>
+            </div>
+            <div class="field">
+              <label for="prefix">Repository name prefix</label>
+              <input id="prefix" name="repoPrefix" type="text" [(ngModel)]="repoPrefix" placeholder="viaubc01" />
+              <span class="hint">Only needed when one organization hosts several courses.</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <button type="submit" class="btn primary" [disabled]="settingsForm.invalid || savingSettings()">
+            {{ savingSettings() ? 'Saving…' : 'Save settings' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- GitHub integration -->
+    <form (ngSubmit)="saveIntegration()" #integrationForm="ngForm">
+      <div class="card">
+        <header>
+          <div class="grow">
+            <h2>GitHub integration</h2>
+            <p>Credentials this course uses to talk to GitHub. Stored values are never shown again.</p>
+          </div>
+          <a class="btn" routerLink="/admin/help/github" [queryParams]="{ org: c.gitHubOrganization }">
+            Setup guide
+          </a>
+        </header>
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label for="app-id">GitHub App ID</label>
+              <input id="app-id" name="appId" type="text" [(ngModel)]="appId" placeholder="123456" />
+            </div>
+            <div class="field">
+              <label for="threshold">Workflow run limit</label>
+              <input
+                id="threshold"
+                name="threshold"
+                type="number"
+                min="1"
+                max="1000"
+                [(ngModel)]="workflowRunThreshold"
+                required
+              />
+              <span class="hint">Runs a student may trigger per repository before the monitor steps in.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="token">Access token</label>
+            <input
+              id="token"
+              name="accessToken"
+              type="password"
+              [(ngModel)]="accessToken"
+              autocomplete="off"
+              [disabled]="isClearing('accessToken')"
+              [placeholder]="c.gitHubConfig?.hasAccessToken ? 'Stored — type to replace' : 'ghp_… or github_pat_…'"
+            />
+            <span class="hint">
+              @if (c.gitHubConfig?.hasAccessToken) {
+                A token ending <span class="mono">…{{ c.gitHubConfig?.accessTokenHint }}</span> is stored.
+                <button type="button" class="linkish" (click)="toggleClear('accessToken')">
+                  {{ isClearing('accessToken') ? 'Keep it' : 'Remove it' }}
+                </button>
+              } @else {
+                Needs the read:org and repo scopes. This is the token the health check verifies.
+              }
+            </span>
+          </div>
+
+          <div class="field">
+            <label for="webhook-secret">Webhook secret</label>
+            <input
+              id="webhook-secret"
+              name="webhookSecret"
+              type="password"
+              [(ngModel)]="webhookSecret"
+              autocomplete="off"
+              [disabled]="isClearing('webhookSecret')"
+              [placeholder]="c.gitHubConfig?.hasWebhookSecret ? 'Stored — type to replace' : 'Secret from the GitHub App'"
+            />
+            <span class="hint">
+              @if (c.gitHubConfig?.hasWebhookSecret) {
+                A secret is stored.
+                <button type="button" class="linkish" (click)="toggleClear('webhookSecret')">
+                  {{ isClearing('webhookSecret') ? 'Keep it' : 'Remove it' }}
+                </button>
+              } @else {
+                Validates the X-Hub-Signature-256 header on incoming deliveries.
+              }
+            </span>
+          </div>
+
+          <div class="field">
+            <label for="private-key">App private key</label>
+            <textarea
+              id="private-key"
+              name="appPrivateKey"
+              rows="4"
+              [(ngModel)]="appPrivateKey"
+              autocomplete="off"
+              [disabled]="isClearing('appPrivateKey')"
+              [placeholder]="
+                c.gitHubConfig?.hasAppPrivateKey ? 'Stored — paste a new key to replace' : '-----BEGIN RSA PRIVATE KEY-----'
+              "
+            ></textarea>
+            <span class="hint">
+              @if (c.gitHubConfig?.hasAppPrivateKey) {
+                A private key is stored.
+                <button type="button" class="linkish" (click)="toggleClear('appPrivateKey')">
+                  {{ isClearing('appPrivateKey') ? 'Keep it' : 'Remove it' }}
+                </button>
+              } @else {
+                Used to authenticate as the GitHub App installation for this course.
+              }
+            </span>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" name="enabled" [(ngModel)]="integrationEnabled" />
+            Accept webhooks for this course
+          </label>
+        </div>
+        <div class="card-foot">
+          <button type="submit" class="btn primary" [disabled]="integrationForm.invalid || savingIntegration()">
+            {{ savingIntegration() ? 'Saving…' : 'Save integration' }}
+          </button>
+          @if (c.gitHubConfig?.updatedAt) {
+            <span class="muted">Last changed {{ c.gitHubConfig?.updatedAt | date: 'medium' }}</span>
+          }
+        </div>
+      </div>
+    </form>
+
+    <!-- CI callback tokens -->
+    <div class="card">
+      <header>
+        <div class="grow">
+          <h2>CI callback tokens</h2>
+          <p>The evaluator workflow signs its results with one of these. Revoke a token to cut it off.</p>
+        </div>
+      </header>
+
+      @if (issuedToken(); as t) {
+        <div class="card-body issued">
+          <p class="notice success">
+            Token created. Its secret is shown here, and stays available — you can copy it again from the list
+            below at any time.
+          </p>
+          <dl class="kv">
+            <dt>Token</dt>
+            <dd class="mono">{{ t.token }}</dd>
+            <dt>Secret</dt>
+            <dd class="mono">{{ t.secret }}</dd>
+          </dl>
+          <button type="button" class="btn quiet" (click)="dismissIssuedToken()">Done</button>
+        </div>
+      }
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Description</th>
+              <th>Created</th>
+              <th>State</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of c.webhookTokens; track t.id) {
+              <tr>
+                <td class="mono">
+                  {{ t.token }}
+                  @if (revealed().has(t.id ?? 0)) {
+                    <div class="secret-reveal">{{ t.secret }}</div>
+                  }
+                </td>
+                <td>{{ t.description || '—' }}</td>
+                <td class="muted">{{ t.createdAt | date: 'yyyy-MM-dd' }}</td>
+                <td>
+                  @if (t.revokedAt) {
+                    <span class="badge bad">Revoked {{ t.revokedAt | date: 'yyyy-MM-dd' }}</span>
+                  } @else {
+                    <span class="badge ok">Active</span>
+                  }
+                </td>
+                <td class="actions">
+                  <span class="token-actions">
+                    <button type="button" class="btn quiet" (click)="copySecret(t)">
+                      {{ copiedTokenId() === t.id ? 'Copied' : 'Copy secret' }}
+                    </button>
+                    <button type="button" class="btn quiet" (click)="toggleReveal(t)">
+                      {{ revealed().has(t.id ?? 0) ? 'Hide' : 'Show' }}
+                    </button>
+                    @if (!t.revokedAt) {
+                      <button type="button" class="btn danger" (click)="revokeToken(t)">Revoke</button>
+                    }
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty">
+                  No tokens yet. Evaluation results cannot be accepted until one exists.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <form class="card-foot" (ngSubmit)="createToken()">
+        <input
+          type="text"
+          name="tokenDescription"
+          [(ngModel)]="newTokenDescription"
+          placeholder="What is this token for? (optional)"
+          class="grow-input"
+        />
+        <button type="submit" class="btn" [disabled]="creatingToken()">
+          {{ creatingToken() ? 'Creating…' : 'Create token' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Staff -->
+    <div class="card">
+      <header>
+        <div class="grow">
+          <h2>Staff</h2>
+          <p>Who can open this course. Site admins can open it regardless of this list.</p>
+        </div>
+      </header>
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role in course</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of c.members; track m.userId) {
+              <tr>
+                <td>
+                  <span class="mono">{{ m.userName }}</span>
+                  @if (m.displayName) {
+                    <div class="muted">{{ m.displayName }}</div>
+                  }
+                </td>
+                <td class="muted">{{ m.email || '—' }}</td>
+                <td>
+                  <select
+                    [value]="m.role"
+                    (change)="changeMemberRole(m, $any($event.target).value)"
+                    [attr.aria-label]="'Role of ' + m.userName"
+                  >
+                    <option value="Instructor">Instructor</option>
+                    <option value="Admin">Course admin</option>
+                  </select>
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn danger" (click)="removeMember(m)">Remove</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="empty">No staff assigned yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-foot stack">
+        <div class="add-member">
+          <input
+            type="search"
+            name="memberSearch"
+            [(ngModel)]="memberSearch"
+            (input)="searchUsers()"
+            placeholder="Find a user by name, username, email or Neptun code"
+            aria-label="Find a user to add"
+            class="grow-input"
+          />
+          @if (searching()) {
+            <span class="muted">Searching…</span>
+          }
+        </div>
+
+        @if (candidates().length > 0) {
+          <ul class="candidates">
+            @for (u of candidates(); track u.id) {
+              <li>
+                <span class="mono">{{ u.userName }}</span>
+                <span class="muted">{{ u.displayName || u.email || '—' }}</span>
+                <span class="spacer"></span>
+                @if (isMember(u)) {
+                  <span class="badge">Already staff</span>
+                } @else {
+                  <button type="button" class="btn" (click)="addMember(u, 'Instructor')">Add as instructor</button>
+                  <button type="button" class="btn" (click)="addMember(u, 'Admin')">Add as course admin</button>
+                }
+              </li>
+            }
+          </ul>
+        } @else if (memberSearch.trim().length >= 2 && !searching()) {
+          <p class="muted">No user matches "{{ memberSearch }}".</p>
+        }
+      </div>
+    </div>
+
+    <!-- Delete -->
+    <div class="card danger-zone">
+      <header>
+        <div class="grow">
+          <h2>Delete this course</h2>
+          <p>
+            Removes the course and everything assigned to it: students, submissions, events, grades, tokens and
+            staff assignments. This cannot be undone.
+          </p>
+        </div>
+      </header>
+      <form class="card-foot" (ngSubmit)="deleteCourse()">
+        <input
+          type="text"
+          name="confirmSlug"
+          [(ngModel)]="confirmSlug"
+          [placeholder]="'Type ' + c.slug + ' to confirm'"
+          aria-label="Type the course slug to confirm deletion"
+          class="grow-input"
+        />
+        <button type="submit" class="btn danger" [disabled]="confirmSlug.trim() !== c.slug || deleting()">
+          {{ deleting() ? 'Deleting…' : 'Delete course' }}
+        </button>
+      </form>
+    </div>
+  </section>
+} @else {
+  <p class="empty">That course does not exist. <a routerLink="/admin/courses">Back to courses</a></p>
+}

@@ -1,0 +1,157 @@
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">{{ courseContext.activeSlug() }}</span>
+      <h1>{{ courseContext.activeCourse()?.name || 'Submissions' }}</h1>
+      <p class="lede">Every student repository in this course, its state on GitHub, and its points.</p>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn" (click)="reload()" [disabled]="loading()">
+        {{ loading() ? 'Refreshing…' : 'Refresh' }}
+      </button>
+      <button type="button" class="btn primary" (click)="downloadCsv()">Export CSV</button>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+
+  @if (!loading() && statuses().length > 0) {
+    <div class="tally">
+      <div class="tile">
+        <span class="n">{{ summary().total }}</span>
+        <span class="l">Submissions</span>
+      </div>
+      <div class="tile">
+        <span class="n">{{ summary().graded }}</span>
+        <span class="l">Graded</span>
+      </div>
+      <div class="tile">
+        <span class="n">{{ summary().openPrs }}</span>
+        <span class="l">With a pull request</span>
+      </div>
+      <div class="tile" [class.bad]="summary().failing > 0">
+        <span class="n">{{ summary().failing }}</span>
+        <span class="l">Last run failed</span>
+      </div>
+    </div>
+  }
+
+  <div class="card">
+    <header>
+      <input
+        type="search"
+        [(ngModel)]="search"
+        (input)="onSearchChange()"
+        placeholder="Search Neptun code or repository"
+        aria-label="Search submissions"
+        class="search"
+      />
+      <label class="check">
+        <input type="checkbox" [checked]="onlyUngraded()" (change)="onlyUngraded.set($any($event.target).checked)" />
+        Not graded yet
+      </label>
+      <label class="check">
+        <input type="checkbox" [checked]="onlyFailing()" (change)="onlyFailing.set($any($event.target).checked)" />
+        Last run failed
+      </label>
+      <span class="grow"></span>
+      @if (filtered()) {
+        <span class="muted">{{ rows().length }} of {{ summary().total }}</span>
+        <button type="button" class="btn quiet" (click)="clearFilters()">Clear</button>
+      }
+    </header>
+
+    @if (loading()) {
+      <p class="empty">Loading submissions…</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort" (click)="sortBy('neptun')">Neptun</button></th>
+              <th><button type="button" class="sort" (click)="sortBy('repository')">Repository</button></th>
+              <th>Branches</th>
+              <th>Pull request</th>
+              <th class="num"><button type="button" class="sort" (click)="sortBy('runs')">Runs</button></th>
+              @for (ex of exerciseNames(); track ex) {
+                <th class="num">{{ ex }}</th>
+              }
+              @if (exerciseNames().length > 0) {
+                <th class="num"><button type="button" class="sort" (click)="sortBy('total')">Total</button></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of rows(); track s.repository) {
+              <tr>
+                <td class="mono">{{ s.neptun || '—' }}</td>
+                <td>
+                  <a [href]="'https://github.com/' + s.repository" target="_blank" rel="noopener" class="mono">
+                    {{ s.repository }}
+                  </a>
+                </td>
+                <td class="mono muted">{{ s.branches?.join(', ') || '—' }}</td>
+                <td>
+                  @if (s.pullRequests?.length) {
+                    @for (pr of s.pullRequests; track pr.number) {
+                      <div class="pr">
+                        <a [href]="pr.htmlUrl" target="_blank" rel="noopener">#{{ pr.number }}</a>
+                        <span class="badge">{{ pr.status }}</span>
+                        @if (pr.assignee) {
+                          <span class="muted">{{ pr.assignee }}</span>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td class="num">
+                  {{ s.workflowRuns?.count ?? 0 }}
+                  @if (s.workflowRuns?.lastStatus; as last) {
+                    <span
+                      class="badge"
+                      [class.ok]="last === 'success'"
+                      [class.bad]="last === 'failure'"
+                    >{{ last }}</span>
+                  }
+                </td>
+                @for (ex of exerciseNames(); track ex) {
+                  <td class="num">
+                    @if (pointsFor(s.repository, ex) !== null) {
+                      {{ pointsFor(s.repository, ex) | number: '1.0-2' }}
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                }
+                @if (exerciseNames().length > 0) {
+                  <td class="num total">
+                    @if (totalFor(s.repository) !== null) {
+                      {{ totalFor(s.repository) | number: '1.0-2' }}
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="5 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0)" class="empty">
+                  @if (filtered()) {
+                    Nothing matches these filters.
+                    <button type="button" class="btn quiet" (click)="clearFilters()">Clear them</button>
+                  } @else {
+                    No submissions in this course yet. They appear once students push to their repositories.
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

@@ -1,7 +1,13 @@
 name: AHK Web - Deploy to Mezga
 
 # Manual trigger only: this deploys to the on-prem IIS server behind the BME VPN.
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      force_full:
+        description: "Ignore the stored deployment manifest and copy everything (use after a manual change on the server)"
+        type: boolean
+        default: false
 
 env:
   DOTNET_VERSION: "10.0.x"
@@ -12,6 +18,10 @@ env:
   FRONTEND_DIR: ahk-frontend
   OFFLINE_PAGE: ahk-backend/Ahk.Web.Server/app_offline.htm
   MOUNT_POINT: /mnt/deploy
+  # Lives at the CIFS mount's root — a sibling of wwwroot/, the .exe and appsettings.json, never inside
+  # the ASP.NET Core app's own static-file root, so it is never web-reachable and never touched by the
+  # targeted copy/delete steps below.
+  MANIFEST_NAME: .deploy-manifest.sha256
 
 jobs:
   deploy:
@@ -63,9 +73,6 @@ jobs:
           mkdir -p publish/wwwroot
           cp -r ${{ env.FRONTEND_DIR }}/dist/ahk-frontend/browser/. publish/wwwroot/
 
-      - name: Stage offline page alongside the publish output
-        run: cp ${{ env.OFFLINE_PAGE }} publish/app_offline.htm
-
       - name: Generate idempotent migration script (artifact only — applied manually)
         run: |
           dotnet tool install --global dotnet-ef
@@ -93,6 +100,11 @@ jobs:
             publish/appsettings.json > publish/appsettings.json.tmp
           mv publish/appsettings.json.tmp publish/appsettings.json
 
+      # Last content-mutating step before the diff: hashing anything after this point (e.g. re-injecting
+      # config) would make the manifest describe a tree that no longer matches what gets copied.
+      - name: Compute local deployment manifest
+        run: (cd publish && find . -type f -printf '%P\0' | sort -z | xargs -0 sha256sum) > new.manifest
+
       # ---- D. VPN (SSTP) up ----
 
       - name: Install SSTP client
@@ -105,11 +117,6 @@ jobs:
           VPN_USER: ${{ vars.VPN_USER }}
           VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
         run: |
-          # sstpc is a daemon that never returns. Background it AND redirect its stdout/stderr to a
-          # logfile: otherwise the backgrounded process keeps this step's output pipe open and the step
-          # hangs forever despite the '&'. No --cert-warn — the endpoint's cert validates against the
-          # system CA store. No 'defaultroute' — it is inert here (the runner's eth0 default wins), which
-          # is why internal traffic was not tunneled; the explicit host route in the next step handles it.
           sudo sstpc --log-stderr \
             --user "$VPN_USER" --password "$VPN_PASSWORD" \
             "$VPN_ADDRESS" \
@@ -131,16 +138,13 @@ jobs:
         env:
           VPN_ROUTES: ${{ vars.VPN_ROUTES }}
         run: |
-          # Split tunnel: only the configured internal hosts (e.g. mezga 152.66.188.8/32) go through
-          # ppp0. The runner->GitHub control channel and the public ahk.aut.bme.hu warm-up stay on the
-          # runner's default route. Automates the manual `ip route replace` from the first live run.
           for cidr in $VPN_ROUTES; do
             echo "Routing $cidr via ppp0"
             sudo ip route replace "$cidr" dev ppp0
           done
           ip route show
 
-      # ---- E. Mount share, swap site ----
+      # ---- E. Mount share, diff against last deploy, swap site ----
 
       - name: Mount deployment share
         env:
@@ -150,35 +154,202 @@ jobs:
           FILE_PASSWORD: ${{ secrets.FILE_PASSWORD }}
         run: |
           sudo mkdir -p "$MOUNT_POINT"
-          sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
-           -o username="$FILE_USERNAME",domain="$FILE_USERDOMAIN",password="$FILE_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
-
-      - name: Stop site (drop app_offline.htm)
-        run: |
-          cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
-          # Give IIS a moment to notice and release file locks before mirroring.
-          sleep 5
-
-      - name: Mirror new files (keep app_offline.htm)
-        run: |
-          ok=0
-          for i in $(seq 1 10); do
-            if rsync -a --delete --exclude 'app_offline.htm' publish/ "$MOUNT_POINT/"; then
-              ok=1; break
-            fi
-            echo "rsync attempt $i failed (likely a locked file); retrying..."
-            sleep 2
-          done
-          if [ "$ok" -ne 1 ]; then
-            echo "::error::Mirroring the deployment failed after retries"
+          # Pass credentials via a file, not inline -o. mount.cifs splits -o on commas, so a comma or
+          # other special char in the password is parsed as an option separator, silently truncating the
+          # password and failing auth with mount error(13) Permission denied. The file sidesteps that.
+          CREDS=$(mktemp)
+          chmod 600 "$CREDS"
+          {
+            echo "username=$FILE_USERNAME"
+            echo "password=$FILE_PASSWORD"
+            echo "domain=$FILE_USERDOMAIN"
+          } > "$CREDS"
+          if ! sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
+              -o credentials="$CREDS",vers=3.0,sec=ntlmssp,uid=$(id -u),gid=$(id -g); then
+            echo "::error::CIFS mount failed; recent kernel (dmesg) messages:"
+            sudo dmesg | tail -30 || true
+            rm -f "$CREDS"
             exit 1
           fi
+          rm -f "$CREDS"
+
+      # Reads exactly one small file from the share — regardless of link speed this is fast, unlike
+      # reading file content to compare it (the actual reason the old rsync mirror was slow).
+      - name: Fetch previous deployment manifest
+        env:
+          FORCE_FULL: ${{ inputs.force_full }}
+        run: |
+          if [ "$FORCE_FULL" = "true" ]; then
+            echo "force_full requested — treating the stored manifest as empty (full re-copy)."
+            : > old.manifest
+          elif [ -f "$MOUNT_POINT/$MANIFEST_NAME" ]; then
+            cp "$MOUNT_POINT/$MANIFEST_NAME" old.manifest
+          else
+            echo "No manifest found on the share yet — treating this as a first-time full deploy."
+            : > old.manifest
+          fi
+
+      # Pure local text processing — no network cost. sha256sum's format is 64 hex chars + two spaces +
+      # path, so "cut -c 67-" reliably extracts the path column regardless of spaces in a filename.
+      - name: Diff manifests
+        id: diff
+        run: |
+          sort old.manifest -o old.sorted
+          sort new.manifest -o new.sorted
+
+          # Changed or added: whole lines (hash+path) present in the new build but not the old one —
+          # covers both "hash changed at an existing path" and "brand-new path".
+          comm -13 old.sorted new.sorted | cut -c 67- > changed.list
+
+          # Removed: paths that existed before and are entirely absent from the new build — this is what
+          # correctly prunes Angular's abandoned content-hashed chunk files, unlike a size comparison.
+          cut -c 67- old.manifest | sort -u > old.paths
+          cut -c 67- new.manifest | sort -u > new.paths
+          comm -23 old.paths new.paths > removed.list
+
+          changed=$(wc -l < changed.list)
+          removed=$(wc -l < removed.list)
+          echo "Changed/added: $changed, removed: $removed"
+
+          if [ "$changed" -eq 0 ] && [ "$removed" -eq 0 ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop site (drop app_offline.htm)
+        if: steps.diff.outputs.has_changes == 'true'
+        run: |
+          cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
+          # Give IIS a moment to notice and release file locks before copying.
+          sleep 5
+
+      # Copies exactly the changed/added files (preserving their relative subdirectories) and deletes
+      # exactly the removed ones. --ignore-times/--whole-file/--inplace stop rsync from doing any of its
+      # own (CIFS-costly) comparison or delta-transfer logic — we already know these files need moving.
+      - name: Apply changed files
+        if: steps.diff.outputs.has_changes == 'true'
+        run: |
+          set -o pipefail
+
+          changed_count=$(wc -l < changed.list)
+          removed_count=$(wc -l < removed.list)
+
+          # Bytes about to cross the tunnel. A self-contained publish is a handful of very large files
+          # plus a long tail, so "which files" explains a slow run far better than "how many".
+          changed_bytes=0
+          if [ -s changed.list ]; then
+            changed_bytes=$(sed 's|^|publish/|' changed.list | tr '\n' '\0' \
+              | xargs -0 -r stat -c %s 2>/dev/null | awk '{s+=$1} END {print s+0}')
+          fi
+
+          echo "Copying $changed_count file(s), $(numfmt --to=iec --suffix=B "$changed_bytes"); deleting $removed_count."
+
+          if [ -s changed.list ]; then
+            echo "::group::Ten largest files in this transfer"
+            sed 's|^|publish/|' changed.list | tr '\n' '\0' \
+              | xargs -0 -r stat -c '%s %n' 2>/dev/null \
+              | sort -rn | head -10 \
+              | awk '{ size=$1; $1=""; sub(/^ /,""); printf "%10s  %s\n", size, $0 }' \
+              | numfmt --to=iec --suffix=B --field=1 || true
+            echo "::endgroup::"
+          fi
+
+          # Millisecond resolution: a fast deploy still has to report a throughput figure, otherwise
+          # there is no baseline to compare a slow one against.
+          copy_ms=0
+          attempts=0
+          if [ -s changed.list ]; then
+            ok=0
+            copy_start=$(date +%s%3N)
+            for i in $(seq 1 10); do
+              attempts=$i
+              echo "::group::rsync attempt $i"
+              attempt_start=$(date +%s%3N)
+              # --out-format stamps every file with the wall-clock time it landed, which is what turns
+              # "the deploy was slow" into "it stalled for 90s on this one file". --stats reports the
+              # effective transfer rate over the tunnel.
+              if rsync -R --files-from=changed.list --ignore-times --whole-file --inplace \
+                  --no-perms --no-owner --no-group --no-times \
+                  --stats --human-readable --out-format='%t  %12l  %n' \
+                  publish/ "$MOUNT_POINT/"; then
+                ok=1
+                echo "Attempt $i succeeded in $(( ($(date +%s%3N) - attempt_start) / 1000 ))s"
+                echo "::endgroup::"
+                break
+              fi
+              echo "::endgroup::"
+              echo "::warning::rsync attempt $i failed after $(( ($(date +%s%3N) - attempt_start) / 1000 ))s (likely a locked file); retrying..."
+              sleep 2
+            done
+            copy_ms=$(( $(date +%s%3N) - copy_start ))
+
+            if [ "$ok" -ne 1 ]; then
+              echo "::error::Copying changed files failed after $attempts attempts and $(( copy_ms / 1000 ))s"
+              exit 1
+            fi
+          fi
+
+          # Deletes are one CIFS round-trip each, so a large prune is latency-bound rather than
+          # bandwidth-bound and is worth timing separately from the copy.
+          delete_ms=0
+          if [ -s removed.list ]; then
+            delete_start=$(date +%s%3N)
+            while IFS= read -r path; do
+              rm -f "$MOUNT_POINT/$path"
+            done < removed.list
+            delete_ms=$(( $(date +%s%3N) - delete_start ))
+            echo "Deleted $removed_count file(s) in $(( delete_ms / 1000 ))s"
+          fi
+
+          # Both rates matter, and which one is poor says where the bottleneck is: low MB/s with
+          # healthy files/s means the link is the limit; low files/s with healthy MB/s means CIFS
+          # round-trip latency is, and the fix is fewer files rather than smaller ones.
+          summary=$(awk -v n="$changed_count" -v b="$changed_bytes" -v cms="$copy_ms" \
+                        -v dn="$removed_count" -v dms="$delete_ms" '
+            BEGIN {
+              mb = b / 1048576
+              cs = cms / 1000
+              ds = dms / 1000
+              printf "| Metric | Value |\n|---|---|\n"
+              printf "| Files copied | %d |\n", n
+              printf "| Bytes copied | %.1f MB |\n", mb
+              printf "| Copy time | %.1fs |\n", cs
+              if (cs > 0) {
+                printf "| Throughput | %.2f MB/s |\n", mb / cs
+                printf "| File rate | %.1f files/s |\n", n / cs
+              }
+              printf "| Files deleted | %d |\n", dn
+              printf "| Delete time | %.1fs |\n", ds
+              if (ds > 0) printf "| Delete rate | %.1f files/s |\n", dn / ds
+              printf "| Total | %.1fs |\n", cs + ds
+            }')
+
+          echo "$summary"
+          {
+            echo "### Applying changed files"
+            echo ""
+            echo "$summary"
+            if [ "$attempts" -gt 1 ]; then
+              echo ""
+              echo "⚠️ rsync needed **$attempts attempts** — retries re-send every file, so each one costs a full copy."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Wake site (remove app_offline.htm)
+        if: steps.diff.outputs.has_changes == 'true'
         run: rm -f "$MOUNT_POINT/app_offline.htm"
 
       - name: Warm up and verify
         run: curl --fail --show-error --retry 5 --retry-delay 3 https://ahk.aut.bme.hu/
+
+      # Last content-mutating step, and only reached after the copy/delete above succeeded. A run that
+      # fails partway leaves the OLD manifest in place, so the next run still sees those files as
+      # "changed" and retries them — a failed run can only ever under-count what's already been done,
+      # never understate future work.
+      - name: Publish new deployment manifest
+        if: steps.diff.outputs.has_changes == 'true'
+        run: cp new.manifest "$MOUNT_POINT/$MANIFEST_NAME"
 
       # ---- F. Teardown (always) ----
 

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!--
+      Ship the checked-in web.config verbatim. The SDK otherwise regenerates it on publish with
+      modules="AspNetCoreModuleV2", but the Mezga IIS server registers the module under the V1 name
+      "AspNetCoreModule"; the generated file fails to start the app there. Disabling the transform
+      copies our web.config (V1 module name + inprocess) as-is.
+    -->
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ahk.Web.Data\Ahk.Web.Data.csproj" />
+    <ProjectReference Include="..\Ahk.Web.Services\Ahk.Web.Services.csproj" />
+  </ItemGroup>
+
+</Project>

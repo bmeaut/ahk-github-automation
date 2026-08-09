@@ -1,0 +1,35 @@
+<div class="chain" role="list">
+  @for (c of checks(); track c.checkId) {
+    <div
+      class="link"
+      [class.ok]="tone(c.status) === 'ok'"
+      [class.warn]="tone(c.status) === 'warn'"
+      [class.bad]="tone(c.status) === 'bad'"
+      role="listitem"
+      [attr.aria-label]="c.title + ': ' + label(c.status)"
+      [title]="c.message"
+    >
+      <span class="link-title">{{ c.title }}</span>
+      <span class="link-state">{{ label(c.status) }}</span>
+    </div>
+  } @empty {
+    <p class="muted">No checks are registered.</p>
+  }
+</div>
+
+@if (detailed()) {
+  <dl class="detail">
+    @for (c of checks(); track c.checkId) {
+      <dt>
+        <span class="dot" [class.ok]="tone(c.status) === 'ok'" [class.warn]="tone(c.status) === 'warn'" [class.bad]="tone(c.status) === 'bad'"></span>
+        {{ c.title }}
+      </dt>
+      <dd>
+        {{ c.message }}
+        @if (c.remediation && c.status !== 'Healthy') {
+          <span class="fix">{{ c.remediation }}</span>
+        }
+      </dd>
+    }
+  </dl>
+}

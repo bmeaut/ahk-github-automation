@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Ahk.Web.Data/Ahk.Web.Data.csproj" />
+  <Project Path="Ahk.Web.Import/Ahk.Web.Import.csproj" />
+  <Project Path="Ahk.Web.Server.Tests/Ahk.Web.Server.Tests.csproj" />
+  <Project Path="Ahk.Web.Server/Ahk.Web.Server.csproj" />
+  <Project Path="Ahk.Web.Services/Ahk.Web.Services.csproj" />
+</Solution>

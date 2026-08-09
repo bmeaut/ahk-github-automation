@@ -1,0 +1,182 @@
+<main class="invite">
+  <div class="mark">
+    <img
+      src="bme-aut-logo.png"
+      alt="BME Department of Automation and Applied Informatics"
+      class="logo"
+    />
+    <h1 class="product">AHK — Automated homework evaluation</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="card">
+      <div class="card-body">
+        <p class="muted">Opening the invitation…</p>
+      </div>
+    </div>
+  } @else if (state(); as s) {
+    <div class="card">
+      <header>
+        <div class="grow">
+          <span class="eyebrow">{{ s.courseName }}</span>
+          <h2>{{ s.assignmentName }}</h2>
+        </div>
+      </header>
+
+      <div class="card-body">
+        @switch (s.status) {
+          <!-- Everything is known; all that is left is to say yes. Wording follows GitHub Classroom's,
+               which students coming from previous semesters will recognize. -->
+          @case ('ReadyToAccept') {
+            <p class="lede">Accept the assignment — {{ s.assignmentName }}</p>
+
+            @if (s.assignmentDescription) {
+              <p>{{ s.assignmentDescription }}</p>
+            }
+
+            <p>
+              Once you accept this assignment, you will be granted access to the
+              <span class="mono">{{ s.repositoryName }}</span>
+              repository in the
+              <span class="mono">{{ s.organization }}</span>
+              organization on GitHub.
+            </p>
+
+            <p class="muted">
+              It will be shared with your GitHub account,
+              <span class="mono">{{ s.gitHubUsername }}</span
+              >.
+            </p>
+
+            @if (error(); as e) {
+              <p class="notice error">{{ e }}</p>
+            }
+
+            <div class="btn-row">
+              <button type="button" class="btn primary" [disabled]="accepting()" (click)="accept()">
+                {{ accepting() ? 'Setting up your repository…' : 'Accept this assignment' }}
+              </button>
+            </div>
+          }
+
+          @case ('Accepted') {
+            <p class="lede">You're ready to go!</p>
+            <p>You accepted the assignment, {{ s.assignmentName }}</p>
+
+            @if (s.invitationUrl) {
+              <!-- The repository exists but is invisible to them until the GitHub invitation is accepted,
+                   so sending them to the repository URL would only produce a 404. -->
+              <p class="notice warn">
+                GitHub has invited you to your repository. Accept the invitation and the repository is
+                yours — the link below takes you straight to it.
+              </p>
+              <p class="mono repo">{{ s.repositoryName }}</p>
+
+              <div class="btn-row">
+                <button type="button" class="btn primary" (click)="openRepository()">
+                  Accept the GitHub invitation
+                </button>
+              </div>
+            } @else {
+              <p>Your assignment repository has been created:</p>
+              <p class="mono repo">
+                <a [href]="s.repoUrl" rel="noopener">{{ s.repoUrl }}</a>
+              </p>
+              <p class="muted">We've configured the repository associated with this assignment.</p>
+
+              @if (s.message) {
+                <p class="notice info">{{ s.message }}</p>
+              }
+
+              <div class="btn-row">
+                <button type="button" class="btn primary" (click)="openRepository()">
+                  Go to the repository
+                </button>
+
+                @if (redirectingIn(); as seconds) {
+                  <button type="button" class="btn quiet" (click)="cancelRedirect()">
+                    Stay here (going in {{ seconds }}s)
+                  </button>
+                }
+              </div>
+            }
+          }
+
+          <!-- Asked once per account, not per course: the answer is stored on the user. -->
+          @case ('NeedsGitHubUsername') {
+            <p class="lede">First, tell us your GitHub username</p>
+            <p>
+              This site works by giving you your own repository on GitHub, so it needs to know which
+              account is yours. We check the name against GitHub before saving it, and you will only be
+              asked this once.
+            </p>
+
+            <form (ngSubmit)="saveGitHubUsername()" #f="ngForm">
+              <div class="field">
+                <label for="gitHubUsername">GitHub username</label>
+                <input
+                  id="gitHubUsername"
+                  name="gitHubUsername"
+                  type="text"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                  [(ngModel)]="gitHubUsername"
+                  required
+                />
+                <span class="hint">
+                  The name in your profile URL — github.com/<strong>username</strong>. Not your email
+                  address.
+                </span>
+              </div>
+
+              @if (error(); as e) {
+                <p class="notice error">{{ e }}</p>
+              }
+
+              <div class="btn-row">
+                <button type="submit" class="btn primary" [disabled]="savingUsername() || f.invalid">
+                  {{ savingUsername() ? 'Checking with GitHub…' : 'Save and continue' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- Terminal: the repository name is built from the Neptun code, and only the IdP can supply it. -->
+          @case ('NeedsNeptun') {
+            <p class="notice warn">{{ s.message }}</p>
+            <p>
+              Repositories are named after your Neptun code, which comes from your university account. Sign
+              out and sign back in with eduID, and this page will work.
+            </p>
+          }
+
+          @case ('Closed') {
+            <p class="notice info">{{ s.message }}</p>
+            <p>
+              If you think you should still be able to accept it, ask your instructor — they can reopen the
+              assignment.
+            </p>
+          }
+
+          @case ('NotConfigured') {
+            <p class="notice error">{{ s.message }}</p>
+          }
+
+          @default {
+            <p class="notice error">
+              {{ s.message || 'This invite link does not match an assignment.' }}
+            </p>
+            <p>Ask your instructor for a current link — invite links can be reissued, which retires the old one.</p>
+          }
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-body">
+        <p class="notice error">{{ error() || 'This invite link could not be opened.' }}</p>
+      </div>
+    </div>
+  }
+</main>

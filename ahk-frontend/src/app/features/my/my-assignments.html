@@ -1,0 +1,124 @@
+<main class="my">
+  <header class="topline">
+    <img
+      src="bme-aut-logo.png"
+      alt="BME Department of Automation and Applied Informatics"
+      class="logo"
+    />
+    <span class="spacer"></span>
+    @if (user(); as u) {
+      <span class="who mono">{{ u.displayName || u.userName }}</span>
+    }
+    <button type="button" class="btn quiet" (click)="logout()">Sign out</button>
+  </header>
+
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Your work</span>
+      <h1>Assignments</h1>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+  @if (note(); as n) {
+    <p class="notice success">{{ n }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading your repositories…</p>
+  } @else if (groups().length === 0) {
+    <div class="card">
+      <div class="card-body">
+        <h2>Nothing here yet</h2>
+        <p class="lede">
+          You have not accepted any assignments. Your instructor hands out an invite link for each one —
+          follow it and your repository is created here.
+        </p>
+        @if (user(); as u) {
+          @if (!u.gitHubUsername) {
+            <p class="muted">
+              You have not told us your GitHub username yet either. The first invite link you open will ask
+              for it.
+            </p>
+          }
+        }
+      </div>
+    </div>
+  } @else {
+    @for (group of groups(); track group.slug) {
+      <section class="card">
+        <header>
+          <div class="grow">
+            <span class="eyebrow mono">{{ group.slug }}</span>
+            <h2>{{ group.name }}</h2>
+          </div>
+        </header>
+
+        <div class="card-body">
+          @for (repository of group.repositories; track repository.acceptanceId) {
+            <article class="repo">
+              <div class="repo-head">
+                <h3>{{ repository.assignmentName }}</h3>
+
+                @switch (repository.access) {
+                  @case ('Active') {
+                    <span class="badge ok">Ready</span>
+                  }
+                  @case ('InvitationPending') {
+                    <span class="badge warn">Invitation waiting</span>
+                  }
+                  @case ('InvitationExpired') {
+                    <span class="badge bad">Invitation expired</span>
+                  }
+                  @default {
+                    <span class="badge">Unknown</span>
+                  }
+                }
+              </div>
+
+              <p class="mono path">
+                <a [href]="repository.repoUrl" rel="noopener" target="_blank">{{
+                  repository.gitHubRepoName
+                }}</a>
+              </p>
+
+              <p class="muted meta">Accepted {{ repository.acceptedAt | date: 'medium' }}</p>
+
+              <!-- Until a GitHub invitation is accepted the repository 404s for its own owner, so this is the
+                   one case where the repository link is not the useful one. -->
+              @if (repository.access !== 'Active') {
+                <p class="notice warn">
+                  @if (repository.access === 'InvitationExpired') {
+                    Your GitHub invitation ran out before you accepted it. Send a new one and open it from
+                    GitHub.
+                  } @else {
+                    GitHub has invited you to this repository. Until you accept the invitation, the
+                    repository will not open for you.
+                  }
+                </p>
+
+                <div class="btn-row">
+                  @if (repository.invitationUrl) {
+                    <a class="btn primary" [href]="repository.invitationUrl" rel="noopener" target="_blank">
+                      Open the invitation
+                    </a>
+                  }
+                  <button
+                    type="button"
+                    class="btn"
+                    [disabled]="resending() === repository.acceptanceId"
+                    (click)="resend(repository)"
+                  >
+                    {{ resending() === repository.acceptanceId ? 'Sending…' : 'Send a new invitation' }}
+                  </button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      </section>
+    }
+  }
+</main>

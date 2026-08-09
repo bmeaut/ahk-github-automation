@@ -1,0 +1,13 @@
+.strong {
+  font-weight: 600;
+}
+
+td .muted {
+  font-size: 0.75rem;
+}
+
+/* The verdict plus the names of the failing checks; the full chain lives on the health page. */
+.health-cell {
+  min-width: 12rem;
+  max-width: 20rem;
+}

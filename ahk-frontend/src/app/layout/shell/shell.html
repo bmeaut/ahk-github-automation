@@ -1,0 +1,73 @@
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" routerLink="/">
+    <img
+      class="logo"
+      src="bme-aut-logo-white.png"
+      alt="BME Department of Automation and Applied Informatics"
+      height="26"
+    />
+    <span class="product">AHK</span>
+  </a>
+
+  <div class="switcher">
+    <label for="course-switch">Course</label>
+    <select
+      id="course-switch"
+      [value]="activeSlug() ?? ''"
+      (change)="switchCourse($any($event.target).value)"
+    >
+      <option value="" disabled>Choose a course…</option>
+      @for (c of courses(); track c.slug) {
+        <option [value]="c.slug">{{ c.slug }} — {{ c.name }}</option>
+      }
+    </select>
+  </div>
+
+  <span class="spacer"></span>
+
+  @if (user(); as u) {
+    <span class="who">
+      <span class="name">{{ u.displayName || u.userName }}</span>
+      @if (isAdmin()) {
+        <span class="badge accent">Site admin</span>
+      }
+    </span>
+  }
+  <button type="button" class="btn quiet on-ink" (click)="logout()">Sign out</button>
+</header>
+
+<div class="frame">
+  <nav class="rail" aria-label="Sections">
+    @if (inAdmin()) {
+      <span class="rail-title">Site administration</span>
+      <a routerLink="/admin/courses" routerLinkActive="active">Courses</a>
+      <a routerLink="/admin/users" routerLinkActive="active">Users</a>
+      <a routerLink="/admin/health" routerLinkActive="active">Health</a>
+      <a routerLink="/admin/help/github" routerLinkActive="active">GitHub setup</a>
+    } @else {
+      <span class="rail-title">{{ activeCourse()?.name || activeSlug() }}</span>
+      <a [routerLink]="['/', activeSlug(), 'dashboard']" routerLinkActive="active">Submissions</a>
+      <a [routerLink]="['/', activeSlug(), 'assignments']" routerLinkActive="active">Assignments</a>
+
+      @if (activeCourse(); as course) {
+        @if (course.viaSiteAdmin) {
+          <p class="rail-note">You are in this course as a site admin, not as assigned staff.</p>
+        }
+      }
+
+      @if (isAdmin()) {
+        <span class="rail-title">Site administration</span>
+        <a routerLink="/admin/courses" routerLinkActive="active">Courses</a>
+        <a routerLink="/admin/users" routerLinkActive="active">Users</a>
+        <a routerLink="/admin/health" routerLinkActive="active">Health</a>
+        <a routerLink="/admin/help/github" routerLinkActive="active">GitHub setup</a>
+      }
+    }
+  </nav>
+
+  <main class="content" id="main">
+    <router-outlet />
+  </main>
+</div>

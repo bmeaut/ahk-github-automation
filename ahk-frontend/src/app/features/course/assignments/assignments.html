@@ -1,0 +1,273 @@
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Course</span>
+      <h1>Assignments</h1>
+      <p class="lede">
+        Each assignment is a template repository plus a link. Share the link with your students and they get
+        their own private copy, named after their Neptun code, with write access.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn" (click)="toggleArchived()">
+        {{ showArchived() ? 'Hide archived' : 'Show archived' }}
+      </button>
+      <button type="button" class="btn primary" (click)="startCreate()">Add assignment</button>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+  @if (saved(); as s) {
+    <p class="notice success">{{ s }}</p>
+  }
+  @if (templateWarning(); as w) {
+    <p class="notice warn">
+      Saved, but the template repository has a problem — students will not be able to accept until it is fixed:
+      {{ w }}
+    </p>
+  }
+
+  @if (creating() || editingId() !== null) {
+    <div class="card">
+      <header>
+        <div class="grow">
+          <h2>{{ editingId() === null ? 'Add assignment' : 'Edit assignment' }}</h2>
+          <p>
+            The template repository must live in this course's organization and be marked as a template on
+            GitHub.
+          </p>
+        </div>
+      </header>
+
+      <form (ngSubmit)="save()" #f="ngForm">
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label for="a-name">Name</label>
+              <input
+                id="a-name"
+                name="name"
+                type="text"
+                [(ngModel)]="name"
+                required
+                placeholder="Homework 1 — Data access"
+              />
+              <span class="hint">Shown to students on the accept screen.</span>
+            </div>
+            <div class="field">
+              <label for="a-template">Template repository</label>
+              <!-- Validate sits with the field it acts on. Advisory: an assignment may be drafted before its
+                   template exists, so it never blocks saving; it checks the name in the field, not a saved id. -->
+              <div class="input-with-action">
+                <input
+                  id="a-template"
+                  name="templateRepoName"
+                  type="text"
+                  [(ngModel)]="templateRepoName"
+                  required
+                  placeholder="viaubc01-hw1"
+                />
+                <button
+                  type="button"
+                  class="btn accent"
+                  (click)="checkTemplate()"
+                  [disabled]="checkingTemplate() || !templateRepoName.trim()"
+                >
+                  {{ checkingTemplate() ? 'Checking…' : 'Validate' }}
+                </button>
+              </div>
+              <span class="hint">
+                A bare name is taken to be in this course's organization, and must be marked as a template on
+                GitHub.
+              </span>
+            </div>
+          </div>
+
+          @if (template(); as t) {
+            @if (t.problem) {
+              <p class="notice warn">{{ t.problem }}</p>
+            } @else {
+              <p class="notice success">
+                The template is reachable and marked as a template repository.
+                @if (t.htmlUrl) {
+                  <a [href]="t.htmlUrl" rel="noopener" target="_blank">Open it on GitHub</a>
+                }
+              </p>
+            }
+          }
+
+          <div class="field-row">
+            <div class="field">
+              <label for="a-description">Description</label>
+              <input
+                id="a-description"
+                name="description"
+                type="text"
+                [(ngModel)]="description"
+                placeholder="What the student is expected to do"
+              />
+              <span class="hint">Optional. Shown under the assignment name on the accept screen.</span>
+            </div>
+            <div class="field">
+              <label for="a-prefix">Repository name prefix</label>
+              <input
+                id="a-prefix"
+                name="repoNamePrefix"
+                type="text"
+                [(ngModel)]="repoNamePrefix"
+                placeholder="viaubc01-hw1"
+              />
+              <span class="hint">
+                Cloned student repositories are named <span class="mono">&lt;prefix&gt;-&lt;neptun&gt;</span>.
+                Leave blank to use the template repository's name.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-foot">
+          <button type="submit" class="btn primary" [disabled]="f.invalid || savingForm()">
+            {{ savingForm() ? 'Saving…' : 'Save assignment' }}
+          </button>
+          <button type="button" class="btn quiet" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="card"><p class="empty">Loading assignments…</p></div>
+  } @else if (assignments().length === 0) {
+    <div class="card">
+      <p class="empty">
+        No assignments yet. Add one against a template repository, then share its invite link with your
+        students.
+      </p>
+    </div>
+  } @else {
+    @for (a of assignments(); track a.id) {
+      <article class="card assignment" [class.archived]="a.isArchived">
+        <header>
+          <div class="grow">
+            <h2>
+              {{ a.name }}
+              @if (a.isArchived) {
+                <span class="badge">Archived</span>
+              }
+            </h2>
+            <p class="mono">{{ a.templateRepoName }}</p>
+          </div>
+        </header>
+
+        <div class="card-body">
+          @if (a.description) {
+            <p>{{ a.description }}</p>
+          }
+
+          @if (a.isArchived) {
+            <p class="notice info">
+              This assignment no longer accepts new students. The ones who already accepted keep their
+              repositories and their link.
+            </p>
+          }
+
+          <!-- The invite link is what this screen exists to produce, so it gets its own block rather than a
+               table cell, and copying it is one click. -->
+          <div class="invite">
+            <label [for]="'invite-' + a.id">Invite link</label>
+            <div class="invite-row">
+              <input
+                [id]="'invite-' + a.id"
+                class="mono"
+                type="text"
+                [value]="inviteUrl(a)"
+                readonly
+                (focus)="$any($event.target).select()"
+              />
+              <button type="button" class="btn primary" (click)="copyInvite(a)">
+                {{ copiedId() === a.id ? 'Copied' : 'Copy' }}
+              </button>
+            </div>
+            <span class="hint">
+              Anyone signed in who has this link can create their repository, so treat it as the key to the
+              assignment. Reissuing it retires the old one.
+            </span>
+          </div>
+
+          <p class="muted meta">
+            Created {{ a.createdAt | date: 'yyyy-MM-dd' }} ·
+            <button type="button" class="linkish" (click)="toggleAcceptances(a)">
+              {{ a.acceptanceCount }} {{ a.acceptanceCount === 1 ? 'student' : 'students' }} accepted
+            </button>
+          </p>
+
+          @if (expandedId() === a.id) {
+            @if (loadingAcceptances()) {
+              <p class="empty">Loading…</p>
+            } @else {
+              <div class="table-wrap">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Neptun</th>
+                      <th>GitHub</th>
+                      <th>Repository</th>
+                      <th>Accepted</th>
+                      <th>Access</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (acceptance of acceptances(); track acceptance.id) {
+                      <tr>
+                        <td>{{ acceptance.displayName || acceptance.userName }}</td>
+                        <td class="mono">{{ acceptance.neptunCode || '—' }}</td>
+                        <td class="mono">{{ acceptance.gitHubUsername }}</td>
+                        <td class="mono">
+                          <a [href]="acceptance.repoUrl" rel="noopener" target="_blank">{{
+                            acceptance.gitHubRepoName
+                          }}</a>
+                        </td>
+                        <td class="muted">{{ acceptance.acceptedAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+                        <td>
+                          @if (acceptance.invitationPending) {
+                            <span class="badge warn">Invitation waiting</span>
+                          } @else {
+                            <span class="badge ok">Ready</span>
+                          }
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="6" class="empty">Nobody has accepted this assignment yet.</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="card-foot">
+          <button type="button" class="btn quiet" (click)="startEdit(a)">Edit</button>
+
+          @if (a.isArchived) {
+            <button type="button" class="btn quiet" (click)="setArchived(a, false)">Reopen</button>
+          } @else {
+            <button type="button" class="btn quiet" (click)="setArchived(a, true)">Archive</button>
+          }
+
+          <button type="button" class="btn quiet" (click)="regenerateInvite(a)">New invite link</button>
+
+          <!-- Only offered while nothing depends on it; the API refuses once students hold repositories. -->
+          @if (a.acceptanceCount === 0) {
+            <button type="button" class="btn danger" (click)="remove(a)">Delete</button>
+          }
+        </div>
+      </article>
+    }
+  }
+</section>

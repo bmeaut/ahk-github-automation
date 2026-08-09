@@ -1,0 +1,132 @@
+/* eduID's own blue, kept local to this screen — it is a foreign accent, used only on the federated login
+   button and nowhere else in the AUT palette. */
+:host {
+  --eduid: #0068ad;
+  --eduid-deep: #024f83;
+}
+
+.login {
+  max-width: 23rem;
+  margin: 0 auto;
+  padding: 4rem 1.25rem;
+}
+
+.mark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+
+  .logo {
+    display: block;
+    width: 100%;
+    max-width: 17rem;
+    height: auto;
+  }
+}
+
+.product {
+  font-size: 1rem;
+}
+
+h2 {
+  font-size: 1.125rem;
+}
+
+.lede {
+  margin-bottom: 1.25rem;
+  font-size: 0.8125rem;
+}
+
+/* eduID login button. The official prescription is a saturated blue block; this is the sanctioned lighter
+   variant — white surface, eduID-blue border, the real eduID logo, and the action word in eduID blue — so it
+   sits with the crimson AUT chrome while staying unmistakably eduID. */
+.eduid-btn {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--eduid);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  overflow: hidden;
+
+  .eduid-logo {
+    flex: none;
+    height: 1.5rem;
+    width: auto;
+    align-self: center;
+    margin: 0.625rem 0.875rem;
+  }
+
+  .eduid-label {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    border-left: 1px solid color-mix(in srgb, var(--eduid) 30%, var(--rule));
+    font-family: var(--font-ui);
+    font-size: 0.9375rem;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    color: var(--eduid);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--eduid) 6%, var(--surface));
+    border-color: var(--eduid-deep);
+  }
+
+  &:hover .eduid-label {
+    color: var(--eduid-deep);
+  }
+}
+
+/* Quiet, prose-style link to reveal the local form — it must not compete with the eduID button. */
+.linkish {
+  display: inline-block;
+  margin-top: 1rem;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--link);
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--link-hover);
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--ink-3);
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+}
+
+.btn.wide {
+  width: 100%;
+  justify-content: center;
+}
+
+.notice {
+  margin-bottom: 0.875rem;
+}
