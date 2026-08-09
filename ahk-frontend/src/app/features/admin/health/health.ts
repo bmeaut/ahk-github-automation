@@ -36,7 +36,7 @@ export class AdminHealth implements OnInit {
     [...this.reports()].sort((a, b) => {
       const bySeverity =
         AdminHealth.severity[a.status ?? 'NotConfigured'] - AdminHealth.severity[b.status ?? 'NotConfigured'];
-      return bySeverity !== 0 ? bySeverity : (a.courseSlug ?? '').localeCompare(b.courseSlug ?? '');
+      return bySeverity !== 0 ? bySeverity : (a.courseName ?? '').localeCompare(b.courseName ?? '');
     }),
   );
 

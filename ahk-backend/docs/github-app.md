@@ -25,8 +25,11 @@ The App is used for two things:
 | Creating student repositories from an assignment's template and granting students access | Live in the portal |
 
 One App serves both. If the organization already has an App registered for `github-monitor`, extend that one
-rather than registering a second — see [Permissions](#permissions) for the grant that has to be added — and
-repoint its webhook URL as described in [Cutover per course](#cutover-per-course).
+rather than registering a second: it already holds everything the rule and chatops handlers need, so the only
+grant to add is **Administration: Read & write** for creating student repositories. Then repoint its webhook
+URL as described in [Cutover per course](#cutover-per-course). Compare against the
+[permissions table](#permissions) rather than assuming — and remember an owner has to accept the added
+permission before it takes effect.
 
 ## Registering the App
 
@@ -44,6 +47,22 @@ Do this once per organization, as an organization owner.
      secret, and resolves which course a delivery belongs to from the repository name inside it.
 5. **Permissions** — set exactly what the [table below](#permissions) lists. Nothing more: an App with rights
    nobody uses is a liability, and organization owners are shown this list when they install it.
+   ⚠️ **Four are write, and GitHub defaults every permission to *No access*.** Get these right at creation —
+   they are the ones that fail late and confusingly:
+
+   | | |
+   |---|---|
+   | Repository → **Administration** | Read & write |
+   | Repository → **Contents** | Read & write |
+   | Repository → **Pull requests** | Read & write |
+   | Repository → **Issues** | Read & write |
+   | Repository → Metadata | Read-only |
+   | Repository → Actions | Read-only |
+   | Organization → **Members** | Read-only |
+
+   Read-only on any of the write four leaves the App able to do most of its job and silently unable to finish
+   it. Read-only **Contents** is the nastiest: `/ahk ok` approves the pull request, then fails to merge, and
+   because the merge is awaited first, the grade is never recorded at all.
 6. **Subscribe to events** — the five the portal has handlers for: *Create*, *Issue comment*, *Pull request*,
    *Pull request review*, *Workflow run*.
    Subscribing to more is harmless — anything else is answered `200` with `Event X is not of interest` — but it
@@ -64,6 +83,17 @@ under *Only select repositories* they fall outside the installation — the port
 successfully and then gets a `404` from the very next call, trying to add the student to a repository it just
 made itself. The health check reports this as a warning before it happens.
 
+⚠️ **Adding a permission later does not apply it.** GitHub holds the change until an organization owner
+accepts it on the installation page — until then the App keeps running with the old set, and the only symptom
+is a `403 Resource not accessible by integration` deep in a delivery log. After any permission change, open
+**Settings → GitHub Apps → *your App* → Configure** on the organization and approve the request.
+
+**Verify before a student does.** The **GitHub App installation** health check on Site administration → Health
+mints a real token and confirms the App is installed, is scoped to all repositories, and holds
+`administration: write`. It does **not** currently assert `contents: write` or `members: read`, so a green
+dashboard is necessary but not sufficient — the end-to-end smoke test in
+[Cutover per course](#cutover-per-course) is what actually exercises those two.
+
 ## Permissions
 
 Set these under **Repository permissions**, plus the one **Organization permission** below.
@@ -72,8 +102,8 @@ Set these under **Repository permissions**, plus the one **Organization permissi
 |---|---|---|
 | **Administration** | **Read & write** | Creating a repository from a template (`POST /repos/{owner}/{repo}/generate`), adding a student as a collaborator (`PUT /repos/{owner}/{repo}/collaborators/{username}`), managing their invitations, setting a repository's Actions permissions, and applying branch protection all sit behind this one. **This is the grant to add if the App already exists for `github-monitor`.** |
 | **Metadata** | Read-only | Mandatory for every App. Also backs `GET /repos/{owner}/{repo}`, which the portal uses to check the template exists and is marked as a template. |
-| **Contents** | Read & write | Reading the template repository, and reading `.github/ahk-monitor.yml` and `neptun.txt` out of each student repository. |
-| Pull requests | Read & write | Comments, merges, assignees — the `/ahk ok` command approves and merges. |
+| **Contents** | **Read & write** | Read covers the template repository plus `.github/ahk-monitor.yml` and `neptun.txt`. **Write is what `/ahk ok` needs to merge**: a merge writes a commit, so `PUT /repos/{o}/{r}/pulls/{n}/merge` is refused with `Resource not accessible by integration` on read-only Contents — even though creating the approving review succeeds. |
+| Pull requests | Read & write | Comments, assignees, and creating the approving review. Not sufficient on its own for the merge — see Contents. |
 | Issues | Read & write | Issue comments carry the `/ahk ok` chatops and every warning the rules post. |
 | Actions | Read-only | Counting workflow runs against the course's threshold. |
 
@@ -207,6 +237,12 @@ Specific failures:
   Grant the App **Members: Read** and have an owner **approve** the added permission on the installation page. To confirm the diagnosis in seconds without touching the App, set your own membership to Public at `https://github.com/orgs/<org>/people` and try again.
   Other causes, if that is not it: the person really is an **outside collaborator** rather than a member (commenting on a pull request does not imply membership); or the repository lives under a *user* account rather than an organization, in which case grading can never be authorized.
   ⚠️ The answer is cached for **one hour** per org+login. After any of these fixes, restart the application to flush it rather than waiting.
+- **`/ahk ok` approves the pull request but records no grade, and leaves no 👍** — look for
+  `Resource not accessible by integration` in the delivery body. The approving review needs only
+  `Pull requests: write`, but the merge that follows it needs **`Contents: write`**, so a half-permissioned
+  App gets exactly this: a visible approval, a failed merge, and — because the merge is awaited before the
+  grade is written — no grade at all. Grant Contents write and have an owner approve it.
+  The grade is safe to re-request: comment `/ahk ok` again once the permission is in place.
 - **Every delivery is `405` with `Allow: GET, HEAD`** — the webhook URL points at the portal but not at
   `/api/integrations/github`. The request fell through to the Angular single-page app's fallback route, which
   only answers GET. Check the path, including that it has no trailing slash.
@@ -224,7 +260,11 @@ organization-level webhook.
 
 1. Store the App id, private key, webhook secret, `WorkflowRunThreshold` and **Enabled** under
    **Site administration → Courses → *course* → GitHub integration**.
-2. Check all four health checks are green on **Site administration → Health**.
+2. Check all four health checks are green on **Site administration → Health**, then open the App's
+   **Permissions & events** page and compare it against the [permissions table](#permissions) line by line.
+   The health check covers `administration: write` and the installation scope; `contents: write` and
+   `members: read` it cannot see, and those are exactly the two whose absence only shows up when a teacher
+   tries to grade.
 3. Make sure the course has a non-revoked CI callback token (mint one, or import the legacy one — the
    `Ahk.Web.Import` tool already imports tokens).
 4. Import the course's historical Cosmos data, if that has not been done.

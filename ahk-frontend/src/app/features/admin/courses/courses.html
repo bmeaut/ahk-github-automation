@@ -20,7 +20,7 @@
     <p class="notice error">{{ e }}</p>
   }
 
-  @if (!loading() && failingCount() > 0) {
+  @if (healthLoaded() && failingCount() > 0) {
     <p class="notice warn">
       {{ failingCount() }} {{ failingCount() === 1 ? 'course is' : 'courses are' }} failing a health check.
       Open the course to see which link is broken.
@@ -47,9 +47,9 @@
                 [(ngModel)]="slug"
                 required
                 pattern="[a-z0-9-]{2,64}"
-                placeholder="viaubc01"
+                placeholder="bmeviaubc01"
               />
-              <span class="hint">Lowercase letters, digits and hyphens. Used as /viaubc01/…</span>
+              <span class="hint">Lowercase letters, digits and hyphens. Used as /bmeviaubc01/…</span>
             </div>
             <div class="field">
               <label for="new-name">Course name</label>
@@ -64,7 +64,7 @@
             </div>
             <div class="field">
               <label for="new-org">GitHub organization</label>
-              <input id="new-org" name="organization" type="text" [(ngModel)]="organization" placeholder="ahk-viaubc01" />
+              <input id="new-org" name="organization" type="text" [(ngModel)]="organization" placeholder="bmeviaubc01" />
               <span class="hint">Optional now; you can set it with the rest of the integration.</span>
             </div>
           </div>
@@ -101,8 +101,8 @@
             @for (c of courses(); track c.id) {
               <tr>
                 <td>
-                  <a class="mono strong" [routerLink]="['/admin/courses', c.id]">{{ c.slug }}</a>
-                  <div class="muted">{{ c.name }}</div>
+                  <a class="strong" [routerLink]="['/admin/courses', c.id]">{{ c.name }}</a>
+                  <div class="muted mono">{{ c.slug }}</div>
                 </td>
                 <td class="mono">
                   {{ c.gitHubOrganization || '—' }}
@@ -125,7 +125,7 @@
                       <div class="muted">{{ p }}</div>
                     }
                   } @else {
-                    <span class="muted">Not checked</span>
+                    <span class="muted">{{ checking() ? 'Checking…' : 'Not checked' }}</span>
                   }
                 </td>
                 <td class="muted">{{ c.createdAt | date: 'yyyy-MM-dd' }}</td>

@@ -112,7 +112,14 @@
       "Bash(python3 -c ' *)",
       "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness.sh __TRACKED_VAR__/apply-step.sh)",
       "Bash(MSYS_NO_PATHCONV=1 wsl.exe bash __TRACKED_VAR__/harness-edge.sh __TRACKED_VAR__/apply-step.sh)",
-      "Bash(sort -t: -k3)"
+      "Bash(sort -t: -k3)",
+      "Bash(curl -sk https://localhost:7443/swagger/index.html -o /dev/null)",
+      "Bash(curl -sk https://localhost:4200 -o /dev/null)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --remote-debugging-port=9222 --ignore-certificate-errors --window-size=1500,1100 --user-data-dir=\"C:/Users/beny314/AppData/Local/Temp/claude/c--Source-ahk-github-automation/04c743d8-49d7-46d1-9a52-adc88a4c2e2e/scratchpad/chrome-profile\" about:blank)",
+      "Bash(curl -s http://127.0.0.1:9222/json/list -o /dev/null)",
+      "Bash(node shot.js)",
+      "Bash(node shot2.js)",
+      "Bash(node shot3.js)"
     ],
     "additionalDirectories": [
       "\\tmp",

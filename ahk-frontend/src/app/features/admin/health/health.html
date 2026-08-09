@@ -58,8 +58,8 @@
         ></span>
         <div class="grow">
           <h2>
-            <a [routerLink]="['/admin/courses', r.courseId]">{{ r.courseSlug }}</a>
-            <span class="course-name">{{ r.courseName }}</span>
+            <a [routerLink]="['/admin/courses', r.courseId]">{{ r.courseName }}</a>
+            <span class="course-name mono">{{ r.courseSlug }}</span>
           </h2>
           <p>{{ summaryFor(r) }}</p>
         </div>

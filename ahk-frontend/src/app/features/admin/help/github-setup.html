@@ -53,18 +53,16 @@
         <li>
           Go to the organization's <strong>Settings → Developer settings → GitHub Apps → New GitHub App</strong>.
         </li>
-        <li><strong>GitHub App name</strong> — something identifiable, e.g. <span class="mono">AHK viaubc01</span>.</li>
+        <li>
+          <strong>GitHub App name</strong> — something identifiable, e.g.
+          <span class="mono">AHK GitHub Monitor (AUT) - BMEVIAUAC01</span>.
+        </li>
         <li><strong>Homepage URL</strong> — <span class="mono">https://ahk.aut.bme.hu</span>.</li>
         <li>
           <strong>Webhook</strong> — tick <strong>Active</strong>, set the
           <strong>Webhook URL</strong> to <span class="mono">https://ahk.aut.bme.hu/api/integrations/github</span>,
           and generate a long random <strong>Webhook secret</strong> (you will paste this into the portal in
           step 3, so keep it).
-          <p class="notice warn">
-            The portal's webhook receiver is <strong>not ported yet</strong>. Until it is, point the webhook at
-            the course's existing <span class="mono">github-monitor</span> Function URL instead, and keep using
-            that. Everything else on this page already applies.
-          </p>
         </li>
         <li>
           <strong>Permissions</strong> — set exactly what the <a href="#permissions">table below</a> lists, and
@@ -116,7 +114,10 @@
     <header>
       <div class="grow">
         <h2>3 · Permissions</h2>
-        <p>Set these under <strong>Repository permissions</strong>. Organization permissions are not needed.</p>
+        <p>
+          Set these under <strong>Repository permissions</strong>, plus the one
+          <strong>Organization permission</strong> below.
+        </p>
       </div>
     </header>
     <div class="card-body">
@@ -146,13 +147,22 @@
             </tr>
             <tr>
               <td><strong>Contents</strong></td>
-              <td class="mono">Read-only</td>
-              <td>Reading the template repository. <span class="mono">github-monitor</span> needs Read &amp; write here for its own work.</td>
+              <td class="mono">Read &amp; write</td>
+              <td>
+                Read covers the template repository, <span class="mono">.github/ahk-monitor.yml</span> and
+                <span class="mono">neptun.txt</span>. <strong>Write is what the merge behind
+                <span class="mono">/ahk ok</span> needs</strong>: on Read-only the approving review still
+                succeeds, the merge is refused with <em>Resource not accessible by integration</em>, and because
+                the merge is awaited first, no grade is recorded at all.
+              </td>
             </tr>
             <tr>
               <td>Pull requests</td>
               <td class="mono">Read &amp; write</td>
-              <td><span class="mono">github-monitor</span> only: comments, merges, assignees.</td>
+              <td>
+                Comments, assignees, and creating the approving review. Not sufficient on its own for the merge
+                — see Contents.
+              </td>
             </tr>
             <tr>
               <td>Issues</td>
@@ -163,6 +173,15 @@
               <td>Actions</td>
               <td class="mono">Read-only</td>
               <td><span class="mono">github-monitor</span> only: counting workflow runs against the course threshold.</td>
+            </tr>
+            <tr>
+              <td><strong>Members</strong>&nbsp;<span class="muted">(Organization)</span></td>
+              <td class="mono">Read-only</td>
+              <td>
+                Organization membership is how the portal decides who may grade.
+                <strong>Without it <span class="mono">/ahk ok</span> is refused for everyone</strong>, and the
+                workflow-run rule cannot tell staff from students, so it warns staff too.
+              </td>
             </tr>
           </tbody>
         </table>

@@ -29,6 +29,8 @@
     </p>
   }
 
+  <!-- Everything about one assignment that is not needed to find it in the list lives here: its description,
+       its invite link, when it was created, and the lifecycle actions. The list stays a list. -->
   @if (creating() || editingId() !== null) {
     <div class="card">
       <header>
@@ -67,7 +69,7 @@
                   type="text"
                   [(ngModel)]="templateRepoName"
                   required
-                  placeholder="viaubc01-hw1"
+                  placeholder="hazi-kiindulas-mssql"
                 />
                 <button
                   type="button"
@@ -117,7 +119,7 @@
                 name="repoNamePrefix"
                 type="text"
                 [(ngModel)]="repoNamePrefix"
-                placeholder="viaubc01-hw1"
+                placeholder="hazi-kiindulas-mssql-2026"
               />
               <span class="hint">
                 Cloned student repositories are named <span class="mono">&lt;prefix&gt;-&lt;neptun&gt;</span>.
@@ -125,6 +127,43 @@
               </span>
             </div>
           </div>
+
+          <!-- Only a saved assignment has a link, a history and a lifecycle. -->
+          @if (editingAssignment(); as a) {
+            @if (a.isArchived) {
+              <p class="notice info">
+                This assignment no longer accepts new students. The ones who already accepted keep their
+                repositories and their link.
+              </p>
+            }
+
+            <div class="field">
+              <label [for]="'invite-' + a.id">Invite link</label>
+              <div class="invite-row">
+                <input
+                  [id]="'invite-' + a.id"
+                  class="mono"
+                  type="text"
+                  [value]="inviteUrl(a)"
+                  readonly
+                  (focus)="$any($event.target).select()"
+                />
+                <button type="button" class="btn" (click)="copyInvite(a)">
+                  {{ copiedId() === a.id ? 'Copied' : 'Copy' }}
+                </button>
+                <button type="button" class="btn" (click)="regenerateInvite(a)">New invite link</button>
+              </div>
+              <span class="hint">
+                Anyone signed in who has this link can create their repository, so treat it as the key to the
+                assignment. Reissuing it retires the old one.
+              </span>
+            </div>
+
+            <p class="muted meta">
+              Created {{ a.createdAt | date: 'yyyy-MM-dd' }} · {{ a.acceptanceCount }}
+              {{ a.acceptanceCount === 1 ? 'student' : 'students' }} accepted
+            </p>
+          }
         </div>
 
         <div class="card-foot">
@@ -132,142 +171,120 @@
             {{ savingForm() ? 'Saving…' : 'Save assignment' }}
           </button>
           <button type="button" class="btn quiet" (click)="cancelEdit()">Cancel</button>
+
+          @if (editingAssignment(); as a) {
+            <span class="spacer"></span>
+
+            @if (a.isArchived) {
+              <button type="button" class="btn quiet" (click)="setArchived(a, false)">Reopen</button>
+            } @else {
+              <button type="button" class="btn quiet" (click)="setArchived(a, true)">Archive</button>
+            }
+
+            <!-- Only offered while nothing depends on it; the API refuses once students hold repositories. -->
+            @if (a.acceptanceCount === 0) {
+              <button type="button" class="btn danger" (click)="remove(a)">Delete</button>
+            }
+          }
         </div>
       </form>
     </div>
   }
 
-  @if (loading()) {
-    <div class="card"><p class="empty">Loading assignments…</p></div>
-  } @else if (assignments().length === 0) {
-    <div class="card">
+  <div class="card">
+    @if (loading()) {
+      <p class="empty">Loading assignments…</p>
+    } @else if (assignments().length === 0) {
       <p class="empty">
         No assignments yet. Add one against a template repository, then share its invite link with your
         students.
       </p>
-    </div>
-  } @else {
-    @for (a of assignments(); track a.id) {
-      <article class="card assignment" [class.archived]="a.isArchived">
-        <header>
-          <div class="grow">
-            <h2>
-              {{ a.name }}
-              @if (a.isArchived) {
-                <span class="badge">Archived</span>
-              }
-            </h2>
-            <p class="mono">{{ a.templateRepoName }}</p>
-          </div>
-        </header>
+    } @else {
+      <div class="table-wrap">
+        <table class="data assignments">
+          <thead>
+            <tr>
+              <th>Assignment</th>
+              <th>Template repository</th>
+              <th class="num">Accepted</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of assignments(); track a.id) {
+              <tr [class.archived]="a.isArchived" [class.editing]="editingId() === a.id">
+                <td class="strong">
+                  {{ a.name }}
+                  @if (a.isArchived) {
+                    <span class="badge">Archived</span>
+                  }
+                </td>
+                <td class="mono">{{ a.templateRepoName }}</td>
+                <td class="num">
+                  <button type="button" class="linkish" (click)="toggleAcceptances(a)">
+                    {{ a.acceptanceCount }}
+                  </button>
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn quiet" (click)="copyInvite(a)">
+                    {{ copiedId() === a.id ? 'Copied' : 'Copy invite link' }}
+                  </button>
+                  <button type="button" class="btn quiet" (click)="startEdit(a)">Edit</button>
+                </td>
+              </tr>
 
-        <div class="card-body">
-          @if (a.description) {
-            <p>{{ a.description }}</p>
-          }
-
-          @if (a.isArchived) {
-            <p class="notice info">
-              This assignment no longer accepts new students. The ones who already accepted keep their
-              repositories and their link.
-            </p>
-          }
-
-          <!-- The invite link is what this screen exists to produce, so it gets its own block rather than a
-               table cell, and copying it is one click. -->
-          <div class="invite">
-            <label [for]="'invite-' + a.id">Invite link</label>
-            <div class="invite-row">
-              <input
-                [id]="'invite-' + a.id"
-                class="mono"
-                type="text"
-                [value]="inviteUrl(a)"
-                readonly
-                (focus)="$any($event.target).select()"
-              />
-              <button type="button" class="btn primary" (click)="copyInvite(a)">
-                {{ copiedId() === a.id ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <span class="hint">
-              Anyone signed in who has this link can create their repository, so treat it as the key to the
-              assignment. Reissuing it retires the old one.
-            </span>
-          </div>
-
-          <p class="muted meta">
-            Created {{ a.createdAt | date: 'yyyy-MM-dd' }} ·
-            <button type="button" class="linkish" (click)="toggleAcceptances(a)">
-              {{ a.acceptanceCount }} {{ a.acceptanceCount === 1 ? 'student' : 'students' }} accepted
-            </button>
-          </p>
-
-          @if (expandedId() === a.id) {
-            @if (loadingAcceptances()) {
-              <p class="empty">Loading…</p>
-            } @else {
-              <div class="table-wrap">
-                <table class="data">
-                  <thead>
-                    <tr>
-                      <th>Student</th>
-                      <th>Neptun</th>
-                      <th>GitHub</th>
-                      <th>Repository</th>
-                      <th>Accepted</th>
-                      <th>Access</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (acceptance of acceptances(); track acceptance.id) {
-                      <tr>
-                        <td>{{ acceptance.displayName || acceptance.userName }}</td>
-                        <td class="mono">{{ acceptance.neptunCode || '—' }}</td>
-                        <td class="mono">{{ acceptance.gitHubUsername }}</td>
-                        <td class="mono">
-                          <a [href]="acceptance.repoUrl" rel="noopener" target="_blank">{{
-                            acceptance.gitHubRepoName
-                          }}</a>
-                        </td>
-                        <td class="muted">{{ acceptance.acceptedAt | date: 'yyyy-MM-dd HH:mm' }}</td>
-                        <td>
-                          @if (acceptance.invitationPending) {
-                            <span class="badge warn">Invitation waiting</span>
-                          } @else {
-                            <span class="badge ok">Ready</span>
+              @if (expandedId() === a.id) {
+                <tr class="roster">
+                  <td colspan="4">
+                    @if (loadingAcceptances()) {
+                      <p class="empty">Loading…</p>
+                    } @else {
+                      <table class="data">
+                        <thead>
+                          <tr>
+                            <th>Student</th>
+                            <th>Neptun</th>
+                            <th>GitHub</th>
+                            <th>Repository</th>
+                            <th>Accepted</th>
+                            <th>Access</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (acceptance of acceptances(); track acceptance.id) {
+                            <tr>
+                              <td>{{ acceptance.displayName || acceptance.userName }}</td>
+                              <td class="mono">{{ acceptance.neptunCode || '—' }}</td>
+                              <td class="mono">{{ acceptance.gitHubUsername }}</td>
+                              <td class="mono">
+                                <a [href]="acceptance.repoUrl" rel="noopener" target="_blank">{{
+                                  acceptance.gitHubRepoName
+                                }}</a>
+                              </td>
+                              <td class="muted">{{ acceptance.acceptedAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+                              <td>
+                                @if (acceptance.invitationPending) {
+                                  <span class="badge warn">Invitation waiting</span>
+                                } @else {
+                                  <span class="badge ok">Ready</span>
+                                }
+                              </td>
+                            </tr>
+                          } @empty {
+                            <tr>
+                              <td colspan="6" class="empty">Nobody has accepted this assignment yet.</td>
+                            </tr>
                           }
-                        </td>
-                      </tr>
-                    } @empty {
-                      <tr>
-                        <td colspan="6" class="empty">Nobody has accepted this assignment yet.</td>
-                      </tr>
+                        </tbody>
+                      </table>
                     }
-                  </tbody>
-                </table>
-              </div>
+                  </td>
+                </tr>
+              }
             }
-          }
-        </div>
-
-        <div class="card-foot">
-          <button type="button" class="btn quiet" (click)="startEdit(a)">Edit</button>
-
-          @if (a.isArchived) {
-            <button type="button" class="btn quiet" (click)="setArchived(a, false)">Reopen</button>
-          } @else {
-            <button type="button" class="btn quiet" (click)="setArchived(a, true)">Archive</button>
-          }
-
-          <button type="button" class="btn quiet" (click)="regenerateInvite(a)">New invite link</button>
-
-          <!-- Only offered while nothing depends on it; the API refuses once students hold repositories. -->
-          @if (a.acceptanceCount === 0) {
-            <button type="button" class="btn danger" (click)="remove(a)">Delete</button>
-          }
-        </div>
-      </article>
+          </tbody>
+        </table>
+      </div>
     }
-  }
+  </div>
 </section>

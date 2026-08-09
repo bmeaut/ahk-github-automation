@@ -13,14 +13,12 @@
 
   <div class="switcher">
     <label for="course-switch">Course</label>
-    <select
-      id="course-switch"
-      [value]="activeSlug() ?? ''"
-      (change)="switchCourse($any($event.target).value)"
-    >
-      <option value="" disabled>Choose a course…</option>
+    <!-- The current course is marked on the options themselves: a [value] binding on the select is applied
+         before the @for has created them, so it falls back to the first option and shows the wrong course. -->
+    <select id="course-switch" (change)="switchCourse($any($event.target).value)">
+      <option value="" disabled [selected]="activeSlug() === null">Choose a course…</option>
       @for (c of courses(); track c.slug) {
-        <option [value]="c.slug">{{ c.slug }} — {{ c.name }}</option>
+        <option [value]="c.slug" [selected]="c.slug === activeSlug()">{{ c.name }} — {{ c.slug }}</option>
       }
     </select>
   </div>

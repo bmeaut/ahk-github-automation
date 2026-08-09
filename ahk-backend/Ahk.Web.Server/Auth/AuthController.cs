@@ -130,6 +130,8 @@ public sealed class AuthController : ControllerBase
         var memberships = await db.CourseMemberships
             .AsNoTracking()
             .Where(m => m.UserId == user.Id)
+            .OrderBy(m => m.Course!.Name)
+            .ThenBy(m => m.Course!.Slug)
             .Select(m => new CourseMembershipDto
             {
                 Slug = m.Course!.Slug,
@@ -148,7 +150,8 @@ public sealed class AuthController : ControllerBase
             var rest = await db.Courses
                 .AsNoTracking()
                 .Where(c => !assigned.Contains(c.Slug))
-                .OrderBy(c => c.Slug)
+                .OrderBy(c => c.Name)
+                .ThenBy(c => c.Slug)
                 .Select(c => new CourseMembershipDto
                 {
                     Slug = c.Slug,
@@ -158,7 +161,10 @@ public sealed class AuthController : ControllerBase
                 })
                 .ToListAsync();
 
-            courses = memberships.Concat(rest).OrderBy(c => c.Slug, StringComparer.Ordinal).ToList();
+            courses = memberships.Concat(rest)
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(c => c.Slug, StringComparer.Ordinal)
+                .ToList();
         }
 
         return new CurrentUserResponse

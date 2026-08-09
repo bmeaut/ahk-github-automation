@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -41,6 +41,15 @@ export class CourseAssignments implements OnInit {
   // ---- Editor ----
   protected readonly editingId = signal<number | null>(null);
   protected readonly creating = signal(false);
+  /**
+   * The saved assignment the editor is open on, or null while creating. The editor carries everything the list
+   * does not — invite link, dates, archive, delete — and all of that needs the stored row, not the form fields.
+   * Reading it from the list means a reload after archiving or reissuing a link refreshes the editor too.
+   */
+  protected readonly editingAssignment = computed(() => {
+    const id = this.editingId();
+    return id === null ? null : (this.assignments().find((a) => a.id === id) ?? null);
+  });
   protected readonly savingForm = signal(false);
   protected name = '';
   protected description = '';
@@ -252,6 +261,8 @@ export class CourseAssignments implements OnInit {
     this.client.delete(assignment.id ?? 0, this.course).subscribe({
       next: () => {
         this.saved.set(`"${assignment.name}" was deleted.`);
+        // Delete is offered from the editor, so the editor has to close with it — there is nothing left to edit.
+        this.cancelEdit();
         this.load();
       },
       error: (err: unknown) => this.error.set(readApiError(err, 'That assignment could not be deleted.')),

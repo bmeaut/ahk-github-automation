@@ -2,7 +2,6 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 
 import {
   CourseDto,
@@ -33,6 +32,8 @@ export class AdminCourses implements OnInit {
   protected readonly health = signal<Map<number, CourseHealthReport>>(new Map());
   protected readonly loading = signal(false);
   protected readonly checking = signal(false);
+  /** True once a health run has returned — until then the Integration column is honestly blank, not "passing". */
+  protected readonly healthLoaded = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly adding = signal(false);
@@ -52,15 +53,17 @@ export class AdminCourses implements OnInit {
 
   protected reload(): void {
     this.loading.set(true);
+    this.healthLoaded.set(false);
     this.error.set(null);
 
-    // The health run is the slow half (it calls GitHub), but the two arrive together so the table never
-    // reflows under the reader.
-    forkJoin({ courses: this.client.list(), reports: this.healthClient.checkAll() }).subscribe({
-      next: ({ courses, reports }) => {
+    // The register itself is one cheap query, so it paints immediately. The health run is the slow half — it
+    // checks every course in turn, and two of its checks call GitHub with a ten-second budget each — so it
+    // follows as a second step and fills the Integration column in when it arrives.
+    this.client.list().subscribe({
+      next: (courses) => {
         this.courses.set(courses);
-        this.health.set(new Map(reports.map((r) => [r.courseId ?? 0, r])));
         this.loading.set(false);
+        this.recheck();
       },
       error: () => {
         this.error.set('Could not load the courses. Reload the page to try again.');
@@ -74,9 +77,11 @@ export class AdminCourses implements OnInit {
     this.healthClient.checkAll().subscribe({
       next: (reports) => {
         this.health.set(new Map(reports.map((r) => [r.courseId ?? 0, r])));
+        this.healthLoaded.set(true);
         this.checking.set(false);
       },
       error: () => {
+        // The table is already on screen; a failed health run only costs the Integration column.
         this.error.set('The health check could not be run.');
         this.checking.set(false);
       },

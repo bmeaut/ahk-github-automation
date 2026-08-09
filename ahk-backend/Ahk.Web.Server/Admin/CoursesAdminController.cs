@@ -37,7 +37,8 @@ public sealed class CoursesAdminController : ControllerBase
     {
         var courses = await db.Courses
             .AsNoTracking()
-            .OrderBy(c => c.Slug)
+            .OrderBy(c => c.Name)
+            .ThenBy(c => c.Slug)
             .Select(c => new CourseDto
             {
                 Id = c.Id,

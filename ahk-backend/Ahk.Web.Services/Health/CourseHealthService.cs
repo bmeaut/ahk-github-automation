@@ -39,7 +39,7 @@ public sealed class CourseHealthService : ICourseHealthService
 
     public async Task<IReadOnlyList<CourseHealthReport>> CheckAllCoursesAsync(CancellationToken cancellationToken = default)
     {
-        var courses = await LoadCourses().OrderBy(c => c.Slug).ToListAsync(cancellationToken);
+        var courses = await LoadCourses().OrderBy(c => c.Name).ThenBy(c => c.Slug).ToListAsync(cancellationToken);
 
         var reports = new List<CourseHealthReport>(courses.Count);
         foreach (var course in courses)
