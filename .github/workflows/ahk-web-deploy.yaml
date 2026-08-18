@@ -10,11 +10,13 @@ on:
         default: false
 
 env:
-  DOTNET_VERSION: "10.0.x"
   NODE_VERSION: "24"
-  BACKEND_PROJECT: ahk-backend/Ahk.Web.Server/Ahk.Web.Server.csproj
-  SOLUTION: ahk-backend/Ahk.Web.slnx
-  DATA_PROJECT: ahk-backend/Ahk.Web.Data
+  # Relative to the ahk-backend/ working directory used by the dotnet steps below (not repo root) — that
+  # working directory is what lets the .NET SDK's own global.json discovery (a directory walk-up from CWD)
+  # find ahk-backend/global.json and pin the exact SDK, rather than floating.
+  BACKEND_PROJECT: Ahk.Web.Server/Ahk.Web.Server.csproj
+  SOLUTION: Ahk.Web.slnx
+  DATA_PROJECT: Ahk.Web.Data
   FRONTEND_DIR: ahk-frontend
   OFFLINE_PAGE: ahk-backend/Ahk.Web.Server/app_offline.htm
   MOUNT_POINT: /mnt/deploy
@@ -34,10 +36,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Pinned via ahk-backend/global.json (rollForward: disable), not a floating "10.0.x" — a self-contained
+      # publish embeds the entire runtime, so an unpinned SDK/package patch changes nearly every file's hash
+      # and silently defeats the manifest-diff deploy below. See CLAUDE.md for the incident this fixes.
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: ahk-backend/global.json
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -49,6 +54,7 @@ jobs:
       # ---- A. Build & test (fail-fast: nothing below runs if a test fails) ----
 
       - name: Backend tests
+        working-directory: ahk-backend
         run: dotnet test ${{ env.SOLUTION }} --configuration Release
 
       - name: Install frontend dependencies
@@ -62,7 +68,8 @@ jobs:
       # ---- B. Produce artifacts ----
 
       - name: Publish backend (self-contained win-x64 via Mezga profile)
-        run: dotnet publish ${{ env.BACKEND_PROJECT }} -p:PublishProfile=Mezga -o publish
+        working-directory: ahk-backend
+        run: dotnet publish ${{ env.BACKEND_PROJECT }} -p:PublishProfile=Mezga -o ../publish
 
       - name: Build frontend (production)
         working-directory: ${{ env.FRONTEND_DIR }}
@@ -74,13 +81,14 @@ jobs:
           cp -r ${{ env.FRONTEND_DIR }}/dist/ahk-frontend/browser/. publish/wwwroot/
 
       - name: Generate idempotent migration script (artifact only — applied manually)
+        working-directory: ahk-backend
         run: |
           dotnet tool install --global dotnet-ef
           export PATH="$PATH:$HOME/.dotnet/tools"
           dotnet ef migrations script --idempotent \
             --project ${{ env.DATA_PROJECT }} \
             --startup-project ${{ env.DATA_PROJECT }} \
-            -o migrate.sql
+            -o ../migrate.sql
 
       - name: Upload migration script
         uses: actions/upload-artifact@v4

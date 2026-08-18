@@ -1,0 +1,4 @@
+# Shell scripts run inside WSL/Linux and must keep LF endings regardless of core.autocrlf on a Windows
+# checkout — a stray CRLF can make bash misparse compound commands (e.g. "(cd x && ...)") with a cryptic
+# "unexpected token $'\r'" error.
+*.sh text eol=lf

@@ -17,7 +17,11 @@ set -euo pipefail
 # ---- Config ----
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BACKEND_PROJECT="ahk-backend/Ahk.Web.Server/Ahk.Web.Server.csproj"
+# Relative to ahk-backend/ (the publish step below cd's there first) — that CWD is what lets the .NET
+# SDK's own global.json discovery (a directory walk-up) find ahk-backend/global.json and pin the exact
+# SDK, matching ahk-web-deploy.yaml's working-directory: ahk-backend. Without it, dotnet.exe (Windows
+# interop) would use whatever SDK happens to be on PATH, which can silently drift from what CI uses.
+BACKEND_PROJECT="Ahk.Web.Server/Ahk.Web.Server.csproj"
 FRONTEND_DIR="ahk-frontend"
 OFFLINE_PAGE="ahk-backend/Ahk.Web.Server/app_offline.htm"
 PUBLISH_DIR="publish-local"
@@ -69,7 +73,7 @@ fi
 # ---- Build ----
 echo "== Publishing backend (self-contained win-x64 via Mezga profile) =="
 rm -rf "$PUBLISH_DIR"
-dotnet.exe publish "$BACKEND_PROJECT" -p:PublishProfile=Mezga -o "$PUBLISH_DIR"
+(cd ahk-backend && dotnet.exe publish "$BACKEND_PROJECT" -p:PublishProfile=Mezga -o "../$PUBLISH_DIR")
 
 echo "== Building frontend (production) =="
 (cd "$FRONTEND_DIR" && npm ci && npx ng build --configuration production)
