@@ -3102,6 +3102,270 @@ export class UsersAdminClient implements IUsersAdminClient {
     }
 }
 
+export interface IWebhookDeliveriesAdminClient {
+    list(courseId?: number | null | undefined, status?: GitHubWebhookDeliveryStatus | null | undefined, repository?: string | null | undefined, skip?: number | undefined, take?: number | undefined): Observable<WebhookDeliveryListDto>;
+    get(id: number): Observable<WebhookDeliveryDetailDto>;
+    getPayload(id: number): Observable<string>;
+    retry(id: number, request?: WebhookDeliveryRetryRequest | undefined): Observable<WebhookDeliveryDto>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class WebhookDeliveriesAdminClient implements IWebhookDeliveriesAdminClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "https://localhost:7443";
+    }
+
+    list(courseId?: number | null | undefined, status?: GitHubWebhookDeliveryStatus | null | undefined, repository?: string | null | undefined, skip?: number | undefined, take?: number | undefined): Observable<WebhookDeliveryListDto> {
+        let url_ = this.baseUrl + "/api/admin/webhook-deliveries?";
+        if (courseId !== undefined && courseId !== null)
+            url_ += "courseId=" + encodeURIComponent("" + courseId) + "&";
+        if (status !== undefined && status !== null)
+            url_ += "status=" + encodeURIComponent("" + status) + "&";
+        if (repository !== undefined && repository !== null)
+            url_ += "repository=" + encodeURIComponent("" + repository) + "&";
+        if (skip === null)
+            throw new globalThis.Error("The parameter 'skip' cannot be null.");
+        else if (skip !== undefined)
+            url_ += "skip=" + encodeURIComponent("" + skip) + "&";
+        if (take === null)
+            throw new globalThis.Error("The parameter 'take' cannot be null.");
+        else if (take !== undefined)
+            url_ += "take=" + encodeURIComponent("" + take) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WebhookDeliveryListDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WebhookDeliveryListDto>;
+        }));
+    }
+
+    protected processList(response: HttpResponseBase): Observable<WebhookDeliveryListDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WebhookDeliveryListDto;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    get(id: number): Observable<WebhookDeliveryDetailDto> {
+        let url_ = this.baseUrl + "/api/admin/webhook-deliveries/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WebhookDeliveryDetailDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WebhookDeliveryDetailDto>;
+        }));
+    }
+
+    protected processGet(response: HttpResponseBase): Observable<WebhookDeliveryDetailDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WebhookDeliveryDetailDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPayload(id: number): Observable<string> {
+        let url_ = this.baseUrl + "/api/admin/webhook-deliveries/{id}/payload";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPayload(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPayload(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string>;
+        }));
+    }
+
+    protected processGetPayload(response: HttpResponseBase): Observable<string> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    retry(id: number, request?: WebhookDeliveryRetryRequest | undefined): Observable<WebhookDeliveryDto> {
+        let url_ = this.baseUrl + "/api/admin/webhook-deliveries/{id}/retry";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRetry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRetry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WebhookDeliveryDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WebhookDeliveryDto>;
+        }));
+    }
+
+    protected processRetry(response: HttpResponseBase): Observable<WebhookDeliveryDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WebhookDeliveryDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status === 409) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface StudentRepository {
     acceptanceId?: number;
     courseSlug?: string;
@@ -3427,6 +3691,59 @@ export interface UpsertUserCourseRequest {
 
 export interface SetPasswordRequest {
     newPassword: string;
+}
+
+export interface WebhookDeliveryListDto {
+    items?: WebhookDeliveryDto[];
+    total?: number;
+    counts?: WebhookDeliveryCountsDto;
+}
+
+export interface WebhookDeliveryDto {
+    id?: number;
+    courseId?: number;
+    courseSlug?: string;
+    courseName?: string;
+    deliveryId?: string | undefined;
+    eventName?: string;
+    repositoryFullName?: string;
+    receivedAt?: Date;
+    completedAt?: Date | undefined;
+    status?: GitHubWebhookDeliveryStatus;
+    attemptCount?: number;
+    nextAttemptAt?: Date | undefined;
+    handlerCount?: number;
+    failedHandlerCount?: number;
+    hasPayload?: boolean;
+    error?: string | undefined;
+}
+
+export type GitHubWebhookDeliveryStatus = "Pending" | "Processing" | "Succeeded" | "Failed" | "Skipped" | "Interrupted";
+
+export interface WebhookDeliveryCountsDto {
+    pending?: number;
+    succeeded?: number;
+    failed?: number;
+    interrupted?: number;
+    skipped?: number;
+}
+
+export interface WebhookDeliveryDetailDto {
+    delivery?: WebhookDeliveryDto;
+    outcomes?: WebhookHandlerOutcome[];
+}
+
+export interface WebhookHandlerOutcome {
+    handlerName?: string;
+    order?: number;
+    result?: string | undefined;
+    error?: string | undefined;
+    durationMs?: number;
+    succeeded?: boolean;
+}
+
+export interface WebhookDeliveryRetryRequest {
+    onlyFailedHandlers?: boolean;
 }
 
 export interface FileResponse {

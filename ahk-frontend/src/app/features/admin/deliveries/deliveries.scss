@@ -1,0 +1,132 @@
+// Tiles match the health dashboard's: the two screens are read together, and a different summary row on each
+// would suggest they measure different kinds of thing.
+.tally {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 7rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule-strong);
+  border-radius: var(--radius);
+
+  &.ok {
+    border-left-color: var(--ok);
+  }
+
+  &.warn {
+    border-left-color: var(--warn);
+  }
+
+  &.bad {
+    border-left-color: var(--bad);
+  }
+
+  .n {
+    font-family: var(--font-mono);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .l {
+    font-family: var(--font-ui);
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+}
+
+.stamp {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  margin-left: auto;
+}
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  .grow {
+    flex: 1 1 14rem;
+  }
+}
+
+.row {
+  cursor: pointer;
+
+  &.open {
+    background: var(--surface-2, var(--surface));
+  }
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sub {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.detail-row td {
+  padding: 0;
+  background: none;
+}
+
+.detail-row .card {
+  margin: 0.5rem 0 1rem;
+}
+
+.outcome {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  padding: 0.375rem 0;
+
+  .name {
+    min-width: 16rem;
+  }
+
+  .grow {
+    flex: 1;
+  }
+
+  .took {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-2);
+  }
+}
+
+pre {
+  // Stack traces and payloads are wide by nature; they scroll inside their own box rather than pushing the
+  // page sideways.
+  overflow-x: auto;
+  max-height: 20rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+}
+
+.payload {
+  max-height: 24rem;
+}

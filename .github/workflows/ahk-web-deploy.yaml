@@ -221,8 +221,11 @@ jobs:
         if: steps.diff.outputs.has_changes == 'true'
         run: |
           cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
-          # Give IIS a moment to notice and release file locks before copying.
-          sleep 5
+          # Give IIS a moment to notice and release file locks before copying. Long enough to also cover the
+          # webhook delivery worker's graceful shutdown (web.config sets shutdownTimeLimit=30): a delivery
+          # killed mid-flight is recorded as Interrupted and then needs a human to decide whether to re-run
+          # it, and letting it finish is cheaper than that. It also cuts the locked-file rsync retries below.
+          sleep 20
 
       # Copies exactly the changed/added files (preserving their relative subdirectories) and deletes
       # exactly the removed ones. --ignore-times/--whole-file/--inplace stop rsync from doing any of its

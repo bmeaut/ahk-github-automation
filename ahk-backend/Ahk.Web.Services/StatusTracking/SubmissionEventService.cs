@@ -51,7 +51,31 @@ public sealed class SubmissionEventService : ISubmissionEventService
         db.SubmissionEvents.Add(submissionEvent);
         submission.LastEventAt = submissionEvent.Timestamp;
 
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // The check above is a read followed by a write, so the same delivery being processed twice at once
+            // slips past it and lands on the filtered unique index instead. That became reachable when the
+            // receiver moved to a queue: the worker and an administrator's re-run can both hold the same row.
+            // A duplicate is the guard working, not a fault — report it as one rather than letting it surface
+            // as a red "exception" line against a handler that behaved correctly.
+            if (string.IsNullOrEmpty(submissionEvent.GitHubDeliveryId))
+                throw;
+
+            db.Entry(submissionEvent).State = EntityState.Detached;
+
+            var duplicate = await db.SubmissionEvents.IgnoreQueryFilters()
+                .AnyAsync(e => e.GitHubDeliveryId == submissionEvent.GitHubDeliveryId, cancellationToken);
+
+            if (!duplicate)
+                throw;
+
+            return false;
+        }
+
         return true;
     }
 }

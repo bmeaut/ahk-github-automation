@@ -1,0 +1,168 @@
+<section class="page">
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Site administration</span>
+      <h1>Webhook deliveries</h1>
+      <p class="lede">
+        Every GitHub webhook this site accepted, and what each handler made of it. Deliveries are answered
+        immediately and processed on a queue, so this — not GitHub's Recent Deliveries tab — is where the
+        result of a delivery is recorded.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn primary" (click)="load()" [disabled]="loading()">
+        {{ loading() ? 'Loading…' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+
+  <div class="tally">
+    <div class="tile" [class.bad]="(counts().failed ?? 0) > 0">
+      <span class="n">{{ counts().failed ?? 0 }}</span>
+      <span class="l">Failed</span>
+    </div>
+    <div class="tile" [class.bad]="(counts().interrupted ?? 0) > 0">
+      <span class="n">{{ counts().interrupted ?? 0 }}</span>
+      <span class="l">Interrupted</span>
+    </div>
+    <div class="tile" [class.warn]="(counts().pending ?? 0) > 0">
+      <span class="n">{{ counts().pending ?? 0 }}</span>
+      <span class="l">Waiting</span>
+    </div>
+    <div class="tile" [class.ok]="(counts().succeeded ?? 0) > 0">
+      <span class="n">{{ counts().succeeded ?? 0 }}</span>
+      <span class="l">Succeeded</span>
+    </div>
+    <div class="tile">
+      <span class="n">{{ counts().skipped ?? 0 }}</span>
+      <span class="l">Skipped</span>
+    </div>
+    @if (loadedAt(); as at) {
+      <span class="stamp">Last 24 hours, plus everything still waiting · loaded {{ at | date: 'medium' }}</span>
+    }
+  </div>
+
+  <div class="filters">
+    <label class="field">
+      <span>Course</span>
+      <select [(ngModel)]="courseId" (ngModelChange)="load()">
+        <!-- [selected], not [value]: a value binding is applied before @for has produced the options. -->
+        <option [ngValue]="null" [selected]="courseId === null">All courses</option>
+        @for (c of courses(); track c.id) {
+          <option [ngValue]="c.id" [selected]="courseId === c.id">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Status</span>
+      <select [(ngModel)]="status" (ngModelChange)="load()">
+        <option [ngValue]="null" [selected]="status === null">Any status</option>
+        @for (s of statuses; track s) {
+          <option [ngValue]="s" [selected]="status === s">{{ s }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field grow">
+      <span>Repository</span>
+      <input type="search" [(ngModel)]="repository" (keyup.enter)="load()" placeholder="viaubc01-abc123" />
+    </label>
+  </div>
+
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Received</th>
+        <th>Course</th>
+        <th>Event</th>
+        <th>Repository</th>
+        <th>Status</th>
+        <th class="num">Attempts</th>
+        <th class="num">Took</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (d of items(); track d.id) {
+        <tr class="row" (click)="toggle(d)" [class.open]="openId() === d.id">
+          <td>{{ d.receivedAt | date: 'short' }}</td>
+          <td>{{ d.courseName }}</td>
+          <td class="mono">{{ d.eventName }}</td>
+          <td class="mono">{{ d.repositoryFullName }}</td>
+          <td>
+            <span class="badge" [class.ok]="tone(d.status) === 'ok'" [class.warn]="tone(d.status) === 'warn'" [class.bad]="tone(d.status) === 'bad'">
+              {{ d.status }}
+            </span>
+            @if ((d.failedHandlerCount ?? 0) > 0) {
+              <span class="sub">{{ d.failedHandlerCount }} of {{ d.handlerCount }} handlers failed</span>
+            }
+          </td>
+          <td class="num">{{ d.attemptCount }}</td>
+          <td class="num">{{ duration(d) }}</td>
+        </tr>
+
+        @if (openId() === d.id) {
+          <tr class="detail-row">
+            <td colspan="7">
+              <div class="card">
+                @if (d.error; as e) {
+                  <p class="notice">{{ e }}</p>
+                }
+
+                @if (detailError(); as e) {
+                  <p class="notice error">{{ e }}</p>
+                }
+
+                @for (o of outcomes(); track o.order) {
+                  <div class="outcome">
+                    <span class="dot" [class.ok]="o.succeeded" [class.bad]="!o.succeeded"></span>
+                    <span class="mono name">{{ o.handlerName }}</span>
+                    <span class="grow">{{ o.result ?? 'threw an exception' }}</span>
+                    <span class="took">{{ o.durationMs }} ms</span>
+                  </div>
+                  @if (o.error; as err) {
+                    <pre>{{ err }}</pre>
+                  }
+                } @empty {
+                  <p class="empty">No handler ran for this delivery.</p>
+                }
+
+                <div class="btn-row">
+                  @if (d.hasPayload) {
+                    <button type="button" class="btn quiet" (click)="retry(d, true)" [disabled]="busy()">
+                      Re-run failed handlers
+                    </button>
+                    <button type="button" class="btn quiet" (click)="retry(d, false)" [disabled]="busy()">
+                      Re-run everything
+                    </button>
+                    <button type="button" class="btn quiet" (click)="showPayload(d.id)">Show payload</button>
+                  } @else {
+                    <span class="sub">The payload is no longer retained, so this delivery cannot be re-run.</span>
+                  }
+                </div>
+
+                @if (payload(); as body) {
+                  <pre class="payload">{{ body }}</pre>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      } @empty {
+        @if (!loading()) {
+          <tr>
+            <td colspan="7" class="empty">No deliveries match these filters.</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+
+  @if (total() > items().length) {
+    <p class="sub">Showing the {{ items().length }} most recent of {{ total() }} matching deliveries.</p>
+  }
+</section>

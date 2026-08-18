@@ -40,6 +40,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/health/health').then((m) => m.AdminHealth),
       },
       {
+        path: 'deliveries',
+        loadComponent: () => import('./features/admin/deliveries/deliveries').then((m) => m.AdminDeliveries),
+      },
+      {
         path: 'help/github',
         loadComponent: () => import('./features/admin/help/github-setup').then((m) => m.GitHubSetupHelp),
       },

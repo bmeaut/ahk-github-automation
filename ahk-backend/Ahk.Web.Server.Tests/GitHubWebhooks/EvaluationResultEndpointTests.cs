@@ -244,6 +244,7 @@ public class EvaluationResultEndpointTests : IClassFixture<EvaluationResultEndpo
         protected override IHost CreateHost(IHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+            builder.WithoutWebhookWorker();
             builder.ConfigureServices(services =>
             {
                 var toRemove = services.Where(d =>

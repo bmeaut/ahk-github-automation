@@ -31,6 +31,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<CourseWebhookToken> CourseWebhookTokens => Set<CourseWebhookToken>();
 
+    public DbSet<GitHubWebhookDelivery> GitHubWebhookDeliveries => Set<GitHubWebhookDelivery>();
+
     public DbSet<Student> Students => Set<Student>();
 
     public DbSet<Submission> Submissions => Set<Submission>();
@@ -105,6 +107,31 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             e.HasIndex(t => t.Token).IsUnique();
             e.HasOne(t => t.Course).WithMany().HasForeignKey(t => t.CourseId).OnDelete(DeleteBehavior.Cascade);
             e.HasQueryFilter(t => t.CourseId == this.currentCourse.CurrentCourseId);
+        });
+
+        builder.Entity<GitHubWebhookDelivery>(e =>
+        {
+            e.Property(d => d.DeliveryId).HasMaxLength(128);
+            e.Property(d => d.EventName).HasMaxLength(64).IsRequired();
+            e.Property(d => d.RepositoryFullName).HasMaxLength(400).IsRequired();
+            e.Property(d => d.Error).HasMaxLength(2000);
+
+            // The worker's claim query: oldest Pending row whose NextAttemptAt has come.
+            e.HasIndex(d => new { d.Status, d.NextAttemptAt, d.Id });
+
+            // The admin listing, and the retention pass.
+            e.HasIndex(d => new { d.CourseId, d.ReceivedAt });
+            e.HasIndex(d => d.ReceivedAt);
+
+            // Not unique: an absent header stores null, and a GitHub redelivery is a legitimately new row.
+            e.HasIndex(d => d.DeliveryId);
+
+            // Cascade, and the only path from Course — which is why CoursesAdminController.Delete needs no
+            // explicit ExecuteDeleteAsync for this table.
+            e.HasOne(d => d.Course).WithMany().HasForeignKey(d => d.CourseId).OnDelete(DeleteBehavior.Cascade);
+
+            // No query filter: see the remarks on the entity. The worker and the admin controller both read
+            // this table with no current course, and a filter would make it silently appear empty.
         });
 
         builder.Entity<Student>(e =>

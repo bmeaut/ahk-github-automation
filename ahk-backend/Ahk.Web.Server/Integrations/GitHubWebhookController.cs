@@ -1,8 +1,7 @@
 using System.Text.Json;
 using Ahk.Web.Data;
-using Ahk.Web.Server.CourseContext;
+using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.Courses;
-using Ahk.Web.Services.GitHub;
 using Ahk.Web.Services.GitHubWebhooks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +13,12 @@ namespace Ahk.Web.Server.Integrations;
 /// Receives GitHub App webhook deliveries — the entry point ported from <c>github-monitor</c>'s single Azure
 /// Function. Anonymous by design: the <c>X-Hub-Signature-256</c> HMAC is the authentication, and there is no
 /// fallback authorization policy in <c>Program.cs</c> for it to fight.
+///
+/// <para>The delivery is verified and recorded here, and answered 202 straight away;
+/// <see cref="GitHubWebhookDeliveryWorker"/> does the work. GitHub gives a delivery <strong>ten
+/// seconds</strong>, and a single <c>pull_request</c> event costs the handlers one GitHub API call per closed
+/// pull request in the repository — processing inline was a race this endpoint kept losing, and losing it
+/// mid-fan-out left a merged pull request with no grade recorded against it.</para>
 ///
 /// <para>Kept out of the OpenAPI document: the SPA never calls this, and NSwag would emit a TypeScript client
 /// for a byte-exact signed payload that no browser can produce.</para>
@@ -28,28 +33,19 @@ public sealed class GitHubWebhookController : ControllerBase
     private const int MaxPayloadBytes = 25 * 1024 * 1024;
 
     private readonly ICourseResolutionService courses;
-    private readonly ICourseGitHubAppTokenProvider tokenProvider;
-    private readonly ICourseGitHubClientFactory clientFactory;
-    private readonly IGitHubWebhookDispatcher dispatcher;
-    private readonly CurrentCourseProvider currentCourse;
     private readonly ApplicationDbContext db;
+    private readonly TimeProvider timeProvider;
     private readonly ILogger<GitHubWebhookController> logger;
 
     public GitHubWebhookController(
         ICourseResolutionService courses,
-        ICourseGitHubAppTokenProvider tokenProvider,
-        ICourseGitHubClientFactory clientFactory,
-        IGitHubWebhookDispatcher dispatcher,
-        CurrentCourseProvider currentCourse,
         ApplicationDbContext db,
+        TimeProvider timeProvider,
         ILogger<GitHubWebhookController> logger)
     {
         this.courses = courses;
-        this.tokenProvider = tokenProvider;
-        this.clientFactory = clientFactory;
-        this.dispatcher = dispatcher;
-        this.currentCourse = currentCourse;
         this.db = db;
+        this.timeProvider = timeProvider;
         this.logger = logger;
     }
 
@@ -59,7 +55,6 @@ public sealed class GitHubWebhookController : ControllerBase
     /// </summary>
     [HttpPost]
     [RequestSizeLimit(MaxPayloadBytes)]
-    [ProducesResponseType(typeof(WebhookResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -114,43 +109,51 @@ public sealed class GitHubWebhookController : ControllerBase
         if (!GitHubSignatureValidator.IsSignatureValid(requestBody, receivedSignature, config.GitHubWebhookSecret))
             return BadRequest(new { error = "Payload signature not valid" });
 
-        // Past this point the body is trusted.
-        currentCourse.Set(course.Id);
-
-        // The org-based lookup is used rather than the payload's installation.id: the course is resolved *by*
-        // organization, so the two are the same installation by construction, and deriving a credential from a
-        // payload field is a weaker path to the same answer.
-        var token = await tokenProvider.GetForCourseAsync(course.Id, bypassCache: false, cancellationToken);
-        if (token is null)
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "GitHub App ID/Token not configured" });
-
-        var context = new GitHubWebhookContext
+        // Past this point the body is trusted, and the only thing left to do is record it.
+        var now = timeProvider.GetUtcNow();
+        var delivery = new GitHubWebhookDelivery
         {
             CourseId = course.Id,
-            GitHubEventName = eventName,
-            DeliveryId = deliveryId ?? string.Empty,
-            RequestBody = requestBody,
-            GitHubClient = clientFactory.CreateForToken(token.Token),
-            WorkflowRunThreshold = config.WorkflowRunThreshold,
+            DeliveryId = string.IsNullOrEmpty(deliveryId) ? null : deliveryId,
+            EventName = eventName,
+            RepositoryFullName = repositoryFullName,
+            Payload = requestBody,
+            ReceivedAt = now,
+            Status = GitHubWebhookDeliveryStatus.Pending,
+            NextAttemptAt = now,
         };
 
-        logger.LogInformation("Webhook delivery accepted with Delivery id = '{DeliveryId}'", deliveryId);
+        db.GitHubWebhookDeliveries.Add(delivery);
 
-        var webhookResult = new WebhookResult();
         try
         {
-            await dispatcher.ProcessAsync(context, webhookResult, cancellationToken);
-            logger.LogInformation("Webhook delivery processed successfully with Delivery id = '{DeliveryId}'", deliveryId);
+            // CancellationToken.None, not the bound RequestAborted: this insert is the single durable act of
+            // the request. GitHub hangs up at its own ten-second deadline, and cancelling here would leave a
+            // delivery neither processed nor recorded — the one outcome with no way back. SqlClient's own
+            // command timeout is the real bound.
+            await db.SaveChangesAsync(CancellationToken.None);
         }
-#pragma warning disable CA1031 // A handled delivery still answers 200; the failure is reported in the body.
+#pragma warning disable CA1031 // Any failure to record must be reported as one, not swallowed into a 202.
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            webhookResult.LogError(ex, "Failed to handle webhook");
-            logger.LogError(ex, "github-webhook failed with Delivery id = '{DeliveryId}'", deliveryId);
+            // 500, deliberately: nothing was persisted and nothing ran, so a red entry in the delivery log is
+            // the truth — and it keeps GitHub's own Redeliver button as the way back.
+            logger.LogError(ex, "Failed to queue webhook delivery '{DeliveryId}'", deliveryId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to record the delivery" });
         }
 
-        return Ok(webhookResult);
+        logger.LogInformation(
+            "Webhook delivery queued: Delivery id = '{DeliveryId}', Event name = '{EventName}', Queue id = {QueueId}",
+            deliveryId, eventName, delivery.Id);
+
+        return Accepted(new
+        {
+            status = "queued",
+            deliveryId,
+            queueId = delivery.Id,
+            message = "queued for processing; see Site administration → Webhook deliveries",
+        });
     }
 
     /// <summary>

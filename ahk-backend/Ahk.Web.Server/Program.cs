@@ -4,8 +4,10 @@ using Ahk.Web.Data.Seed;
 using Ahk.Web.Server.Auth;
 using Ahk.Web.Server.Configuration;
 using Ahk.Web.Server.CourseContext;
+using Ahk.Web.Server.Integrations;
 using Ahk.Web.Server.MockOidc;
 using Ahk.Web.Services;
+using Ahk.Web.Services.GitHubWebhooks;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -219,7 +221,14 @@ public class Program
         // clock a test can move. TimeProvider is the framework's answer to grade-management's IDateTimeProvider.
         builder.Services.TryAddSingleton(TimeProvider.System);
 
+        builder.Services.Configure<WebhookOptions>(builder.Configuration.GetSection(WebhookOptions.SectionName));
         builder.Services.AddAhkServices();
+
+        // The webhook receiver records deliveries and answers 202; this drains them. Gated by configuration so
+        // the test hosts, which boot the real Program, do not poll a database for the length of a test run.
+        var webhooks = builder.Configuration.GetSection(WebhookOptions.SectionName).Get<WebhookOptions>() ?? new WebhookOptions();
+        if (webhooks.WorkerEnabled)
+            builder.Services.AddHostedService<GitHubWebhookDeliveryWorker>();
 
         // ---- MVC + OpenAPI (NSwag document consumed by the Angular code generator) ----
         // Enums travel as names, not ordinals: the generated TypeScript client then models them as string

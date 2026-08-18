@@ -181,6 +181,11 @@ public sealed class CoursesAdminController : ControllerBase
 
         // GradeRecord, SubmissionEvent and AssignmentAcceptance point at Course with NoAction (SQL Server
         // rejects the extra cascade paths), so they are removed explicitly before the course goes.
+        //
+        // GitHubWebhookDeliveries is deliberately absent: it is reached by a single path from Course, so its
+        // foreign key is a plain Cascade and the database removes it. Adding it here would be harmless but
+        // would suggest the rule is "list everything", which is what makes people give a new entity a second
+        // cascade path without noticing.
         await db.GradeExercisePoints.IgnoreQueryFilters()
             .Where(p => p.GradeRecord!.CourseId == id).ExecuteDeleteAsync(cancellationToken);
         await db.GradeRecords.IgnoreQueryFilters().Where(g => g.CourseId == id).ExecuteDeleteAsync(cancellationToken);

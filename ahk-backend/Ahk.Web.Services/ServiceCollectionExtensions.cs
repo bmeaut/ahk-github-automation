@@ -78,6 +78,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAhkGitHubWebhooks(this IServiceCollection services)
     {
         services.AddScoped<IGitHubWebhookDispatcher, GitHubWebhookDispatcher>();
+        services.AddScoped<IGitHubWebhookDeliveryProcessor, GitHubWebhookDeliveryProcessor>();
 
         services.AddScoped<IGitHubWebhookHandler, BranchProtectionRuleHandler>();
         services.AddScoped<IGitHubWebhookHandler, IssueCommentEditDeleteHandler>();
@@ -114,6 +115,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICourseHealthCheck, GitHubAccessHealthCheck>();
         services.AddScoped<ICourseHealthCheck, GitHubAppInstallationHealthCheck>();
         services.AddScoped<ICourseHealthCheck, CiCallbackTokenHealthCheck>();
+        services.AddScoped<ICourseHealthCheck, WebhookQueueHealthCheck>();
         services.AddScoped<ICourseHealthService, CourseHealthService>();
 
         return services;

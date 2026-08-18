@@ -95,6 +95,47 @@ public class WebhookHandlerRegistrationTests
     }
 
     /// <summary>
+    /// ⚠️ The dispatcher records a handler by its simple type name, and an administrator re-running a failed
+    /// delivery keys the "already succeeded, do not run again" set on exactly that string. Widen it to a full
+    /// name, or rename a handler class, and the skip-set silently stops matching — so a re-run posts a second
+    /// comment or attempts a second merge, which is the one thing the re-run exists to avoid.
+    /// </summary>
+    [Fact]
+    public async Task DispatcherRecordsHandlersByTheirSimpleTypeName()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddScoped<IGitHubWebhookHandler, StubHandler>();
+        services.AddScoped<IGitHubWebhookDispatcher, GitHubWebhookDispatcher>();
+
+        await using var provider = services.BuildServiceProvider();
+        var dispatcher = provider.GetRequiredService<IGitHubWebhookDispatcher>();
+
+        var outcomes = await dispatcher.ProcessAsync(new GitHubWebhookContext
+        {
+            CourseId = 1,
+            GitHubEventName = StubHandler.EventName,
+            DeliveryId = "d1",
+            RequestBody = "{}",
+            GitHubClient = Mock.Of<Octokit.IGitHubClient>(),
+            WorkflowRunThreshold = 5,
+        });
+
+        Assert.Equal(nameof(StubHandler), Assert.Single(outcomes).HandlerName);
+    }
+
+    /// <summary>A handler whose only job is to be named, for the test above.</summary>
+    private sealed class StubHandler : IGitHubWebhookHandler
+    {
+        public const string EventName = "stub_event";
+
+        public string GitHubEventName => EventName;
+
+        public Task<EventHandlerResult> ExecuteAsync(GitHubWebhookContext context, CancellationToken cancellationToken = default)
+            => Task.FromResult(EventHandlerResult.NoActionNeeded("stub"));
+    }
+
+    /// <summary>
     /// Resolves the handlers alone, with their collaborators stubbed. Registering the whole service graph would
     /// drag in the DbContext and the HTTP clients for a question that is purely about registration.
     /// </summary>

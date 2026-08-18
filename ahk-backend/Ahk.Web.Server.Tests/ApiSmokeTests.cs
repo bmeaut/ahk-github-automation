@@ -114,6 +114,7 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
         {
             // "Testing" (not Development) so the dev data seeder / SQL Server connection are skipped.
             builder.UseEnvironment("Testing");
+            builder.WithoutWebhookWorker();
             builder.ConfigureServices(services =>
             {
                 // Drop the SqlServer registration (the options, EF's options-configuration, and the context)

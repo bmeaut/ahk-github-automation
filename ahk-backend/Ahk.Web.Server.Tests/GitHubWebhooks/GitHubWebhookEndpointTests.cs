@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
@@ -124,34 +125,65 @@ public class GitHubWebhookEndpointTests : IClassFixture<GitHubWebhookEndpointTes
         Assert.Contains("Payload signature not valid", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
-    /// <summary>A correctly signed delivery for an event nobody handles is a 200 that says so.</summary>
+    /// <summary>
+    /// A correctly signed delivery is accepted, not processed. 202 rather than 200 because that is now the
+    /// literal truth — and because GitHub colours any non-2xx red, which the three "nothing to do" branches
+    /// above already rely on.
+    /// </summary>
     [Fact]
-    public async Task ValidDeliveryForUnhandledEvent_Returns200WithResult()
+    public async Task ValidDeliveryForUnhandledEvent_Returns202AndQueues()
     {
-        var response = await PostAsync(Body("bmeaut/viaubc01-abc123"), eventName: "ping");
+        var response = await PostAsync(Body("bmeaut/viaubc01-abc123"), eventName: "ping", deliveryId: "delivery-ping");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Event ping is not of interest", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Contains("queued", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+
+        Assert.NotNull(await FindDeliveryAsync("delivery-ping"));
     }
 
     /// <summary>
-    /// The dispatcher must receive the resolved course and the per-course run threshold — the two things the
-    /// port had to add, and the two a handler cannot obtain for itself.
+    /// The queued row must carry the body byte for byte: the handlers deserialize it again later, and a
+    /// delivery that survives the hand-off in a mangled form is worse than one that never arrived.
     /// </summary>
     [Fact]
-    public async Task ValidDelivery_PassesCourseAndThresholdToDispatcher()
+    public async Task ValidDelivery_PersistsTheDeliveryVerbatim()
     {
-        factory.Dispatcher.Reset();
+        var body = Body("bmeaut/viaubc01-abc123");
 
-        var response = await PostAsync(Body("bmeaut/viaubc01-abc123"), eventName: "pull_request", deliveryId: "delivery-42");
+        var response = await PostAsync(body, eventName: "pull_request", deliveryId: "delivery-42");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
 
-        var context = Assert.Single(factory.Dispatcher.Seen);
-        Assert.Equal("pull_request", context.GitHubEventName);
-        Assert.Equal("delivery-42", context.DeliveryId);
-        Assert.Equal(7, context.WorkflowRunThreshold);
-        Assert.NotEqual(0, context.CourseId);
+        var delivery = await FindDeliveryAsync("delivery-42");
+        Assert.NotNull(delivery);
+        Assert.Equal(body, delivery.Payload);
+        Assert.Equal("pull_request", delivery.EventName);
+        Assert.Equal("bmeaut/viaubc01-abc123", delivery.RepositoryFullName);
+        Assert.Equal(GitHubWebhookDeliveryStatus.Pending, delivery.Status);
+        Assert.Equal(0, delivery.AttemptCount);
+        Assert.NotEqual(0, delivery.CourseId);
+    }
+
+    /// <summary>
+    /// The point of the change, stated as an absence rather than a stopwatch: the accept path mints no
+    /// installation token, builds no GitHub client and runs no handler. The factory registers those three as
+    /// strict mocks with no setups and a dispatcher that throws, so reaching any of them fails the test
+    /// deterministically — where a wall-clock assertion would only flake on a slow CI agent.
+    /// </summary>
+    [Fact]
+    public async Task ValidDelivery_DoesNoGitHubWorkOnTheRequestThread()
+    {
+        var started = Stopwatch.StartNew();
+
+        var response = await PostAsync(Body("bmeaut/viaubc01-abc123"), eventName: "pull_request", deliveryId: "delivery-fast");
+
+        started.Stop();
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+
+        // Generous by an order of magnitude against GitHub's ten seconds; this is a smoke check, the real
+        // assertion is that the strict mocks above were never touched.
+        Assert.True(started.Elapsed < TimeSpan.FromSeconds(2), $"accept took {started.ElapsedMilliseconds} ms");
     }
 
     /// <summary>
@@ -169,6 +201,13 @@ public class GitHubWebhookEndpointTests : IClassFixture<GitHubWebhookEndpointTes
 
     private static string Body(string repositoryFullName)
         => $"{{\"repository\":{{\"full_name\":\"{repositoryFullName}\"}}}}";
+
+    private async Task<GitHubWebhookDelivery?> FindDeliveryAsync(string deliveryId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        return await db.GitHubWebhookDeliveries.AsNoTracking().SingleOrDefaultAsync(d => d.DeliveryId == deliveryId);
+    }
 
     /// <summary>
     /// Signs the way GitHub does, implemented here rather than reused from the validator so the endpoint tests
@@ -204,28 +243,28 @@ public class GitHubWebhookEndpointTests : IClassFixture<GitHubWebhookEndpointTes
         return await client.SendAsync(request);
     }
 
-    /// <summary>Records what the endpoint handed it, so the handlers themselves stay out of these tests.</summary>
-    public sealed class RecordingDispatcher : IGitHubWebhookDispatcher
+    /// <summary>
+    /// Refuses to run. The accept path must never reach a handler, and a dispatcher that throws says so
+    /// louder than an assertion after the fact.
+    /// </summary>
+    private sealed class ExplodingDispatcher : IGitHubWebhookDispatcher
     {
-        public List<GitHubWebhookContext> Seen { get; } = new();
+        public bool HasHandlersFor(string gitHubEventName) => true;
 
-        public void Reset() => Seen.Clear();
-
-        public Task ProcessAsync(GitHubWebhookContext context, WebhookResult result, CancellationToken cancellationToken = default)
-        {
-            Seen.Add(context);
-            result.LogInfo($"Event {context.GitHubEventName} is not of interest");
-            return Task.CompletedTask;
-        }
+        public Task<IReadOnlyList<WebhookHandlerOutcome>> ProcessAsync(
+            GitHubWebhookContext context,
+            Func<IReadOnlyList<WebhookHandlerOutcome>, CancellationToken, Task>? onProgress = null,
+            IReadOnlySet<string>? skipHandlers = null,
+            CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("The webhook accept path must not dispatch handlers.");
     }
 
     public sealed class WebhookAppFactory : WebApplicationFactory<Program>
     {
-        public RecordingDispatcher Dispatcher { get; } = new();
-
         protected override IHost CreateHost(IHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+            builder.WithoutWebhookWorker();
             builder.ConfigureServices(services =>
             {
                 var toRemove = services.Where(d =>
@@ -241,18 +280,13 @@ public class GitHubWebhookEndpointTests : IClassFixture<GitHubWebhookEndpointTes
                     services.Remove(descriptor);
 
                 services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("GitHubWebhookEndpointTests"));
-                services.AddSingleton<IGitHubWebhookDispatcher>(Dispatcher);
 
-                // Nothing may reach api.github.com from a test.
-                var tokenProvider = new Mock<ICourseGitHubAppTokenProvider>();
-                tokenProvider
-                    .Setup(p => p.GetForCourseAsync(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                    .ReturnsAsync(new GitHubInstallationToken("installation-token", 1, new Dictionary<string, string>(), "all"));
-                services.AddSingleton(tokenProvider.Object);
-
-                var clientFactory = new Mock<ICourseGitHubClientFactory>();
-                clientFactory.Setup(f => f.CreateForToken(It.IsAny<string>())).Returns(Mock.Of<IGitHubClient>());
-                services.AddSingleton(clientFactory.Object);
+                // Strict, and deliberately without a single setup: the accept path is supposed to mint no
+                // token, build no client and run no handler, so any call here fails the test outright rather
+                // than being quietly satisfied. It is also what keeps api.github.com out of a test run.
+                services.AddSingleton<IGitHubWebhookDispatcher>(new ExplodingDispatcher());
+                services.AddSingleton(new Mock<ICourseGitHubAppTokenProvider>(MockBehavior.Strict).Object);
+                services.AddSingleton(new Mock<ICourseGitHubClientFactory>(MockBehavior.Strict).Object);
             });
 
             var host = base.CreateHost(builder);

@@ -156,21 +156,66 @@ warning and otherwise ignored.
 
 ## Delivery responses
 
-What the receiver answers, and what each status means when you read it in **Advanced → Recent Deliveries**.
-Only the first two are normal.
+⚠️ **A delivery is accepted, not processed.** GitHub allows a webhook **ten seconds**, and a single
+`pull_request` event costs the handlers one GitHub API call per closed pull request in the repository — more
+than the budget allows on a busy repository, and losing that race mid-fan-out used to leave a pull request
+merged with no grade recorded against it. So the receiver verifies the signature, records the delivery and
+answers `202` in milliseconds; a background worker does the work with no deadline.
+
+**The consequence for you: GitHub's *Recent Deliveries* tab no longer says what happened.** Its response body
+is now written before any handler runs. Use **Site administration → Webhook deliveries** in the portal
+instead — it shows what each handler made of each delivery, and can re-run a failed one while skipping the
+handlers that already worked.
+
+What the receiver answers:
 
 | Status | Body | Meaning |
 |---|---|---|
-| `200` | one line per handler | Delivered and processed. Read the lines: `no action needed` and `action not of interest` are both normal, and `event handler disabled: no ahk-monitor.yml or disabled` means the repository is not opted in. |
+| `202` | `queued for processing` | Accepted. What happened next is in the portal's delivery log, not here. |
 | `202` | `repository '…' is not mapped to a course` | The repository's organization (and repo-name prefix) match no course. Normal for repositories in the organization that are not coursework. |
 | `202` | `GitHub integration is not configured` / `is turned off` | The course exists but has no GitHub integration saved, or it is switched off. **A course switched off silently ignores `/ahk ok`.** |
 | `400` | `Payload signature not valid` | The secret stored on the course does not match the one on the App. |
 | `400` | `X-GitHub-Event header missing` etc. | Something other than GitHub is posting, or the webhook is configured with the wrong content type. |
 | `500` | `GitHub secret not configured` | The course has an organization but no webhook secret stored. Finish *Storing the credentials* below. |
-| `500` | `GitHub App ID/Token not configured` | The App id or private key is missing or invalid, so no installation token could be minted. |
+| `500` | `Failed to record the delivery` | The database was unreachable. Nothing was queued, so GitHub's **Redeliver** button is the way back. |
 
 Benign cases answer `202` rather than an error on purpose: GitHub colours every non-2xx red, and a delivery log
 full of red is a log nobody reads.
+
+### Delivery statuses in the portal
+
+| Status | Meaning |
+|---|---|
+| **Waiting** | Queued. Normally seconds; see the deployment note below if it stays. |
+| **Succeeded** | Every handler subscribed to the event returned. `no action needed` and `event handler disabled: no ahk-monitor.yml or disabled` are both normal outcomes. |
+| **Skipped** | Nothing to do — no handler subscribes to the event (`ping`), the integration was switched off, or the delivery was older than six hours when it was reached. |
+| **Failed** | A handler threw, or the delivery could not be set up. **Not retried automatically**: a handler that failed may already have posted a comment or merged a pull request, so re-running is a decision for a person. |
+| **Interrupted** | The application stopped mid-delivery, on a deploy or an app-pool recycle. Same reasoning: never resumed on its own. |
+
+Only setup failures that happen *before* any handler runs — a database blip, a `5xx` from GitHub while minting
+a token — are retried automatically, three times with increasing delay.
+
+### Deployment prerequisite: the application pool must stay running
+
+A queue drains only while the process is alive. The worker starts with the application and clears the backlog
+immediately, so a sleeping application pool makes deliveries **late rather than lost** — but "late" can mean
+overnight, because nothing wakes the process until the next request arrives.
+
+On the IIS server, set the application pool to:
+
+- **Start Mode** = `AlwaysRunning`
+- **Idle Time-out (minutes)** = `0` (the default of 20 is the problem)
+- **Regular Time Interval (minutes)** = `0`
+- and enable Application Initialization (`preloadEnabled`) on the site.
+
+The **Webhook delivery queue** health check is the alarm if this is not set: it fails once the oldest waiting
+delivery is more than 30 minutes old.
+
+### Deployment prerequisite: apply migrations before the binaries
+
+The delivery queue lives in a new table. Because every accepted delivery now answers `2xx`, GitHub never
+retries — so binaries running against a database without that table would **lose** deliveries rather than
+merely erroring. Apply `migrate.sql` **before** the file copy, not after.
 
 ## Template repository requirements
 
@@ -212,7 +257,7 @@ GitHub changes the policy, nothing here has to change.
 
 ## Troubleshooting
 
-The admin health dashboard runs four checks per course. Each maps to something in this document:
+The admin health dashboard runs five checks per course. Each maps to something in this document:
 
 | Check | What it means when it fails |
 |---|---|
@@ -220,6 +265,7 @@ The admin health dashboard runs four checks per course. Each maps to something i
 | **GitHub access token** | The course's personal access token is invalid or cannot see the organization. Independent of the App; used only for this check today. |
 | **GitHub App installation** | The App credentials do not work, the App is not installed on the organization, it lacks `administration: write`, or the installation is limited to selected repositories. Everything above. |
 | **CI callback token** | No token for evaluation results to be signed with. Unrelated to the App. |
+| **Webhook delivery queue** | Deliveries are failing, or — worse — piling up unprocessed, which means the worker is not running. See *the application pool must stay running*. |
 
 Specific failures:
 
@@ -238,7 +284,7 @@ Specific failures:
   Other causes, if that is not it: the person really is an **outside collaborator** rather than a member (commenting on a pull request does not imply membership); or the repository lives under a *user* account rather than an organization, in which case grading can never be authorized.
   ⚠️ The answer is cached for **one hour** per org+login. After any of these fixes, restart the application to flush it rather than waiting.
 - **`/ahk ok` approves the pull request but records no grade, and leaves no 👍** — look for
-  `Resource not accessible by integration` in the delivery body. The approving review needs only
+  `Resource not accessible by integration` in the handler outcome (portal → Webhook deliveries). The approving review needs only
   `Pull requests: write`, but the merge that follows it needs **`Contents: write`**, so a half-permissioned
   App gets exactly this: a visible approval, a failed merge, and — because the merge is awaited before the
   grade is written — no grade at all. Grant Contents write and have an owner approve it.
@@ -246,8 +292,10 @@ Specific failures:
 - **Every delivery is `405` with `Allow: GET, HEAD`** — the webhook URL points at the portal but not at
   `/api/integrations/github`. The request fell through to the Angular single-page app's fallback route, which
   only answers GET. Check the path, including that it has no trailing slash.
-- **Deliveries are `200` but nothing happens** — read the response body. `no ahk-monitor.yml or disabled` means
-  the repository is not opted in; mind the 12-hour cache noted above.
+- **Deliveries are `202` but nothing happens** — open the portal's **Webhook deliveries** log; the response
+  body no longer says. `event handler disabled: no ahk-monitor.yml or disabled` against a handler means the
+  repository is not opted in; mind the 12-hour cache noted above. A delivery stuck at **Waiting** means the
+  worker is not running — see *the application pool must stay running*.
 - **No deliveries at all** — the App's installation is limited to *selected repositories*, so a repository
   created after the installation falls outside it. Or the event is not one of the five subscribed.
 
