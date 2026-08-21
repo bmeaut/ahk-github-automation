@@ -203,3 +203,28 @@ from GitHub's own `expired` flag, never computed here.
   `CourseMember` policy to the `Admin` role, and `GET /api/auth/me` therefore lists *every* course for
   an admin — marked `viaSiteAdmin: true` where there is no membership record — so the SPA's course
   switcher and route guard need no special case for them.
+
+### Impersonation ("continue as this user")
+
+A site admin can work through another account from the users screen, to see what the person actually
+sees instead of resetting their password. Two endpoints, both in `Auth/ImpersonationController.cs`:
+
+- `POST /api/auth/impersonate/{userId}` — **site admins only**. Signs the caller in as that user with
+  `SignInWithClaimsAsync`, adding the `ahk:impersonator_id` / `ahk:impersonator_name` claims.
+- `POST /api/auth/impersonate/stop` — only `[Authorize]`, because the caller is now the impersonated
+  user and may hold no roles at all.
+
+The security model is the cookie. The marker lives **only** inside the data-protected application
+cookie, so it cannot be forged, edited, or transplanted; `stop` reads the admin's id from there and
+trusts nothing in the request. Returning **re-checks that the admin still exists and still holds
+`Admin`** — if they were deleted or demoted meanwhile the session is signed out instead of restored.
+Starting is refused while a marker is already present (no chaining, even when the impersonated
+account is itself an admin) and refused on your own account. Everything else is an ordinary sign-in:
+the session holds exactly the target's roles and memberships, so no policy anywhere is special-cased.
+
+⚠️ `SecurityStampValidator` rebuilds the principal from the database on its validation interval and
+would drop the marker, stranding the admin inside the other account. `SecurityStampValidatorOptions.
+OnRefreshingPrincipal` in `Program.cs` carries it across — do not remove it.
+
+Both transitions log at **Warning** with admin id/username, target id/username and remote IP; that is
+the audit trail (there is no database table for it).

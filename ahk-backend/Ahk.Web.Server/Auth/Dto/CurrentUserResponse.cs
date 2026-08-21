@@ -23,6 +23,13 @@ public sealed class CurrentUserResponse
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
 
     /// <summary>
+    /// User name of the site admin currently impersonating this account, or null in an ordinary session. The
+    /// admin's user id stays server-side (in the signed cookie); the SPA only needs a name for the banner and
+    /// the fact that a way back exists.
+    /// </summary>
+    public string? ImpersonatorUserName { get; set; }
+
+    /// <summary>
     /// Every course this user can open, which is what the course switcher lists. For a site admin that is all
     /// courses, matching <c>CourseMembershipAuthorizationHandler</c>, which lets admins into any course.
     /// </summary>

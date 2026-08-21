@@ -107,6 +107,28 @@ public class Program
             };
         });
 
+        // ⚠️ The stamp validator rebuilds the principal from the database on its validation interval (30
+        // minutes by default), which drops any claim that is not stored on the user — including the
+        // impersonation marker. Without this the admin would silently lose the way back half an hour in and be
+        // stranded inside the other account. Carry the marker across the refresh.
+        builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+        {
+            options.OnRefreshingPrincipal = context =>
+            {
+                if (context.CurrentPrincipal is null || context.NewPrincipal?.Identity is not ClaimsIdentity identity)
+                    return Task.CompletedTask;
+
+                foreach (var claimType in new[] { ImpersonationClaims.ImpersonatorId, ImpersonationClaims.ImpersonatorName })
+                {
+                    var claim = context.CurrentPrincipal.FindFirst(claimType);
+                    if (claim is not null && identity.FindFirst(claimType) is null)
+                        identity.AddClaim(claim);
+                }
+
+                return Task.CompletedTask;
+            };
+        });
+
         // Same collision, shorter-lived cookie: this one carries the external identity between the OIDC
         // callback and sign-in.
         builder.Services.ConfigureExternalCookie(options =>
@@ -189,6 +211,9 @@ public class Program
                 }
             });
         }
+
+        // The session shape the SPA hydrates from; shared by login/me and the impersonation endpoints.
+        builder.Services.AddScoped<CurrentUserBuilder>();
 
         // ---- Authorization ----
         builder.Services.AddScoped<IAuthorizationHandler, CourseMembershipAuthorizationHandler>();

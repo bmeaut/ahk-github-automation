@@ -58,6 +58,20 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    /// <summary>
+    /// Both impersonation endpoints need a session. Starting one additionally needs the site-admin role, which
+    /// <see cref="ImpersonationTests"/> covers; here the point is that neither is reachable anonymously.
+    /// </summary>
+    [Theory]
+    [InlineData("/api/auth/impersonate/1")]
+    [InlineData("/api/auth/impersonate/stop")]
+    public async Task ImpersonationEndpoints_WithoutAuth_Return401(string url)
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsync(url, null);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     /// <summary>Every host/admin surface is behind the site-admin role, including the ones added for the admin UI.</summary>
     [Theory]
     [InlineData("/api/admin/courses")]
