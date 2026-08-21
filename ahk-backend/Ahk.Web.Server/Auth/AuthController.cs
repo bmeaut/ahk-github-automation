@@ -94,19 +94,10 @@ public sealed class AuthController : ControllerBase
         return Ok(new LogoutResponse { EndSessionUrl = url });
     }
 
-    [HttpPost("register")]
-    [ProducesResponseType(typeof(CurrentUserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<CurrentUserResponse>> Register([FromBody] RegisterRequest request)
-    {
-        var user = new ApplicationUser { UserName = request.UserName, Email = request.Email, DisplayName = request.DisplayName };
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
-
-        await signInManager.SignInAsync(user, isPersistent: false);
-        return Ok(await currentUser.BuildAsync(user));
-    }
+    // There is deliberately no self-service registration. Accounts arrive one of two ways: a BME account on
+    // its first OIDC sign-in (ExternalAuthController), or an administrator creating a local one
+    // (UsersAdminController.Create). An anonymous endpoint that mints a full account with no approval and no
+    // verified identity contradicts that model, so it was removed rather than gated.
 
     [HttpGet("me")]
     [Authorize]

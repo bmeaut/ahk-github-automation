@@ -1119,7 +1119,6 @@ export class SubmissionStatusesClient implements ISubmissionStatusesClient {
 export interface IAuthClient {
     login(request: LoginRequest): Observable<CurrentUserResponse>;
     logout(): Observable<LogoutResponse>;
-    register(request: RegisterRequest): Observable<CurrentUserResponse>;
     me(): Observable<CurrentUserResponse>;
 }
 
@@ -1233,64 +1232,6 @@ export class AuthClient implements IAuthClient {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LogoutResponse;
             return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    register(request: RegisterRequest): Observable<CurrentUserResponse> {
-        let url_ = this.baseUrl + "/api/auth/register";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRegister(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processRegister(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<CurrentUserResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<CurrentUserResponse>;
-        }));
-    }
-
-    protected processRegister(response: HttpResponseBase): Observable<CurrentUserResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CurrentUserResponse;
-            return _observableOf(result200);
-            }));
-        } else if (status === 400) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3656,13 +3597,6 @@ export interface LoginRequest {
 
 export interface LogoutResponse {
     endSessionUrl?: string | undefined;
-}
-
-export interface RegisterRequest {
-    userName: string;
-    email: string;
-    password: string;
-    displayName?: string | undefined;
 }
 
 export interface GitHubProfileResponse {

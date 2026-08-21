@@ -12,20 +12,13 @@ Severity is judgment, not a promise.
 
 ## P0 — housekeeping
 
-1. **Review and commit the impersonation work.** ~20 files sit uncommitted in the working tree
-   (admin impersonation + the course-switcher reload fix). Nothing else reviews cleanly until it
-   lands. *S.*
+1. **Review and merge the `admin-impersonation` branch.** Admin impersonation, the course-switcher
+   reload fix, and the registration-endpoint removal are committed there but not on `master` and not
+   pushed. *S.*
 
 ## P1 — security
 
-1. **`POST /api/auth/register` is anonymous and unguarded** —
-   [AuthController.cs:97](ahk-backend/Ahk.Web.Server/Auth/AuthController.cs#L97). Anyone who can
-   reach the API can create a full local account: no admin approval, no e-mail verification, no
-   Neptun code. The SPA never calls it (only the admin-gated `UsersAdminController.Create` is used),
-   and `Program.cs` deliberately has no `FallbackPolicy` to catch it. **Delete the endpoint, or gate
-   it behind `[Authorize(Roles = Admin)]`.** *S — highest value on this list.*
-
-2. **`GitHubUsername` is existence-checked, never ownership-proven, and not unique** —
+1. **`GitHubUsername` is existence-checked, never ownership-proven, and not unique** —
    [ProfileController.cs](ahk-backend/Ahk.Web.Server/Auth/ProfileController.cs) calls
    `GET /users/{login}` to confirm the login exists, but nothing proves the caller controls that
    account, and `ApplicationDbContext` has no `HasIndex` on `GitHubUsername`/`GitHubUserId` (only
@@ -148,5 +141,9 @@ Verified in the code, not assumed:
   reset note is obsolete.
 - **Deployment** — `ahk-web-deploy.yaml` has completed green end-to-end (most recently 2026-08-18,
   16m), and no `VPN_CA_CERT` branch remains in the workflow or scripts.
+- **`POST /api/auth/register`** (2026-08-21) — removed outright rather than gated; self-service
+  registration is not wanted. Accounts come from a BME sign-in or from an administrator.
+  `ApiSmokeTests.Register_EndpointDoesNotExist` asserts both the response and that no account is
+  created, so a restored endpoint fails the build.
 
 *Compiled by reading the current source; no files were modified for this pass.*
