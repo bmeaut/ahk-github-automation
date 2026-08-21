@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -25,7 +25,7 @@ import { CourseContextService } from '../../../core/course/course-context.servic
   templateUrl: './assignments.html',
   styleUrl: './assignments.scss',
 })
-export class CourseAssignments implements OnInit {
+export class CourseAssignments {
   private readonly client = inject(AssignmentsClient);
   private readonly courseContext = inject(CourseContextService);
 
@@ -71,8 +71,23 @@ export class CourseAssignments implements OnInit {
     return this.courseContext.activeSlug() ?? '';
   }
 
-  ngOnInit(): void {
-    this.load();
+  constructor() {
+    // The course switcher navigates between sibling /{course}/assignments routes, which reuses this component
+    // instance — ngOnInit would fire only for the first course. Reloading off the slug signal keeps the list
+    // with the header. The open editor and the expanded roster hold ids from the course being left, so they
+    // are closed rather than carried over.
+    effect(() => {
+      const slug = this.courseContext.activeSlug();
+      if (slug) {
+        untracked(() => {
+          this.cancelEdit();
+          this.expandedId.set(null);
+          this.acceptances.set([]);
+          this.clearMessages();
+          this.load();
+        });
+      }
+    });
   }
 
   protected load(): void {
