@@ -1,125 +1,152 @@
-# AHK portal — review findings
+# AHK portal — pending work
 
-Whole-app review (ahk-backend + ahk-frontend, cross-checked against the four legacy apps and the
-docs). Review only — nothing in this list has been fixed. Grouped by category, each item names the
-file(s) involved. Severity is my judgment of impact, not a promise.
+Re-verified against the code on **2026-08-20**. This replaces the earlier review list: most of that
+file's §1 (missing functionality) and all of its §5 (deployment) closed when the webhook receiver,
+chatops and CI callback landed. What closed is recorded at the bottom, with the evidence, so it does
+not get re-opened from memory.
+
+Each item names the files involved and a rough size (S = an hour or so, M = half a day, L = more).
+Severity is judgment, not a promise.
 
 ---
 
-## 1. Missing / not-yet-ported functionality
+## P0 — housekeeping
 
-These are gaps versus the legacy system's functional scope, beyond what CLAUDE.md already summarizes
-as "the write-side entry points."
+1. **Review and commit the impersonation work.** ~20 files sit uncommitted in the working tree
+   (admin impersonation + the course-switcher reload fix). Nothing else reviews cleanly until it
+   lands. *S.*
 
-1. **No GitHub webhook receiver.** Nothing in `Ahk.Web.Server` maps `/api/integrations/github` (the
-   path `docs/github-app.md` reserves for it). Every rule `github-monitor` enforces today — branch
-   protection, single-open-PR, reviewer-must-be-assignee, comment-edit/delete tracking, the 5-run
-   Actions cap — has **zero equivalent** in the portal. `CourseGitHubConfig.WorkflowRunThreshold` is
-   stored and editable in the admin UI but **nothing reads it** — grep confirms no consumer. A course
-   migrated to the portal today silently loses all of this enforcement.
-2. **No `/ahk ok` chatops**, and therefore:
-3. **No way to enter or override a grade through the portal at all**, not even manually. `IGradeService`
-   (`Ahk.Web.Services/Grading/GradeService.cs`) is fully implemented — `SetGradeAsync`,
-   `ConfirmAutoGradeAsync`, `RecordEvaluationResultAsync` — but grep across `Ahk.Web.Server` finds
-   **no controller calling any of them**. Today's admin/instructor UI can only *read* grades
-   (`GradesController`), never write one. Worth deciding whether a stopgap manual-entry admin endpoint
-   is wanted before the chatops port lands, since courses may move to the portal before that ships.
-4. **No HMAC-verified CI callback** (the `publish-results-pr` → grade-management webhook). CI callback
-   *tokens* are fully manageable (`CoursesAdminController` CRUD, `WebhookTokenService`,
-   `CiCallbackTokenHealthCheck`), but nothing accepts a signed payload and calls
-   `RecordEvaluationResultAsync`. So even the automated-evaluation path has no landing point yet.
-5. **Root `README.md` never mentions the portal.** It describes only the four legacy apps; a newcomer
-   reading it has no idea `ahk-backend`/`ahk-frontend` exist. (See also §5.)
+## P1 — security
 
-## 2. Correctness / code-quality findings
+1. **`POST /api/auth/register` is anonymous and unguarded** —
+   [AuthController.cs:97](ahk-backend/Ahk.Web.Server/Auth/AuthController.cs#L97). Anyone who can
+   reach the API can create a full local account: no admin approval, no e-mail verification, no
+   Neptun code. The SPA never calls it (only the admin-gated `UsersAdminController.Create` is used),
+   and `Program.cs` deliberately has no `FallbackPolicy` to catch it. **Delete the endpoint, or gate
+   it behind `[Authorize(Roles = Admin)]`.** *S — highest value on this list.*
 
-1. **`POST /api/auth/register` is a live, unauthenticated, unguarded endpoint** —
-   [AuthController.cs:99-111](ahk-backend/Ahk.Web.Server/Auth/AuthController.cs#L99-L111). Anyone can
-   create a full local account with any username/password, no admin approval, no email verification,
-   no Neptun code. The SPA never calls it (`login.ts`'s own comment: "local username/password is for
-   the handful of administrator-issued accounts") — grep across the frontend confirms only
-   `UsersAdminController.Create` (admin-gated) is used for account creation. This directly contradicts
-   the documented access model and is reachable by anyone who can reach the API. Recommend removing the
-   endpoint or gating it behind `[Authorize(Roles = Admin)]`.
-2. **`GitHubUsername` is existence-checked, not ownership-verified, and not unique** —
+2. **`GitHubUsername` is existence-checked, never ownership-proven, and not unique** —
    [ProfileController.cs](ahk-backend/Ahk.Web.Server/Auth/ProfileController.cs) calls
-   `GET /users/{login}` to confirm the login exists, but nothing proves the caller actually controls
-   that GitHub account (no OAuth/device-flow proof), and `ApplicationUser.GitHubUsername`/
-   `GitHubUserId` have no unique index (confirmed by grepping `ApplicationDbContext.cs` — only
-   `MaxLength`, no `HasIndex`). Concretely: user B can claim a string that happens to be real user
-   Alice's GitHub login. When B accepts an assignment, `AssignmentInviteService.AcceptAsync` calls
-   `AddCollaboratorAsync(..., login: user.GitHubUsername!, ...)`, which invites/adds **Alice's real
-   GitHub account** as a collaborator on B's own private homework repo — an unwanted invite sent to a
-   stranger, and a spoofing vector worth deciding whether to close (verify via OAuth, or at minimum add
-   a unique index so only one site account can claim a given GitHub login).
-3. **TOCTOU race in repository creation** —
+   `GET /users/{login}` to confirm the login exists, but nothing proves the caller controls that
+   account, and `ApplicationDbContext` has no `HasIndex` on `GitHubUsername`/`GitHubUserId` (only
+   `HasMaxLength`). User B can claim Alice's real GitHub login; on accept,
+   `AssignmentInviteService.AcceptAsync` calls `AddCollaboratorAsync` with it and **Alice** receives
+   a collaborator invite to B's homework repo. Minimum fix: a unique index (*S*). Real fix: OAuth /
+   device-flow proof of ownership (*L*). Decide which.
+
+## P2 — functional gaps worth a decision
+
+1. **No way for an instructor to enter or correct a grade in the portal.** `IGradeService`
+   (`Ahk.Web.Services/Grading/GradeService.cs`) is complete, but the only callers are the chatops
+   handlers and `EvaluationResultController` — no admin/instructor controller writes a grade. Fixing
+   a wrong grade means posting a PR comment. Legacy was the same, so this is not a regression, but
+   the portal is where instructors now work. *M.*
+
+2. **New student repositories get no branch protection**
+   ([issue #96](https://github.com/BMEAUT/ahk-github-automation/issues/96)).
+   [AssignmentInviteService.cs:164-190](ahk-backend/Ahk.Web.Services/Assignments/AssignmentInviteService.cs#L164-L190)
+   generates the repo, enables Actions, adds the collaborator — and stops. A student can merge their
+   own PR without review. The portal is now the thing creating repositories, so this is its job.
+   (`BranchProtectionRuleHandler` only *reacts* to protection-rule events; it does not create one.)
+   *S–M.*
+
+3. **`ExternalAuthController` has no test at all.** Grepping `Ahk.Web.Server.Tests` finds no
+   reference. This is the eduID link-by-Neptun-code logic — exactly where a regression silently
+   duplicates or misattributes user accounts. `ExternalClaimsMapperTests` covers claim projection
+   only, not the lookup/link/create branching in `Callback`. *M.*
+
+4. **No `UseExceptionHandler` / `UseHsts` in the pipeline** — neither appears in
+   `Program.ConfigurePipelineAsync` for any environment. Worth deciding deliberately (IIS/ANCM may
+   already cover it) rather than by omission; the Production response shape for an unhandled
+   exception has never been checked either way. *S.*
+
+## P3 — correctness nits and test gaps
+
+1. **TOCTOU race in repository creation** —
    [AssignmentInviteService.cs:164-172](ahk-backend/Ahk.Web.Services/Assignments/AssignmentInviteService.cs#L164-L172).
-   `AcceptAsync` checks `GetRepositoryAsync` for an existing repo, then calls
-   `GenerateFromTemplateAsync` if none is found. Two concurrent accept requests (double-click, two
-   tabs) can both observe "not found" and both call `generate`; GitHub's second call would 422 ("name
-   already exists"), which is an unhandled `GitHubOperationException` → 500 for the loser. The DB-level
-   protection (unique index on `(AssignmentId, UserId)`) only catches the *second SaveChanges*, not this
-   earlier GitHub-side race. Low likelihood, but worth a comment or a catch-and-retry.
-4. **`SaveAssignmentRequest.TemplateRepoName` isn't validated for the `owner/name` shape** —
-   [AssignmentsController.cs:177-184](ahk-backend/Ahk.Web.Server/Courses/AssignmentsController.cs#L177-L184)
-   only checks non-empty. `IAssignmentService.SplitRepoName` (`AssignmentService.cs:53-61`) silently
-   treats a slash-less value as `(owner: "", name: fullName)` rather than rejecting it. A typo'd
-   template name (e.g. missing the org prefix) is accepted at Create time and only fails later, either
-   when a student accepts (GitHub call with an empty owner) or when the instructor opts into
-   `checkTemplate=true`. Consider validating the shape at Create/Update instead.
-5. **No `UseExceptionHandler`/`UseHsts` in `Program.cs`** — grep of `ConfigurePipelineAsync` shows
-   neither is registered for any environment. Worth confirming deliberately (e.g. relying on IIS/ANCM
-   defaults in production) rather than by omission, since an unhandled exception's exact response shape
-   in Production hasn't been verified either way in this review.
+   `AcceptAsync` checks `GetRepositoryAsync`, then calls `GenerateFromTemplateAsync` if nothing was
+   found. Two concurrent accepts (double-click, two tabs) both see "not found"; GitHub 422s the
+   second, and the unhandled `GitHubOperationException` becomes a 500 for the loser. The unique index
+   on `(AssignmentId, UserId)` only catches the later `SaveChanges`, not this GitHub-side race.
+   *S — catch and re-read.*
 
-## 3. Test coverage gaps
+2. **`TemplateRepoName` is not validated for the `owner/name` shape** —
+   `AssignmentsController.Validate` only checks non-empty, and
+   `IAssignmentService.SplitRepoName` silently turns a slash-less value into `(owner: "", name)`. A
+   typo'd template is accepted at save time and only fails when a student accepts. *S.*
 
-1. **`ExternalAuthController`'s Neptun-matching logic has no test at all.** Grepping
-   `Ahk.Web.Server.Tests` for `ExternalAuthController` finds only compiled binaries, no source
-   reference. This is the controller changed this session to link eduID logins by Neptun code instead
-   of email — exactly the kind of logic where a regression would silently duplicate or misattribute
-   user accounts, and it's currently unverified by any automated test. `ExternalClaimsMapperTests`
-   covers claim projection only, not the lookup/link/create branching in `Callback`.
-2. No test exercises `CoursesAdminController.Delete`'s explicit multi-table cascade
-   (`ExecuteDeleteAsync` for grade points → grades → events → submissions → acceptances → assignments)
-   against a course that actually has rows in all of those tables. The logic reads correctly by
-   inspection, but CLAUDE.md flags this exact area as fragile ("a new course-scoped entity whose FK is
-   NoAction must be added to that list, or the delete fails") — a regression test would catch the next
-   entity that's added without updating the list.
+3. **No test for `CoursesAdminController.Delete`'s multi-table cascade** against a course that
+   actually has grade points, grades, events, submissions, acceptances and assignments. CLAUDE.md
+   flags this as fragile ("a new course-scoped entity whose FK is `NoAction` must be added to that
+   list"); a regression test would catch the next entity added without updating it. *M.*
 
-## 4. Documentation issues
+## P4 — documentation and polish
 
-1. **Dangling reference to "the architecture plan."** Both `CLAUDE.md` and `ahk-backend/README.md`
-   reference "the architecture plan" for design rationale (OIDC choices, `MapIdentityApi` rejection,
-   etc.), but no such file exists anywhere in the repo — confirmed by searching for the phrase across
-   the whole tree. Either the document exists somewhere outside this repo and should be linked, or the
-   references should point at wherever the rationale actually now lives (much of it is duplicated
-   inline in CLAUDE.md already).
-2. **Root `README.md` describes only the four legacy apps** and does not mention `ahk-backend`/
-   `ahk-frontend` or that a migration is underway — see §1 item 5. A one-paragraph pointer to
-   `ahk-backend/README.md` would close this.
-3. `ahk-backend/README.md`'s "Run" section has no mention of the new `ahk-web-deploy.yaml` production
-   deployment path (SSTP VPN / CIFS / Mezga) added this session — it's only in the root `CLAUDE.md`.
-   Minor, but a reader of just the backend README would not find it.
+1. **Dangling reference to "the architecture plan"** — `CLAUDE.md:55` and
+   `ahk-backend/README.md:187` both cite it for design rationale, and no such file exists in the
+   repo. Either link where it actually lives, or point at the rationale now inlined in CLAUDE.md. *S.*
 
-## 5. Deployment / operational open items (from this session's work, not yet fully closed)
+2. **`ahk-backend/README.md` never mentions the production deployment path** (`ahk-web-deploy.yaml`,
+   SSTP VPN, Mezga, the hash-diffed mirror). It is documented only in the root CLAUDE.md, so a reader
+   of just the backend README cannot find it. *S.*
 
-1. **Local dev databases still hold the old 5-migration history.** The `Migrations/` directory was
-   reset to a single `InitialCreate` this session (for a clean production rollout). Any existing dev
-   LocalDB will conflict on `dotnet ef database update` (its `__EFMigrationsHistory` references
-   migration ids that no longer exist). Needs a drop/recreate before next use — already called out
-   verbally, tracking here so it isn't lost.
-2. **The CIFS mount fix (credentials file instead of inline `-o password=`) has not yet been confirmed
-   against a real deploy run.** It was applied to fix a `mount error(13)` diagnosed from symptoms
-   (likely a comma in the password truncating the inline option), but the next live workflow run is the
-   first real confirmation.
-3. **`VPN_CA_CERT` support was added then the user reported it unnecessary** (the endpoint's cert
-   validates fine); the plan says to drop the block entirely, but worth double-checking the final
-   workflow file has no leftover dead branch for it.
-4. **`ahk-web-deploy.yaml` has never completed an end-to-end green run** (build → test → VPN → mount →
-   mirror → web.config-driven app start → warm-up) in one pass, only fixed incrementally per failure.
-   Worth one full run start-to-finish as a final confidence check before calling the pipeline done.
+3. **`favicon.ico` is still the Angular scaffold default** — unchanged since the `ee130df` scaffold
+   commit, while the rest of the app carries the BME AUT identity. The AUT mark is 2.86:1, so this
+   needs a square crop from the EPS masters in `ahk-frontend/brand/`. *S.*
+
+4. **Students cannot see their grades in the portal.** `MyAssignmentsController` lists repositories
+   only; grades reach students through PR comments, as in the legacy system. An enhancement, not a
+   gap — listed so the decision is explicit. *M.*
+
+5. **`Ahk.Web.Import` is throwaway** and should be deleted once every course has migrated. Blocked on
+   the migration, not on code.
 
 ---
 
-*Compiled from a manual review; no source files were modified as part of this pass.*
+## GitHub issue backlog (30 open)
+
+**The `v2`-labelled issues (#70–#91, Aug 2025) belong to an earlier rewrite effort, not this portal**
+— controller refactor, .NET Aspire, DB-first, `SoftDeleteInterceptor`, wizard/role screens that do
+not exist here. Recommend closing them in bulk rather than working them.
+
+Three older `v1` bugs were **ported verbatim into the portal** and are therefore live again:
+
+- **[#25](https://github.com/BMEAUT/ahk-github-automation/issues/25)** — `/ahk ok` does not work if
+  AHK was disabled when the repository was created. The `.github/ahk-monitor.yml` gate and its
+  12-hour per-repo cache were kept verbatim; CLAUDE.md calls this the most common "webhook returns
+  2xx but nothing happens" cause.
+- **[#1](https://github.com/BMEAUT/ahk-github-automation/issues/1)** — a *missing* `neptun.txt` is
+  cached as null for the same 12 hours
+  ([RepositoryEventHandlerBase.cs:107](ahk-backend/Ahk.Web.Services/GitHubWebhooks/Handlers/RepositoryEventHandlerBase.cs#L107)),
+  so adding the file later takes up to half a day to take effect.
+- **[#29](https://github.com/BMEAUT/ahk-github-automation/issues/29)** — the workflow-run counter
+  miscounts. The port deliberately kept GitHub's own `total_count` because "a silent change here
+  changes a student's grade", so the original complaint stands.
+
+#25 and #1 share a root cause — negative results cached as long as positive ones — and would likely
+be fixed together.
+
+Also outside the portal: **[#95](https://github.com/BMEAUT/ahk-github-automation/issues/95)**
+(PublishResult Markdown support) and **#90/#91** (rewritten PublishResults + its CI/CD) target
+`publish-results-pr`.
+
+---
+
+## Closed since the previous list
+
+Verified in the code, not assumed:
+
+- **GitHub webhook receiver** — `Ahk.Web.Server/Integrations/GitHubWebhookController.cs` plus the
+  delivery queue; all 11 legacy handlers have portal equivalents under
+  `Ahk.Web.Services/GitHubWebhooks/Handlers/`. `CourseGitHubConfig.WorkflowRunThreshold` **is** read
+  (`ActionWorkflowRunHandler`), contrary to the previous list.
+- **`/ahk ok` chatops** — `Handlers/GradeComment/`.
+- **HMAC-verified CI callback** — `Integrations/EvaluationResultController.cs`, covered by
+  `EvaluationResultEndpointTests`.
+- **Root `README.md`** now leads with the portal and links the per-course cutover checklist.
+- **Dev migration history** — three migrations present and applying cleanly; the single-`InitialCreate`
+  reset note is obsolete.
+- **Deployment** — `ahk-web-deploy.yaml` has completed green end-to-end (most recently 2026-08-18,
+  16m), and no `VPN_CA_CERT` branch remains in the workflow or scripts.
+
+*Compiled by reading the current source; no files were modified for this pass.*
