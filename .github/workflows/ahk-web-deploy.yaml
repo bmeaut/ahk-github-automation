@@ -280,9 +280,14 @@ jobs:
               attempt_start=$(date +%s%3N)
               # --out-format stamps every file with the wall-clock time it landed, which is what turns
               # "the deploy was slow" into "it stalled for 90s on this one file". --stats reports the
-              # effective transfer rate over the tunnel.
+              # effective transfer rate over the tunnel. --timeout is the load-bearing option here: the
+              # VPN/CIFS link has been observed to silently wedge mid-transfer (no error, no progress,
+              # rsync never returns), which starves the retry loop below of the chance to ever retry —
+              # without it, one bad file hangs the job until GitHub's own multi-hour cap. --timeout=30
+              # makes rsync itself give up after 30s of I/O silence (not total transfer time), so a stall
+              # becomes attempt 1 failing loudly and attempt 2 actually starting.
               if rsync -R --files-from=changed.list --ignore-times --whole-file --inplace \
-                  --no-perms --no-owner --no-group --no-times \
+                  --no-perms --no-owner --no-group --no-times --timeout=30 \
                   --stats --human-readable --out-format='%t  %12l  %n' \
                   publish/ "$MOUNT_POINT/"; then
                 ok=1

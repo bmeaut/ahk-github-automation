@@ -157,8 +157,11 @@ else
     echo "== Copying changed files =="
     ok=false
     for i in $(seq 1 10); do
+      # --timeout: a wedged transfer (no error, no progress, rsync never returns) would otherwise starve
+      # this retry loop of the chance to ever retry. 30s of I/O silence (not total transfer time) is
+      # enough for even the largest self-contained assemblies to keep progressing without tripping it.
       if rsync -R --files-from=changed.list --ignore-times --whole-file --inplace \
-          --no-perms --no-owner --no-group --no-times "$PUBLISH_DIR/" "$MOUNT_POINT/"; then
+          --no-perms --no-owner --no-group --no-times --timeout=30 "$PUBLISH_DIR/" "$MOUNT_POINT/"; then
         ok=true
         break
       fi
