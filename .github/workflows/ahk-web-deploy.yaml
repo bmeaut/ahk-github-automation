@@ -229,11 +229,12 @@ jobs:
         if: steps.diff.outputs.has_changes == 'true'
         run: |
           cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
-          # Give IIS a moment to notice and release file locks before copying. Long enough to also cover the
-          # webhook delivery worker's graceful shutdown (web.config sets shutdownTimeLimit=30): a delivery
-          # killed mid-flight is recorded as Interrupted and then needs a human to decide whether to re-run
-          # it, and letting it finish is cheaper than that. It also cuts the locked-file rsync retries below.
-          sleep 20
+          # Give IIS a moment to notice and release file locks before copying. Must clear web.config's
+          # shutdownTimeLimit=30 (the webhook delivery worker's graceful-shutdown budget) with room to
+          # spare, or file operations below can start racing a lock the old process hasn't released yet —
+          # 20s used to be shorter than that budget, which is exactly the kind of gap that turns into an
+          # unexplained multi-minute stall further down with no visible cause.
+          sleep 35
 
       # Copies exactly the changed/added files (preserving their relative subdirectories) and deletes
       # exactly the removed ones. --ignore-times/--whole-file/--inplace stop rsync from doing any of its
@@ -303,11 +304,23 @@ jobs:
 
           # Deletes are one CIFS round-trip each, so a large prune is latency-bound rather than
           # bandwidth-bound and is worth timing separately from the copy.
+          #
+          # Both properties below exist because a plain `rm -f` loop over a mounted share gave zero
+          # visibility and no way out: with no per-file output, a delete that is merely slow (this link's
+          # per-op latency is highly variable — see the rsync --out-format gaps above) is indistinguishable
+          # in the log from one that has hung on a stale CIFS handle, and `rm -f` has no timeout of its
+          # own, so a single wedged delete blocks the job until GitHub's own multi-hour cap. `timeout 30`
+          # turns that into a bounded, loud failure naming the exact file; the per-file echo (mirroring
+          # rsync's own --out-format above) means "stuck" vs "slow" is answered by the log, not a guess.
           delete_ms=0
           if [ -s removed.list ]; then
             delete_start=$(date +%s%3N)
             while IFS= read -r path; do
-              rm -f "$MOUNT_POINT/$path"
+              echo "$(date '+%Y/%m/%d %H:%M:%S')  deleting  $path"
+              if ! timeout 30 rm -f "$MOUNT_POINT/$path"; then
+                echo "::error::Deleting '$path' did not complete within 30s — likely a stale/held CIFS handle."
+                exit 1
+              fi
             done < removed.list
             delete_ms=$(( $(date +%s%3N) - delete_start ))
             echo "Deleted $removed_count file(s) in $(( delete_ms / 1000 ))s"

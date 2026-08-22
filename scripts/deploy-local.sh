@@ -149,7 +149,9 @@ if [ "$changed" -eq 0 ] && [ "$removed" -eq 0 ]; then
 else
   echo "== Stopping site (app_offline.htm) =="
   cp "$OFFLINE_PAGE" "$MOUNT_POINT/app_offline.htm"
-  sleep 5
+  # web.config sets shutdownTimeLimit=30 (the webhook delivery worker's graceful-shutdown budget) — must
+  # clear it with room to spare, or file operations below can race a lock the old process hasn't released.
+  sleep 35
 
   if [ -s changed.list ]; then
     echo "== Copying changed files =="
@@ -171,8 +173,14 @@ else
 
   if [ -s removed.list ]; then
     echo "== Removing stale files =="
+    # timeout + per-file echo: a plain `rm -f` loop gives no way to tell "slow" from "hung on a stale
+    # handle" — with neither, a wedged delete blocks the script indefinitely instead of failing loudly.
     while IFS= read -r path; do
-      rm -f "$MOUNT_POINT/$path"
+      echo "deleting  $path"
+      if ! timeout 30 rm -f "$MOUNT_POINT/$path"; then
+        echo "::error::Deleting '$path' did not complete within 30s — likely a stale/held file handle."
+        exit 1
+      fi
     done < removed.list
   fi
 
