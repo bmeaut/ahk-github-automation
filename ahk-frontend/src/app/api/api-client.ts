@@ -1712,6 +1712,7 @@ export class ProfileClient implements IProfileClient {
 export interface ICourseHealthAdminClient {
     checkAll(): Observable<CourseHealthReport[]>;
     checkCourse(courseId: number): Observable<CourseHealthReport>;
+    refreshStale(): Observable<void>;
 }
 
 @Injectable({
@@ -1823,6 +1824,51 @@ export class CourseHealthAdminClient implements ICourseHealthAdminClient {
             let result404: any = null;
             result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    refreshStale(): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/health/refresh-stale";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRefreshStale(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRefreshStale(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRefreshStale(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 202) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3642,6 +3688,10 @@ export interface CourseDto {
     memberCount?: number;
     studentCount?: number;
     submissionCount?: number;
+    healthStatus?: HealthStatus | undefined;
+    healthCheckedAt?: Date | undefined;
+    healthSummary?: string | undefined;
+    healthStale?: boolean;
 }
 
 export interface CourseDetailDto {

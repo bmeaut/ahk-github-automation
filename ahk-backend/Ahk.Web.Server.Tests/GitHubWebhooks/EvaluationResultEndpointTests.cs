@@ -245,6 +245,7 @@ public class EvaluationResultEndpointTests : IClassFixture<EvaluationResultEndpo
         {
             builder.UseEnvironment("Testing");
             builder.WithoutWebhookWorker();
+            builder.WithoutHealthRefreshWorker();
             builder.ConfigureServices(services =>
             {
                 var toRemove = services.Where(d =>

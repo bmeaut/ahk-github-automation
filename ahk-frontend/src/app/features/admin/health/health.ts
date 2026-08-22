@@ -9,6 +9,10 @@ import { HealthChain } from '../../../shared/health-chain/health-chain';
  * Health of every course in one place: which integrations work, which are half-configured, and what to do
  * about the ones that are not. Failing courses sort to the top, because that is the only reason to open this
  * page twice.
+ *
+ * This is the live view, and the slow one: every check runs against every course on open, most of the time
+ * spent waiting on GitHub. That is the point — an admin comes here having just changed a credential. Each run
+ * also refreshes the cached verdict the course register shows.
  */
 @Component({
   selector: 'app-admin-health',
@@ -62,7 +66,9 @@ export class AdminHealth implements OnInit {
     this.client.checkAll().subscribe({
       next: (reports) => {
         this.reports.set(reports);
-        this.checkedAt.set(new Date());
+
+        // The server stamps every report from the same clock it caches with, so the two never disagree.
+        this.checkedAt.set(reports[0]?.checkedAt ?? new Date());
         this.loading.set(false);
       },
       error: () => {

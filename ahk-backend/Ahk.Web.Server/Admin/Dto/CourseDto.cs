@@ -26,6 +26,21 @@ public sealed class CourseDto
     public int StudentCount { get; set; }
 
     public int SubmissionCount { get; set; }
+
+    // --- Cached health verdict ---
+    // Read straight off the course row, never computed here: a live run costs seconds of GitHub round-trips
+    // per course, and the register must paint in one query. /admin/health is the live view.
+
+    /// <summary>Worst check status as of <see cref="HealthCheckedAt"/>; null when the course was never checked.</summary>
+    public HealthStatus? HealthStatus { get; set; }
+
+    public DateTimeOffset? HealthCheckedAt { get; set; }
+
+    /// <summary>Titles of the checks that did not pass, comma-joined. Empty when everything passed.</summary>
+    public string? HealthSummary { get; set; }
+
+    /// <summary>True when the cached verdict is past its TTL. It is still shown; a refresh is queued behind it.</summary>
+    public bool HealthStale { get; set; }
 }
 
 /// <summary>Everything one course holds, for the course editor: settings, integration, members and tokens.</summary>

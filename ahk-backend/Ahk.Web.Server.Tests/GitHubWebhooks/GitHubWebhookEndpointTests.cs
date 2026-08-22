@@ -265,6 +265,7 @@ public class GitHubWebhookEndpointTests : IClassFixture<GitHubWebhookEndpointTes
         {
             builder.UseEnvironment("Testing");
             builder.WithoutWebhookWorker();
+            builder.WithoutHealthRefreshWorker();
             builder.ConfigureServices(services =>
             {
                 var toRemove = services.Where(d =>

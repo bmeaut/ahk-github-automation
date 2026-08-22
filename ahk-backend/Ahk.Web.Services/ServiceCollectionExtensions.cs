@@ -118,6 +118,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICourseHealthCheck, WebhookQueueHealthCheck>();
         services.AddScoped<ICourseHealthService, CourseHealthService>();
 
+        // Singleton: it is the hand-off point between a request thread and the background refresh worker.
+        services.AddSingleton<ICourseHealthRefreshQueue, CourseHealthRefreshQueue>();
+
         return services;
     }
 }

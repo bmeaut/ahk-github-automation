@@ -2,9 +2,11 @@ using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Admin.Dto;
 using Ahk.Web.Services.Courses;
+using Ahk.Web.Services.Health;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Ahk.Web.Server.Admin;
 
@@ -24,17 +26,28 @@ public sealed class CoursesAdminController : ControllerBase
 {
     private readonly ApplicationDbContext db;
     private readonly IWebhookTokenService webhookTokens;
+    private readonly TimeProvider timeProvider;
+    private readonly CourseHealthOptions healthOptions;
 
-    public CoursesAdminController(ApplicationDbContext db, IWebhookTokenService webhookTokens)
+    public CoursesAdminController(
+        ApplicationDbContext db,
+        IWebhookTokenService webhookTokens,
+        TimeProvider timeProvider,
+        IOptions<CourseHealthOptions> healthOptions)
     {
         this.db = db;
         this.webhookTokens = webhookTokens;
+        this.timeProvider = timeProvider;
+        this.healthOptions = healthOptions?.Value ?? new CourseHealthOptions();
     }
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<CourseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<CourseDto>>> List(CancellationToken cancellationToken)
     {
+        // Computed before the query so the staleness comparison translates to SQL instead of pulling rows back.
+        var cutoff = timeProvider.GetUtcNow() - healthOptions.CacheTtl;
+
         var courses = await db.Courses
             .AsNoTracking()
             .OrderBy(c => c.Name)
@@ -51,6 +64,10 @@ public sealed class CoursesAdminController : ControllerBase
                 MemberCount = c.Memberships.Count,
                 StudentCount = db.Students.IgnoreQueryFilters().Count(s => s.CourseId == c.Id),
                 SubmissionCount = db.Submissions.IgnoreQueryFilters().Count(s => s.CourseId == c.Id),
+                HealthStatus = c.HealthStatus,
+                HealthCheckedAt = c.HealthCheckedAt,
+                HealthSummary = c.HealthSummary,
+                HealthStale = c.HealthCheckedAt == null || c.HealthCheckedAt < cutoff,
             })
             .ToListAsync(cancellationToken);
 

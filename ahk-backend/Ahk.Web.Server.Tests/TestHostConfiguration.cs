@@ -17,4 +17,16 @@ internal static class TestHostConfiguration
         {
             ["Webhooks:WorkerEnabled"] = "false",
         }));
+
+    /// <summary>
+    /// Turns off the course health refresh worker, for the same reason as
+    /// <see cref="WithoutWebhookWorker"/>: it is started by the real <c>Program</c> in every test host, and a
+    /// queued refresh would run the real checks — including the ones that call GitHub — in the background of
+    /// an unrelated test.
+    /// </summary>
+    public static IHostBuilder WithoutHealthRefreshWorker(this IHostBuilder builder) =>
+        builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Health:RefreshWorkerEnabled"] = "false",
+        }));
 }

@@ -19,15 +19,25 @@ public interface ICourseHealthService
 /// Courses are checked sequentially: the checks share the request's <see cref="ApplicationDbContext"/>, which is
 /// not thread-safe, and the only slow check (<see cref="GitHubAccessHealthCheck"/>) is bounded by its own
 /// 10-second HTTP timeout.
+///
+/// <para>Every run also writes its verdict back onto the <see cref="Course"/> row. That is what lets the course
+/// register show an integration state without running anything, and it means the cache is refreshed by all
+/// three entry points — the dashboard, the course editor's re-check button, and the background worker —
+/// without any of them knowing about it.</para>
 /// </summary>
 public sealed class CourseHealthService : ICourseHealthService
 {
+    /// <summary>Safety net matching the column length; five check titles fit comfortably inside it.</summary>
+    private const int SummaryMaxLength = 400;
+
     private readonly ApplicationDbContext db;
+    private readonly TimeProvider timeProvider;
     private readonly IReadOnlyList<ICourseHealthCheck> checks;
 
-    public CourseHealthService(ApplicationDbContext db, IEnumerable<ICourseHealthCheck> checks)
+    public CourseHealthService(ApplicationDbContext db, TimeProvider timeProvider, IEnumerable<ICourseHealthCheck> checks)
     {
         this.db = db;
+        this.timeProvider = timeProvider;
         this.checks = checks.OrderBy(c => c.Order).ThenBy(c => c.Id, StringComparer.Ordinal).ToList();
     }
 
@@ -80,12 +90,36 @@ public sealed class CourseHealthService : ICourseHealthService
             });
         }
 
-        return new CourseHealthReport
+        var report = new CourseHealthReport
         {
             CourseId = course.Id,
             CourseSlug = course.Slug,
             CourseName = course.Name,
+            CheckedAt = timeProvider.GetUtcNow(),
             Checks = results,
         };
+
+        await CacheAsync(report, cancellationToken);
+        return report;
+    }
+
+    /// <summary>
+    /// Stores the aggregate verdict on the course row. The courses were read <c>AsNoTracking</c>, so this is a
+    /// second, tracked read — not <c>ExecuteUpdateAsync</c>, which is relational-only and would break the
+    /// InMemory tests.
+    /// </summary>
+    private async Task CacheAsync(CourseHealthReport report, CancellationToken cancellationToken)
+    {
+        var entity = await db.Courses.FirstOrDefaultAsync(c => c.Id == report.CourseId, cancellationToken);
+        if (entity is null)
+            return;
+
+        var failing = string.Join(", ", report.Checks.Where(c => c.Status != HealthStatus.Healthy).Select(c => c.Title));
+
+        entity.HealthStatus = report.Status;
+        entity.HealthCheckedAt = report.CheckedAt;
+        entity.HealthSummary = failing.Length > SummaryMaxLength ? failing[..SummaryMaxLength] : failing;
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

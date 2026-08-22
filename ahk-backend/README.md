@@ -125,7 +125,8 @@ admin console is built on.
 | `PUT /users/{id}/roles` | Site roles. An admin cannot remove their own `Admin` role |
 | `PUT/DELETE /users/{id}/courses[/{courseId}]` | Course assignments |
 | `POST /users/{id}/password` | Set a local account's password |
-| `GET /health`, `GET /health/{courseId}` | Run the course health checks |
+| `GET /health`, `GET /health/{courseId}` | Run the course health checks live |
+| `POST /health/refresh-stale` | Queue a background re-check of every course whose cached verdict is past its TTL. Returns 202 at once; runs nothing itself |
 
 **Stored credentials are never returned.** The GitHub config DTO reports only whether each credential
 is present (plus a last-four hint for the access token). On update, each credential field follows one
@@ -148,6 +149,24 @@ one class plus one registration line** — the controller and the UI need no cha
 Results carry a status (`Healthy` / `Warning` / `Failed` / `NotConfigured`), a message, and a
 remediation line; a course's overall status is the worst of its checks. Checks must not throw — a
 failure is a `Failed` result, so one unreachable course cannot take the dashboard down.
+
+### The cached verdict
+
+A full run is sequential and two of the checks call GitHub with a ten-second budget each, so
+`GET /admin/health` costs roughly `N_courses × 30s`. Only the health dashboard pays that: it runs live
+on every open, which is the point — an admin opens it having just changed a credential.
+
+Every run also stamps the outcome onto the `Course` row — `HealthStatus`, `HealthCheckedAt` and
+`HealthSummary` (the comma-joined titles of the checks that did not pass, deliberately without their
+messages). The course register reads only that, in the same query that lists the courses, so it paints
+at once and never touches GitHub.
+
+A cached verdict older than `Health:CacheTtl` (24 hours) is **still shown** — stale beats blank — and
+the register asks for a refresh with `POST /admin/health/refresh-stale`, which enqueues the stale
+course ids on `ICourseHealthRefreshQueue` and returns. `CourseHealthRefreshWorker` drains that queue
+one course at a time, re-reading each course's timestamp first so anything already refreshed is
+skipped; the refreshed verdict appears on the next page load. The worker is switched off in tests via
+`Health:RefreshWorkerEnabled`.
 
 ## Assignments (the GitHub Classroom replacement)
 

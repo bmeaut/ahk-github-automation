@@ -1,6 +1,7 @@
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Data.Seed;
+using Ahk.Web.Server.Admin;
 using Ahk.Web.Server.Auth;
 using Ahk.Web.Server.Configuration;
 using Ahk.Web.Server.CourseContext;
@@ -8,6 +9,7 @@ using Ahk.Web.Server.Integrations;
 using Ahk.Web.Server.MockOidc;
 using Ahk.Web.Services;
 using Ahk.Web.Services.GitHubWebhooks;
+using Ahk.Web.Services.Health;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -247,6 +249,7 @@ public class Program
         builder.Services.TryAddSingleton(TimeProvider.System);
 
         builder.Services.Configure<WebhookOptions>(builder.Configuration.GetSection(WebhookOptions.SectionName));
+        builder.Services.Configure<CourseHealthOptions>(builder.Configuration.GetSection(CourseHealthOptions.SectionName));
         builder.Services.AddAhkServices();
 
         // The webhook receiver records deliveries and answers 202; this drains them. Gated by configuration so
@@ -254,6 +257,12 @@ public class Program
         var webhooks = builder.Configuration.GetSection(WebhookOptions.SectionName).Get<WebhookOptions>() ?? new WebhookOptions();
         if (webhooks.WorkerEnabled)
             builder.Services.AddHostedService<GitHubWebhookDeliveryWorker>();
+
+        // The course register serves cached health verdicts and queues the stale ones; this refreshes them.
+        // Gated for the same reason as above.
+        var health = builder.Configuration.GetSection(CourseHealthOptions.SectionName).Get<CourseHealthOptions>() ?? new CourseHealthOptions();
+        if (health.RefreshWorkerEnabled)
+            builder.Services.AddHostedService<CourseHealthRefreshWorker>();
 
         // ---- MVC + OpenAPI (NSwag document consumed by the Angular code generator) ----
         // Enums travel as names, not ordinals: the generated TypeScript client then models them as string

@@ -6,7 +6,6 @@ import { Router, RouterLink } from '@angular/router';
 import {
   CourseDto,
   CourseHealthAdminClient,
-  CourseHealthReport,
   CoursesAdminClient,
   CreateCourseRequest,
   HealthStatus,
@@ -16,6 +15,10 @@ import {
  * The site's course register. Each row carries the course's identity, its size, and a one-line verdict on its
  * integration, so an admin can tell a working course from a half-configured one without opening it. The full
  * chain of checks is one click away, on the health page and in the course editor.
+ *
+ * The verdict comes off the course row, cached: running the checks live costs seconds of GitHub round-trips
+ * per course, and this page must paint at once. A verdict past its TTL is shown anyway — stale is far more
+ * useful than blank — and a background refresh is queued behind it, landing on the next visit.
  */
 @Component({
   selector: 'app-admin-courses',
@@ -29,11 +32,7 @@ export class AdminCourses implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly courses = signal<CourseDto[]>([]);
-  protected readonly health = signal<Map<number, CourseHealthReport>>(new Map());
   protected readonly loading = signal(false);
-  protected readonly checking = signal(false);
-  /** True once a health run has returned — until then the Integration column is honestly blank, not "passing". */
-  protected readonly healthLoaded = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly adding = signal(false);
@@ -44,7 +43,7 @@ export class AdminCourses implements OnInit {
 
   /** Courses whose integration is failing — the number the page leads with. */
   protected readonly failingCount = computed(
-    () => [...this.health().values()].filter((r) => r.status === 'Failed').length,
+    () => this.courses().filter((c) => c.healthStatus === 'Failed').length,
   );
 
   ngOnInit(): void {
@@ -53,17 +52,13 @@ export class AdminCourses implements OnInit {
 
   protected reload(): void {
     this.loading.set(true);
-    this.healthLoaded.set(false);
     this.error.set(null);
 
-    // The register itself is one cheap query, so it paints immediately. The health run is the slow half — it
-    // checks every course in turn, and two of its checks call GitHub with a ten-second budget each — so it
-    // follows as a second step and fills the Integration column in when it arrives.
     this.client.list().subscribe({
       next: (courses) => {
         this.courses.set(courses);
         this.loading.set(false);
-        this.recheck();
+        this.queueRefresh(courses);
       },
       error: () => {
         this.error.set('Could not load the courses. Reload the page to try again.');
@@ -72,24 +67,16 @@ export class AdminCourses implements OnInit {
     });
   }
 
-  protected recheck(): void {
-    this.checking.set(true);
-    this.healthClient.checkAll().subscribe({
-      next: (reports) => {
-        this.health.set(new Map(reports.map((r) => [r.courseId ?? 0, r])));
-        this.healthLoaded.set(true);
-        this.checking.set(false);
-      },
-      error: () => {
-        // The table is already on screen; a failed health run only costs the Integration column.
-        this.error.set('The health check could not be run.');
-        this.checking.set(false);
-      },
-    });
-  }
+  /**
+   * Asks the server to bring stale verdicts up to date in the background. Fire and forget: the request only
+   * queues work, the table is already on screen, and a failed enqueue is not worth an error banner.
+   */
+  private queueRefresh(courses: CourseDto[]): void {
+    if (!courses.some((c) => c.healthStale)) {
+      return;
+    }
 
-  protected reportFor(course: CourseDto): CourseHealthReport | undefined {
-    return this.health().get(course.id ?? 0);
+    this.healthClient.refreshStale().subscribe({ error: () => undefined });
   }
 
   protected tone(status: HealthStatus | undefined): string {
@@ -116,14 +103,6 @@ export class AdminCourses implements OnInit {
       default:
         return 'Not set up';
     }
-  }
-
-  /** Names the checks that are not passing, so the row says what to go and fix. */
-  protected problems(report: CourseHealthReport): string {
-    return (report.checks ?? [])
-      .filter((c) => c.status !== 'Healthy')
-      .map((c) => c.title)
-      .join(', ');
   }
 
   protected startAdding(): void {

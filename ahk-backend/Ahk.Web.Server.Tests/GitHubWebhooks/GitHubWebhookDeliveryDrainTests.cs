@@ -120,6 +120,9 @@ public class GitHubWebhookDeliveryDrainTests : IClassFixture<GitHubWebhookDelive
         protected override IHost CreateHost(IHostBuilder builder)
         {
             // Deliberately NOT calling WithoutWebhookWorker(): the worker running is the thing under test.
+            // The health refresh worker is another matter — nothing here queues it, and it has no business
+            // reaching for GitHub in the background of this test.
+            builder.WithoutHealthRefreshWorker();
             builder.UseEnvironment("Testing");
             builder.ConfigureServices(services =>
             {

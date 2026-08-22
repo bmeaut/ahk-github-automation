@@ -78,6 +78,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             e.Property(c => c.Name).HasMaxLength(256).IsRequired();
             e.Property(c => c.GitHubOrganization).HasMaxLength(256);
             e.Property(c => c.RepoNamePrefix).HasMaxLength(256);
+            e.Property(c => c.HealthSummary).HasMaxLength(400);
 
             // Machine-to-machine course resolution: organization first, then repo-name prefix.
             e.HasIndex(c => c.GitHubOrganization);

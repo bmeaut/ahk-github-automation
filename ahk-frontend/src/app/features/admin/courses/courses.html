@@ -9,9 +9,7 @@
       </p>
     </div>
     <div class="btn-row">
-      <button type="button" class="btn" (click)="recheck()" [disabled]="checking() || loading()">
-        {{ checking() ? 'Checking…' : 'Re-check health' }}
-      </button>
+      <a class="btn" routerLink="/admin/health">Run health checks</a>
       <button type="button" class="btn primary" (click)="startAdding()">Add course</button>
     </div>
   </div>
@@ -20,7 +18,7 @@
     <p class="notice error">{{ e }}</p>
   }
 
-  @if (healthLoaded() && failingCount() > 0) {
+  @if (failingCount() > 0) {
     <p class="notice warn">
       {{ failingCount() }} {{ failingCount() === 1 ? 'course is' : 'courses are' }} failing a health check.
       Open the course to see which link is broken.
@@ -118,18 +116,22 @@
                 <td class="num">{{ c.submissionCount }}</td>
                 <td class="num">{{ c.memberCount }}</td>
                 <td class="health-cell">
-                  @if (reportFor(c); as report) {
+                  @if (c.healthStatus; as status) {
                     <span
                       class="badge"
-                      [class.ok]="tone(report.status) === 'ok'"
-                      [class.warn]="tone(report.status) === 'warn'"
-                      [class.bad]="tone(report.status) === 'bad'"
-                    >{{ verdict(report.status) }}</span>
-                    @if (problems(report); as p) {
-                      <div class="muted">{{ p }}</div>
+                      [class.ok]="tone(status) === 'ok'"
+                      [class.warn]="tone(status) === 'warn'"
+                      [class.bad]="tone(status) === 'bad'"
+                    >{{ verdict(status) }}</span>
+                    @if (c.healthSummary) {
+                      <div class="muted">{{ c.healthSummary }}</div>
+                    }
+                    <div class="muted">Checked {{ c.healthCheckedAt | date: 'short' }}</div>
+                    @if (c.healthStale) {
+                      <div class="muted">refreshing in the background…</div>
                     }
                   } @else {
-                    <span class="muted">{{ checking() ? 'Checking…' : 'Not checked' }}</span>
+                    <span class="muted">Not checked yet</span>
                   }
                 </td>
                 <td class="muted">{{ c.createdAt | date: 'yyyy-MM-dd' }}</td>

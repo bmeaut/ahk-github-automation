@@ -33,5 +33,20 @@ public class Course
 
     public CourseGitHubConfig? GitHubConfig { get; set; }
 
+    // --- Health cache ---
+    // Written by CourseHealthService after every run, so the course register can show an integration verdict
+    // without paying for a live check (a full run costs ~30s per course, most of it waiting on GitHub).
+    // Deliberately holds no per-check messages: /admin/courses only needs to say "this course needs
+    // attention", and /admin/health runs fresh whenever the detail is actually wanted.
+
+    /// <summary>Worst status across the checks as of <see cref="HealthCheckedAt"/>; null when never checked.</summary>
+    public HealthStatus? HealthStatus { get; set; }
+
+    /// <summary>When the cached verdict was produced. Older than the configured TTL means stale, not invalid.</summary>
+    public DateTimeOffset? HealthCheckedAt { get; set; }
+
+    /// <summary>Titles of the checks that did not pass, comma-joined. Empty when everything passed.</summary>
+    public string? HealthSummary { get; set; }
+
     public ICollection<CourseMembership> Memberships { get; } = new List<CourseMembership>();
 }

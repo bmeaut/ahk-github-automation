@@ -114,6 +114,15 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    /// <summary>The health refresh trigger queues background work, so it is behind the same role as the rest.</summary>
+    [Fact]
+    public async Task RefreshStale_WithoutAuth_Returns401()
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsync("/api/admin/health/refresh-stale", null);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     [Fact]
     public async Task UnknownCourseSlug_Returns404_BeforeAuth()
     {
@@ -153,6 +162,7 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
             // "Testing" (not Development) so the dev data seeder / SQL Server connection are skipped.
             builder.UseEnvironment("Testing");
             builder.WithoutWebhookWorker();
+            builder.WithoutHealthRefreshWorker();
             builder.ConfigureServices(services =>
             {
                 // Drop the SqlServer registration (the options, EF's options-configuration, and the context)
