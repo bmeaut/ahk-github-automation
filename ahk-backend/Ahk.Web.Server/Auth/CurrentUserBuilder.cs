@@ -82,6 +82,7 @@ public sealed class CurrentUserBuilder
             DisplayName = user.DisplayName,
             NeptunCode = user.NeptunCode,
             GitHubUsername = user.GitHubUsername,
+            GitHubUsernameVerified = user.GitHubVerifiedAt is not null,
             Roles = roles.ToList(),
             Courses = courses,
             ImpersonatorUserName = impersonatorUserName,

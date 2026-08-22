@@ -87,3 +87,11 @@ h3 {
 .btn-row {
   margin-top: 0.75rem;
 }
+
+/* The GitHub account every repository on this page is shared with, and whether anything has confirmed it. */
+.github-line {
+  margin-top: 0.375rem;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}

@@ -257,6 +257,21 @@
                         @if (u.affiliation) {
                           <p class="muted">Affiliation: <span class="mono">{{ u.affiliation }}</span></p>
                         }
+                        <p class="muted">
+                          GitHub:
+                          @if (u.gitHubUsername) {
+                            <span class="mono">{{ u.gitHubUsername }}</span
+                            >&nbsp;
+                            @if (u.gitHubVerifiedAt) {
+                              <span class="badge ok">Confirmed</span>
+                            } @else {
+                              <!-- Only the user's own word so far: nothing has been accepted with that account. -->
+                              <span class="badge warn">Unconfirmed</span>
+                            }
+                          } @else {
+                            <span>not linked</span>
+                          }
+                        </p>
                         <button type="button" class="btn danger" (click)="deleteUser(u)">Delete account</button>
                         <p class="muted small">
                           Deleting removes the account and its course assignments. Grades already recorded stay.

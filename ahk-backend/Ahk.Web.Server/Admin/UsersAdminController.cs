@@ -309,6 +309,8 @@ public sealed class UsersAdminController : ControllerBase
         DisplayName = user.DisplayName,
         NeptunCode = user.NeptunCode,
         Affiliation = user.Affiliation,
+        GitHubUsername = user.GitHubUsername,
+        GitHubVerifiedAt = user.GitHubVerifiedAt,
         Roles = roles,
         Courses = courses,
         IsExternal = user.PasswordHash is null,

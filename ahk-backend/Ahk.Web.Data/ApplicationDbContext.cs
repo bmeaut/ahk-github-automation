@@ -62,6 +62,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             // NULL means "no code" (directory/local accounts may have none) and is allowed many times —
             // which is why the admin controllers store null, never "", for a blank code.
             e.HasIndex(u => u.NeptunCode).IsUnique().HasFilter("[NeptunCode] IS NOT NULL");
+
+            // Same rule for the GitHub account, and for the same reason: a repository is shared with whatever
+            // login is stored here, so two accounts claiming one login means one of them is directing an
+            // invitation at a stranger. Both columns are indexed — the login is what GitHub calls are made
+            // with, the numeric id is what survives the user renaming themselves.
+            e.HasIndex(u => u.GitHubUsername).IsUnique().HasFilter("[GitHubUsername] IS NOT NULL");
+            e.HasIndex(u => u.GitHubUserId).IsUnique().HasFilter("[GitHubUserId] IS NOT NULL");
         });
 
         builder.Entity<Course>(e =>

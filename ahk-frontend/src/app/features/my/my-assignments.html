@@ -16,6 +16,24 @@
     <div class="grow">
       <span class="eyebrow">Your work</span>
       <h1>Assignments</h1>
+      @if (user(); as u) {
+        @if (u.gitHubUsername) {
+          <p class="github-line">
+            Your repositories are shared with
+            <span class="mono">{{ u.gitHubUsername }}</span
+            >.&nbsp;
+            @if (u.gitHubUsernameVerified) {
+              <span class="badge ok">Confirmed</span>
+            } @else {
+              <span class="badge warn">Not confirmed yet</span>
+              <span class="muted">
+                — it is confirmed once you accept a repository invitation with that account. If the name is
+                wrong, the invitation goes to whoever owns it, so check it before you accept.
+              </span>
+            }
+          </p>
+        }
+      }
     </div>
   </div>
 

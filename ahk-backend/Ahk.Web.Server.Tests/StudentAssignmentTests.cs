@@ -39,7 +39,7 @@ public class StudentAssignmentTests
             Db = new ApplicationDbContext(options, new NoCourseProvider());
 
             Db.Courses.Add(new Course { Id = CourseId, Slug = "viaubc01", Name = "Sample Course", GitHubOrganization = "ahk-org" });
-            Db.Users.Add(new ApplicationUser { Id = UserId, UserName = "student@bme.hu" });
+            Db.Users.Add(new ApplicationUser { Id = UserId, UserName = "student@bme.hu", GitHubUsername = "octocat" });
             Db.Assignments.Add(new Assignment { Id = 10, CourseId = CourseId, Name = "Homework 1", TemplateRepoName = "ahk-org/viaubc01-hw1", InviteToken = "t" });
             Db.AssignmentAcceptances.Add(new AssignmentAcceptance
             {
@@ -111,6 +111,65 @@ public class StudentAssignmentTests
         var stored = await fixture.Db.AssignmentAcceptances.IgnoreQueryFilters().SingleAsync();
         Assert.False(stored.InvitationPending);
         Assert.Null(stored.InvitationId);
+    }
+
+    /// <summary>
+    /// Accepting the invitation is what corroborates the student's claim to that GitHub login: only someone
+    /// signed in as "octocat" can accept an invitation addressed to it.
+    /// </summary>
+    [Fact]
+    public async Task AnAcceptedInvitation_CorroboratesTheClaimToThatGitHubLogin()
+    {
+        await using var fixture = new Fixture(invitationPending: true, invitationId: 99);
+
+        fixture.GitHub
+            .Setup(g => g.IsCollaboratorAsync("ahk-org", "viaubc01-hw1-abc123", "octocat", "gh-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await fixture.Service.ListForUserAsync(UserId);
+
+        var user = await fixture.Db.Users.SingleAsync();
+        Assert.NotNull(user.GitHubVerifiedAt);
+    }
+
+    /// <summary>An invitation nobody has accepted yet proves nothing; the claim stays the student's own word.</summary>
+    [Fact]
+    public async Task APendingInvitation_LeavesTheClaimUnverified()
+    {
+        await using var fixture = new Fixture(invitationPending: true, invitationId: 99);
+
+        fixture.GitHub
+            .Setup(g => g.IsCollaboratorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        fixture.GitHub
+            .Setup(g => g.FindInvitationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GitHubInvitation(99, "octocat", false, DateTimeOffset.UtcNow));
+
+        await fixture.Service.ListForUserAsync(UserId);
+
+        Assert.Null((await fixture.Db.Users.SingleAsync()).GitHubVerifiedAt);
+    }
+
+    /// <summary>
+    /// The student re-bound their profile to a different GitHub account, then an old invitation to the previous
+    /// login settled. That says nothing about the login they claim now, so it must not be stamped.
+    /// </summary>
+    [Fact]
+    public async Task AnAcceptedInvitationForAPreviousLogin_DoesNotCorroborateTheCurrentOne()
+    {
+        await using var fixture = new Fixture(invitationPending: true, invitationId: 99);
+
+        var user = await fixture.Db.Users.SingleAsync();
+        user.GitHubUsername = "different-account";
+        await fixture.Db.SaveChangesAsync();
+
+        fixture.GitHub
+            .Setup(g => g.IsCollaboratorAsync("ahk-org", "viaubc01-hw1-abc123", "octocat", "gh-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await fixture.Service.ListForUserAsync(UserId);
+
+        Assert.Null((await fixture.Db.Users.SingleAsync()).GitHubVerifiedAt);
     }
 
     /// <summary>No access and no invitation left on GitHub means it lapsed — offer the resend, do not leave them waiting.</summary>

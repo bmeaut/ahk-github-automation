@@ -18,14 +18,7 @@ Severity is judgment, not a promise.
 
 ## P1 — security
 
-1. **`GitHubUsername` is existence-checked, never ownership-proven, and not unique** —
-   [ProfileController.cs](ahk-backend/Ahk.Web.Server/Auth/ProfileController.cs) calls
-   `GET /users/{login}` to confirm the login exists, but nothing proves the caller controls that
-   account, and `ApplicationDbContext` has no `HasIndex` on `GitHubUsername`/`GitHubUserId` (only
-   `HasMaxLength`). User B can claim Alice's real GitHub login; on accept,
-   `AssignmentInviteService.AcceptAsync` calls `AddCollaboratorAsync` with it and **Alice** receives
-   a collaborator invite to B's homework repo. Minimum fix: a unique index (*S*). Real fix: OAuth /
-   device-flow proof of ownership (*L*). Decide which.
+*(Empty. The GitHub-identity item closed on 2026-08-22 — see below.)*
 
 ## P2 — functional gaps worth a decision
 
@@ -141,6 +134,14 @@ Verified in the code, not assumed:
   reset note is obsolete.
 - **Deployment** — `ahk-web-deploy.yaml` has completed green end-to-end (most recently 2026-08-18,
   16m), and no `VPN_CA_CERT` branch remains in the workflow or scripts.
+- **GitHub identity** (2026-08-22) — one GitHub account now backs one portal account (filtered unique
+  indexes on `GitHubUsername` and `GitHubUserId`, plus a controller check that answers with a
+  sentence), and a claim is corroborated when an invitation sent to that login is accepted, surfaced
+  as Confirmed / Not confirmed yet on `/my` and in the admin drawer. Deliberately *not* proof of
+  ownership: a mistyped login simply never becomes confirmed. **Full OAuth verification remains the
+  option not taken** — worth revisiting if invitations to strangers ever become a real problem
+  rather than a theoretical one. ⚠️ The migration's unique indexes fail on a database that already
+  holds duplicate claims; the pre-check queries are in the migration's own comment.
 - **`POST /api/auth/register`** (2026-08-21) — removed outright rather than gated; self-service
   registration is not wanted. Accounts come from a BME sign-in or from an administrator.
   `ApiSmokeTests.Register_EndpointDoesNotExist` asserts both the response and that no account is

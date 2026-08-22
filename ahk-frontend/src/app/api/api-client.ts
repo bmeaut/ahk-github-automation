@@ -3572,6 +3572,7 @@ export interface CurrentUserResponse {
     displayName?: string | undefined;
     neptunCode?: string | undefined;
     gitHubUsername?: string | undefined;
+    gitHubUsernameVerified?: boolean;
     roles?: string[];
     impersonatorUserName?: string | undefined;
     courses?: CourseMembershipDto[];
@@ -3602,6 +3603,7 @@ export interface LogoutResponse {
 export interface GitHubProfileResponse {
     gitHubUsername?: string;
     gitHubUserId?: number | undefined;
+    verified?: boolean;
 }
 
 export interface SetGitHubUsernameRequest {
@@ -3730,6 +3732,8 @@ export interface UserDto {
     displayName?: string | undefined;
     neptunCode?: string | undefined;
     affiliation?: string | undefined;
+    gitHubUsername?: string | undefined;
+    gitHubVerifiedAt?: Date | undefined;
     roles?: string[];
     courses?: UserCourseDto[];
     isExternal?: boolean;

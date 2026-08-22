@@ -135,6 +135,7 @@ public sealed class StudentAssignmentService : IStudentAssignmentService
         if (await gitHub.IsCollaboratorAsync(owner, name, acceptance.GitHubUsername, token.Token, cancellationToken))
         {
             ClearInvitation(acceptance);
+            await MarkGitHubVerifiedAsync(acceptance, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
             return Project(acceptance);
         }
@@ -172,6 +173,7 @@ public sealed class StudentAssignmentService : IStudentAssignmentService
             if (await gitHub.IsCollaboratorAsync(owner, name, acceptance.GitHubUsername, token.Token, cancellationToken))
             {
                 ClearInvitation(acceptance);
+                await MarkGitHubVerifiedAsync(acceptance, cancellationToken);
                 return true;
             }
 
@@ -198,6 +200,26 @@ public sealed class StudentAssignmentService : IStudentAssignmentService
             logger.LogWarning(ex, "Could not refresh the invitation state of {Repository}.", acceptance.GitHubRepoName);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Records that the GitHub login on this acceptance has been acted on by whoever holds it: an invitation
+    /// only becomes a collaborator when someone signed in as that account accepts it.
+    ///
+    /// <para>Only stamped while the user still claims that same login — re-binding to a different account
+    /// clears the stamp, and an old acceptance settling afterwards must not resurrect it. Deliberately does
+    /// not save: the caller batches one SaveChanges for the whole page.</para>
+    /// </summary>
+    private async Task MarkGitHubVerifiedAsync(AssignmentAcceptance acceptance, CancellationToken cancellationToken)
+    {
+        var user = await db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == acceptance.UserId, cancellationToken);
+
+        if (user?.GitHubUsername is null || user.GitHubVerifiedAt is not null)
+            return;
+
+        if (string.Equals(user.GitHubUsername, acceptance.GitHubUsername, StringComparison.OrdinalIgnoreCase))
+            user.GitHubVerifiedAt = DateTimeOffset.UtcNow;
     }
 
     private static void ClearInvitation(AssignmentAcceptance acceptance)

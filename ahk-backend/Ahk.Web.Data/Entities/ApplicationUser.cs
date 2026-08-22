@@ -34,5 +34,17 @@ public class ApplicationUser : IdentityUser<int>
     /// <summary>GitHub's numeric account id — stable across a rename, which the login is not.</summary>
     public long? GitHubUserId { get; set; }
 
+    /// <summary>
+    /// When the claim to <see cref="GitHubUsername"/> was last corroborated, or null while it is only the
+    /// user's own assertion. Set the moment a repository invitation sent to that login is accepted, because
+    /// only someone signed in as that account can accept one.
+    ///
+    /// <para>Corroboration, not proof of ownership: a user who types a stranger's login still causes an
+    /// invitation to be sent to the stranger, and if the stranger accepts it this is stamped anyway. It says
+    /// "somebody holding this login acted on it", which is what makes a mistyped login self-correcting — it
+    /// simply never becomes verified. Cleared whenever the stored login changes.</para>
+    /// </summary>
+    public DateTimeOffset? GitHubVerifiedAt { get; set; }
+
     public ICollection<CourseMembership> CourseMemberships { get; } = new List<CourseMembership>();
 }

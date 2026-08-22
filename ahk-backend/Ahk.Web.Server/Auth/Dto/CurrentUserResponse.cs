@@ -17,8 +17,15 @@ public sealed class CurrentUserResponse
     /// </summary>
     public string? NeptunCode { get; set; }
 
-    /// <summary>Verified GitHub login, or null while the user has not supplied one.</summary>
+    /// <summary>The GitHub login the user gave, or null while they have not supplied one.</summary>
     public string? GitHubUsername { get; set; }
+
+    /// <summary>
+    /// False while that login is only the user's own claim — nothing has confirmed they hold it. It turns true
+    /// once a repository invitation sent to it is accepted, so it is false for everyone until their first
+    /// assignment. The SPA says so plainly rather than presenting an unconfirmed name as settled.
+    /// </summary>
+    public bool GitHubUsernameVerified { get; set; }
 
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
 

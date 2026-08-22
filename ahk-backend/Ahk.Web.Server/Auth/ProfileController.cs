@@ -24,6 +24,12 @@ public sealed class GitHubProfileResponse
     public string GitHubUsername { get; set; } = string.Empty;
 
     public long? GitHubUserId { get; set; }
+
+    /// <summary>
+    /// False while the link is only the user's own claim. It turns true once an invitation sent to that login
+    /// has been accepted — which is the first assignment they take — so a freshly entered name is always false.
+    /// </summary>
+    public bool Verified { get; set; }
 }
 
 /// <summary>
@@ -104,14 +110,47 @@ public sealed class ProfileController : ControllerBase
         if (account is null)
             return BadRequest(new { error = $"There is no GitHub user called \"{login}\". Check the spelling — it is the name in your profile URL, github.com/<username>." });
 
+        // One GitHub account belongs to one person, so it may back only one portal account. Matched on the
+        // numeric id as well as the login: the id is what survives a rename, so it catches the case where
+        // someone re-types a login another account claimed before that account was renamed. The filtered
+        // unique indexes are the real guarantee; this check exists to answer with a sentence rather than a 500.
+        var takenBy = await db.Users
+            .AsNoTracking()
+            .Where(u => u.Id != user.Id && (u.GitHubUsername == account.Login || u.GitHubUserId == account.Id))
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (takenBy != 0)
+            return BadRequest(new { error = $"The GitHub account \"{account.Login}\" is already linked to another user here. If it is yours, ask an administrator to sort it out." });
+
+        // Re-binding to a different account withdraws whatever the previous one had corroborated: the new
+        // login is an assertion again until an invitation sent to it is accepted.
+        if (!string.Equals(user.GitHubUsername, account.Login, StringComparison.OrdinalIgnoreCase))
+            user.GitHubVerifiedAt = null;
+
         // Store GitHub's own casing, so the value shown back matches the account exactly.
         user.GitHubUsername = account.Login;
         user.GitHubUserId = account.Id;
 
-        var result = await userManager.UpdateAsync(user);
+        IdentityResult result;
+        try
+        {
+            result = await userManager.UpdateAsync(user);
+        }
+        catch (DbUpdateException)
+        {
+            // Two people claiming the same login at once: the index caught what the check above raced past.
+            return BadRequest(new { error = $"The GitHub account \"{account.Login}\" is already linked to another user here." });
+        }
+
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
-        return Ok(new GitHubProfileResponse { GitHubUsername = account.Login, GitHubUserId = account.Id });
+        return Ok(new GitHubProfileResponse
+        {
+            GitHubUsername = account.Login,
+            GitHubUserId = account.Id,
+            Verified = user.GitHubVerifiedAt is not null,
+        });
     }
 }

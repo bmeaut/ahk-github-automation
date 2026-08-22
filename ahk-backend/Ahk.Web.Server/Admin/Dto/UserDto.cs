@@ -20,6 +20,15 @@ public sealed class UserDto
     /// <summary>From the IdP's <c>eduperson_scoped_affiliation</c> claim, values joined with ';'.</summary>
     public string? Affiliation { get; set; }
 
+    /// <summary>The GitHub login this account claims, or null. Unique across users.</summary>
+    public string? GitHubUsername { get; set; }
+
+    /// <summary>
+    /// When that claim was corroborated by an invitation to it being accepted, or null while it is only the
+    /// user's own word. An admin looking into "why did a stranger get an invite" needs to see which it is.
+    /// </summary>
+    public DateTimeOffset? GitHubVerifiedAt { get; set; }
+
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
 
     public IReadOnlyList<UserCourseDto> Courses { get; set; } = Array.Empty<UserCourseDto>();
