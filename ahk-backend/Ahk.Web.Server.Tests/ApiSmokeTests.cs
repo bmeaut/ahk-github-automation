@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Net;
+using System.Net.Http.Json;
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -55,6 +56,43 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
         client.DefaultRequestHeaders.Add("Cookie", $"{Program.ApplicationCookieName}=not-a-real-cookie-value");
 
         var response = await client.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// There is no self-service registration, by design: accounts come from a BME sign-in or from an
+    /// administrator. An anonymous endpoint that mints a full account would contradict that, so its absence is
+    /// asserted rather than left to whoever next reads the controller.
+    /// </summary>
+    [Fact]
+    public async Task Register_EndpointDoesNotExist()
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            new { userName = "intruder", email = "intruder@example.com", password = "Passw0rd!" });
+
+        // 405, not 404: MapFallbackToFile matches any path but allows only GET/HEAD, so a POST to a route no
+        // controller claims is "method not allowed". What matters is the account, so assert that too — this
+        // test fails loudly if the endpoint is ever restored.
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, response.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        Assert.Null(await users.FindByNameAsync("intruder"));
+    }
+
+    /// <summary>
+    /// Both impersonation endpoints need a session. Starting one additionally needs the site-admin role, which
+    /// <see cref="ImpersonationTests"/> covers; here the point is that neither is reachable anonymously.
+    /// </summary>
+    [Theory]
+    [InlineData("/api/auth/impersonate/1")]
+    [InlineData("/api/auth/impersonate/stop")]
+    public async Task ImpersonationEndpoints_WithoutAuth_Return401(string url)
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsync(url, null);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 

@@ -375,6 +375,26 @@ input.ng-invalid.ng-touched {
   color: var(--ink);
 }
 
+/* Icon-only action, for table rows where a word per button would crowd the line. Always give one a
+   title + aria-label: there is no visible text to read. */
+.btn.icon {
+  padding: 0.3125rem;
+  justify-content: center;
+  line-height: 0;
+  vertical-align: middle;
+  color: var(--ink-2);
+}
+
+.btn.icon:hover:not(:disabled) {
+  color: var(--brand);
+}
+
+.btn.icon svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+
 .btn-row {
   display: flex;
   align-items: center;
@@ -433,6 +453,11 @@ table.data td.num {
 table.data td.actions {
   text-align: right;
   white-space: nowrap;
+}
+
+/* Angular strips whitespace-only text nodes between elements, so adjacent action buttons need real spacing. */
+table.data td.actions .btn + .btn {
+  margin-left: 0.375rem;
 }
 
 .empty {

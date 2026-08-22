@@ -119,7 +119,10 @@
       "Bash(curl -s http://127.0.0.1:9222/json/list -o /dev/null)",
       "Bash(node shot.js)",
       "Bash(node shot2.js)",
-      "Bash(node shot3.js)"
+      "Bash(node shot3.js)",
+      "Read(//c/Users/beny314/.nuget/packages/microsoft.aspnetcore.mvc.testing/**)",
+      "Bash(grep -ao \"CookieContainerHandler\" ~/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/Microsoft.AspNetCore.Mvc.Testing.dll | head -2; echo \"---CreateDefaultClient---\"; grep -ao \"CreateDefaultClient\" ~/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/Microsoft.AspNetCore.Mvc.Testing.dll | head -2; echo \"--- pkg ref version ---\"; grep -n \"Mvc.Testing\" /c/Source/ahk-github-automation/ahk-backend/Ahk.Web.Server.Tests/Ahk.Web.Server.Tests.csproj)",
+      "Read(//c/Users/beny314/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/**)"
     ],
     "additionalDirectories": [
       "\\tmp",

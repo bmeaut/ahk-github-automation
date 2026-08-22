@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
-import { AuthClient, CurrentUserResponse, LoginRequest } from '../../api/api-client';
+import { AuthClient, CurrentUserResponse, ImpersonationClient, LoginRequest } from '../../api/api-client';
 import { readApiError } from '../api-error';
 
 /**
@@ -12,6 +12,7 @@ import { readApiError } from '../api-error';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly authClient = inject(AuthClient);
+  private readonly impersonationClient = inject(ImpersonationClient);
 
   private readonly user = signal<CurrentUserResponse | null>(null);
   private readonly loaded = signal(false);
@@ -25,6 +26,13 @@ export class AuthService {
    * the course switcher and the course guard both read it without a special case.
    */
   readonly courses = computed(() => this.user()?.courses ?? []);
+
+  /**
+   * The site admin looking through this account, when the session is an impersonation. The server derives it
+   * from the signed cookie, so this is a display value only — nothing here grants anything.
+   */
+  readonly impersonatorUserName = computed(() => this.user()?.impersonatorUserName ?? null);
+  readonly isImpersonating = computed(() => this.impersonatorUserName() !== null);
 
   /** Loads the session once (cached). Returns the user, or null if not authenticated. */
   ensureLoaded(): Observable<CurrentUserResponse | null> {
@@ -85,6 +93,31 @@ export class AuthService {
         this.setLoggedOut();
         return of(undefined);
       }),
+    );
+  }
+
+  /**
+   * Site admin only: continue as another user. Both this and {@link stopImpersonation} finish with a full page
+   * load rather than a router navigation — the identity behind every screen has just changed, and reloading is
+   * the one way to guarantee no component, course context or cached list survives from the previous one.
+   */
+  impersonate(userId: number): Observable<string | null> {
+    return this.impersonationClient.start(userId).pipe(
+      tap((u) => {
+        this.setUser(u);
+        window.location.assign(this.landingUrl());
+      }),
+      map(() => null),
+      catchError((err: unknown) => of(readApiError(err, 'That user could not be impersonated.'))),
+    );
+  }
+
+  /** Ends an impersonation and returns to the admin's own account. */
+  stopImpersonation(): Observable<string | null> {
+    return this.impersonationClient.stop().pipe(
+      tap(() => window.location.assign('/admin/users')),
+      map(() => null),
+      catchError((err: unknown) => of(readApiError(err, 'Your own session could not be restored.'))),
     );
   }
 

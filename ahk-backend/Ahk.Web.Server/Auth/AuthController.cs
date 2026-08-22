@@ -1,11 +1,9 @@
-using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Auth.Dto;
 using Ahk.Web.Server.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Ahk.Web.Server.Auth;
@@ -17,18 +15,18 @@ public sealed class AuthController : ControllerBase
 {
     private readonly SignInManager<ApplicationUser> signInManager;
     private readonly UserManager<ApplicationUser> userManager;
-    private readonly ApplicationDbContext db;
+    private readonly CurrentUserBuilder currentUser;
     private readonly OidcOptions oidcOptions;
 
     public AuthController(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
-        ApplicationDbContext db,
+        CurrentUserBuilder currentUser,
         IOptions<OidcOptions> oidcOptions)
     {
         this.signInManager = signInManager;
         this.userManager = userManager;
-        this.db = db;
+        this.currentUser = currentUser;
         this.oidcOptions = oidcOptions.Value;
     }
 
@@ -69,7 +67,7 @@ public sealed class AuthController : ControllerBase
         }
 
         var user = await userManager.FindByNameAsync(request.UserName);
-        return Ok(await BuildCurrentUserAsync(user!));
+        return Ok(await currentUser.BuildAsync(user!));
     }
 
     /// <summary>
@@ -96,19 +94,10 @@ public sealed class AuthController : ControllerBase
         return Ok(new LogoutResponse { EndSessionUrl = url });
     }
 
-    [HttpPost("register")]
-    [ProducesResponseType(typeof(CurrentUserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<CurrentUserResponse>> Register([FromBody] RegisterRequest request)
-    {
-        var user = new ApplicationUser { UserName = request.UserName, Email = request.Email, DisplayName = request.DisplayName };
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
-
-        await signInManager.SignInAsync(user, isPersistent: false);
-        return Ok(await BuildCurrentUserAsync(user));
-    }
+    // There is deliberately no self-service registration. Accounts arrive one of two ways: a BME account on
+    // its first OIDC sign-in (ExternalAuthController), or an administrator creating a local one
+    // (UsersAdminController.Create). An anonymous endpoint that mints a full account with no approval and no
+    // verified identity contradicts that model, so it was removed rather than gated.
 
     [HttpGet("me")]
     [Authorize]
@@ -120,63 +109,8 @@ public sealed class AuthController : ControllerBase
         if (user is null)
             return Unauthorized();
 
-        return Ok(await BuildCurrentUserAsync(user));
-    }
-
-    private async Task<CurrentUserResponse> BuildCurrentUserAsync(ApplicationUser user)
-    {
-        var roles = await userManager.GetRolesAsync(user);
-
-        var memberships = await db.CourseMemberships
-            .AsNoTracking()
-            .Where(m => m.UserId == user.Id)
-            .OrderBy(m => m.Course!.Name)
-            .ThenBy(m => m.Course!.Slug)
-            .Select(m => new CourseMembershipDto
-            {
-                Slug = m.Course!.Slug,
-                Name = m.Course.Name,
-                Role = m.Role.ToString(),
-            })
-            .ToListAsync();
-
-        // A site admin may open any course (CourseMembershipAuthorizationHandler says so), so the switcher has
-        // to list them all — otherwise the instructor screens are unreachable for courses they do not staff.
-        // Explicit memberships win, keeping the role the admin actually holds in their own courses.
-        var courses = memberships;
-        if (roles.Contains(Roles.Admin, StringComparer.Ordinal))
-        {
-            var assigned = memberships.Select(m => m.Slug).ToHashSet(StringComparer.Ordinal);
-            var rest = await db.Courses
-                .AsNoTracking()
-                .Where(c => !assigned.Contains(c.Slug))
-                .OrderBy(c => c.Name)
-                .ThenBy(c => c.Slug)
-                .Select(c => new CourseMembershipDto
-                {
-                    Slug = c.Slug,
-                    Name = c.Name,
-                    Role = CourseRole.Admin.ToString(),
-                    ViaSiteAdmin = true,
-                })
-                .ToListAsync();
-
-            courses = memberships.Concat(rest)
-                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(c => c.Slug, StringComparer.Ordinal)
-                .ToList();
-        }
-
-        return new CurrentUserResponse
-        {
-            UserId = user.Id,
-            UserName = user.UserName ?? string.Empty,
-            Email = user.Email,
-            DisplayName = user.DisplayName,
-            NeptunCode = user.NeptunCode,
-            GitHubUsername = user.GitHubUsername,
-            Roles = roles.ToList(),
-            Courses = courses,
-        };
+        // The cookie carries the impersonation marker when an admin is looking through this account, which is
+        // the one thing the session shape needs beyond the user record itself.
+        return Ok(await currentUser.BuildAsync(user, CurrentUserBuilder.ImpersonatorNameOf(User)));
     }
 }

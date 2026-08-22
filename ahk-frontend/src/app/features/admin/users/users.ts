@@ -11,6 +11,7 @@ import {
   UsersAdminClient,
 } from '../../../api/api-client';
 import { readApiError } from '../../../core/api-error';
+import { AuthService } from '../../../core/auth/auth.service';
 
 const SITE_ADMIN = 'Admin';
 
@@ -28,6 +29,7 @@ const SITE_ADMIN = 'Admin';
 export class AdminUsers implements OnInit {
   private readonly client = inject(UsersAdminClient);
   private readonly coursesClient = inject(CoursesAdminClient);
+  private readonly auth = inject(AuthService);
 
   protected readonly users = signal<UserDto[]>([]);
   protected readonly total = signal(0);
@@ -123,6 +125,23 @@ export class AdminUsers implements OnInit {
   protected page(delta: number): void {
     this.skip.set(Math.max(0, this.skip() + delta * this.pageSize));
     this.reload();
+  }
+
+  // ---- Impersonation ----
+
+  /** Own row: there is nothing to impersonate, and the API refuses it anyway. */
+  protected canImpersonate(user: UserDto): boolean {
+    return user.id !== this.auth.currentUser()?.userId;
+  }
+
+  /** On success the browser navigates away as the other user, so only a failure returns here. */
+  protected impersonate(user: UserDto): void {
+    this.clearMessages();
+    this.auth.impersonate(user.id ?? 0).subscribe((error) => {
+      if (error) {
+        this.error.set(error);
+      }
+    });
   }
 
   // ---- Site role ----

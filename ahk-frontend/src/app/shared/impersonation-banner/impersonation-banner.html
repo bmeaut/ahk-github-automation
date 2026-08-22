@@ -1,0 +1,17 @@
+@if (isImpersonating()) {
+  <div class="impersonating" role="status">
+    <span class="tag">Impersonating</span>
+    <span class="what">
+      Viewing the site as <strong class="mono">{{ user()?.userName }}</strong
+      >.&nbsp;You are signed in as <strong class="mono">{{ impersonator() }}</strong
+      >.&nbsp;Anything you do here is done as this user.
+    </span>
+    @if (error(); as e) {
+      <span class="failed">{{ e }}</span>
+    }
+    <span class="grow"></span>
+    <button type="button" class="btn" (click)="stop()" [disabled]="leaving()">
+      {{ leaving() ? 'Returning…' : 'Return to my account' }}
+    </button>
+  </div>
+}

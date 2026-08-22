@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -21,7 +21,7 @@ type SortKey = 'neptun' | 'repository' | 'runs' | 'total';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class CourseDashboard implements OnInit {
+export class CourseDashboard {
   private readonly statusesClient = inject(SubmissionStatusesClient);
   private readonly gradesClient = inject(GradesClient);
   protected readonly courseContext = inject(CourseContextService);
@@ -73,16 +73,31 @@ export class CourseDashboard implements OnInit {
     };
   });
 
-  ngOnInit(): void {
-    this.reload();
+  constructor() {
+    // The course switcher navigates between sibling /{course}/dashboard routes, so the router reuses this
+    // component instance and ngOnInit would fire only for the first course. Loading off the slug signal keeps
+    // the tallies and the table with the header, which reads that same signal. Filters are course-specific —
+    // a Neptun search carried over from the previous course would show an empty table for the new one.
+    effect(() => {
+      const slug = this.courseContext.activeSlug();
+      if (slug) {
+        untracked(() => {
+          this.clearFilters();
+          this.load(slug);
+        });
+      }
+    });
   }
 
+  /** Refresh: reloads whichever course is currently in context. */
   protected reload(): void {
     const slug = this.courseContext.activeSlug();
-    if (!slug) {
-      return;
+    if (slug) {
+      this.load(slug);
     }
+  }
 
+  private load(slug: string): void {
     this.loading.set(true);
     this.error.set(null);
 
