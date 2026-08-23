@@ -241,8 +241,39 @@ jobs:
       # own (CIFS-costly) comparison or delta-transfer logic — we already know these files need moving.
       - name: Apply changed files
         if: steps.diff.outputs.has_changes == 'true'
+        env:
+          DEPLOYMENT_PATH: ${{ vars.DEPLOYMENT_PATH }}
+          FILE_USERNAME: ${{ vars.FILE_USERNAME }}
+          FILE_USERDOMAIN: ${{ vars.FILE_USERDOMAIN }}
+          FILE_PASSWORD: ${{ secrets.FILE_PASSWORD }}
         run: |
           set -o pipefail
+
+          # Retrying an operation against the SAME mount only helps if the stall was in the operation
+          # itself. The observed failures instead look like the underlying CIFS/VPN session getting
+          # silently wedged (a network middlebox black-holing an idle TCP flow) — every retry against that
+          # same session hits the same wall. A fresh mount is a fresh TCP/SMB session, so it isn't affected
+          # by whatever killed the old one; called before each retry below, not before the first attempt.
+          remount_share() {
+            echo "Remounting $DEPLOYMENT_PATH (fresh session)..."
+            sudo umount "$MOUNT_POINT" 2>/dev/null || true
+            local creds
+            creds=$(mktemp)
+            chmod 600 "$creds"
+            {
+              echo "username=$FILE_USERNAME"
+              echo "password=$FILE_PASSWORD"
+              echo "domain=$FILE_USERDOMAIN"
+            } > "$creds"
+            local result=0
+            if ! sudo mount -t cifs "$DEPLOYMENT_PATH" "$MOUNT_POINT" \
+                -o credentials="$creds",vers=3.0,sec=ntlmssp,uid=$(id -u),gid=$(id -g); then
+              echo "::warning::Remount attempt failed."
+              result=1
+            fi
+            rm -f "$creds"
+            return $result
+          }
 
           changed_count=$(wc -l < changed.list)
           removed_count=$(wc -l < removed.list)
@@ -297,6 +328,7 @@ jobs:
               fi
               echo "::endgroup::"
               echo "::warning::rsync attempt $i failed after $(( ($(date +%s%3N) - attempt_start) / 1000 ))s (likely a locked file); retrying..."
+              remount_share || true
               sleep 2
             done
             copy_ms=$(( $(date +%s%3N) - copy_start ))
@@ -322,7 +354,9 @@ jobs:
           # wedge for several minutes and then recover on its own (see the rsync retry above), so a single
           # 30s timeout with no retry just trades "hangs forever" for "fails the whole job on one transient
           # hiccup" — barely an improvement. Retrying the one stuck path (not the whole batch, unlike
-          # rsync) is cheap here since a delete is trivially idempotent.
+          # rsync) is cheap here since a delete is trivially idempotent. Confirmed in practice that retrying
+          # on the SAME mount does not help (3 straight timeouts on one file) — remount_share forces a
+          # fresh session before each retry instead of hoping the old one heals in time.
           delete_ms=0
           if [ -s removed.list ]; then
             delete_start=$(date +%s%3N)
@@ -335,6 +369,7 @@ jobs:
                   break
                 fi
                 echo "::warning::Deleting '$path' timed out after 30s (attempt $attempt/3); retrying..."
+                remount_share || true
               done
               if [ "$ok" != "true" ]; then
                 echo "::error::Deleting '$path' did not complete within 30s after 3 attempts — likely a stale/held CIFS handle."

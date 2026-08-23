@@ -116,6 +116,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Retrying an operation against the SAME mount only helps if the stall was in the operation itself.
+# Observed failures instead look like the underlying SMB session getting silently wedged — a fresh mount
+# is a fresh session, unaffected by whatever killed the old one. Called before each retry below, not
+# before the first attempt.
+remount_share() {
+  echo "Remounting $DEPLOYMENT_PATH (fresh session)..."
+  sudo umount "$MOUNT_POINT" 2>/dev/null || true
+  if ! sudo mount -t drvfs "$DEPLOYMENT_PATH" "$MOUNT_POINT" -o "uid=$(id -u),gid=$(id -g)"; then
+    echo "::warning::Remount attempt failed."
+    return 1
+  fi
+  return 0
+}
+
 # ---- Fetch previous deployment manifest ----
 if [ "$FORCE_FULL" = "true" ]; then
   echo "--force-full requested — treating the stored manifest as empty (full re-copy)."
@@ -166,6 +180,7 @@ else
         break
       fi
       echo "rsync attempt $i failed (likely a locked file); retrying..."
+      remount_share || true
       sleep 2
     done
     if [ "$ok" != "true" ]; then
@@ -189,6 +204,7 @@ else
           break
         fi
         echo "::warning::Deleting '$path' timed out after 30s (attempt $attempt/3); retrying..."
+        remount_share || true
       done
       if [ "$ok" != "true" ]; then
         echo "::error::Deleting '$path' did not complete within 30s after 3 attempts — likely a stale/held file handle."
