@@ -178,10 +178,20 @@ else
     echo "== Removing stale files =="
     # timeout + per-file echo: a plain `rm -f` loop gives no way to tell "slow" from "hung on a stale
     # handle" — with neither, a wedged delete blocks the script indefinitely instead of failing loudly.
+    # 3 attempts per file, not just one: the link can wedge transiently and recover on its own (same as
+    # the rsync retry above), so a single timeout with no retry just fails the whole run on one hiccup.
     while IFS= read -r path; do
       echo "deleting  $path"
-      if ! timeout 30 rm -f "$MOUNT_POINT/$path"; then
-        echo "::error::Deleting '$path' did not complete within 30s — likely a stale/held file handle."
+      ok=false
+      for attempt in 1 2 3; do
+        if timeout 30 rm -f "$MOUNT_POINT/$path"; then
+          ok=true
+          break
+        fi
+        echo "::warning::Deleting '$path' timed out after 30s (attempt $attempt/3); retrying..."
+      done
+      if [ "$ok" != "true" ]; then
+        echo "::error::Deleting '$path' did not complete within 30s after 3 attempts — likely a stale/held file handle."
         exit 1
       fi
     done < removed.list

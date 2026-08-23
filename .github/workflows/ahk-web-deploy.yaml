@@ -317,13 +317,27 @@ jobs:
           # own, so a single wedged delete blocks the job until GitHub's own multi-hour cap. `timeout 30`
           # turns that into a bounded, loud failure naming the exact file; the per-file echo (mirroring
           # rsync's own --out-format above) means "stuck" vs "slow" is answered by the log, not a guess.
+          #
+          # Each file gets its own 3 attempts, not just one: the same link has been observed to silently
+          # wedge for several minutes and then recover on its own (see the rsync retry above), so a single
+          # 30s timeout with no retry just trades "hangs forever" for "fails the whole job on one transient
+          # hiccup" — barely an improvement. Retrying the one stuck path (not the whole batch, unlike
+          # rsync) is cheap here since a delete is trivially idempotent.
           delete_ms=0
           if [ -s removed.list ]; then
             delete_start=$(date +%s%3N)
             while IFS= read -r path; do
               echo "$(date '+%Y/%m/%d %H:%M:%S')  deleting  $path"
-              if ! timeout 30 rm -f "$MOUNT_POINT/$path"; then
-                echo "::error::Deleting '$path' did not complete within 30s — likely a stale/held CIFS handle."
+              ok=false
+              for attempt in 1 2 3; do
+                if timeout 30 rm -f "$MOUNT_POINT/$path"; then
+                  ok=true
+                  break
+                fi
+                echo "::warning::Deleting '$path' timed out after 30s (attempt $attempt/3); retrying..."
+              done
+              if [ "$ok" != "true" ]; then
+                echo "::error::Deleting '$path' did not complete within 30s after 3 attempts — likely a stale/held CIFS handle."
                 exit 1
               fi
             done < removed.list
