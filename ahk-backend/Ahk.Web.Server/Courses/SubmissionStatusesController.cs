@@ -1,4 +1,5 @@
-using Ahk.Web.Data.Entities;
+﻿using Ahk.Web.Data.Entities;
+using Ahk.Web.Server.Auth;
 using Ahk.Web.Server.CourseContext;
 using Ahk.Web.Services.StatusTracking;
 using Ahk.Web.Services.StatusTracking.Dto;
@@ -10,10 +11,12 @@ namespace Ahk.Web.Server.Courses;
 /// <summary>
 /// Course-scoped submission status list — the port of the legacy <c>list-statuses/{*repoprefix}</c> function,
 /// with the repository prefix replaced by the {course} route segment.
+///
+/// <para>One of the two endpoints that also accept a personal access token — see <see cref="AuthSchemes"/>.</para>
 /// </summary>
 [ApiController]
 [Route("api/{course}/statuses")]
-[Authorize(Policy = CourseMembershipRequirement.PolicyName)]
+[Authorize(AuthenticationSchemes = AuthSchemes.CookieOrPersonalToken, Policy = CourseMembershipRequirement.PolicyName)]
 public sealed class SubmissionStatusesController : ControllerBase
 {
     private readonly IStatusTrackingService statusTracking;

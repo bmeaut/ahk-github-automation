@@ -75,6 +75,22 @@ Dev data seeder (Development env only) creates:
 - sample courses `viaubc01`, `viaubb01` — deliberately configured differently so the health dashboard
   shows a mix of states
 
+## Personal access tokens
+
+For reading a course from a script, without driving the login form — the portal's replacement for the legacy
+functions' master key. A user mints one for themselves at `/settings`; it authenticates as them, so it opens
+exactly the courses they can open.
+
+```bash
+curl -H "Authorization: Bearer ahkp_…" https://ahk.aut.bme.hu/api/viaubc01/statuses
+curl -H "Authorization: Bearer ahkp_…" https://ahk.aut.bme.hu/api/viaubc01/grades
+curl -H "Authorization: Bearer ahkp_…" https://ahk.aut.bme.hu/api/viaubc01/grades/csv
+```
+
+Those three are the only endpoints that accept one — everything else, the token management included, needs an
+interactive session, so a token can never mint another. Revoking a token (by its owner at `/settings`, or by a
+site admin from the user drawer in `/admin/users`) takes effect on the next request: nothing is cached.
+
 ## Configuration (keys under `Authentication`/`ConnectionStrings`)
 
 - `ConnectionStrings:Default` — MSSQL connection string.

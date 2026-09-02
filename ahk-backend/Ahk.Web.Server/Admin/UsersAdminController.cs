@@ -1,7 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Admin.Dto;
+using Ahk.Web.Server.Auth.Dto;
+using Ahk.Web.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -26,11 +28,16 @@ public sealed class UsersAdminController : ControllerBase
 
     private readonly ApplicationDbContext db;
     private readonly UserManager<ApplicationUser> userManager;
+    private readonly IPersonalAccessTokenService accessTokens;
 
-    public UsersAdminController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+    public UsersAdminController(
+        ApplicationDbContext db,
+        UserManager<ApplicationUser> userManager,
+        IPersonalAccessTokenService accessTokens)
     {
         this.db = db;
         this.userManager = userManager;
+        this.accessTokens = accessTokens;
     }
 
     /// <summary>
@@ -246,6 +253,50 @@ public sealed class UsersAdminController : ControllerBase
 
         return Ok(await LoadDtoAsync(user, cancellationToken));
     }
+
+    // ---- Personal access tokens ----
+
+    /// <summary>
+    /// A user's access tokens, for cutting one off — after a laptop is lost, or when an instructor leaves
+    /// without deleting their account. The values are deliberately not returned: an administrator needs to
+    /// revoke a token, not use one, and one who genuinely has to act as someone has impersonation.
+    /// </summary>
+    [HttpGet("{id:int}/tokens")]
+    [ProducesResponseType(typeof(IEnumerable<UserAccessTokenDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<UserAccessTokenDto>>> ListTokens(int id, CancellationToken cancellationToken)
+    {
+        if (!await db.Users.AnyAsync(u => u.Id == id, cancellationToken))
+            return NotFound();
+
+        var tokens = await accessTokens.ListForUserAsync(id, cancellationToken);
+
+        return Ok(tokens.Select(t => new UserAccessTokenDto
+        {
+            Id = t.Id,
+            TokenHint = Hint(t.Token),
+            Description = t.Description,
+            CreatedAt = t.CreatedAt,
+            LastUsedAt = t.LastUsedAt,
+            RevokedAt = t.RevokedAt,
+        }).ToList());
+    }
+
+    [HttpDelete("{id:int}/tokens/{tokenId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RevokeToken(int id, int tokenId, CancellationToken cancellationToken)
+    {
+        // Scoped to the user in the route so a mistyped id cannot revoke somebody else's token.
+        var owned = await db.PersonalAccessTokens.AnyAsync(t => t.Id == tokenId && t.UserId == id, cancellationToken);
+        if (!owned)
+            return NotFound();
+
+        return await accessTokens.RevokeAnyAsync(tokenId, cancellationToken) ? NoContent() : NotFound();
+    }
+
+    /// <summary>Last four characters of a token — enough to match against what the owner sees, not to use it.</summary>
+    private static string? Hint(string token) => token.Length < 8 ? null : token[^4..];
 
     /// <summary>Sets a new password for a local account, e.g. after a support request.</summary>
     [HttpPost("{id:int}/password")]

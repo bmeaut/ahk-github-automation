@@ -1,4 +1,4 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.Courses;
 using Ahk.Web.Services.GitHub;
@@ -10,6 +10,7 @@ using Ahk.Web.Services.Grading;
 using Ahk.Web.Services.Health;
 using Ahk.Web.Services.StatusTracking;
 using Ahk.Web.Services.Submissions;
+using Ahk.Web.Services.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ahk.Web.Services;
@@ -26,6 +27,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGradeListingService, GradeListingService>();
         services.AddScoped<ICourseResolutionService, CourseResolutionService>();
         services.AddScoped<IWebhookTokenService, WebhookTokenService>();
+        services.AddScoped<IPersonalAccessTokenService, PersonalAccessTokenService>();
 
         services.AddAhkGitHubApi();
         services.AddAhkGitHubWebhooks();

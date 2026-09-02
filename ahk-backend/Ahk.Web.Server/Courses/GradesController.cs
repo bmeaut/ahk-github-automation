@@ -1,4 +1,5 @@
-using Ahk.Web.Data.Entities;
+﻿using Ahk.Web.Data.Entities;
+using Ahk.Web.Server.Auth;
 using Ahk.Web.Server.CourseContext;
 using Ahk.Web.Services.Grading;
 using Ahk.Web.Services.Grading.Dto;
@@ -11,10 +12,14 @@ namespace Ahk.Web.Server.Courses;
 /// Course-scoped final grades — the port of the legacy <c>list-grades/{*repoprefix}</c> function, with the
 /// repository prefix replaced by the {course} route segment. The CSV endpoint preserves the original export
 /// format so downstream administration keeps working.
+///
+/// <para>One of the two endpoints that also accept a personal access token, which is what replaces the
+/// legacy function key for scripted access. The token authenticates as its owner, so the policy below decides
+/// the same way for both schemes.</para>
 /// </summary>
 [ApiController]
 [Route("api/{course}/grades")]
-[Authorize(Policy = CourseMembershipRequirement.PolicyName)]
+[Authorize(AuthenticationSchemes = AuthSchemes.CookieOrPersonalToken, Policy = CourseMembershipRequirement.PolicyName)]
 public sealed class GradesController : ControllerBase
 {
     private readonly IGradeListingService gradeListing;

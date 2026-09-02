@@ -1,0 +1,155 @@
+<main class="settings">
+  <header class="topline">
+    <a routerLink="/">
+      <img src="bme-aut-logo.png" alt="BME Department of Automation and Applied Informatics" class="logo" />
+    </a>
+    <span class="spacer"></span>
+    @if (user(); as u) {
+      <span class="who mono">{{ u.displayName || u.userName }}</span>
+    }
+    <button type="button" class="btn quiet" (click)="logout()">Sign out</button>
+  </header>
+
+  <div class="page-head">
+    <div class="grow">
+      <span class="eyebrow">Your account</span>
+      <h1>Access tokens</h1>
+      <p class="lede">
+        A token lets a script read your courses' submissions and grades as you — the same courses, the same
+        access you have here. Anyone holding it can do that, so treat it like your password.
+      </p>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <p class="notice error">{{ e }}</p>
+  }
+  @if (saved(); as s) {
+    <p class="notice success">{{ s }}</p>
+  }
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>Your tokens</h2>
+        <p>Revoke one to cut off whatever is using it. That takes effect on the next request.</p>
+      </div>
+    </header>
+
+    @if (issued(); as t) {
+      <div class="card-body issued">
+        <p class="notice success">
+          Token created. You can copy it again later from the list below — it is stored so you do not have to
+          keep a second copy of it somewhere less safe.
+        </p>
+        <dl class="kv">
+          <dt>Token</dt>
+          <dd class="mono copy-row">
+            <span>{{ t.token }}</span>
+            <button type="button" class="btn quiet" (click)="copy('issued', t.token)">
+              {{ copied() === 'issued' ? 'Copied' : 'Copy' }}
+            </button>
+          </dd>
+        </dl>
+        <button type="button" class="btn quiet" (click)="dismissIssued()">Done</button>
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="empty">Loading your tokens…</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>What it is for</th>
+              <th>Created</th>
+              <th>Last used</th>
+              <th>State</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of tokens(); track t.id) {
+              <tr>
+                <td class="mono">
+                  {{ mask(t) }}
+                  @if (isRevealed(t)) {
+                    <div class="secret-reveal">{{ t.token }}</div>
+                  }
+                </td>
+                <td>{{ t.description || '—' }}</td>
+                <td class="muted">{{ t.createdAt | date: 'yyyy-MM-dd' }}</td>
+                <td class="muted">
+                  @if (t.lastUsedAt) {
+                    {{ t.lastUsedAt | date: 'yyyy-MM-dd HH:mm' }}
+                  } @else {
+                    Never
+                  }
+                </td>
+                <td>
+                  @if (t.revokedAt) {
+                    <span class="badge bad">Revoked {{ t.revokedAt | date: 'yyyy-MM-dd' }}</span>
+                  } @else {
+                    <span class="badge ok">Active</span>
+                  }
+                </td>
+                <td class="actions">
+                  <span class="token-actions">
+                    @if (!t.revokedAt) {
+                      <button type="button" class="btn quiet" (click)="copy('row-' + t.id, t.token)">
+                        {{ copied() === 'row-' + t.id ? 'Copied' : 'Copy' }}
+                      </button>
+                      <button type="button" class="btn quiet" (click)="toggleReveal(t)">
+                        {{ isRevealed(t) ? 'Hide' : 'Show' }}
+                      </button>
+                      <button type="button" class="btn danger" (click)="revoke(t)">Revoke</button>
+                    }
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty">No tokens yet. Create one below to call the API from a script.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <form class="card-foot" (ngSubmit)="create()">
+        <input
+          type="text"
+          name="tokenDescription"
+          [(ngModel)]="newDescription"
+          placeholder="What is this token for? (optional)"
+          aria-label="What this token is for"
+          class="grow-input"
+        />
+        <button type="submit" class="btn primary" [disabled]="creating()">
+          {{ creating() ? 'Creating…' : 'Create token' }}
+        </button>
+      </form>
+    }
+  </div>
+
+  <div class="card">
+    <header>
+      <div class="grow">
+        <h2>Using a token</h2>
+        <p>Send it as a bearer token. These two endpoints accept one; everything else needs a sign-in.</p>
+      </div>
+    </header>
+    <div class="card-body">
+      <pre class="example mono">curl -H "Authorization: Bearer YOUR_TOKEN" \
+  {{ origin }}/api/{{ exampleCourse() }}/statuses
+
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  {{ origin }}/api/{{ exampleCourse() }}/grades</pre>
+      <p class="muted">
+        Add <span class="mono">/csv</span> to the grades URL for the same export the submissions page offers.
+      </p>
+    </div>
+  </div>
+</main>

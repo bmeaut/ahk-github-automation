@@ -272,6 +272,35 @@
                             <span>not linked</span>
                           }
                         </p>
+                        <h3>Access tokens</h3>
+                        @if (loadingTokens()) {
+                          <p class="muted">Loading…</p>
+                        } @else if (tokens().length > 0) {
+                          <ul class="assigned tokens">
+                            @for (t of tokens(); track t.id) {
+                              <li>
+                                <span class="mono">…{{ t.tokenHint }}</span>
+                                <span class="muted">{{ t.description || 'No description' }}</span>
+                                <span class="spacer"></span>
+                                @if (t.revokedAt) {
+                                  <span class="badge bad">Revoked</span>
+                                } @else {
+                                  <span class="muted small">
+                                    @if (t.lastUsedAt) {
+                                      Last used {{ t.lastUsedAt | date: 'yyyy-MM-dd' }}
+                                    } @else {
+                                      Never used
+                                    }
+                                  </span>
+                                  <button type="button" class="btn danger" (click)="revokeToken(u, t)">Revoke</button>
+                                }
+                              </li>
+                            }
+                          </ul>
+                        } @else {
+                          <p class="muted">No access tokens.</p>
+                        }
+
                         <button type="button" class="btn danger" (click)="deleteUser(u)">Delete account</button>
                         <p class="muted small">
                           Deleting removes the account and its course assignments. Grades already recorded stay.

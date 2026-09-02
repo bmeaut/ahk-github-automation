@@ -9,6 +9,7 @@
     @if (user(); as u) {
       <span class="who mono">{{ u.displayName || u.userName }}</span>
     }
+    <a class="btn quiet" routerLink="/settings">Access tokens</a>
     <button type="button" class="btn quiet" (click)="logout()">Sign out</button>
   </header>
 

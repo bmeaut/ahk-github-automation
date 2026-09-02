@@ -1,4 +1,4 @@
-using Ahk.Web.Data.Entities;
+﻿using Ahk.Web.Data.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +30,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<CourseMembership> CourseMemberships => Set<CourseMembership>();
 
     public DbSet<CourseWebhookToken> CourseWebhookTokens => Set<CourseWebhookToken>();
+
+    public DbSet<PersonalAccessToken> PersonalAccessTokens => Set<PersonalAccessToken>();
 
     public DbSet<GitHubWebhookDelivery> GitHubWebhookDeliveries => Set<GitHubWebhookDelivery>();
 
@@ -115,6 +117,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             e.HasIndex(t => t.Token).IsUnique();
             e.HasOne(t => t.Course).WithMany().HasForeignKey(t => t.CourseId).OnDelete(DeleteBehavior.Cascade);
             e.HasQueryFilter(t => t.CourseId == this.currentCourse.CurrentCourseId);
+        });
+
+        builder.Entity<PersonalAccessToken>(e =>
+        {
+            e.Property(t => t.Token).HasMaxLength(128).IsRequired();
+            e.Property(t => t.Description).HasMaxLength(512);
+
+            // Globally unique: the value is presented on its own, with nothing else identifying the caller.
+            e.HasIndex(t => t.Token).IsUnique();
+            e.HasIndex(t => t.UserId);
+
+            // The only path to this table is from the user, so deleting an account takes its tokens with it
+            // without adding a second cascade path anywhere.
+            e.HasOne(t => t.User).WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<GitHubWebhookDelivery>(e =>

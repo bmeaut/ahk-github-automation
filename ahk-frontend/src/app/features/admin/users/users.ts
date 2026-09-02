@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
@@ -7,6 +8,7 @@ import {
   CourseRole,
   CoursesAdminClient,
   CreateUserRequest,
+  UserAccessTokenDto,
   UserDto,
   UsersAdminClient,
 } from '../../../api/api-client';
@@ -22,7 +24,7 @@ const SITE_ADMIN = 'Admin';
  */
 @Component({
   selector: 'app-admin-users',
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './users.html',
   styleUrl: './users.scss',
 })
@@ -47,6 +49,10 @@ export class AdminUsers implements OnInit {
 
   /** The user row currently expanded for course assignment. */
   protected readonly expanded = signal<number | null>(null);
+
+  /** The expanded user's access tokens, loaded when the drawer opens rather than for every row in the page. */
+  protected readonly tokens = signal<UserAccessTokenDto[]>([]);
+  protected readonly loadingTokens = signal(false);
 
   protected readonly adding = signal(false);
   protected readonly savingNew = signal(false);
@@ -173,8 +179,42 @@ export class AdminUsers implements OnInit {
 
   // ---- Course assignment ----
 
+  /**
+   * The expanded user's tokens. Values are never returned — an administrator is here to cut a token off, and
+   * one who genuinely has to act as someone has impersonation for that.
+   */
+  private loadTokens(user: UserDto): void {
+    this.tokens.set([]);
+    if (this.expanded() !== user.id) {
+      return;
+    }
+
+    this.loadingTokens.set(true);
+    this.client.listTokens(user.id ?? 0).subscribe({
+      next: (tokens) => {
+        this.tokens.set(tokens);
+        this.loadingTokens.set(false);
+      },
+      error: () => this.loadingTokens.set(false),
+    });
+  }
+
+  protected revokeToken(user: UserDto, token: UserAccessTokenDto): void {
+    this.error.set(null);
+    this.saved.set(null);
+
+    this.client.revokeToken(user.id ?? 0, token.id ?? 0).subscribe({
+      next: () => {
+        this.saved.set(`A token of ${user.userName} was revoked.`);
+        this.loadTokens(user);
+      },
+      error: (err: unknown) => this.error.set(readApiError(err, 'That token could not be revoked.')),
+    });
+  }
+
   protected toggleExpanded(user: UserDto): void {
     this.expanded.set(this.expanded() === user.id ? null : (user.id ?? null));
+    this.loadTokens(user);
   }
 
   protected assignableCourses(user: UserDto): CourseDto[] {

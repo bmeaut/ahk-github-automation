@@ -1,13 +1,15 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Admin;
 using Ahk.Web.Server.Admin.Dto;
+using Ahk.Web.Services.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 namespace Ahk.Web.Server.Tests;
@@ -43,7 +45,11 @@ public sealed class UserNeptunTests : IDisposable
             services: null!,
             NullLogger<UserManager<ApplicationUser>>.Instance);
 
-        this.controller = new UsersAdminController(this.db, this.userManager);
+        // Strict with no setups: these tests are about Neptun codes, and must reach no token code at all.
+        this.controller = new UsersAdminController(
+            this.db,
+            this.userManager,
+            new Mock<IPersonalAccessTokenService>(MockBehavior.Strict).Object);
     }
 
     [Fact]

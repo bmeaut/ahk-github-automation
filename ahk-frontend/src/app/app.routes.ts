@@ -18,6 +18,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/my/my-assignments').then((m) => m.MyAssignments),
   },
   {
+    // The user's own account, tokens included. Standalone like /my for the same reason: a student is a
+    // member of no course, and the shell would have nothing to put in its rail or switcher.
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
+  },
+  {
     // The course-management screen. Declared before 'admin' so it matches first, and deliberately outside
     // that route: its guard is adminGuard, which would bounce the course admins this screen exists for.
     path: 'admin/courses/:id',

@@ -1623,6 +1623,180 @@ export class ImpersonationClient implements IImpersonationClient {
     }
 }
 
+export interface IPersonalAccessTokensClient {
+    list(): Observable<PersonalAccessTokenDto[]>;
+    create(request: CreatePersonalAccessTokenRequest): Observable<PersonalAccessTokenDto>;
+    revoke(id: number): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class PersonalAccessTokensClient implements IPersonalAccessTokensClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "https://localhost:7443";
+    }
+
+    list(): Observable<PersonalAccessTokenDto[]> {
+        let url_ = this.baseUrl + "/api/profile/tokens";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PersonalAccessTokenDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PersonalAccessTokenDto[]>;
+        }));
+    }
+
+    protected processList(response: HttpResponseBase): Observable<PersonalAccessTokenDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PersonalAccessTokenDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create(request: CreatePersonalAccessTokenRequest): Observable<PersonalAccessTokenDto> {
+        let url_ = this.baseUrl + "/api/profile/tokens";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PersonalAccessTokenDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PersonalAccessTokenDto>;
+        }));
+    }
+
+    protected processCreate(response: HttpResponseBase): Observable<PersonalAccessTokenDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PersonalAccessTokenDto;
+            return _observableOf(result201);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    revoke(id: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/profile/tokens/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRevoke(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRevoke(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRevoke(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IProfileClient {
     setGitHubUsername(request: SetGitHubUsernameRequest): Observable<GitHubProfileResponse>;
 }
@@ -2726,6 +2900,8 @@ export interface IUsersAdminClient {
     updateRoles(id: number, request: UpdateUserRolesRequest): Observable<UserDto>;
     upsertCourse(id: number, request: UpsertUserCourseRequest): Observable<UserDto>;
     removeCourse(id: number, courseId: number): Observable<UserDto>;
+    listTokens(id: number): Observable<UserAccessTokenDto[]>;
+    revokeToken(id: number, tokenId: number): Observable<void>;
     setPassword(id: number, request: SetPasswordRequest): Observable<void>;
 }
 
@@ -3232,6 +3408,120 @@ export class UsersAdminClient implements IUsersAdminClient {
         return _observableOf(null as any);
     }
 
+    listTokens(id: number): Observable<UserAccessTokenDto[]> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/tokens";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processListTokens(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processListTokens(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserAccessTokenDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserAccessTokenDto[]>;
+        }));
+    }
+
+    protected processListTokens(response: HttpResponseBase): Observable<UserAccessTokenDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserAccessTokenDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    revokeToken(id: number, tokenId: number): Observable<void> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/tokens/{tokenId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (tokenId === undefined || tokenId === null)
+            throw new globalThis.Error("The parameter 'tokenId' must be defined.");
+        url_ = url_.replace("{tokenId}", encodeURIComponent("" + tokenId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRevokeToken(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRevokeToken(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRevokeToken(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     setPassword(id: number, request: SetPasswordRequest): Observable<void> {
         let url_ = this.baseUrl + "/api/admin/users/{id}/password";
         if (id === undefined || id === null)
@@ -3716,6 +4006,19 @@ export interface LogoutResponse {
     endSessionUrl?: string | undefined;
 }
 
+export interface PersonalAccessTokenDto {
+    id?: number;
+    token?: string;
+    description?: string | undefined;
+    createdAt?: Date;
+    lastUsedAt?: Date | undefined;
+    revokedAt?: Date | undefined;
+}
+
+export interface CreatePersonalAccessTokenRequest {
+    description?: string | undefined;
+}
+
 export interface GitHubProfileResponse {
     gitHubUsername?: string;
     gitHubUserId?: number | undefined;
@@ -3895,6 +4198,15 @@ export interface UpdateUserRolesRequest {
 export interface UpsertUserCourseRequest {
     courseId: number;
     role?: CourseRole;
+}
+
+export interface UserAccessTokenDto {
+    id?: number;
+    tokenHint?: string | undefined;
+    description?: string | undefined;
+    createdAt?: Date;
+    lastUsedAt?: Date | undefined;
+    revokedAt?: Date | undefined;
 }
 
 export interface SetPasswordRequest {

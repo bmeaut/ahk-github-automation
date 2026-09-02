@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Data.Seed;
 using Ahk.Web.Server.Admin;
@@ -213,6 +213,13 @@ public class Program
                 }
             });
         }
+
+        // Personal access tokens: a second way to authenticate, accepted only by the course read endpoints
+        // (see AuthSchemes.CookieOrPersonalToken). Adding a scheme changes no default — the default
+        // authenticate/challenge scheme stays the Identity application cookie.
+        builder.Services.AddAuthentication()
+            .AddScheme<AuthenticationSchemeOptions, PersonalAccessTokenAuthenticationHandler>(
+                PersonalAccessTokenAuthenticationHandler.SchemeName, configureOptions: null);
 
         // The session shape the SPA hydrates from; shared by login/me and the impersonation endpoints.
         builder.Services.AddScoped<CurrentUserBuilder>();

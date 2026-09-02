@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { MyAssignmentsClient, StudentRepository } from '../../api/api-client';
 import { readApiError } from '../../core/api-error';
@@ -20,7 +21,7 @@ interface CourseGroup {
  */
 @Component({
   selector: 'app-my-assignments',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './my-assignments.html',
   styleUrl: './my-assignments.scss',
 })
