@@ -49,6 +49,9 @@
       <span class="rail-title">{{ activeCourse()?.name || activeSlug() }}</span>
       <a [routerLink]="['/', activeSlug(), 'dashboard']" routerLinkActive="active">Submissions</a>
       <a [routerLink]="['/', activeSlug(), 'assignments']" routerLinkActive="active">Assignments</a>
+      @if (manageCourseId(); as courseId) {
+        <a [routerLink]="['/admin/courses', courseId]" routerLinkActive="active">Manage course</a>
+      }
 
       @if (activeCourse(); as course) {
         @if (course.viaSiteAdmin) {

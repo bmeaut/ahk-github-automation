@@ -7,15 +7,15 @@ import {
   CourseDetailDto,
   CourseHealthAdminClient,
   CourseHealthReport,
+  CourseMemberCandidateDto,
   CourseMemberDto,
   CourseRole,
   CoursesAdminClient,
   UpdateCourseGitHubConfigRequest,
   UpdateCourseRequest,
-  UserDto,
-  UsersAdminClient,
   WebhookTokenDto,
 } from '../../../api/api-client';
+import { AuthService } from '../../../core/auth/auth.service';
 import { copyToClipboard } from '../../../core/clipboard';
 import { HealthChain } from '../../../shared/health-chain/health-chain';
 
@@ -25,6 +25,11 @@ import { HealthChain } from '../../../shared/health-chain/health-chain';
  *
  * Stored credentials are never sent to the browser, so their inputs start empty and mean "leave as is". Only a
  * field the admin actually typed into is submitted — that is what lets an unchanged form be saved safely.
+ *
+ * Two audiences: a site admin sees all of it, an admin of this course sees the statistics, the health, the
+ * settings read-only and the staff. The rest is not rendered for them — and, more to the point, the API refuses
+ * those endpoints and leaves the integration and the tokens out of the payload, so {@link canManageSite}
+ * decides layout, never access.
  */
 @Component({
   selector: 'app-course-editor',
@@ -34,10 +39,13 @@ import { HealthChain } from '../../../shared/health-chain/health-chain';
 })
 export class CourseEditor implements OnInit {
   private readonly client = inject(CoursesAdminClient);
-  private readonly usersClient = inject(UsersAdminClient);
   private readonly healthClient = inject(CourseHealthAdminClient);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /** Site admins get the integration, the tokens and the delete action; course admins get none of them. */
+  protected readonly canManageSite = this.auth.isAdmin;
 
   protected readonly course = signal<CourseDetailDto | null>(null);
   protected readonly report = signal<CourseHealthReport | null>(null);
@@ -83,7 +91,7 @@ export class CourseEditor implements OnInit {
 
   // ---- Staff ----
   protected memberSearch = '';
-  protected readonly candidates = signal<UserDto[]>([]);
+  protected readonly candidates = signal<CourseMemberCandidateDto[]>([]);
   protected readonly searching = signal(false);
 
   // ---- Delete ----
@@ -317,16 +325,19 @@ export class CourseEditor implements OnInit {
     }
 
     this.searching.set(true);
-    this.usersClient.list(term, undefined, 0, 10).subscribe({
-      next: (page) => {
-        this.candidates.set(page.items ?? []);
+
+    // Course-scoped on purpose: a course admin has no access to the site-wide user directory, but adding
+    // staff means finding people.
+    this.client.memberCandidates(this.courseId, term).subscribe({
+      next: (matches) => {
+        this.candidates.set(matches);
         this.searching.set(false);
       },
       error: () => this.searching.set(false),
     });
   }
 
-  protected addMember(user: UserDto, role: CourseRole): void {
+  protected addMember(user: CourseMemberCandidateDto, role: CourseRole): void {
     this.clearMessages();
     this.client.upsertMember(this.courseId, { userId: user.id ?? 0, role }).subscribe({
       next: () => {
@@ -359,8 +370,17 @@ export class CourseEditor implements OnInit {
   }
 
   /** Members already on the course are filtered out of the picker, so adding twice is not offered. */
-  protected isMember(user: UserDto): boolean {
+  protected isMember(user: CourseMemberCandidateDto): boolean {
     return (this.course()?.members ?? []).some((m) => m.userId === user.id);
+  }
+
+  /**
+   * True for the caller's own row when they are only a course admin. Demoting or removing themselves would
+   * lock them out of the course they administer, so the API refuses it and the row says so rather than
+   * offering a control that returns 400.
+   */
+  protected isSelf(member: CourseMemberDto): boolean {
+    return !this.canManageSite() && member.userId === this.auth.currentUser()?.userId;
   }
 
   // ---- Delete ----

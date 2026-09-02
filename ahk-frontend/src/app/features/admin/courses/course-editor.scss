@@ -172,3 +172,11 @@ select {
   width: auto;
   min-width: 10rem;
 }
+
+/* The settings form stays a form for a course admin — same fields, same order — but must not invite a change
+   it cannot save. Read-only inputs read as the record they are. */
+input[readonly] {
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: default;
+}

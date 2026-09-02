@@ -1,4 +1,4 @@
-using Ahk.Web.Data.Entities;
+﻿using Ahk.Web.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,8 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Ahk.Web.Data.Seed;
 
 /// <summary>
-/// Seeds development data: applies migrations, ensures roles, a super-admin, an instructor scoped to one
-/// course, two sample courses with GitHub config + CI token, and a small amount of realistic domain data
+/// Seeds development data: applies migrations, ensures roles, a super-admin, an instructor and a course admin
+/// scoped to one course, two sample courses with GitHub config + CI token, and a small amount of realistic data
 /// (students, submissions, status events, grades) so the dashboards and exports have something to show.
 ///
 /// All reads use <c>IgnoreQueryFilters()</c>: there is no HTTP request here, so no current course is set and
@@ -50,22 +50,37 @@ public static class DevDataSeeder
             await userManager.CreateAsync(instructor, "Instructor123!");
         }
 
+        // A course admin of that same course: no site role, but "Manage course" and the staff list are theirs.
+        var courseAdmin = await userManager.FindByNameAsync("courseadmin");
+        if (courseAdmin is null)
+        {
+            courseAdmin = new ApplicationUser { UserName = "courseadmin", Email = "courseadmin@ahk.aut.bme.hu", DisplayName = "Sample Course Admin", EmailConfirmed = true };
+            await userManager.CreateAsync(courseAdmin, "CourseAdmin123!");
+        }
+
         // The two courses are deliberately configured differently so the admin health dashboard shows a mix of
         // states in development: one fully wired up bar the access token, one with nothing filled in yet.
         var courseA = await EnsureCourseAsync(db, "viaubc01", "Sample Course VIAUBC01", "ahk-viaubc01", webhookSecret: "dev-webhook-secret");
         await EnsureCourseAsync(db, "viaubb01", "Sample Course VIAUBB01", "ahk-viaubb01", webhookSecret: null);
 
-        // Instructor is a member of the first course only.
-        var hasMembership = await db.CourseMemberships.IgnoreQueryFilters()
-            .AnyAsync(m => m.UserId == instructor.Id && m.CourseId == courseA.Id);
-        if (!hasMembership)
-        {
-            db.CourseMemberships.Add(new CourseMembership { UserId = instructor.Id, CourseId = courseA.Id, Role = CourseRole.Instructor });
-            await db.SaveChangesAsync();
-        }
+        // Both staff accounts are members of the first course only, in the two different course roles.
+        await EnsureMembershipAsync(db, instructor.Id, courseA.Id, CourseRole.Instructor);
+        await EnsureMembershipAsync(db, courseAdmin.Id, courseA.Id, CourseRole.Admin);
 
         await EnsureSampleDomainDataAsync(db, courseA);
         await EnsureSampleAssignmentsAsync(db, courseA);
+    }
+
+    private static async Task EnsureMembershipAsync(ApplicationDbContext db, int userId, int courseId, CourseRole role)
+    {
+        var exists = await db.CourseMemberships.IgnoreQueryFilters()
+            .AnyAsync(m => m.UserId == userId && m.CourseId == courseId);
+
+        if (exists)
+            return;
+
+        db.CourseMemberships.Add(new CourseMembership { UserId = userId, CourseId = courseId, Role = role });
+        await db.SaveChangesAsync();
     }
 
     /// <summary>

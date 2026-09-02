@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { adminGuard, authGuard, rootRedirectGuard } from './core/auth/auth.guard';
-import { courseGuard } from './core/course/course.guard';
+import { courseGuard, courseManageGuard } from './core/course/course.guard';
 import { Shell } from './layout/shell/shell';
 
 export const routes: Routes = [
@@ -18,6 +18,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/my/my-assignments').then((m) => m.MyAssignments),
   },
   {
+    // The course-management screen. Declared before 'admin' so it matches first, and deliberately outside
+    // that route: its guard is adminGuard, which would bounce the course admins this screen exists for.
+    path: 'admin/courses/:id',
+    component: Shell,
+    canActivate: [authGuard, courseManageGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/admin/courses/course-editor').then((m) => m.CourseEditor),
+      },
+    ],
+  },
+  {
     // Host/admin context (no course segment).
     path: 'admin',
     component: Shell,
@@ -26,10 +39,6 @@ export const routes: Routes = [
       {
         path: 'courses',
         loadComponent: () => import('./features/admin/courses/courses').then((m) => m.AdminCourses),
-      },
-      {
-        path: 'courses/:id',
-        loadComponent: () => import('./features/admin/courses/course-editor').then((m) => m.CourseEditor),
       },
       {
         path: 'users',

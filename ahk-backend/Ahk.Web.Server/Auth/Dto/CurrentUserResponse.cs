@@ -1,4 +1,4 @@
-namespace Ahk.Web.Server.Auth.Dto;
+﻿namespace Ahk.Web.Server.Auth.Dto;
 
 /// <summary>Shape returned by <c>GET /api/auth/me</c> — hydrates the SPA session with identity + course access.</summary>
 public sealed class CurrentUserResponse
@@ -45,6 +45,9 @@ public sealed class CurrentUserResponse
 
 public sealed class CourseMembershipDto
 {
+    /// <summary>The course's id, which is how the course-management screen addresses it.</summary>
+    public int Id { get; set; }
+
     public string Slug { get; set; } = string.Empty;
 
     public string Name { get; set; } = string.Empty;

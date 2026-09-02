@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Ahk.Web.Data.Entities;
 
 namespace Ahk.Web.Server.Admin.Dto;
@@ -62,11 +62,31 @@ public sealed class CourseDetailDto
 
     public int SubmissionCount { get; set; }
 
-    public CourseGitHubConfigDto GitHubConfig { get; set; } = new();
+    /// <summary>
+    /// Null for a course admin: the GitHub integration is a site-admin concern, and its block is not rendered
+    /// for them. The state is withheld rather than merely hidden, so the browser never receives it.
+    /// </summary>
+    public CourseGitHubConfigDto? GitHubConfig { get; set; }
 
     public IReadOnlyList<CourseMemberDto> Members { get; set; } = Array.Empty<CourseMemberDto>();
 
+    /// <summary>Empty for a course admin, for the same reason — and these carry the callback secrets in clear.</summary>
     public IReadOnlyList<WebhookTokenDto> WebhookTokens { get; set; } = Array.Empty<WebhookTokenDto>();
+}
+
+/// <summary>
+/// A user offered by the staff picker. Deliberately thinner than <see cref="UserDto"/>: course admins may
+/// search the directory to add staff, but site roles and other courses' assignments are none of their business.
+/// </summary>
+public sealed class CourseMemberCandidateDto
+{
+    public int Id { get; set; }
+
+    public string UserName { get; set; } = string.Empty;
+
+    public string? DisplayName { get; set; }
+
+    public string? Email { get; set; }
 }
 
 public sealed class CreateCourseRequest

@@ -70,6 +70,8 @@ Dev data seeder (Development env only) creates:
 
 - site admin — `admin` / `Admin123!`
 - instructor (member of `viaubc01` only) — `instructor` / `Instructor123!`
+- course admin of `viaubc01` — `courseadmin` / `CourseAdmin123!` — no site role, but gets "Manage course":
+  statistics, health, read-only settings and full staff management
 - sample courses `viaubc01`, `viaubb01` — deliberately configured differently so the health dashboard
   shows a mix of states
 

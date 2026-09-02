@@ -30,3 +30,30 @@ export const courseGuard: CanActivateFn = (route) => {
     }),
   );
 };
+
+/**
+ * Guards /admin/courses/:id, the course-management screen. It is not an <code>adminGuard</code> route: a course
+ * admin reaches it for their own course, and a site admin holds that role on every course (the API synthesizes
+ * it), so one membership check covers both. The course context is set either way, which is what gives the page
+ * a course rail. Backend authorization is the real gate; this only avoids landing on a screen that would 403.
+ */
+export const courseManageGuard: CanActivateFn = (route) => {
+  const auth = inject(AuthService);
+  const courseContext = inject(CourseContextService);
+  const router = inject(Router);
+  const id = Number(route.paramMap.get('id'));
+
+  return auth.ensureLoaded().pipe(
+    map((user) => {
+      if (!user) {
+        return router.createUrlTree(['/login']);
+      }
+      const course = auth.courses().find((c) => c.id === id);
+      if (course?.role === 'Admin' && course.slug) {
+        courseContext.setActiveSlug(course.slug);
+        return true;
+      }
+      return router.createUrlTree([auth.landingUrl()]);
+    }),
+  );
+};

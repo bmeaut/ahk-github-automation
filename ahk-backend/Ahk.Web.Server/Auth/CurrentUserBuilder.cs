@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Auth.Dto;
@@ -41,6 +41,7 @@ public sealed class CurrentUserBuilder
             .ThenBy(m => m.Course!.Slug)
             .Select(m => new CourseMembershipDto
             {
+                Id = m.CourseId,
                 Slug = m.Course!.Slug,
                 Name = m.Course.Name,
                 Role = m.Role.ToString(),
@@ -61,6 +62,7 @@ public sealed class CurrentUserBuilder
                 .ThenBy(c => c.Slug)
                 .Select(c => new CourseMembershipDto
                 {
+                    Id = c.Id,
                     Slug = c.Slug,
                     Name = c.Name,
                     Role = CourseRole.Admin.ToString(),

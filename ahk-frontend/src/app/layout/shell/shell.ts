@@ -30,6 +30,15 @@ export class Shell {
   /** True on the site-admin screens, which have no course context. */
   protected readonly inAdmin = computed(() => this.activeSlug() === null);
 
+  /**
+   * Id of the active course when the user administers it, for the "Manage course" link — null otherwise. Site
+   * admins hold that role on every course (the API says so), so this needs no separate admin case.
+   */
+  protected readonly manageCourseId = computed(() => {
+    const course = this.activeCourse();
+    return course?.role === 'Admin' ? (course.id ?? null) : null;
+  });
+
   protected switchCourse(slug: string): void {
     if (slug) {
       void this.router.navigate([slug, 'dashboard']);

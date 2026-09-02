@@ -1,6 +1,8 @@
+﻿using System.Security.Claims;
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Admin.Dto;
+using Ahk.Web.Server.CourseContext;
 using Ahk.Web.Services.Courses;
 using Ahk.Web.Services.Health;
 using Microsoft.AspNetCore.Authorization;
@@ -11,9 +13,15 @@ using Microsoft.Extensions.Options;
 namespace Ahk.Web.Server.Admin;
 
 /// <summary>
-/// Host/admin context (no {course} segment): site super-admins manage the set of courses, their connected
-/// GitHub environments, their staff and their CI callback tokens. This centralizes what used to be a separate
-/// per-course Azure deployment plus its <c>AHK_*</c> application settings.
+/// Host/admin context (no {course} segment): the set of courses, their connected GitHub environments, their
+/// staff and their CI callback tokens. This centralizes what used to be a separate per-course Azure deployment
+/// plus its <c>AHK_*</c> application settings.
+///
+/// <para>Authorization is per action, not on the class. Most of this is site-admin only, but one course's
+/// detail, its staff and its member picker are open to a <see cref="CourseRole.Admin"/> of that course as well,
+/// through the <c>CourseAdmin</c> policy — and the two cannot be combined on one action, because multiple
+/// <c>[Authorize]</c> attributes are ANDed. A new action therefore has to state its own attribute;
+/// <c>CourseAdminAccessTests</c> fails the build if one does not.</para>
 ///
 /// Reads of course-scoped entities (students, submissions, grades, tokens) use <c>IgnoreQueryFilters()</c> and
 /// filter on <c>CourseId</c> themselves: there is no {course} segment here, so no current course is set and the
@@ -21,9 +29,12 @@ namespace Ahk.Web.Server.Admin;
 /// </summary>
 [ApiController]
 [Route("api/admin/courses")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize]
 public sealed class CoursesAdminController : ControllerBase
 {
+    private const int MinCandidateSearchLength = 2;
+    private const int MaxCandidates = 10;
+
     private readonly ApplicationDbContext db;
     private readonly IWebhookTokenService webhookTokens;
     private readonly TimeProvider timeProvider;
@@ -42,6 +53,7 @@ public sealed class CoursesAdminController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(IEnumerable<CourseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<CourseDto>>> List(CancellationToken cancellationToken)
     {
@@ -74,7 +86,12 @@ public sealed class CoursesAdminController : ControllerBase
         return Ok(courses);
     }
 
+    /// <summary>
+    /// One course, as the course-management screen reads it. A course admin gets the same payload minus the
+    /// GitHub integration and the callback tokens — see <see cref="CourseDetailDto"/>.
+    /// </summary>
     [HttpGet("{id:int}")]
+    [Authorize(Policy = CourseAdminRequirement.PolicyName)]
     [ProducesResponseType(typeof(CourseDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CourseDetailDto>> Get(int id, CancellationToken cancellationToken)
@@ -101,7 +118,12 @@ public sealed class CoursesAdminController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        var tokens = await webhookTokens.ListForCourseAsync(id, cancellationToken);
+        // Withheld, not merely unrendered: the token DTOs carry their HMAC secrets in clear, and the integration
+        // state is a site-admin concern. A course admin's browser never receives either.
+        var siteAdmin = User.IsInRole(Roles.Admin);
+        var tokens = siteAdmin
+            ? await webhookTokens.ListForCourseAsync(id, cancellationToken)
+            : Array.Empty<CourseWebhookToken>();
 
         return Ok(new CourseDetailDto
         {
@@ -113,13 +135,14 @@ public sealed class CoursesAdminController : ControllerBase
             CreatedAt = course.CreatedAt,
             StudentCount = await db.Students.IgnoreQueryFilters().CountAsync(s => s.CourseId == id, cancellationToken),
             SubmissionCount = await db.Submissions.IgnoreQueryFilters().CountAsync(s => s.CourseId == id, cancellationToken),
-            GitHubConfig = ToDto(course.GitHubConfig),
+            GitHubConfig = siteAdmin ? ToDto(course.GitHubConfig) : null,
             Members = members,
             WebhookTokens = tokens.Select(ToDto).ToList(),
         });
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CourseDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CourseDetailDto>> Create([FromBody] CreateCourseRequest request, CancellationToken cancellationToken)
@@ -153,7 +176,9 @@ public sealed class CoursesAdminController : ControllerBase
         });
     }
 
+    /// <summary>Site-admin only: a course admin sees these settings, but read-only.</summary>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -184,6 +209,7 @@ public sealed class CoursesAdminController : ControllerBase
     /// live course's grades.
     /// </summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -219,6 +245,7 @@ public sealed class CoursesAdminController : ControllerBase
     // ---- GitHub integration ----
 
     [HttpGet("{id:int}/github")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CourseGitHubConfigDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CourseGitHubConfigDto>> GetGitHubConfig(int id, CancellationToken cancellationToken)
@@ -230,6 +257,7 @@ public sealed class CoursesAdminController : ControllerBase
     }
 
     [HttpPut("{id:int}/github")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CourseGitHubConfigDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CourseGitHubConfigDto>> UpdateGitHubConfig(int id, [FromBody] UpdateCourseGitHubConfigRequest request, CancellationToken cancellationToken)
@@ -261,6 +289,7 @@ public sealed class CoursesAdminController : ControllerBase
     // ---- Members ----
 
     [HttpGet("{id:int}/members")]
+    [Authorize(Policy = CourseAdminRequirement.PolicyName)]
     [ProducesResponseType(typeof(IEnumerable<CourseMemberDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<CourseMemberDto>>> ListMembers(int id, CancellationToken cancellationToken)
     {
@@ -283,7 +312,9 @@ public sealed class CoursesAdminController : ControllerBase
 
     /// <summary>Adds a user to the course, or changes the role they hold in it.</summary>
     [HttpPut("{id:int}/members")]
+    [Authorize(Policy = CourseAdminRequirement.PolicyName)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpsertMember(int id, [FromBody] UpsertCourseMemberRequest request, CancellationToken cancellationToken)
     {
@@ -292,6 +323,9 @@ public sealed class CoursesAdminController : ControllerBase
 
         if (!await db.Users.AnyAsync(u => u.Id == request.UserId, cancellationToken))
             return NotFound(new { error = "No such user." });
+
+        if (IsSelf(request.UserId))
+            return BadRequest(new { error = "You cannot change your own role in this course. Ask a site administrator." });
 
         var membership = await db.CourseMemberships
             .FirstOrDefaultAsync(m => m.CourseId == id && m.UserId == request.UserId, cancellationToken);
@@ -306,10 +340,15 @@ public sealed class CoursesAdminController : ControllerBase
     }
 
     [HttpDelete("{id:int}/members/{userId:int}")]
+    [Authorize(Policy = CourseAdminRequirement.PolicyName)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveMember(int id, int userId, CancellationToken cancellationToken)
     {
+        if (IsSelf(userId))
+            return BadRequest(new { error = "You cannot remove yourself from this course. Ask a site administrator." });
+
         var membership = await db.CourseMemberships
             .FirstOrDefaultAsync(m => m.CourseId == id && m.UserId == userId, cancellationToken);
 
@@ -321,9 +360,49 @@ public sealed class CoursesAdminController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Users who could be added as staff, for the picker on the course-management screen. A course admin has no
+    /// access to <c>api/admin/users</c>, but adding staff means finding people, so the search lives here and
+    /// returns the minimum a picker needs.
+    /// </summary>
+    [HttpGet("{id:int}/member-candidates")]
+    [Authorize(Policy = CourseAdminRequirement.PolicyName)]
+    [ProducesResponseType(typeof(IEnumerable<CourseMemberCandidateDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<CourseMemberCandidateDto>>> MemberCandidates(
+        int id,
+        [FromQuery] string? search,
+        CancellationToken cancellationToken)
+    {
+        // Below the minimum this would return an arbitrary slice of the directory rather than a search result.
+        var term = search?.Trim() ?? string.Empty;
+        if (term.Length < MinCandidateSearchLength)
+            return Ok(Array.Empty<CourseMemberCandidateDto>());
+
+        var candidates = await db.Users
+            .AsNoTracking()
+            .Where(u =>
+                (u.UserName != null && u.UserName.Contains(term)) ||
+                (u.DisplayName != null && u.DisplayName.Contains(term)) ||
+                (u.Email != null && u.Email.Contains(term)) ||
+                (u.NeptunCode != null && u.NeptunCode.Contains(term)))
+            .OrderBy(u => u.UserName)
+            .Take(MaxCandidates)
+            .Select(u => new CourseMemberCandidateDto
+            {
+                Id = u.Id,
+                UserName = u.UserName ?? string.Empty,
+                DisplayName = u.DisplayName,
+                Email = u.Email,
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(candidates);
+    }
+
     // ---- CI callback tokens ----
 
     [HttpGet("{id:int}/tokens")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(IEnumerable<WebhookTokenDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<WebhookTokenDto>>> ListTokens(int id, CancellationToken cancellationToken)
     {
@@ -333,6 +412,7 @@ public sealed class CoursesAdminController : ControllerBase
 
     /// <summary>Issues a token, returning its secret. The secret is also readable later via the list endpoint.</summary>
     [HttpPost("{id:int}/tokens")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(WebhookTokenDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<WebhookTokenDto>> CreateToken(int id, [FromBody] CreateWebhookTokenRequest request, CancellationToken cancellationToken)
@@ -345,10 +425,22 @@ public sealed class CoursesAdminController : ControllerBase
     }
 
     [HttpDelete("{id:int}/tokens/{tokenId:int}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RevokeToken(int id, int tokenId, CancellationToken cancellationToken) =>
         await webhookTokens.RevokeAsync(id, tokenId, cancellationToken) ? NoContent() : NotFound();
+
+    /// <summary>
+    /// True when the caller is acting on their own membership and is not a site admin. A course admin who
+    /// demoted or removed themselves would lock themselves out of the course they administer — the same
+    /// self-lockout the users endpoints refuse for the site Admin role and for account deletion. A site admin
+    /// is not restricted: they can always get back in.
+    /// </summary>
+    private bool IsSelf(int userId) =>
+        !User.IsInRole(Roles.Admin)
+        && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var callerId)
+        && callerId == userId;
 
     /// <summary>
     /// Applies the credential update rule: null leaves the stored value alone, empty clears it, anything else

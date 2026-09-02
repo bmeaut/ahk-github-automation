@@ -1711,7 +1711,7 @@ export class ProfileClient implements IProfileClient {
 
 export interface ICourseHealthAdminClient {
     checkAll(): Observable<CourseHealthReport[]>;
-    checkCourse(courseId: number): Observable<CourseHealthReport>;
+    checkCourse(id: number): Observable<CourseHealthReport>;
     refreshStale(): Observable<void>;
 }
 
@@ -1776,11 +1776,11 @@ export class CourseHealthAdminClient implements ICourseHealthAdminClient {
         return _observableOf(null as any);
     }
 
-    checkCourse(courseId: number): Observable<CourseHealthReport> {
-        let url_ = this.baseUrl + "/api/admin/health/{courseId}";
-        if (courseId === undefined || courseId === null)
-            throw new globalThis.Error("The parameter 'courseId' must be defined.");
-        url_ = url_.replace("{courseId}", encodeURIComponent("" + courseId));
+    checkCourse(id: number): Observable<CourseHealthReport> {
+        let url_ = this.baseUrl + "/api/admin/health/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -1890,6 +1890,7 @@ export interface ICoursesAdminClient {
     listMembers(id: number): Observable<CourseMemberDto[]>;
     upsertMember(id: number, request: UpsertCourseMemberRequest): Observable<void>;
     removeMember(id: number, userId: number): Observable<void>;
+    memberCandidates(id: number, search?: string | null | undefined): Observable<CourseMemberCandidateDto[]>;
     listTokens(id: number): Observable<WebhookTokenDto[]>;
     createToken(id: number, request: CreateWebhookTokenRequest): Observable<WebhookTokenDto>;
     revokeToken(id: number, tokenId: number): Observable<void>;
@@ -2410,6 +2411,12 @@ export class CoursesAdminClient implements ICoursesAdminClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
             }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
         } else if (status === 404) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result404: any = null;
@@ -2467,11 +2474,70 @@ export class CoursesAdminClient implements ICoursesAdminClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
             }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
         } else if (status === 404) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result404: any = null;
             result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    memberCandidates(id: number, search?: string | null | undefined): Observable<CourseMemberCandidateDto[]> {
+        let url_ = this.baseUrl + "/api/admin/courses/{id}/member-candidates?";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (search !== undefined && search !== null)
+            url_ += "search=" + encodeURIComponent("" + search) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMemberCandidates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMemberCandidates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CourseMemberCandidateDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CourseMemberCandidateDto[]>;
+        }));
+    }
+
+    protected processMemberCandidates(response: HttpResponseBase): Observable<CourseMemberCandidateDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CourseMemberCandidateDto[];
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -3625,6 +3691,7 @@ export interface CurrentUserResponse {
 }
 
 export interface CourseMembershipDto {
+    id?: number;
     slug?: string;
     name?: string;
     role?: string;
@@ -3703,7 +3770,7 @@ export interface CourseDetailDto {
     createdAt?: Date;
     studentCount?: number;
     submissionCount?: number;
-    gitHubConfig?: CourseGitHubConfigDto;
+    gitHubConfig?: CourseGitHubConfigDto | undefined;
     members?: CourseMemberDto[];
     webhookTokens?: WebhookTokenDto[];
 }
@@ -3764,6 +3831,13 @@ export interface UpdateCourseGitHubConfigRequest {
 export interface UpsertCourseMemberRequest {
     userId: number;
     role?: CourseRole;
+}
+
+export interface CourseMemberCandidateDto {
+    id?: number;
+    userName?: string;
+    displayName?: string | undefined;
+    email?: string | undefined;
 }
 
 export interface CreateWebhookTokenRequest {

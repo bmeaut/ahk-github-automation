@@ -219,10 +219,16 @@ public class Program
 
         // ---- Authorization ----
         builder.Services.AddScoped<IAuthorizationHandler, CourseMembershipAuthorizationHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, CourseAdminAuthorizationHandler>();
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy(CourseMembershipRequirement.PolicyName, policy =>
                 policy.Requirements.Add(new CourseMembershipRequirement()));
+
+            // The course-scoped half of the admin surface: settings (read), health and staff. Its actions take
+            // the course from their {id} route value, not from a {course} segment — see CourseAdminRequirement.
+            options.AddPolicy(CourseAdminRequirement.PolicyName, policy =>
+                policy.Requirements.Add(new CourseAdminRequirement()));
         });
 
         // ---- Development-only mock OpenID provider ----
