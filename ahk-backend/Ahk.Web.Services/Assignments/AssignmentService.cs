@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.GitHub;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +48,13 @@ public interface IAssignmentService
 
     /// <summary>Acceptances per assignment for a whole course, so the listing needs one query rather than one per row.</summary>
     Task<IReadOnlyDictionary<int, int>> CountAcceptancesAsync(int courseId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Submissions per assignment for a whole course. A submission belongs to an assignment when an acceptance
+    /// names the same repository — see <see cref="AssignmentService.CountSubmissionsAsync"/> for why that is
+    /// the only association there is.
+    /// </summary>
+    Task<IReadOnlyDictionary<int, int>> CountSubmissionsAsync(int courseId, CancellationToken cancellationToken = default);
 
     /// <summary>Verifies the template repository exists and is marked as a template. Never throws.</summary>
     Task<TemplateCheck> CheckTemplateAsync(int courseId, string templateRepoName, CancellationToken cancellationToken = default);
@@ -187,6 +194,31 @@ public sealed class AssignmentService : IAssignmentService
     {
         var counts = await db.AssignmentAcceptances.IgnoreQueryFilters().AsNoTracking()
             .Where(a => a.CourseId == courseId)
+            .GroupBy(a => a.AssignmentId)
+            .Select(g => new { AssignmentId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return counts.ToDictionary(c => c.AssignmentId, c => c.Count);
+    }
+
+    /// <summary>
+    /// Submissions per assignment, in one grouped query like <see cref="CountAcceptancesAsync"/>.
+    ///
+    /// <para>The join is on the repository name: an acceptance and the submission it provisioned both store the
+    /// full "owner/name" through <c>Normalize.RepoName</c>, submissions are unique on (CourseId, RepoName) and
+    /// acceptances are indexed on it. Nothing else links the two — a repository created outside the portal
+    /// (GitHub Classroom, or before the migration) has no acceptance and therefore no assignment, which is what
+    /// the "No assignment" filter on the submissions screen lists.</para>
+    ///
+    /// <para>In practice this equals the acceptance count, because <c>AssignmentInviteService.AcceptAsync</c>
+    /// creates the submission eagerly. It is counted rather than assumed so that an assignment whose
+    /// repositories were removed reports what actually exists.</para>
+    /// </summary>
+    public async Task<IReadOnlyDictionary<int, int>> CountSubmissionsAsync(int courseId, CancellationToken cancellationToken = default)
+    {
+        var counts = await db.AssignmentAcceptances.IgnoreQueryFilters().AsNoTracking()
+            .Where(a => a.CourseId == courseId
+                && db.Submissions.IgnoreQueryFilters().Any(s => s.CourseId == courseId && s.GitHubRepoName == a.GitHubRepoName))
             .GroupBy(a => a.AssignmentId)
             .Select(g => new { AssignmentId = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);

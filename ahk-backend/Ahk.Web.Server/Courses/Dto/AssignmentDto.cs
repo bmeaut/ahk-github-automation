@@ -1,4 +1,4 @@
-using Ahk.Web.Services.Assignments;
+﻿using Ahk.Web.Services.Assignments;
 
 namespace Ahk.Web.Server.Courses.Dto;
 
@@ -33,6 +33,12 @@ public sealed class AssignmentDto
 
     /// <summary>How many students have taken this assignment up.</summary>
     public int AcceptanceCount { get; set; }
+
+    /// <summary>
+    /// How many repositories in this course belong to the assignment. Populated on the listing only; the
+    /// single-assignment responses leave it 0, as they already do for <see cref="AcceptanceCount"/>.
+    /// </summary>
+    public int SubmissionCount { get; set; }
 }
 
 /// <summary>An assignment plus the state of its template repository on GitHub.</summary>

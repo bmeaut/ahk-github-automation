@@ -16,6 +16,8 @@
     </div>
   </div>
 
+  <app-course-tally />
+
   @if (error(); as e) {
     <p class="notice error">{{ e }}</p>
   }
@@ -207,6 +209,7 @@
               <th>Assignment</th>
               <th>Template repository</th>
               <th class="num">Accepted</th>
+              <th class="num">Submissions</th>
               <th></th>
             </tr>
           </thead>
@@ -225,6 +228,15 @@
                     {{ a.acceptanceCount }}
                   </button>
                 </td>
+                <td class="num">
+                  <!-- Opens the submissions screen already scoped to this assignment. -->
+                  <a
+                    class="linkish"
+                    [routerLink]="['/', course, 'submissions']"
+                    [queryParams]="{ assignment: a.id }"
+                    >{{ a.submissionCount }}</a
+                  >
+                </td>
                 <td class="actions">
                   <button type="button" class="btn quiet" (click)="copyInvite(a)">
                     {{ copiedId() === a.id ? 'Copied' : 'Copy invite link' }}
@@ -235,7 +247,7 @@
 
               @if (expandedId() === a.id) {
                 <tr class="roster">
-                  <td colspan="4">
+                  <td colspan="5">
                     @if (loadingAcceptances()) {
                       <p class="empty">Loading…</p>
                     } @else {

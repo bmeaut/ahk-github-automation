@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import {
   AssignmentAcceptanceDto,
@@ -12,16 +13,18 @@ import {
 import { readApiError } from '../../../core/api-error';
 import { copyToClipboard } from '../../../core/clipboard';
 import { CourseContextService } from '../../../core/course/course-context.service';
+import { CourseTally } from '../../../shared/course-tally/course-tally';
 
 /**
- * Assignment administration for a course — what used to be set up in GitHub Classroom.
+ * Assignment administration for a course — what used to be set up in GitHub Classroom, and the course's
+ * landing page, which is why the course-wide tally sits at the top of it.
  *
  * The invite link is the point of this screen, so copying it is a first-class action rather than something
  * the instructor has to select out of a table cell.
  */
 @Component({
   selector: 'app-course-assignments',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, RouterLink, CourseTally],
   templateUrl: './assignments.html',
   styleUrl: './assignments.scss',
 })
@@ -67,7 +70,8 @@ export class CourseAssignments {
   protected readonly acceptances = signal<AssignmentAcceptanceDto[]>([]);
   protected readonly loadingAcceptances = signal(false);
 
-  private get course(): string {
+  /** Protected, not private: the submissions link in the template is built from it. */
+  protected get course(): string {
     return this.courseContext.activeSlug() ?? '';
   }
 

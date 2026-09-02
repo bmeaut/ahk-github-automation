@@ -7,7 +7,8 @@ namespace Ahk.Web.Data.Seed;
 
 /// <summary>
 /// Seeds development data: applies migrations, ensures roles, a super-admin, an instructor and a course admin
-/// scoped to one course, two sample courses with GitHub config + CI token, and a small amount of realistic data
+/// scoped to one course, a student who accepted an assignment, two sample courses with GitHub config + CI
+/// token, and a small amount of realistic data
 /// (students, submissions, status events, grades) so the dashboards and exports have something to show.
 ///
 /// All reads use <c>IgnoreQueryFilters()</c>: there is no HTTP request here, so no current course is set and
@@ -58,6 +59,22 @@ public static class DevDataSeeder
             await userManager.CreateAsync(courseAdmin, "CourseAdmin123!");
         }
 
+        // A student account, so one submission can be linked to an assignment through an acceptance below.
+        var student = await userManager.FindByNameAsync("student1");
+        if (student is null)
+        {
+            student = new ApplicationUser
+            {
+                UserName = "student1",
+                Email = "student1@ahk.aut.bme.hu",
+                DisplayName = "Sample Student",
+                NeptunCode = Normalize.Neptun("ABC123"),
+                GitHubUsername = "sample-student",
+                EmailConfirmed = true,
+            };
+            await userManager.CreateAsync(student, "Student123!");
+        }
+
         // The two courses are deliberately configured differently so the admin health dashboard shows a mix of
         // states in development: one fully wired up bar the access token, one with nothing filled in yet.
         var courseA = await EnsureCourseAsync(db, "viaubc01", "Sample Course VIAUBC01", "ahk-viaubc01", webhookSecret: "dev-webhook-secret");
@@ -69,6 +86,39 @@ public static class DevDataSeeder
 
         await EnsureSampleDomainDataAsync(db, courseA);
         await EnsureSampleAssignmentsAsync(db, courseA);
+        await EnsureSampleAcceptanceAsync(db, courseA, student.Id);
+    }
+
+    /// <summary>
+    /// Links one of the two sample submissions to the open assignment, the way accepting an invite would.
+    /// Deliberately only one: the other repository then exercises the "No assignment" filter, and a submission
+    /// with no acceptance is exactly what a course migrated from GitHub Classroom looks like.
+    /// </summary>
+    private static async Task EnsureSampleAcceptanceAsync(ApplicationDbContext db, Course course, int userId)
+    {
+        if (await db.AssignmentAcceptances.IgnoreQueryFilters().AnyAsync(a => a.CourseId == course.Id))
+            return;
+
+        var assignment = await db.Assignments.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.CourseId == course.Id && a.ArchivedAt == null);
+
+        if (assignment is null)
+            return;
+
+        var repo = Normalize.RepoName($"{course.GitHubOrganization}/{course.Slug}-hw1-abc123");
+
+        db.AssignmentAcceptances.Add(new AssignmentAcceptance
+        {
+            CourseId = course.Id,
+            AssignmentId = assignment.Id,
+            UserId = userId,
+            GitHubRepoName = repo,
+            RepoUrl = $"https://github.com/{repo}",
+            GitHubUsername = "sample-student",
+            AcceptedAt = DateTimeOffset.UtcNow.AddDays(-8),
+        });
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task EnsureMembershipAsync(ApplicationDbContext db, int userId, int courseId, CourseRole role)

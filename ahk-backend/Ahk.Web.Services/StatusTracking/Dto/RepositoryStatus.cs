@@ -1,4 +1,4 @@
-namespace Ahk.Web.Services.StatusTracking.Dto;
+﻿namespace Ahk.Web.Services.StatusTracking.Dto;
 
 /// <summary>
 /// Projected current state of one submission, derived from its append-only event log. Shape preserved from the
@@ -10,6 +10,15 @@ public sealed class RepositoryStatus
     public string Repository { get; set; } = string.Empty;
 
     public string Neptun { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The assignment this repository belongs to, or null when nothing links it to one. Additive to the
+    /// legacy shape: the association comes from an <c>AssignmentAcceptance</c> naming the same repository, so a
+    /// repository created outside the portal has none.
+    /// </summary>
+    public int? AssignmentId { get; set; }
+
+    public string? AssignmentName { get; set; }
 
     public IReadOnlyCollection<string> Branches { get; set; } = Array.Empty<string>();
 

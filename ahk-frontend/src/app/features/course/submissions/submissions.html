@@ -2,7 +2,7 @@
   <div class="page-head">
     <div class="grow">
       <span class="eyebrow">{{ courseContext.activeSlug() }}</span>
-      <h1>{{ courseContext.activeCourse()?.name || 'Submissions' }}</h1>
+      <h1>Submissions</h1>
       <p class="lede">Every student repository in this course, its state on GitHub, and its points.</p>
     </div>
     <div class="btn-row">
@@ -17,29 +17,24 @@
     <p class="notice error">{{ e }}</p>
   }
 
-  @if (!loading() && statuses().length > 0) {
-    <div class="tally">
-      <div class="tile">
-        <span class="n">{{ summary().total }}</span>
-        <span class="l">Submissions</span>
-      </div>
-      <div class="tile">
-        <span class="n">{{ summary().graded }}</span>
-        <span class="l">Graded</span>
-      </div>
-      <div class="tile">
-        <span class="n">{{ summary().openPrs }}</span>
-        <span class="l">With a pull request</span>
-      </div>
-      <div class="tile" [class.bad]="summary().failing > 0">
-        <span class="n">{{ summary().failing }}</span>
-        <span class="l">Last run failed</span>
-      </div>
-    </div>
-  }
-
   <div class="card">
     <header>
+      <!-- [ngValue] carries the non-string options; the current one is marked with [selected], because a
+           [value] binding on the select is applied before @for has produced the options. -->
+      <select
+        class="filter"
+        aria-label="Filter by assignment"
+        [ngModel]="assignmentScope()"
+        (ngModelChange)="setAssignmentScope($event)"
+      >
+        <option [ngValue]="'all'" [selected]="assignmentScope() === 'all'">All assignments</option>
+        <option [ngValue]="'none'" [selected]="assignmentScope() === 'none'">No assignment</option>
+        @for (a of assignments(); track a.id) {
+          <option [ngValue]="a.id" [selected]="assignmentScope() === a.id">
+            {{ a.name }}{{ a.isArchived ? ' (archived)' : '' }}
+          </option>
+        }
+      </select>
       <input
         type="search"
         [(ngModel)]="search"
@@ -58,8 +53,10 @@
       </label>
       <span class="grow"></span>
       @if (filtered()) {
-        <span class="muted">{{ rows().length }} of {{ summary().total }}</span>
-        <button type="button" class="btn quiet" (click)="clearFilters()">Clear</button>
+        <span class="muted">{{ rows().length }} of {{ statuses().length }}</span>
+        <button type="button" class="btn quiet" (click)="clearAllFilters()">Clear</button>
+      } @else {
+        <span class="muted">{{ statuses().length }} submissions</span>
       }
     </header>
 
@@ -72,6 +69,7 @@
             <tr>
               <th><button type="button" class="sort" (click)="sortBy('neptun')">Neptun</button></th>
               <th><button type="button" class="sort" (click)="sortBy('repository')">Repository</button></th>
+              <th>Assignment</th>
               <th>Branches</th>
               <th>Pull request</th>
               <th class="num"><button type="button" class="sort" (click)="sortBy('runs')">Runs</button></th>
@@ -91,6 +89,13 @@
                   <a [href]="'https://github.com/' + s.repository" target="_blank" rel="noopener" class="mono">
                     {{ s.repository }}
                   </a>
+                </td>
+                <td>
+                  @if (s.assignmentName; as assignment) {
+                    {{ assignment }}
+                  } @else {
+                    <span class="muted">—</span>
+                  }
                 </td>
                 <td class="mono muted">{{ s.branches?.join(', ') || '—' }}</td>
                 <td>
@@ -139,10 +144,10 @@
               </tr>
             } @empty {
               <tr>
-                <td [attr.colspan]="5 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0)" class="empty">
+                <td [attr.colspan]="6 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0)" class="empty">
                   @if (filtered()) {
                     Nothing matches these filters.
-                    <button type="button" class="btn quiet" (click)="clearFilters()">Clear them</button>
+                    <button type="button" class="btn quiet" (click)="clearAllFilters()">Clear them</button>
                   } @else {
                     No submissions in this course yet. They appear once students push to their repositories.
                   }

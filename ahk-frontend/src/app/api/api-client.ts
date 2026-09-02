@@ -3613,6 +3613,7 @@ export interface AssignmentDto {
     archivedAt?: Date | undefined;
     createdAt?: Date;
     acceptanceCount?: number;
+    submissionCount?: number;
 }
 
 export interface AssignmentDetailDto {
@@ -3660,6 +3661,8 @@ export interface FinalStudentGrade {
 export interface RepositoryStatus {
     repository?: string;
     neptun?: string;
+    assignmentId?: number | undefined;
+    assignmentName?: string | undefined;
     branches?: string[];
     pullRequests?: PullRequestStatus[];
     workflowRuns?: WorkflowRunsStatus;

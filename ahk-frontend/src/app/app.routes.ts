@@ -74,14 +74,17 @@ export const routes: Routes = [
     canActivate: [authGuard, courseGuard],
     children: [
       {
-        path: 'dashboard',
-        loadComponent: () => import('./features/course/dashboard/dashboard').then((m) => m.CourseDashboard),
-      },
-      {
         path: 'assignments',
         loadComponent: () => import('./features/course/assignments/assignments').then((m) => m.CourseAssignments),
       },
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'submissions',
+        loadComponent: () => import('./features/course/submissions/submissions').then((m) => m.CourseSubmissions),
+      },
+      // The submissions screen was /dashboard until assignments became the course's landing page. Kept so
+      // links and bookmarks handed out before the rename still arrive somewhere.
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'submissions' },
+      { path: '', pathMatch: 'full', redirectTo: 'assignments' },
     ],
   },
   // "/" resolves per user rather than always going to the login form: the OIDC callback lands here when it

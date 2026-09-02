@@ -135,7 +135,7 @@ export class AuthService {
       return '/admin/courses';
     }
     const first = this.courses()[0];
-    return first ? `/${first.slug}/dashboard` : '/my';
+    return first ? `/${first.slug}/assignments` : '/my';
   }
 
   private setUser(u: CurrentUserResponse): void {

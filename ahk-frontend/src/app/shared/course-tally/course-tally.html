@@ -1,0 +1,20 @@
+@if (tiles(); as t) {
+  <div class="tally">
+    <div class="tile">
+      <span class="n">{{ t.total }}</span>
+      <span class="l">Submissions</span>
+    </div>
+    <div class="tile">
+      <span class="n">{{ t.graded }}</span>
+      <span class="l">Graded</span>
+    </div>
+    <div class="tile">
+      <span class="n">{{ t.openPrs }}</span>
+      <span class="l">With a pull request</span>
+    </div>
+    <div class="tile" [class.bad]="t.failing > 0">
+      <span class="n">{{ t.failing }}</span>
+      <span class="l">Last run failed</span>
+    </div>
+  </div>
+}

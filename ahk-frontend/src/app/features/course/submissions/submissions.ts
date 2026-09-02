@@ -1,12 +1,23 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import { FinalStudentGrade, GradesClient, RepositoryStatus, SubmissionStatusesClient } from '../../../api/api-client';
+import {
+  AssignmentDto,
+  AssignmentsClient,
+  FinalStudentGrade,
+  GradesClient,
+  RepositoryStatus,
+  SubmissionStatusesClient,
+} from '../../../api/api-client';
 import { CourseContextService } from '../../../core/course/course-context.service';
 
 type SortKey = 'neptun' | 'repository' | 'runs' | 'total';
+
+/** All submissions, one assignment's, or the ones no assignment claims. */
+type AssignmentScope = 'all' | 'none' | number;
 
 /**
  * The instructor's view of a course: every submission, its state on GitHub, and its points. Site admins reach
@@ -14,20 +25,27 @@ type SortKey = 'neptun' | 'repository' | 'runs' | 'total';
  *
  * Search, filtering and sorting all happen client-side — a course is a few hundred rows at most, and a
  * round-trip per keystroke would be slower than the reader.
+ *
+ * The assignment scope is the exception: it lives in the <code>assignment</code> query parameter, because the
+ * assignments listing links here with one already chosen.
  */
 @Component({
-  selector: 'app-course-dashboard',
+  selector: 'app-course-submissions',
   imports: [DecimalPipe, FormsModule],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  templateUrl: './submissions.html',
+  styleUrl: './submissions.scss',
 })
-export class CourseDashboard {
+export class CourseSubmissions {
   private readonly statusesClient = inject(SubmissionStatusesClient);
   private readonly gradesClient = inject(GradesClient);
+  private readonly assignmentsClient = inject(AssignmentsClient);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   protected readonly courseContext = inject(CourseContextService);
 
   protected readonly statuses = signal<RepositoryStatus[]>([]);
   protected readonly grades = signal<Map<string, FinalStudentGrade>>(new Map());
+  protected readonly assignments = signal<AssignmentDto[]>([]);
   protected readonly exerciseNames = signal<string[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -38,12 +56,21 @@ export class CourseDashboard {
   protected readonly onlyFailing = signal(false);
   protected readonly sortKey = signal<SortKey>('neptun');
   protected readonly sortAsc = signal(true);
+  protected readonly assignmentScope = signal<AssignmentScope>('all');
 
   protected readonly rows = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const grades = this.grades();
 
+    const scope = this.assignmentScope();
+
     let rows = this.statuses().filter((s) => {
+      if (scope === 'none' && s.assignmentId != null) {
+        return false;
+      }
+      if (typeof scope === 'number' && s.assignmentId !== scope) {
+        return false;
+      }
       if (term && !`${s.neptun ?? ''} ${s.repository ?? ''}`.toLowerCase().includes(term)) {
         return false;
       }
@@ -62,19 +89,8 @@ export class CourseDashboard {
     return rows;
   });
 
-  protected readonly summary = computed(() => {
-    const all = this.statuses();
-    const grades = this.grades();
-    return {
-      total: all.length,
-      graded: all.filter((s) => grades.has(s.repository ?? '')).length,
-      openPrs: all.filter((s) => (s.pullRequests?.length ?? 0) > 0).length,
-      failing: all.filter((s) => s.workflowRuns?.lastStatus === 'failure').length,
-    };
-  });
-
   constructor() {
-    // The course switcher navigates between sibling /{course}/dashboard routes, so the router reuses this
+    // The course switcher navigates between sibling /{course}/submissions routes, so the router reuses this
     // component instance and ngOnInit would fire only for the first course. Loading off the slug signal keeps
     // the tallies and the table with the header, which reads that same signal. Filters are course-specific —
     // a Neptun search carried over from the previous course would show an empty table for the new one.
@@ -83,6 +99,11 @@ export class CourseDashboard {
       if (slug) {
         untracked(() => {
           this.clearFilters();
+
+          // Not part of clearFilters: arriving from the assignments listing carries a scope in the URL, and
+          // resetting it here would drop the filter on the first paint. Switching course drops the parameter
+          // with the navigation, so the scope resets by itself.
+          this.assignmentScope.set(this.scopeFromUrl());
           this.load(slug);
         });
       }
@@ -101,10 +122,16 @@ export class CourseDashboard {
     this.loading.set(true);
     this.error.set(null);
 
-    forkJoin({ statuses: this.statusesClient.list(slug), grades: this.gradesClient.list(slug) }).subscribe({
-      next: ({ statuses, grades }) => {
+    forkJoin({
+      statuses: this.statusesClient.list(slug),
+      grades: this.gradesClient.list(slug),
+      // Archived included: a link to an archived assignment must still name it in the dropdown.
+      assignments: this.assignmentsClient.list(slug, true),
+    }).subscribe({
+      next: ({ statuses, grades, assignments }) => {
         this.statuses.set(statuses);
         this.grades.set(new Map(grades.map((g) => [g.repo ?? '', g])));
+        this.assignments.set(assignments);
 
         // Union of exercise names across students drives the table columns, like the CSV export.
         const names = new Set<string>();
@@ -123,6 +150,28 @@ export class CourseDashboard {
 
   protected onSearchChange(): void {
     this.searchTerm.set(this.search);
+  }
+
+  /** Applies a scope and mirrors it into the URL, so the filtered view can be linked to and reloaded. */
+  protected setAssignmentScope(scope: AssignmentScope): void {
+    this.assignmentScope.set(scope);
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { assignment: scope === 'all' ? null : scope },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /** The scope named by the current URL: an assignment id, "none", or everything. */
+  private scopeFromUrl(): AssignmentScope {
+    const value = this.route.snapshot.queryParamMap.get('assignment');
+    if (value === 'none') {
+      return 'none';
+    }
+    const id = Number(value);
+    return value !== null && Number.isFinite(id) && id > 0 ? id : 'all';
   }
 
   protected sortBy(key: SortKey): void {
@@ -157,7 +206,18 @@ export class CourseDashboard {
     }
   }
 
-  protected clearFilters(): void {
+  /**
+   * Clears everything the "Clear" buttons offer to clear, the assignment scope included — a scope that is
+   * hiding every row is exactly what someone pressing Clear wants gone. Only the buttons use this: the
+   * course-change path must not navigate, so it calls {@link clearFilters}.
+   */
+  protected clearAllFilters(): void {
+    this.clearFilters();
+    this.setAssignmentScope('all');
+  }
+
+  /** Clears the refinements over the current scope, without touching the scope or the URL. */
+  private clearFilters(): void {
     this.search = '';
     this.searchTerm.set('');
     this.onlyUngraded.set(false);
@@ -165,7 +225,11 @@ export class CourseDashboard {
   }
 
   protected readonly filtered = computed(
-    () => this.searchTerm().trim().length > 0 || this.onlyUngraded() || this.onlyFailing(),
+    () =>
+      this.searchTerm().trim().length > 0 ||
+      this.onlyUngraded() ||
+      this.onlyFailing() ||
+      this.assignmentScope() !== 'all',
   );
 
   private compare(a: RepositoryStatus, b: RepositoryStatus, key: SortKey): number {

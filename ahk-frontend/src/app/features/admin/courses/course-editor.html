@@ -19,7 +19,7 @@
         </p>
       </div>
       <div class="btn-row">
-        <a class="btn" [routerLink]="['/', c.slug, 'dashboard']">Open submissions</a>
+        <a class="btn" [routerLink]="['/', c.slug, 'submissions']">Open submissions</a>
       </div>
     </div>
 
@@ -86,7 +86,7 @@
                   Changing the slug changes every URL for this course. Existing links will stop working.
                 </span>
               } @else {
-                <span class="hint">Used in the address: /{{ c.slug }}/dashboard</span>
+                <span class="hint">Used in the address: /{{ c.slug }}/assignments</span>
               }
             </div>
             <div class="field">

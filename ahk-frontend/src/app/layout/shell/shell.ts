@@ -41,7 +41,7 @@ export class Shell {
 
   protected switchCourse(slug: string): void {
     if (slug) {
-      void this.router.navigate([slug, 'dashboard']);
+      void this.router.navigate([slug, 'assignments']);
     }
   }
 

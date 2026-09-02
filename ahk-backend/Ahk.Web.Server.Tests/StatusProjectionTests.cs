@@ -1,3 +1,4 @@
+﻿using System.Linq;
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.StatusTracking;
@@ -88,6 +89,75 @@ public class StatusProjectionTests
         // Workflow runs: total count and the most recent conclusion.
         Assert.Equal(2, status.WorkflowRuns.Count);
         Assert.Equal("success", status.WorkflowRuns.LastStatus);
+    }
+
+    /// <summary>
+    /// The assignment a repository belongs to comes from an acceptance naming that same repository — the only
+    /// association there is. A repository nothing accepted (GitHub Classroom, or anything created outside the
+    /// portal) has none, which is what the submissions screen lists as "No assignment".
+    /// </summary>
+    [Fact]
+    public async Task Projection_CarriesTheAcceptedAssignment()
+    {
+        await using var db = await SeedAsync();
+        var assignmentId = await AddAssignmentAsync(db, CourseId, "Homework 1", acceptedRepo: "org/course-hw1-abc123");
+
+        // A second repository in the same course that nobody accepted.
+        db.Submissions.Add(new Submission { CourseId = CourseId, GitHubRepoName = "org/course-legacy-xyz789" });
+        await db.SaveChangesAsync();
+
+        var statuses = await new StatusTrackingService(db).ListStatusesAsync(CourseId);
+
+        var accepted = statuses.Single(s => s.Repository == "org/course-hw1-abc123");
+        Assert.Equal(assignmentId, accepted.AssignmentId);
+        Assert.Equal("Homework 1", accepted.AssignmentName);
+
+        var unassigned = statuses.Single(s => s.Repository == "org/course-legacy-xyz789");
+        Assert.Null(unassigned.AssignmentId);
+        Assert.Null(unassigned.AssignmentName);
+    }
+
+    /// <summary>An acceptance in another course must not label this course's repository.</summary>
+    [Fact]
+    public async Task Projection_IgnoresAnAcceptanceFromAnotherCourse()
+    {
+        await using var db = await SeedAsync();
+        await AddAssignmentAsync(db, courseId: 999, name: "Someone else's homework", acceptedRepo: "org/course-hw1-abc123");
+
+        var status = Assert.Single(await new StatusTrackingService(db).ListStatusesAsync(CourseId));
+
+        Assert.Null(status.AssignmentId);
+        Assert.Null(status.AssignmentName);
+    }
+
+    /// <summary>Adds an assignment plus one acceptance for <paramref name="acceptedRepo"/>, returning its id.</summary>
+    private static async Task<int> AddAssignmentAsync(ApplicationDbContext db, int courseId, string name, string acceptedRepo)
+    {
+        var user = new ApplicationUser { UserName = $"student-{courseId}-{name}", NeptunCode = "ABC123" };
+        db.Users.Add(user);
+
+        var assignment = new Assignment
+        {
+            CourseId = courseId,
+            Name = name,
+            TemplateRepoName = "org/course-hw1",
+            InviteToken = $"token-{courseId}-{name}",
+        };
+        db.Assignments.Add(assignment);
+        await db.SaveChangesAsync();
+
+        db.AssignmentAcceptances.Add(new AssignmentAcceptance
+        {
+            CourseId = courseId,
+            AssignmentId = assignment.Id,
+            UserId = user.Id,
+            GitHubRepoName = acceptedRepo,
+            RepoUrl = $"https://github.com/{acceptedRepo}",
+            GitHubUsername = "sample-student",
+        });
+        await db.SaveChangesAsync();
+
+        return assignment.Id;
     }
 
     [Fact]

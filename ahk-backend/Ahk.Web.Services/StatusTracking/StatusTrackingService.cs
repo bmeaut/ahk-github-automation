@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.StatusTracking.Dto;
 using Microsoft.EntityFrameworkCore;
@@ -31,17 +31,48 @@ public sealed class StatusTrackingService : IStatusTrackingService
             .Include(s => s.Student)
             .ToListAsync(cancellationToken);
 
-        return submissions.Select(CreateStatus).ToList();
+        var assignments = await LoadAssignmentsByRepoAsync(courseId, cancellationToken);
+
+        return submissions.Select(s => CreateStatus(s, assignments)).ToList();
     }
 
-    private static RepositoryStatus CreateStatus(Submission submission)
+    /// <summary>
+    /// Which assignment each repository belongs to, if any. One query for the whole course rather than a join
+    /// on the submission query, because the projection above already materializes every row.
+    ///
+    /// <para>The acceptance is the only association there is: both sides store the full "owner/name" through
+    /// <c>Normalize.RepoName</c>, and a repository created outside the portal has no acceptance and so
+    /// no assignment. The grouping is defensive — nothing stops two assignments from having produced the same
+    /// repository name.</para>
+    /// </summary>
+    private async Task<IReadOnlyDictionary<string, AssignmentRef>> LoadAssignmentsByRepoAsync(int courseId, CancellationToken cancellationToken)
+    {
+        var acceptances = await db.AssignmentAcceptances
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(a => a.CourseId == courseId)
+            .Select(a => new { a.GitHubRepoName, a.AssignmentId, AssignmentName = a.Assignment!.Name })
+            .ToListAsync(cancellationToken);
+
+        return acceptances
+            .GroupBy(a => a.GitHubRepoName, StringComparer.Ordinal)
+            .ToDictionary(
+                g => g.Key,
+                g => new AssignmentRef(g.First().AssignmentId, g.First().AssignmentName),
+                StringComparer.Ordinal);
+    }
+
+    private static RepositoryStatus CreateStatus(Submission submission, IReadOnlyDictionary<string, AssignmentRef> assignments)
     {
         var events = submission.Events;
+        assignments.TryGetValue(submission.GitHubRepoName, out var assignment);
 
         return new RepositoryStatus
         {
             Repository = submission.GitHubRepoName,
             Neptun = GetNeptun(submission, events),
+            AssignmentId = assignment?.Id,
+            AssignmentName = assignment?.Name,
             Branches = events.OfType<BranchCreatedEvent>().Select(e => e.Branch).Distinct().ToArray(),
             PullRequests = events.OfType<PullRequestEvent>()
                 .GroupBy(e => e.Number)
@@ -82,4 +113,7 @@ public sealed class StatusTrackingService : IStatusTrackingService
             LastStatus = items.OrderByDescending(e => e.Timestamp).FirstOrDefault()?.Conclusion,
         };
     }
+
+    /// <summary>The assignment a repository belongs to, as the projection needs it.</summary>
+    private sealed record AssignmentRef(int Id, string Name);
 }

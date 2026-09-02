@@ -1,4 +1,4 @@
-using Ahk.Web.Data.Entities;
+﻿using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Courses.Dto;
 using Ahk.Web.Server.CourseContext;
 using Ahk.Web.Services.Assignments;
@@ -30,9 +30,12 @@ public sealed class AssignmentsController : ControllerBase
     {
         var course = CurrentCourse();
         var items = await assignments.ListAsync(course.Id, includeArchived, cancellationToken);
-        var counts = await assignments.CountAcceptancesAsync(course.Id, cancellationToken);
+        var accepted = await assignments.CountAcceptancesAsync(course.Id, cancellationToken);
+        var submitted = await assignments.CountSubmissionsAsync(course.Id, cancellationToken);
 
-        return Ok(items.Select(a => ToDto(a, course, counts.GetValueOrDefault(a.Id))).ToList());
+        return Ok(items
+            .Select(a => ToDto(a, course, accepted.GetValueOrDefault(a.Id), submitted.GetValueOrDefault(a.Id)))
+            .ToList());
     }
 
     /// <summary>
@@ -209,7 +212,7 @@ public sealed class AssignmentsController : ControllerBase
         RepoNamePrefix = request.RepoNamePrefix,
     };
 
-    private AssignmentDto ToDto(Assignment assignment, Course course, int acceptanceCount) => new()
+    private AssignmentDto ToDto(Assignment assignment, Course course, int acceptanceCount, int submissionCount = 0) => new()
     {
         Id = assignment.Id,
         Name = assignment.Name,
@@ -221,6 +224,7 @@ public sealed class AssignmentsController : ControllerBase
         ArchivedAt = assignment.ArchivedAt,
         CreatedAt = assignment.CreatedAt,
         AcceptanceCount = acceptanceCount,
+        SubmissionCount = submissionCount,
     };
 
     private Course CurrentCourse() => (Course)HttpContext.Items[CourseResolutionMiddleware.CourseItemKey]!;
