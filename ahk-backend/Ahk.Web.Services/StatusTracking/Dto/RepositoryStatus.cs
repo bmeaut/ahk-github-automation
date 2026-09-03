@@ -7,7 +7,13 @@
 /// </summary>
 public sealed class RepositoryStatus
 {
+    /// <summary>Identifies the row for the archive/reactivate actions; the repository name is not an id.</summary>
+    public int SubmissionId { get; set; }
+
     public string Repository { get; set; } = string.Empty;
+
+    /// <summary>When set, the submission is archived. Only present when archived rows were asked for.</summary>
+    public DateTimeOffset? ArchivedAt { get; set; }
 
     public string Neptun { get; set; } = string.Empty;
 

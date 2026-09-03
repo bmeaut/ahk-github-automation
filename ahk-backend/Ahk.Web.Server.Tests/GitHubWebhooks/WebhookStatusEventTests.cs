@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.GitHubWebhooks;
 using Ahk.Web.Services.GitHubWebhooks.Handlers.StatusTracking;
@@ -190,7 +190,7 @@ public class WebhookStatusEventTests
         => new(NewEventService(db), NewCache(), NullLogger<BranchCreateStatusTrackingHandler>.Instance);
 
     private static ISubmissionEventService NewEventService(ApplicationDbContext db)
-        => new SubmissionEventService(db, new SubmissionResolver(db));
+        => new SubmissionEventService(db, new SubmissionResolver(db, new SubmissionArchiveService(db)));
 
     private static IMemoryCache NewCache() => new MemoryCache(new MemoryCacheOptions());
 

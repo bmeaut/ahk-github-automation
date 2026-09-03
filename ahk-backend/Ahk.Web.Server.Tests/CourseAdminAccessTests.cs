@@ -175,6 +175,65 @@ public class CourseAdminAccessTests : IClassFixture<CourseAdminAccessTests.Cours
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    // ---- Course-scoped admin actions ----
+
+    /// <summary>
+    /// Archiving a submission is a course admin's to do, and it hangs off <c>api/{course}/…</c> rather than the
+    /// host admin routes — a different policy from everything above.
+    /// </summary>
+    [Fact]
+    public async Task CourseAdmin_ArchivesAndReactivatesASubmission()
+    {
+        var client = await SignInAsync("courseadmin");
+        var url = $"/api/course-a/submissions/{factory.SubmissionInAId}";
+
+        var archived = await client.PostAsync($"{url}/archive", content: null);
+        Assert.Equal(HttpStatusCode.NoContent, archived.StatusCode);
+
+        var reactivated = await client.PostAsync($"{url}/unarchive", content: null);
+        Assert.Equal(HttpStatusCode.NoContent, reactivated.StatusCode);
+    }
+
+    [Fact]
+    public async Task Instructor_IsRefusedArchivingASubmission()
+    {
+        var client = await SignInAsync("instructor");
+
+        var response = await client.PostAsync($"/api/course-a/submissions/{factory.SubmissionInAId}/archive", content: null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    /// <summary>
+    /// ⚠️ The case that makes this endpoint need its own policy. <c>CourseAdmin</c> reads the <c>{id}</c> route
+    /// value as a course id; here it is a submission id, so under that policy an admin of course A could act on
+    /// another course's submission whenever the numbers lined up. The course comes from the <c>{course}</c>
+    /// segment instead, so this is a 403 — and a 404 would be wrong too, since it must not confirm the row.
+    /// </summary>
+    [Fact]
+    public async Task CourseAdmin_CannotArchiveASubmissionOfAnotherCourse()
+    {
+        var client = await SignInAsync("courseadmin");
+
+        var byCourse = await client.PostAsync($"/api/course-b/submissions/{factory.SubmissionInBId}/archive", content: null);
+        Assert.Equal(HttpStatusCode.Forbidden, byCourse.StatusCode);
+
+        // And naming their own course does not reach the other course's row either.
+        var byId = await client.PostAsync($"/api/course-a/submissions/{factory.SubmissionInBId}/archive", content: null);
+        Assert.Equal(HttpStatusCode.NotFound, byId.StatusCode);
+    }
+
+    [Fact]
+    public async Task SiteAdmin_ArchivesASubmissionInAnyCourse()
+    {
+        var client = await SignInAsync("admin");
+
+        var response = await client.PostAsync($"/api/course-b/submissions/{factory.SubmissionInBId}/archive", content: null);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        await client.PostAsync($"/api/course-b/submissions/{factory.SubmissionInBId}/unarchive", content: null);
+    }
+
     // ---- Staff management ----
 
     [Fact]
@@ -305,6 +364,10 @@ public class CourseAdminAccessTests : IClassFixture<CourseAdminAccessTests.Cours
 
         public int CourseBId { get; private set; }
 
+        public int SubmissionInAId { get; private set; }
+
+        public int SubmissionInBId { get; private set; }
+
         protected override IHost CreateHost(IHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
@@ -377,7 +440,16 @@ public class CourseAdminAccessTests : IClassFixture<CourseAdminAccessTests.Cours
             });
 
             db.Students.Add(new Student { CourseId = courseA.Id, Neptun = "ABC123" });
+
+            // One submission per course, for the archive endpoints. B's id is captured so the cross-course
+            // test can name a real row rather than a guess.
+            var inA = new Submission { CourseId = courseA.Id, GitHubRepoName = "org/course-a-hw1-abc123" };
+            var inB = new Submission { CourseId = courseB.Id, GitHubRepoName = "org/course-b-hw1-abc123" };
+            db.Submissions.AddRange(inA, inB);
             db.SaveChanges();
+
+            SubmissionInAId = inA.Id;
+            SubmissionInBId = inB.Id;
 
             // Referenced so the unused-variable analyzer sees the admin account is deliberate.
             Assert.NotEqual(0, admin.Id);

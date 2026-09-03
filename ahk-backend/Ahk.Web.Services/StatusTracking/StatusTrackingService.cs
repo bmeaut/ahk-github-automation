@@ -7,7 +7,11 @@ namespace Ahk.Web.Services.StatusTracking;
 
 public interface IStatusTrackingService
 {
-    Task<IReadOnlyCollection<RepositoryStatus>> ListStatusesAsync(int courseId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// The course's submission statuses. Archived submissions are left out unless
+    /// <paramref name="includeArchived"/> asks for them.
+    /// </summary>
+    Task<IReadOnlyCollection<RepositoryStatus>> ListStatusesAsync(int courseId, bool includeArchived = false, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -21,12 +25,13 @@ public sealed class StatusTrackingService : IStatusTrackingService
 
     public StatusTrackingService(ApplicationDbContext db) => this.db = db;
 
-    public async Task<IReadOnlyCollection<RepositoryStatus>> ListStatusesAsync(int courseId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<RepositoryStatus>> ListStatusesAsync(int courseId, bool includeArchived = false, CancellationToken cancellationToken = default)
     {
         var submissions = await db.Submissions
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(s => s.CourseId == courseId)
+            .Where(s => includeArchived || s.ArchivedAt == null)
             .Include(s => s.Events)
             .Include(s => s.Student)
             .ToListAsync(cancellationToken);
@@ -69,7 +74,9 @@ public sealed class StatusTrackingService : IStatusTrackingService
 
         return new RepositoryStatus
         {
+            SubmissionId = submission.Id,
             Repository = submission.GitHubRepoName,
+            ArchivedAt = submission.ArchivedAt,
             Neptun = GetNeptun(submission, events),
             AssignmentId = assignment?.Id,
             AssignmentName = assignment?.Name,

@@ -13,6 +13,9 @@ namespace Ahk.Web.Server.Courses;
 /// with the repository prefix replaced by the {course} route segment.
 ///
 /// <para>One of the two endpoints that also accept a personal access token — see <see cref="AuthSchemes"/>.</para>
+///
+/// <para>Archived submissions are left out unless <c>?includeArchived=true</c>, mirroring the assignments
+/// listing, so a script gets the course's live picture without knowing archiving exists.</para>
 /// </summary>
 [ApiController]
 [Route("api/{course}/statuses")]
@@ -25,9 +28,11 @@ public sealed class SubmissionStatusesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<RepositoryStatus>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<RepositoryStatus>>> List(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<RepositoryStatus>>> List(
+        [FromQuery] bool includeArchived,
+        CancellationToken cancellationToken)
     {
         var course = (Course)HttpContext.Items[CourseResolutionMiddleware.CourseItemKey]!;
-        return Ok(await statusTracking.ListStatusesAsync(course.Id, cancellationToken));
+        return Ok(await statusTracking.ListStatusesAsync(course.Id, includeArchived, cancellationToken));
     }
 }

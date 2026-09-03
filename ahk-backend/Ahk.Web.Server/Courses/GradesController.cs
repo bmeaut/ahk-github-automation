@@ -28,10 +28,12 @@ public sealed class GradesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<FinalStudentGrade>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<FinalStudentGrade>>> List(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<FinalStudentGrade>>> List(
+        [FromQuery] bool includeArchived,
+        CancellationToken cancellationToken)
     {
         var course = CurrentCourse();
-        return Ok(await gradeListing.ListAsync(course.Id, cancellationToken));
+        return Ok(await gradeListing.ListAsync(course.Id, includeArchived, cancellationToken));
     }
 
     [HttpGet("csv")]

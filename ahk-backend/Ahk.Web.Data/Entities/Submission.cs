@@ -28,6 +28,17 @@ public class Submission : ICourseScoped
 
     public DateTimeOffset? LastEventAt { get; set; }
 
+    /// <summary>
+    /// When set, the submission is archived: it drops out of the status list, the grades list and the CSV
+    /// export unless they are explicitly asked for archived rows. Nothing is deleted — the events and grades
+    /// stay exactly as they were.
+    ///
+    /// <para>Set three ways, all through <c>SubmissionArchiveService</c>: a course admin archives one by hand,
+    /// archiving an assignment cascades to the repositories its acceptances name, and a submission created
+    /// while its assignment is archived is born archived.</para>
+    /// </summary>
+    public DateTimeOffset? ArchivedAt { get; set; }
+
     public ICollection<SubmissionEvent> Events { get; } = new List<SubmissionEvent>();
 
     public ICollection<GradeRecord> Grades { get; } = new List<GradeRecord>();

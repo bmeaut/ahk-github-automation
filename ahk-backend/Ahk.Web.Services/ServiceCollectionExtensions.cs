@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAhkServices(this IServiceCollection services)
     {
         services.AddScoped<ISubmissionResolver, SubmissionResolver>();
+        services.AddScoped<ISubmissionArchiveService, SubmissionArchiveService>();
         services.AddScoped<ISubmissionEventService, SubmissionEventService>();
         services.AddScoped<IStatusTrackingService, StatusTrackingService>();
         services.AddScoped<IGradeService, GradeService>();

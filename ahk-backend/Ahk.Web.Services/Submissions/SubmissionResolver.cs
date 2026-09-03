@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,8 +22,13 @@ public interface ISubmissionResolver
 public sealed class SubmissionResolver : ISubmissionResolver
 {
     private readonly ApplicationDbContext db;
+    private readonly ISubmissionArchiveService archive;
 
-    public SubmissionResolver(ApplicationDbContext db) => this.db = db;
+    public SubmissionResolver(ApplicationDbContext db, ISubmissionArchiveService archive)
+    {
+        this.db = db;
+        this.archive = archive;
+    }
 
     public async Task<Student> GetOrCreateStudentAsync(int courseId, string neptun, CancellationToken cancellationToken = default)
     {
@@ -50,7 +55,17 @@ public sealed class SubmissionResolver : ISubmissionResolver
 
         if (submission is null)
         {
-            submission = new Submission { CourseId = courseId, GitHubRepoName = repo };
+            // A repository belonging to an already-archived assignment is born archived, so archiving an
+            // assignment holds for its future submissions too. Only on creation: this runs for every webhook
+            // event, and recomputing an existing row's state would undo an admin's own decision.
+            var archived = await archive.IsRepositoryArchivedAsync(courseId, repo, cancellationToken);
+
+            submission = new Submission
+            {
+                CourseId = courseId,
+                GitHubRepoName = repo,
+                ArchivedAt = archived ? DateTimeOffset.UtcNow : null,
+            };
             db.Submissions.Add(submission);
         }
 

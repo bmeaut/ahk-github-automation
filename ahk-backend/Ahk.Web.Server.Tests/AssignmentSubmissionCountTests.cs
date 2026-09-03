@@ -1,7 +1,8 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.GitHub;
+using Ahk.Web.Services.Submissions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -110,7 +111,8 @@ public class AssignmentSubmissionCountTests
     private static AssignmentService CreateService(ApplicationDbContext db) => new(
         db,
         new Mock<IGitHubRepositoryService>(MockBehavior.Strict).Object,
-        new Mock<ICourseGitHubAppTokenProvider>(MockBehavior.Strict).Object);
+        new Mock<ICourseGitHubAppTokenProvider>(MockBehavior.Strict).Object,
+        new SubmissionArchiveService(db));
 
     private static async Task<Assignment> AddAssignmentAsync(ApplicationDbContext db, int courseId, string name)
     {

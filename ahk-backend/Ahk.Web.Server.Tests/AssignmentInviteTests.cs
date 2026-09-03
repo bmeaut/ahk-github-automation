@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.GitHub;
@@ -57,7 +57,7 @@ public class AssignmentInviteTests
                 Db,
                 GitHub.Object,
                 Tokens.Object,
-                new SubmissionResolver(Db),
+                new SubmissionResolver(Db, new SubmissionArchiveService(Db)),
                 NullLogger<AssignmentInviteService>.Instance);
         }
 

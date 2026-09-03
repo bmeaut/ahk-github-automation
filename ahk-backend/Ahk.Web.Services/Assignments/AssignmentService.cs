@@ -1,6 +1,7 @@
 ﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.GitHub;
+using Ahk.Web.Services.Submissions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ahk.Web.Services.Assignments;
@@ -81,12 +82,18 @@ public sealed class AssignmentService : IAssignmentService
     private readonly ApplicationDbContext db;
     private readonly IGitHubRepositoryService gitHub;
     private readonly ICourseGitHubAppTokenProvider tokens;
+    private readonly ISubmissionArchiveService submissionArchive;
 
-    public AssignmentService(ApplicationDbContext db, IGitHubRepositoryService gitHub, ICourseGitHubAppTokenProvider tokens)
+    public AssignmentService(
+        ApplicationDbContext db,
+        IGitHubRepositoryService gitHub,
+        ICourseGitHubAppTokenProvider tokens,
+        ISubmissionArchiveService submissionArchive)
     {
         this.db = db;
         this.gitHub = gitHub;
         this.tokens = tokens;
+        this.submissionArchive = submissionArchive;
     }
 
     public async Task<IReadOnlyList<Assignment>> ListAsync(int courseId, bool includeArchived, CancellationToken cancellationToken = default)
@@ -149,6 +156,11 @@ public sealed class AssignmentService : IAssignmentService
             return null;
 
         assignment.ArchivedAt = archived ? assignment.ArchivedAt ?? DateTimeOffset.UtcNow : null;
+
+        // The repositories this assignment produced follow it, in both directions: reopening an assignment
+        // whose work is invisible would be a puzzle rather than a feature.
+        await submissionArchive.SetForAssignmentAsync(courseId, assignmentId, archived, cancellationToken);
+
         await db.SaveChangesAsync(cancellationToken);
         return assignment;
     }
@@ -218,7 +230,8 @@ public sealed class AssignmentService : IAssignmentService
     {
         var counts = await db.AssignmentAcceptances.IgnoreQueryFilters().AsNoTracking()
             .Where(a => a.CourseId == courseId
-                && db.Submissions.IgnoreQueryFilters().Any(s => s.CourseId == courseId && s.GitHubRepoName == a.GitHubRepoName))
+                && db.Submissions.IgnoreQueryFilters()
+                    .Any(s => s.CourseId == courseId && s.GitHubRepoName == a.GitHubRepoName && s.ArchivedAt == null))
             .GroupBy(a => a.AssignmentId)
             .Select(g => new { AssignmentId = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);

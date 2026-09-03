@@ -37,3 +37,17 @@ td.total {
   min-width: 12rem;
   max-width: 20rem;
 }
+
+/* Dim an archived row's text but not its buttons — the same treatment archived assignments get, so the two
+   lists read alike. */
+tr.archived td {
+  opacity: 0.72;
+}
+
+tr.archived td.actions {
+  opacity: 1;
+}
+
+.badge {
+  margin-left: 0.5rem;
+}

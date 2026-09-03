@@ -227,6 +227,7 @@ public class Program
         // ---- Authorization ----
         builder.Services.AddScoped<IAuthorizationHandler, CourseMembershipAuthorizationHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, CourseAdminAuthorizationHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, CurrentCourseAdminAuthorizationHandler>();
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy(CourseMembershipRequirement.PolicyName, policy =>
@@ -236,6 +237,11 @@ public class Program
             // the course from their {id} route value, not from a {course} segment — see CourseAdminRequirement.
             options.AddPolicy(CourseAdminRequirement.PolicyName, policy =>
                 policy.Requirements.Add(new CourseAdminRequirement()));
+
+            // The same role, on the course-scoped routes: it reads the {course} segment, never a route id.
+            // CurrentCourseAdminRequirement documents why using the wrong one of the two is a security bug.
+            options.AddPolicy(CurrentCourseAdminRequirement.PolicyName, policy =>
+                policy.Requirements.Add(new CurrentCourseAdminRequirement()));
         });
 
         // ---- Development-only mock OpenID provider ----

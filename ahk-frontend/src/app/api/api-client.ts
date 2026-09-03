@@ -927,7 +927,7 @@ export class AssignmentsClient implements IAssignmentsClient {
 }
 
 export interface IGradesClient {
-    list(course: string): Observable<FinalStudentGrade[]>;
+    list(course: string, includeArchived?: boolean | undefined): Observable<FinalStudentGrade[]>;
     exportCsv(course: string): Observable<string>;
 }
 
@@ -944,11 +944,15 @@ export class GradesClient implements IGradesClient {
         this.baseUrl = baseUrl ?? "https://localhost:7443";
     }
 
-    list(course: string): Observable<FinalStudentGrade[]> {
-        let url_ = this.baseUrl + "/api/{course}/grades";
+    list(course: string, includeArchived?: boolean | undefined): Observable<FinalStudentGrade[]> {
+        let url_ = this.baseUrl + "/api/{course}/grades?";
         if (course === undefined || course === null)
             throw new globalThis.Error("The parameter 'course' must be defined.");
         url_ = url_.replace("{course}", encodeURIComponent("" + course));
+        if (includeArchived === null)
+            throw new globalThis.Error("The parameter 'includeArchived' cannot be null.");
+        else if (includeArchived !== undefined)
+            url_ += "includeArchived=" + encodeURIComponent("" + includeArchived) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -1047,8 +1051,141 @@ export class GradesClient implements IGradesClient {
     }
 }
 
+export interface ISubmissionsClient {
+    archive(id: number, course: string): Observable<void>;
+    unarchive(id: number, course: string): Observable<void>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class SubmissionsClient implements ISubmissionsClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "https://localhost:7443";
+    }
+
+    archive(id: number, course: string): Observable<void> {
+        let url_ = this.baseUrl + "/api/{course}/submissions/{id}/archive";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (course === undefined || course === null)
+            throw new globalThis.Error("The parameter 'course' must be defined.");
+        url_ = url_.replace("{course}", encodeURIComponent("" + course));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processArchive(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processArchive(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processArchive(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    unarchive(id: number, course: string): Observable<void> {
+        let url_ = this.baseUrl + "/api/{course}/submissions/{id}/unarchive";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (course === undefined || course === null)
+            throw new globalThis.Error("The parameter 'course' must be defined.");
+        url_ = url_.replace("{course}", encodeURIComponent("" + course));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUnarchive(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUnarchive(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUnarchive(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface ISubmissionStatusesClient {
-    list(course: string): Observable<RepositoryStatus[]>;
+    list(course: string, includeArchived?: boolean | undefined): Observable<RepositoryStatus[]>;
 }
 
 @Injectable({
@@ -1064,11 +1201,15 @@ export class SubmissionStatusesClient implements ISubmissionStatusesClient {
         this.baseUrl = baseUrl ?? "https://localhost:7443";
     }
 
-    list(course: string): Observable<RepositoryStatus[]> {
-        let url_ = this.baseUrl + "/api/{course}/statuses";
+    list(course: string, includeArchived?: boolean | undefined): Observable<RepositoryStatus[]> {
+        let url_ = this.baseUrl + "/api/{course}/statuses?";
         if (course === undefined || course === null)
             throw new globalThis.Error("The parameter 'course' must be defined.");
         url_ = url_.replace("{course}", encodeURIComponent("" + course));
+        if (includeArchived === null)
+            throw new globalThis.Error("The parameter 'includeArchived' cannot be null.");
+        else if (includeArchived !== undefined)
+            url_ += "includeArchived=" + encodeURIComponent("" + includeArchived) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -3949,7 +4090,9 @@ export interface FinalStudentGrade {
 }
 
 export interface RepositoryStatus {
+    submissionId?: number;
     repository?: string;
+    archivedAt?: Date | undefined;
     neptun?: string;
     assignmentId?: number | undefined;
     assignmentName?: string | undefined;

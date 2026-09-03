@@ -16,6 +16,9 @@
   @if (error(); as e) {
     <p class="notice error">{{ e }}</p>
   }
+  @if (saved(); as s) {
+    <p class="notice success">{{ s }}</p>
+  }
 
   <div class="card">
     <header>
@@ -51,6 +54,10 @@
         <input type="checkbox" [checked]="onlyFailing()" (change)="onlyFailing.set($any($event.target).checked)" />
         Last run failed
       </label>
+      <label class="check">
+        <input type="checkbox" [checked]="showArchived()" (change)="toggleArchived()" />
+        Show archived
+      </label>
       <span class="grow"></span>
       @if (filtered()) {
         <span class="muted">{{ rows().length }} of {{ statuses().length }}</span>
@@ -79,16 +86,22 @@
               @if (exerciseNames().length > 0) {
                 <th class="num"><button type="button" class="sort" (click)="sortBy('total')">Total</button></th>
               }
+              @if (canArchive()) {
+                <th></th>
+              }
             </tr>
           </thead>
           <tbody>
             @for (s of rows(); track s.repository) {
-              <tr>
+              <tr [class.archived]="s.archivedAt">
                 <td class="mono">{{ s.neptun || '—' }}</td>
                 <td>
                   <a [href]="'https://github.com/' + s.repository" target="_blank" rel="noopener" class="mono">
                     {{ s.repository }}
                   </a>
+                  @if (s.archivedAt) {
+                    <span class="badge">Archived</span>
+                  }
                 </td>
                 <td>
                   @if (s.assignmentName; as assignment) {
@@ -141,10 +154,24 @@
                     }
                   </td>
                 }
+                @if (canArchive()) {
+                  <td class="actions">
+                    @if (s.archivedAt) {
+                      <button type="button" class="btn quiet" (click)="setArchived(s, false)">Reactivate</button>
+                    } @else {
+                      <button type="button" class="btn danger" (click)="setArchived(s, true)">Archive</button>
+                    }
+                  </td>
+                }
               </tr>
             } @empty {
               <tr>
-                <td [attr.colspan]="6 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0)" class="empty">
+                <td
+                  [attr.colspan]="
+                    6 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0) + (canArchive() ? 1 : 0)
+                  "
+                  class="empty"
+                >
                   @if (filtered()) {
                     Nothing matches these filters.
                     <button type="button" class="btn quiet" (click)="clearAllFilters()">Clear them</button>
