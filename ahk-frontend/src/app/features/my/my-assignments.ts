@@ -36,6 +36,7 @@ export class MyAssignments implements OnInit {
   protected readonly note = signal<string | null>(null);
 
   protected readonly user = this.auth.currentUser;
+  protected readonly canManageTokens = this.auth.canManageTokens;
 
   /** Grouped by course, preserving the API's newest-first order within each. */
   protected readonly groups = computed<CourseGroup[]>(() => {

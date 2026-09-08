@@ -228,6 +228,7 @@ public class Program
         builder.Services.AddScoped<IAuthorizationHandler, CourseMembershipAuthorizationHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, CourseAdminAuthorizationHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, CurrentCourseAdminAuthorizationHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, CourseStaffAuthorizationHandler>();
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy(CourseMembershipRequirement.PolicyName, policy =>
@@ -242,6 +243,11 @@ public class Program
             // CurrentCourseAdminRequirement documents why using the wrong one of the two is a security bug.
             options.AddPolicy(CurrentCourseAdminRequirement.PolicyName, policy =>
                 policy.Requirements.Add(new CurrentCourseAdminRequirement()));
+
+            // Names no course: "is this person staff of any course, or a site admin?" It gates the personal
+            // access token endpoints, which belong to a user rather than to a course.
+            options.AddPolicy(CourseStaffRequirement.PolicyName, policy =>
+                policy.Requirements.Add(new CourseStaffRequirement()));
         });
 
         // ---- Development-only mock OpenID provider ----

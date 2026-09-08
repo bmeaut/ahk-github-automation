@@ -27,9 +27,13 @@
 
   @if (user(); as u) {
     <span class="who">
-      <a class="name" routerLink="/settings" title="Your account and access tokens">
-        {{ u.displayName || u.userName }}
-      </a>
+      @if (canManageTokens()) {
+        <a class="name" routerLink="/settings" title="Your account and access tokens">
+          {{ u.displayName || u.userName }}
+        </a>
+      } @else {
+        <span class="name">{{ u.displayName || u.userName }}</span>
+      }
       @if (isAdmin()) {
         <span class="badge accent">Site admin</span>
       }

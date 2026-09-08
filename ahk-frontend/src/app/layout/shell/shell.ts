@@ -23,6 +23,7 @@ export class Shell {
   protected readonly user = this.auth.currentUser;
   protected readonly isAdmin = this.auth.isAdmin;
   protected readonly courses = this.auth.courses;
+  protected readonly canManageTokens = this.auth.canManageTokens;
 
   protected readonly activeSlug = this.courseContext.activeSlug;
   protected readonly activeCourse = this.courseContext.activeCourse;

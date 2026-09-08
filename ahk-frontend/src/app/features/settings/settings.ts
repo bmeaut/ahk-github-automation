@@ -33,6 +33,13 @@ export class Settings implements OnInit {
 
   protected readonly user = this.auth.currentUser;
 
+  /**
+   * Tokens are staff-only, and the backend's `CourseStaff` policy is what enforces it. A student reaching this
+   * page — the route is open, so a bookmark or a typed URL still lands here — is told so instead of being
+   * shown a form that would 403, and nothing is fetched on their behalf.
+   */
+  protected readonly canManageTokens = this.auth.canManageTokens;
+
   /** The site's own origin, so the example command is one this reader can paste as it stands. */
   protected readonly origin = window.location.origin;
 
@@ -49,7 +56,11 @@ export class Settings implements OnInit {
   protected readonly copied = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.load();
+    if (this.canManageTokens()) {
+      this.load();
+    } else {
+      this.loading.set(false);
+    }
   }
 
   private load(): void {

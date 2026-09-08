@@ -171,18 +171,48 @@ public class PersonalAccessTokenTests : IClassFixture<PersonalAccessTokenTests.T
 
     /// <summary>
     /// The id comes from the client, so it is scoped to the caller: one user guessing another's token id must
-    /// not be able to revoke it.
+    /// not be able to revoke it. Both accounts here staff a course — a student is refused a step earlier, by
+    /// the policy (see <see cref="AStudent_CannotReachTheTokenEndpoints"/>).
     /// </summary>
     [Fact]
     public async Task OneUser_CannotRevokeAnothersToken()
     {
         var (id, value) = await IssueTokenAsync("instructor");
 
-        var client = await SignInAsync("outsider");
+        var client = await SignInAsync("courseadmin");
         var response = await client.DeleteAsync($"/api/profile/tokens/{id}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await GetWithTokenAsync("/api/course-a/statuses", value)).StatusCode);
+    }
+
+    /// <summary>
+    /// Tokens are staff-only. A student — an account that staffs no course — is refused the whole surface, the
+    /// listing included, so the SPA can hide the screen rather than show a form that would fail on submit.
+    /// </summary>
+    [Fact]
+    public async Task AStudent_CannotReachTheTokenEndpoints()
+    {
+        var (id, _) = await IssueTokenAsync("instructor");
+        var client = await SignInAsync("outsider");
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/profile/tokens")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            (await client.PostAsJsonAsync("/api/profile/tokens", new { description = "mine" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.DeleteAsync($"/api/profile/tokens/{id}")).StatusCode);
+    }
+
+    /// <summary>Everyone who staffs a course keeps the screen: both course roles, and the site admin who staffs none.</summary>
+    [Theory]
+    [InlineData("instructor")]
+    [InlineData("courseadmin")]
+    [InlineData("admin")]
+    public async Task StaffAndSiteAdmins_ReachTheTokenEndpoints(string userName)
+    {
+        var client = await SignInAsync(userName);
+
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/profile/tokens")).StatusCode);
     }
 
     [Fact]
@@ -304,7 +334,8 @@ public class PersonalAccessTokenTests : IClassFixture<PersonalAccessTokenTests.T
 
         /// <summary>
         /// Two courses and the accounts whose reach differs: an instructor and a course admin of course A, a
-        /// site admin who staffs neither, an outsider, and an account to lock out.
+        /// site admin who staffs neither, an outsider (a student: no membership anywhere), and an account to
+        /// lock out.
         /// </summary>
         private static void Seed(IServiceProvider services)
         {

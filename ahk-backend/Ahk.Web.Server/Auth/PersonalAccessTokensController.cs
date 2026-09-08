@@ -1,6 +1,7 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Auth.Dto;
+using Ahk.Web.Server.CourseContext;
 using Ahk.Web.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,15 +12,19 @@ namespace Ahk.Web.Server.Auth;
 /// The caller's own access tokens: mint one, list them, revoke one. What a token is *for* is documented on
 /// <see cref="Ahk.Web.Data.Entities.PersonalAccessToken"/>.
 ///
-/// <para>⚠️ Cookie-only, by construction: a bare <c>[Authorize]</c> uses the default authenticate scheme, and
-/// only the course read endpoints opt into <see cref="AuthSchemes.CookieOrPersonalToken"/>. So a token can
+/// <para>⚠️ Cookie-only, by construction: an <c>[Authorize]</c> that names no scheme uses the default
+/// authenticate scheme, and only the course read endpoints opt into <see cref="AuthSchemes.CookieOrPersonalToken"/>. So a token can
 /// never mint or revoke another token — reaching this controller takes an interactive sign-in.</para>
 ///
 /// <para>The owner always comes from the signed-in principal. Nothing here takes a user id from the client.</para>
+///
+/// <para>Staff only (<see cref="CourseStaffRequirement"/>): a student has nothing to script — they read their
+/// own repositories through the site — so the whole surface, listing included, is 403 for them and the SPA
+/// hides it. Tokens minted before this rule keep working; revoking one is the admin token screen's job.</para>
 /// </summary>
 [ApiController]
 [Route("api/profile/tokens")]
-[Authorize]
+[Authorize(Policy = CourseStaffRequirement.PolicyName)]
 public sealed class PersonalAccessTokensController : ControllerBase
 {
     private readonly IPersonalAccessTokenService tokens;

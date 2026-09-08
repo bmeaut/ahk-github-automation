@@ -81,6 +81,12 @@ For reading a course from a script, without driving the login form — the porta
 functions' master key. A user mints one for themselves at `/settings`; it authenticates as them, so it opens
 exactly the courses they can open.
 
+**Course staff only.** `/api/profile/tokens` is behind the `CourseStaff` policy — a site admin, or anyone with
+a membership in at least one course, either `CourseRole` — and the SPA hides the screen and every link into it
+for everyone else. A student reads their own repositories through the site and has nothing to script, so the
+whole surface, listing included, answers 403 for them. Tokens minted before the rule keep working; a site
+admin revokes one from the user drawer in `/admin/users`.
+
 ```bash
 curl -H "Authorization: Bearer ahkp_…" https://ahk.aut.bme.hu/api/viaubc01/statuses
 curl -H "Authorization: Bearer ahkp_…" https://ahk.aut.bme.hu/api/viaubc01/grades

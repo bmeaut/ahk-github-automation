@@ -28,6 +28,16 @@ export class AuthService {
   readonly courses = computed(() => this.user()?.courses ?? []);
 
   /**
+   * Whether this user may hold personal access tokens: staff of at least one course, or a site admin. It
+   * mirrors the backend's `CourseStaff` policy, which is the thing that actually enforces it — a student has
+   * nothing to script, so the token screen and every link into it are hidden rather than left to 403.
+   *
+   * Reads the same `courses` list as the switcher: it is empty for a student, and the API already folds a
+   * site admin's implicit access into it.
+   */
+  readonly canManageTokens = computed(() => this.isAdmin() || this.courses().length > 0);
+
+  /**
    * The site admin looking through this account, when the session is an impersonation. The server derives it
    * from the signed cookie, so this is a display value only — nothing here grants anything.
    */
