@@ -1,5 +1,6 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
+using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.GitHub;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +31,18 @@ public sealed class GitHubProfileResponse
     /// has been accepted — which is the first assignment they take — so a freshly entered name is always false.
     /// </summary>
     public bool Verified { get; set; }
+
+    /// <summary>
+    /// Repositories the corrected login was just invited to. Zero on a first entry (there are none yet) and on
+    /// a re-entry of the same login (nothing changed).
+    /// </summary>
+    public int RepositoriesShared { get; set; }
+
+    /// <summary>
+    /// Repositories the invitation could not be sent for — GitHub unreachable, or a course with no working App.
+    /// They keep the old login and can be re-sent from the student's own page.
+    /// </summary>
+    public int RepositoriesFailed { get; set; }
 }
 
 /// <summary>
@@ -45,23 +58,34 @@ public sealed class ProfileController : ControllerBase
     private readonly IGitHubRepositoryService gitHub;
     private readonly ICourseGitHubAppTokenProvider tokens;
     private readonly ApplicationDbContext db;
+    private readonly IStudentAssignmentService studentAssignments;
 
     public ProfileController(
         UserManager<ApplicationUser> userManager,
         IGitHubRepositoryService gitHub,
         ICourseGitHubAppTokenProvider tokens,
-        ApplicationDbContext db)
+        ApplicationDbContext db,
+        IStudentAssignmentService studentAssignments)
     {
         this.userManager = userManager;
         this.gitHub = gitHub;
         this.tokens = tokens;
         this.db = db;
+        this.studentAssignments = studentAssignments;
     }
 
     /// <summary>
     /// Records the caller's GitHub login, after checking it exists. The check is <c>GET /users/{login}</c>
     /// rather than a fetch of the profile page: a 404 there is unambiguous, and the response carries the
     /// numeric account id, which survives the user renaming themselves later.
+    ///
+    /// <para>Correcting a misspelling is the reason this can be called twice, so a changed login is followed by
+    /// re-sharing every repository the student already holds with the new account — the earlier invitations went
+    /// to whoever owns the name they typed first, and those are left alone (that stranger can only decline).</para>
+    ///
+    /// <para>⚠️ A <b>confirmed</b> account cannot be changed here. Confirmation means someone signed in as that
+    /// account and accepted an invitation, so the link is no longer a typo waiting to be fixed — and letting it
+    /// be re-pointed would be a way to hand a stranger's account the repositories it earned.</para>
     /// </summary>
     [HttpPut("github")]
     [ProducesResponseType(typeof(GitHubProfileResponse), StatusCodes.Status200OK)]
@@ -123,9 +147,25 @@ public sealed class ProfileController : ControllerBase
         if (takenBy != 0)
             return BadRequest(new { error = $"The GitHub account \"{account.Login}\" is already linked to another user here. If it is yours, ask an administrator to sort it out." });
 
+        // Two different questions. "Is this a different account?" decides whether the confirmed link is being
+        // re-pointed — matched on the numeric id as well, so an account renamed on GitHub is still the same one.
+        // "Did the stored login change?" decides whether the repositories have to be shared again, which a
+        // rename also needs: the acceptance rows address the collaborator by login.
+        var hadLogin = !string.IsNullOrWhiteSpace(user.GitHubUsername);
+        var loginChanged = !string.Equals(user.GitHubUsername, account.Login, StringComparison.OrdinalIgnoreCase);
+        var sameAccount = !loginChanged || (user.GitHubUserId is not null && user.GitHubUserId == account.Id);
+
+        if (!sameAccount && user.GitHubVerifiedAt is not null)
+        {
+            return BadRequest(new
+            {
+                error = $"Your GitHub account \"{user.GitHubUsername}\" is confirmed — you have accepted a repository invitation with it — so it can no longer be changed here. Ask your instructor if it is wrong.",
+            });
+        }
+
         // Re-binding to a different account withdraws whatever the previous one had corroborated: the new
         // login is an assertion again until an invitation sent to it is accepted.
-        if (!string.Equals(user.GitHubUsername, account.Login, StringComparison.OrdinalIgnoreCase))
+        if (!sameAccount)
             user.GitHubVerifiedAt = null;
 
         // Store GitHub's own casing, so the value shown back matches the account exactly.
@@ -146,11 +186,21 @@ public sealed class ProfileController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
 
+        // The repositories already created for this student were shared with the login they are correcting, so
+        // the new account has no access to any of them until it is invited too. Failures are counted rather
+        // than thrown: the login is saved either way, and an uninvited repository is recoverable from /my.
+        // A first entry skips it — no login, therefore no repository, therefore nothing to look up.
+        var share = hadLogin && loginChanged
+            ? await studentAssignments.ShareExistingRepositoriesAsync(user.Id, cancellationToken)
+            : default;
+
         return Ok(new GitHubProfileResponse
         {
             GitHubUsername = account.Login,
             GitHubUserId = account.Id,
             Verified = user.GitHubVerifiedAt is not null,
+            RepositoriesShared = share.Shared,
+            RepositoriesFailed = share.Failed,
         });
     }
 }

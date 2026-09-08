@@ -95,3 +95,24 @@ h3 {
   font-size: 0.75rem;
   color: var(--ink-2);
 }
+
+/* Its own line under the sentence it acts on: inline, the button wrapped mid-paragraph and read as stray.
+   Pulled left by the button's own padding so its label lines up with the paragraph above it. */
+.github-actions {
+  margin-top: 0.5rem;
+
+  .btn {
+    margin-left: -0.75rem;
+  }
+}
+
+/* The username editor sits under the line it corrects — a bordered block rather than a card, so the page still
+   leads with the repositories. */
+.github-edit {
+  max-width: 26rem;
+  margin-top: 0.75rem;
+  padding: 0.875rem 0.875rem 0.25rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}

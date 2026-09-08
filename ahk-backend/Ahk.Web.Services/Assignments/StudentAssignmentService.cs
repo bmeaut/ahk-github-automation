@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.GitHub;
 using Microsoft.EntityFrameworkCore;
@@ -47,9 +47,21 @@ public sealed class StudentRepository
     public DateTimeOffset? InvitationSentAt { get; set; }
 }
 
+/// <summary>What re-sharing a user's repositories with a corrected GitHub login came to.</summary>
+/// <param name="Shared">Repositories the new login was invited to.</param>
+/// <param name="Failed">Repositories GitHub refused or could not be asked about; the stored login is unchanged on those.</param>
+public readonly record struct RepositoryShareResult(int Shared, int Failed);
+
 public interface IStudentAssignmentService
 {
     Task<IReadOnlyList<StudentRepository>> ListForUserAsync(int userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Shares every repository this user already holds with the login now on their profile. Called after they
+    /// correct a misspelled GitHub username: the repositories exist, but the invitations went to whoever owns
+    /// the name they typed first.
+    /// </summary>
+    Task<RepositoryShareResult> ShareExistingRepositoriesAsync(int userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Issues a fresh invitation for a repository the student still cannot open. Returns null when the
@@ -110,6 +122,85 @@ public sealed class StudentAssignmentService : IStudentAssignmentService
             await db.SaveChangesAsync(cancellationToken);
 
         return results;
+    }
+
+    /// <summary>
+    /// Re-invites the user's current GitHub login to each repository that was shared with a previous one. The
+    /// old invitation is deliberately left alone: it points at an account that is not this student's, so its
+    /// owner can only decline it, and deleting it would cost a call per repository for nothing.
+    ///
+    /// <para>Never throws. The rename it follows is already saved, so one unreachable course must cost that
+    /// course's repository and no more — the caller reports the count and the student can try again.</para>
+    /// </summary>
+    public async Task<RepositoryShareResult> ShareExistingRepositoriesAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        var login = user?.GitHubUsername;
+        if (string.IsNullOrWhiteSpace(login))
+            return default;
+
+        var acceptances = await db.AssignmentAcceptances.IgnoreQueryFilters()
+            .Where(a => a.UserId == userId && a.GitHubUsername != login)
+            .ToListAsync(cancellationToken);
+
+        var shared = 0;
+        var failed = 0;
+
+        foreach (var acceptance in acceptances)
+        {
+            if (await ShareAsync(acceptance, login, cancellationToken))
+                shared++;
+            else
+                failed++;
+        }
+
+        // The roster copy of the login, which the course screens show: one Student row per course this person
+        // has work in, all of them still naming the misspelling.
+        if (shared > 0 && !string.IsNullOrWhiteSpace(user!.NeptunCode))
+        {
+            var neptun = Normalize.Neptun(user.NeptunCode);
+            var students = await db.Students.IgnoreQueryFilters()
+                .Where(st => st.Neptun == neptun && st.GitHubUsername != login)
+                .ToListAsync(cancellationToken);
+
+            foreach (var student in students)
+                student.GitHubUsername = login;
+        }
+
+        if (shared > 0)
+            await db.SaveChangesAsync(cancellationToken);
+
+        return new RepositoryShareResult(shared, failed);
+    }
+
+    /// <summary>One repository's share, with the acceptance updated to the login that now holds it.</summary>
+    private async Task<bool> ShareAsync(AssignmentAcceptance acceptance, string login, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var token = await tokens.GetForCourseAsync(acceptance.CourseId, bypassCache: false, cancellationToken);
+            if (token is null)
+            {
+                logger.LogWarning("Could not re-share {Repository}: course {CourseId} has no GitHub App token.", acceptance.GitHubRepoName, acceptance.CourseId);
+                return false;
+            }
+
+            var (owner, name) = IAssignmentService.SplitRepoName(acceptance.GitHubRepoName);
+            var result = await gitHub.AddCollaboratorAsync(owner, name, login, token.Token, cancellationToken);
+
+            acceptance.GitHubUsername = login;
+            acceptance.InvitationPending = result.InvitationCreated;
+            acceptance.InvitationId = result.InvitationId;
+            acceptance.InvitationSentAt = result.InvitationCreated ? DateTimeOffset.UtcNow : null;
+            return true;
+        }
+        catch (Exception ex) when (ex is GitHubOperationException or HttpRequestException or TaskCanceledException)
+        {
+            logger.LogWarning(ex, "Could not share {Repository} with {Login}.", acceptance.GitHubRepoName, login);
+            return false;
+        }
     }
 
     public async Task<StudentRepository?> ResendInvitationAsync(int userId, int acceptanceId, CancellationToken cancellationToken = default)

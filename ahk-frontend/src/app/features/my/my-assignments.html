@@ -35,6 +35,52 @@
               </span>
             }
           </p>
+
+          @if (!u.gitHubUsernameVerified && !editingGitHub()) {
+            <!-- Only offered while unconfirmed: once an invitation has been accepted with the account, the
+                 server refuses the change, so a button here would only lead to an error. -->
+            <p class="github-actions">
+              <button type="button" class="btn quiet" (click)="editGitHubUsername()">
+                Change my GitHub username
+              </button>
+            </p>
+          }
+
+          @if (editingGitHub()) {
+            <form class="github-edit" (ngSubmit)="saveGitHubUsername()" #gh="ngForm">
+              <div class="field">
+                <label for="gitHubUsername">Your GitHub username</label>
+                <input
+                  id="gitHubUsername"
+                  name="gitHubUsername"
+                  type="text"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                  [(ngModel)]="gitHubUsername"
+                  required
+                />
+                <span class="hint">
+                  The name in your profile URL — github.com/<strong>username</strong>. We check it against
+                  GitHub, then invite that account to the repositories you already have.
+                </span>
+              </div>
+
+              <div class="btn-row">
+                <button type="submit" class="btn primary" [disabled]="savingGitHub() || gh.invalid">
+                  {{ savingGitHub() ? 'Checking with GitHub…' : 'Save and re-invite' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn quiet"
+                  [disabled]="savingGitHub()"
+                  (click)="cancelGitHubUsername()"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          }
         }
       }
     </div>

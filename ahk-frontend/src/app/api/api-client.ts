@@ -4166,6 +4166,8 @@ export interface GitHubProfileResponse {
     gitHubUsername?: string;
     gitHubUserId?: number | undefined;
     verified?: boolean;
+    repositoriesShared?: number;
+    repositoriesFailed?: number;
 }
 
 export interface SetGitHubUsernameRequest {

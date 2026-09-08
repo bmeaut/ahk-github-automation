@@ -203,7 +203,7 @@ GitHub App this depends on** — registration, permissions, installation scope a
 | `/api/{course}/assignments` | `CourseMember` | Instructor CRUD, archive/unarchive, regenerate invite link, acceptance roster |
 | `/api/{course}/invite/{token}` | **`[Authorize]` only** | The student flow: state, then `POST accept` |
 | `/api/my/assignments` | `[Authorize]` | Every repository the caller holds, across courses, plus `POST {id}/resend-invitation` |
-| `/api/profile/github` | `[Authorize]` | Records the caller's GitHub username after verifying it exists |
+| `/api/profile/github` | `[Authorize]` | Records (or corrects) the caller's GitHub username after verifying it exists |
 
 Three things about this are deliberate and easy to break:
 
@@ -223,6 +223,23 @@ named `{template repository name}-{neptun}`, lower-cased like every other reposi
 Students who are not organization members receive a GitHub *invitation* rather than direct access, and
 invitations expire. That state is tracked per acceptance and re-sendable from `/my`; the expiry is read
 from GitHub's own `expired` flag, never computed here.
+
+**Correcting a misspelled GitHub username.** A student who typed their login wrong shared their repositories
+with a stranger, so `PUT /api/profile/github` takes a second answer — from `/my` or from the invite screen —
+and `StudentAssignmentService.ShareExistingRepositoriesAsync` then invites the corrected account to every
+repository they already hold, moving `AssignmentAcceptance.GitHubUsername` (and the roster `Student` row) with
+it. Three deliberate parts:
+
+- **The invitations already sent are left alone.** They belong to whoever owns the misspelling, who can only
+  decline them, and withdrawing each one would cost a GitHub call per repository for nothing.
+- **A failure is counted, not thrown.** The rename is already saved when the sharing runs, so an unreachable
+  course costs that one repository; the reply carries `repositoriesShared`/`repositoriesFailed` and the student
+  can recover the rest with "Send a new invitation" on `/my`.
+- **A confirmed account cannot be re-pointed** (400). Confirmation means someone signed in as that account and
+  accepted an invitation with it, so it is no longer a typo waiting to be fixed — re-pointing it would hand a
+  stranger's account the repositories it earned. The one exception is the *same* account under a new name:
+  matched on GitHub's numeric id, that keeps its confirmation and still re-shares, because the acceptance rows
+  address collaborators by login.
 
 ## Auth model
 

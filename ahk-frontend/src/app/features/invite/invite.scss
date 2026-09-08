@@ -54,3 +54,13 @@ h2 {
 .btn-row {
   margin-top: 1.25rem;
 }
+
+/* Correcting a misspelled username on the way in: a bordered block, so the form and its Save button read as a
+   detour from the Accept button rather than an alternative to it. */
+.github-edit {
+  margin: 0.75rem 0 1rem;
+  padding: 0.875rem 0.875rem 0.25rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}

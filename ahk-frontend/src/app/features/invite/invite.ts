@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -16,7 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
  */
 @Component({
   selector: 'app-invite',
-  imports: [FormsModule],
+  imports: [FormsModule, NgTemplateOutlet],
   templateUrl: './invite.html',
   styleUrl: './invite.scss',
 })
@@ -36,6 +37,12 @@ export class Invite implements OnInit, OnDestroy {
 
   protected gitHubUsername = '';
   protected readonly savingUsername = signal(false);
+
+  /**
+   * True while a username that is already stored is being corrected, which is the difference between the two
+   * places the form appears: asked for the first time, or fixed before the repository is created.
+   */
+  protected readonly editingUsername = signal(false);
 
   private course = '';
   private token = '';
@@ -65,6 +72,20 @@ export class Invite implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Opens the editor on the stored username. Offered only before the repository is handed over — once the
+   * account is confirmed the server refuses the change, and by then the state is Accepted anyway.
+   */
+  protected editGitHubUsername(): void {
+    this.gitHubUsername = this.state()?.gitHubUsername ?? '';
+    this.error.set(null);
+    this.editingUsername.set(true);
+  }
+
+  protected cancelGitHubUsername(): void {
+    this.editingUsername.set(false);
+  }
+
   /** Verified server-side against the GitHub API, so a typo comes back as a message rather than a broken repo. */
   protected saveGitHubUsername(): void {
     const login = this.gitHubUsername.trim();
@@ -78,6 +99,7 @@ export class Invite implements OnInit, OnDestroy {
     this.profileClient.setGitHubUsername({ gitHubUsername: login, courseSlug: this.course }).subscribe({
       next: () => {
         this.savingUsername.set(false);
+        this.editingUsername.set(false);
         this.gitHubUsername = '';
 
         // The session carries the username too, and the student may go to /my straight afterwards.

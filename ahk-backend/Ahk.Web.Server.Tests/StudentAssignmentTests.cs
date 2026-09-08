@@ -1,4 +1,4 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.GitHub;
@@ -265,5 +265,107 @@ public class StudentAssignmentTests
 
         Assert.Null(await fixture.Service.ResendInvitationAsync(userId: 999, acceptanceId: 100));
         Assert.Empty(await fixture.Service.ListForUserAsync(999));
+    }
+
+    // ---- Correcting a misspelled GitHub username ----
+
+    /// <summary>
+    /// The repository was created for a login the student typed wrong, so it is shared with a stranger. After
+    /// the correction the real account has to be invited to it, and the acceptance has to name that account —
+    /// every later collaborator and invitation lookup addresses GitHub by this login.
+    /// </summary>
+    [Fact]
+    public async Task CorrectingTheLogin_InvitesTheNewAccountToTheRepository()
+    {
+        await using var fixture = new Fixture(invitationPending: true, invitationId: 99);
+        await CorrectTheLoginAsync(fixture, "Octocat-Real");
+
+        fixture.GitHub
+            .Setup(g => g.AddCollaboratorAsync("ahk-org", "viaubc01-hw1-abc123", "Octocat-Real", "gh-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CollaboratorResult(true, 555));
+
+        var result = await fixture.Service.ShareExistingRepositoriesAsync(UserId);
+
+        Assert.Equal(1, result.Shared);
+        Assert.Equal(0, result.Failed);
+
+        var stored = await fixture.Db.AssignmentAcceptances.IgnoreQueryFilters().SingleAsync();
+        Assert.Equal("Octocat-Real", stored.GitHubUsername);
+        Assert.True(stored.InvitationPending);
+        Assert.Equal(555, stored.InvitationId);
+        Assert.NotNull(stored.InvitationSentAt);
+
+        // The invitation aimed at the misspelling is left where it is: it belongs to a stranger, who can only
+        // decline it, and withdrawing it would cost a call per repository for nothing.
+        fixture.GitHub.Verify(
+            g => g.DeleteInvitationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>The roster copy of the login follows too, or the course screens keep showing the misspelling.</summary>
+    [Fact]
+    public async Task CorrectingTheLogin_UpdatesTheStudentRow()
+    {
+        await using var fixture = new Fixture(invitationPending: true, invitationId: 99);
+        await CorrectTheLoginAsync(fixture, "Octocat-Real");
+
+        fixture.GitHub
+            .Setup(g => g.AddCollaboratorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CollaboratorResult(true, 555));
+
+        await fixture.Service.ShareExistingRepositoriesAsync(UserId);
+
+        var student = await fixture.Db.Students.IgnoreQueryFilters().SingleAsync();
+        Assert.Equal("Octocat-Real", student.GitHubUsername);
+    }
+
+    /// <summary>
+    /// One repository GitHub refuses must not cost the others, nor undo the rename that is already saved. It is
+    /// counted and left on its old login, which is what makes it recoverable from the student's own page.
+    /// </summary>
+    [Fact]
+    public async Task ARepositoryGitHubRefuses_IsCountedAndLeftAlone()
+    {
+        await using var fixture = new Fixture(invitationPending: true, invitationId: 99);
+        await CorrectTheLoginAsync(fixture, "Octocat-Real");
+
+        fixture.GitHub
+            .Setup(g => g.AddCollaboratorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new GitHubOperationException("adding a collaborator", System.Net.HttpStatusCode.Forbidden, "no"));
+
+        var result = await fixture.Service.ShareExistingRepositoriesAsync(UserId);
+
+        Assert.Equal(0, result.Shared);
+        Assert.Equal(1, result.Failed);
+        Assert.Equal("octocat", (await fixture.Db.AssignmentAcceptances.IgnoreQueryFilters().SingleAsync()).GitHubUsername);
+    }
+
+    /// <summary>Nothing to correct: the repository is already shared with the login on the profile.</summary>
+    [Fact]
+    public async Task ARepositoryAlreadyOnTheCurrentLogin_IsLeftUntouched()
+    {
+        await using var fixture = new Fixture(invitationPending: false, invitationId: null);
+
+        var result = await fixture.Service.ShareExistingRepositoriesAsync(UserId);
+
+        Assert.Equal(0, result.Shared);
+        Assert.Equal(0, result.Failed);
+        fixture.GitHub.Verify(
+            g => g.AddCollaboratorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Puts the fixture in the state the profile endpoint leaves behind: the user now claims a different login,
+    /// while the acceptance and the roster row still name the one the repository was shared with.
+    /// </summary>
+    private static async Task CorrectTheLoginAsync(Fixture fixture, string login)
+    {
+        var user = await fixture.Db.Users.SingleAsync();
+        user.GitHubUsername = login;
+        user.NeptunCode = "ABC123";
+
+        fixture.Db.Students.Add(new Student { Id = 1, CourseId = CourseId, Neptun = "ABC123", GitHubUsername = "octocat" });
+        await fixture.Db.SaveChangesAsync();
     }
 }

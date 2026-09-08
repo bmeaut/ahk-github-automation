@@ -1,6 +1,7 @@
-using Ahk.Web.Data;
+﻿using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Auth;
+using Ahk.Web.Services.Assignments;
 using Ahk.Web.Services.GitHub;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -29,6 +30,7 @@ public sealed class GitHubIdentityTests : IDisposable
     private readonly ApplicationDbContext db;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly Mock<IGitHubRepositoryService> gitHub = new();
+    private readonly Mock<IStudentAssignmentService> studentAssignments = new();
     private readonly ProfileController controller;
 
     public GitHubIdentityTests()
@@ -52,7 +54,7 @@ public sealed class GitHubIdentityTests : IDisposable
 
         var tokens = new Mock<ICourseGitHubAppTokenProvider>();
 
-        this.controller = new ProfileController(this.userManager, this.gitHub.Object, tokens.Object, this.db);
+        this.controller = new ProfileController(this.userManager, this.gitHub.Object, tokens.Object, this.db, this.studentAssignments.Object);
     }
 
     [Fact]
@@ -113,26 +115,59 @@ public sealed class GitHubIdentityTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 
-    /// <summary>Re-entering one's own login must not trip the clash check.</summary>
+    /// <summary>Re-entering one's own login must not trip the clash check, and nothing is re-shared for it.</summary>
     [Fact]
-    public async Task ReEnteringOnesOwnLogin_IsAccepted()
+    public async Task ReEnteringOnesOwnLogin_IsAccepted_AndSharesNothing()
     {
         var alice = await CreateUserAsync("alice");
         SignIn(alice);
         GitHubKnows("Octocat", 583231);
 
         await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
+
         var result = await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "Octocat" }, default);
 
         Assert.IsType<OkObjectResult>(result.Result);
+        this.studentAssignments.Verify(
+            s => s.ShareExistingRepositoriesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     /// <summary>
-    /// Re-binding to a different account withdraws what the old one had corroborated — otherwise a student
-    /// could earn the verified mark on their own account and then swap in someone else's login.
+    /// The misspelling case this exists for: an unconfirmed login can be corrected, the correction withdraws
+    /// nothing (there was nothing corroborated), and every repository already created is shared with the new
+    /// account — the earlier invitations went to whoever owns the name that was typed first.
     /// </summary>
     [Fact]
-    public async Task ChangingToADifferentAccount_ClearsTheVerification()
+    public async Task ChangingAnUnconfirmedAccount_IsAccepted_AndReSharesTheRepositories()
+    {
+        var alice = await CreateUserAsync("alice");
+        SignIn(alice);
+        GitHubKnows("Octcat", 111);
+        await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octcat" }, default);
+
+        this.studentAssignments
+            .Setup(s => s.ShareExistingRepositoriesAsync(alice.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RepositoryShareResult(2, 1));
+
+        GitHubKnows("Octocat", 583231);
+        var result = await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
+
+        var dto = Assert.IsType<GitHubProfileResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal("Octocat", dto.GitHubUsername);
+        Assert.False(dto.Verified);
+        Assert.Equal(2, dto.RepositoriesShared);
+        Assert.Equal(1, dto.RepositoriesFailed);
+
+        Assert.Equal("Octocat", (await this.userManager.FindByNameAsync("alice"))!.GitHubUsername);
+    }
+
+    /// <summary>
+    /// A confirmed link is not a typo waiting to be fixed: someone signed in as that account and accepted an
+    /// invitation with it. Re-pointing it would hand a stranger's account the repositories it earned.
+    /// </summary>
+    [Fact]
+    public async Task ChangingAConfirmedAccount_IsRefused()
     {
         var alice = await CreateUserAsync("alice");
         SignIn(alice);
@@ -146,9 +181,40 @@ public sealed class GitHubIdentityTests : IDisposable
         GitHubKnows("Hubot", 999);
         var result = await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "hubot" }, default);
 
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+
+        var stored = await this.userManager.FindByNameAsync("alice");
+        Assert.Equal("Octocat", stored!.GitHubUsername);
+        Assert.NotNull(stored.GitHubVerifiedAt);
+        this.studentAssignments.Verify(
+            s => s.ShareExistingRepositoriesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// The same account under a new name: GitHub's numeric id says it is still theirs, so the confirmation
+    /// survives — but the acceptance rows address collaborators by login, so the repositories are re-shared.
+    /// </summary>
+    [Fact]
+    public async Task AConfirmedAccountRenamedOnGitHub_IsAccepted_AndStaysConfirmed()
+    {
+        var alice = await CreateUserAsync("alice");
+        SignIn(alice);
+        GitHubKnows("Octocat", 583231);
+        await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
+
+        alice.GitHubVerifiedAt = DateTimeOffset.UtcNow;
+        await this.userManager.UpdateAsync(alice);
+
+        GitHubKnows("TheOctocat", 583231);
+        var result = await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "theoctocat" }, default);
+
         var dto = Assert.IsType<GitHubProfileResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
-        Assert.False(dto.Verified);
-        Assert.Null((await this.userManager.FindByNameAsync("alice"))!.GitHubVerifiedAt);
+        Assert.Equal("TheOctocat", dto.GitHubUsername);
+        Assert.True(dto.Verified);
+        this.studentAssignments.Verify(
+            s => s.ShareExistingRepositoriesAsync(alice.Id, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     /// <summary>A login GitHub has never heard of is a typo, and says so.</summary>

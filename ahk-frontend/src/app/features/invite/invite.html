@@ -45,8 +45,21 @@
             <p class="muted">
               It will be shared with your GitHub account,
               <span class="mono">{{ s.gitHubUsername }}</span
-              >.
+              >.&nbsp;
+              @if (!editingUsername()) {
+                <button type="button" class="btn quiet" (click)="editGitHubUsername()">
+                  Not your account?
+                </button>
+              }
             </p>
+
+            @if (editingUsername()) {
+              <!-- Boxed here, plain in the first-time case: this one sits beside the Accept button, and two
+                   loose primary buttons in a row read as a choice between them. -->
+              <div class="github-edit">
+                <ng-container [ngTemplateOutlet]="gitHubUsernameForm"></ng-container>
+              </div>
+            }
 
             @if (error(); as e) {
               <p class="notice error">{{ e }}</p>
@@ -111,35 +124,7 @@
               asked this once.
             </p>
 
-            <form (ngSubmit)="saveGitHubUsername()" #f="ngForm">
-              <div class="field">
-                <label for="gitHubUsername">GitHub username</label>
-                <input
-                  id="gitHubUsername"
-                  name="gitHubUsername"
-                  type="text"
-                  autocapitalize="off"
-                  autocorrect="off"
-                  spellcheck="false"
-                  [(ngModel)]="gitHubUsername"
-                  required
-                />
-                <span class="hint">
-                  The name in your profile URL — github.com/<strong>username</strong>. Not your email
-                  address.
-                </span>
-              </div>
-
-              @if (error(); as e) {
-                <p class="notice error">{{ e }}</p>
-              }
-
-              <div class="btn-row">
-                <button type="submit" class="btn primary" [disabled]="savingUsername() || f.invalid">
-                  {{ savingUsername() ? 'Checking with GitHub…' : 'Save and continue' }}
-                </button>
-              </div>
-            </form>
+            <ng-container [ngTemplateOutlet]="gitHubUsernameForm"></ng-container>
           }
 
           <!-- Terminal: the repository name is built from the Neptun code, and only the IdP can supply it. -->
@@ -180,3 +165,41 @@
     </div>
   }
 </main>
+
+<!-- One form, used both when the username is asked for the first time and when a misspelling is corrected on
+     the way into a repository. Correcting it re-invites the new account to every repository already created. -->
+<ng-template #gitHubUsernameForm>
+  <form (ngSubmit)="saveGitHubUsername()" #f="ngForm">
+    <div class="field">
+      <label for="gitHubUsername">GitHub username</label>
+      <input
+        id="gitHubUsername"
+        name="gitHubUsername"
+        type="text"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        [(ngModel)]="gitHubUsername"
+        required
+      />
+      <span class="hint">
+        The name in your profile URL — github.com/<strong>username</strong>. Not your email address.
+      </span>
+    </div>
+
+    @if (error(); as e) {
+      <p class="notice error">{{ e }}</p>
+    }
+
+    <div class="btn-row">
+      <button type="submit" class="btn primary" [disabled]="savingUsername() || f.invalid">
+        {{ savingUsername() ? 'Checking with GitHub…' : 'Save and continue' }}
+      </button>
+      @if (editingUsername()) {
+        <button type="button" class="btn quiet" [disabled]="savingUsername()" (click)="cancelGitHubUsername()">
+          Cancel
+        </button>
+      }
+    </div>
+  </form>
+</ng-template>
