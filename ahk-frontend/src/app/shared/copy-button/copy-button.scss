@@ -1,0 +1,17 @@
+/* The host is an inline control: it has to sit on the text baseline when it follows a value inside a sentence. */
+:host {
+  display: inline-flex;
+  flex: none;
+  vertical-align: middle;
+}
+
+/* Sizing comes from the global .btn.icon; only the two feedback states are ours. */
+.btn.icon.copied,
+.btn.icon.copied:hover:not(:disabled) {
+  color: var(--ok);
+}
+
+.btn.icon.failed,
+.btn.icon.failed:hover:not(:disabled) {
+  color: var(--bad);
+}

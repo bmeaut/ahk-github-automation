@@ -122,11 +122,23 @@
       "Bash(node shot3.js)",
       "Read(//c/Users/beny314/.nuget/packages/microsoft.aspnetcore.mvc.testing/**)",
       "Bash(grep -ao \"CookieContainerHandler\" ~/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/Microsoft.AspNetCore.Mvc.Testing.dll | head -2; echo \"---CreateDefaultClient---\"; grep -ao \"CreateDefaultClient\" ~/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/Microsoft.AspNetCore.Mvc.Testing.dll | head -2; echo \"--- pkg ref version ---\"; grep -n \"Mvc.Testing\" /c/Source/ahk-github-automation/ahk-backend/Ahk.Web.Server.Tests/Ahk.Web.Server.Tests.csproj)",
-      "Read(//c/Users/beny314/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/**)"
+      "Read(//c/Users/beny314/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.11/lib/net10.0/**)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --remote-debugging-port=9222 --ignore-certificate-errors --no-first-run --no-default-browser-check --user-data-dir=\"C:\\\\Users\\\\beny314\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Source-ahk-github-automation\\\\cb955ced-88fe-4016-acff-71d85e272c1a\\\\scratchpad\\\\chrome-profile\" --window-size=1280,1400 https://localhost:4200/login)",
+      "Read(//c/Users/beny314/AppData/Local/Temp/claude/c--Source-ahk-github-automation/cb955ced-88fe-4016-acff-71d85e272c1a/scratchpad/**)",
+      "Bash(node run1.mjs .)",
+      "Bash(node run2.mjs)",
+      "Bash(node run3.mjs)",
+      "Bash(node run4.mjs)",
+      "Bash(node run5.mjs)",
+      "Bash(node run6.mjs)",
+      "Bash(sqlcmd -S \"\\(localdb\\)\\\\MSSQLLocalDB\" -d AhkWeb -Q \"SET QUOTED_IDENTIFIER ON; DELETE FROM CourseWebhookTokens WHERE Description LIKE '%probe%'; SELECT Id, Description FROM CourseWebhookTokens;\")",
+      "Bash(powershell -NoProfile -Command 'Get-NetTCPConnection -LocalPort 7443,4200,9222 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; '\\\\''stopped'\\\\''')",
+      "Bash(npx prettier *)"
     ],
     "additionalDirectories": [
       "\\tmp",
-      "C:\\Users\\beny314\\AppData\\Local\\Temp\\claude\\c--Source-ahk-github-automation\\f74052ba-9e93-4760-8fe5-7c53f23ddecb\\scratchpad"
+      "C:\\Users\\beny314\\AppData\\Local\\Temp\\claude\\c--Source-ahk-github-automation\\f74052ba-9e93-4760-8fe5-7c53f23ddecb\\scratchpad",
+      "C:\\Users\\beny314\\AppData\\Local\\Temp\\claude\\c--Source-ahk-github-automation\\cb955ced-88fe-4016-acff-71d85e272c1a\\scratchpad"
     ]
   },
   "enabledPlugins": {

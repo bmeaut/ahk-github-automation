@@ -100,6 +100,16 @@ textarea {
   .btn {
     flex: none;
   }
+
+  /* The GitHub Actions secret this value is pasted into — a label about the value, not part of it, so it is
+     dimmer than the token and never breaks across lines. */
+  .secret-name {
+    flex: none;
+    font-size: 0.75rem;
+    color: var(--ink-2);
+    white-space: nowrap;
+    word-break: normal;
+  }
 }
 
 .kv {

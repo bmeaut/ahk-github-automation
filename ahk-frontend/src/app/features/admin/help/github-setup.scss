@@ -36,6 +36,21 @@
   }
 }
 
+/* A value quoted inside running text with its copy button attached. Not the .copy-row of the course editor:
+   that is a block row for a <dd>, this one has to stay inline so the sentence reads around it. It may wrap as a
+   unit, but the button never leaves the value it copies. */
+.copyable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: middle;
+  max-width: 100%;
+
+  .mono {
+    word-break: break-all;
+  }
+}
+
 /* The permission groups' headings, each sitting directly on its own table. */
 .card-body > h3 {
   margin: 1.25rem 0 0.5rem;

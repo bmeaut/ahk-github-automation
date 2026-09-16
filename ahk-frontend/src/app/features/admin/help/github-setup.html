@@ -54,15 +54,39 @@
           Go to the organization's <strong>Settings → Developer settings → GitHub Apps → New GitHub App</strong>.
         </li>
         <li>
-          <strong>GitHub App name</strong> — something identifiable, e.g.
-          <span class="mono">AHK GitHub Monitor (AUT) - BMEVIAUAC01</span>.
+          <strong>GitHub App name</strong> —
+          @if (appName(); as name) {
+            use
+            <span class="copyable">
+              <span class="mono">{{ name }}</span>
+              <app-copy-button [value]="name" label="the App name" />
+            </span>
+            <br />
+            App names are unique across the whole of GitHub, which is what the course's slug in it buys.
+          } @else {
+            something identifiable, and unique across the whole of GitHub — the convention is
+            <span class="mono">AHK Monitor (AUT) - COURSESLUG</span>, e.g.
+            <span class="mono">AHK Monitor (AUT) - VIAUBC01</span>. Open this guide from a course's
+            <strong>GitHub integration</strong> card and it will name the App for that course exactly.
+          }
         </li>
-        <li><strong>Homepage URL</strong> — <span class="mono">https://ahk.aut.bme.hu</span>.</li>
+        <li>
+          <strong>Homepage URL</strong> —
+          <span class="copyable">
+            <span class="mono">{{ homepageUrl }}</span>
+            <app-copy-button [value]="homepageUrl" label="the homepage URL" />
+          </span>
+        </li>
         <li>
           <strong>Webhook</strong> — tick <strong>Active</strong>, set the
-          <strong>Webhook URL</strong> to <span class="mono">https://ahk.aut.bme.hu/api/integrations/github</span>,
-          and generate a long random <strong>Webhook secret</strong> (you will paste this into the portal in
-          step 3, so keep it).
+          <strong>Webhook URL</strong> to
+          <span class="copyable">
+            <span class="mono">{{ webhookUrl }}</span>
+            <app-copy-button [value]="webhookUrl" label="the webhook URL" />
+          </span>
+          <br />
+          Then generate a long random <strong>Webhook secret</strong> — you will paste this into the portal in
+          step 3, so keep it.
         </li>
         <li>
           <strong>Permissions</strong> — set exactly what the <a href="#permissions">table below</a> lists, and
@@ -280,6 +304,16 @@
       <div class="grow">
         <h2>Not from GitHub: CI callback tokens</h2>
       </div>
+      @if (org(); as o) {
+        <a
+          class="btn"
+          [href]="'https://github.com/organizations/' + o + '/settings/secrets/actions'"
+          target="_blank"
+          rel="noopener"
+        >
+          Organization secrets ↗
+        </a>
+      }
     </header>
     <div class="card-body prose">
       <p>
@@ -288,6 +322,15 @@
         <strong>here in the portal</strong>, not on GitHub. The evaluator workflow uses one to sign its result
         submissions back to the portal (an HMAC in the <span class="mono">X-Ahk-Token</span> header), so the
         portal can trust that a set of grades really came from that course's CI.
+      </p>
+      <p>
+        A token is issued as a pair, and the pair goes into the organization's <strong>Actions secrets</strong>
+        @if (!org()) {
+          (Organization → <strong>Settings → Secrets and variables → Actions</strong>)
+        }
+        under the names the evaluator workflow reads: the token as <span class="mono">AHK_APPTOKEN</span> and
+        its secret as <span class="mono">AHK_APPSECRET</span>. Setting them on the organization rather than on
+        each repository means a newly created student repository is already able to report.
       </p>
       <p class="hint">
         Do not confuse the <strong>webhook secret</strong> (a GitHub value, documented above) with a

@@ -150,7 +150,11 @@
               <h2>GitHub integration</h2>
               <p>Credentials this course uses to talk to GitHub. Stored values are never shown again.</p>
             </div>
-            <a class="btn" routerLink="/admin/help/github" [queryParams]="{ org: c.gitHubOrganization }">
+            <a
+              class="btn"
+              routerLink="/admin/help/github"
+              [queryParams]="{ org: c.gitHubOrganization, slug: c.slug }"
+            >
               Setup guide
             </a>
           </header>
@@ -177,15 +181,21 @@
 
             <div class="field">
               <label for="token">Access token</label>
-              <input
-                id="token"
-                name="accessToken"
-                type="password"
-                [(ngModel)]="accessToken"
-                autocomplete="off"
-                [disabled]="isClearing('accessToken')"
-                [placeholder]="c.gitHubConfig?.hasAccessToken ? 'Stored — type to replace' : 'ghp_… or github_pat_…'"
-              />
+              <!-- The token is created on GitHub, on your own account — the link saves hunting for the page. -->
+              <div class="input-with-action">
+                <input
+                  id="token"
+                  name="accessToken"
+                  type="password"
+                  [(ngModel)]="accessToken"
+                  autocomplete="off"
+                  [disabled]="isClearing('accessToken')"
+                  [placeholder]="c.gitHubConfig?.hasAccessToken ? 'Stored — type to replace' : 'ghp_… or github_pat_…'"
+                />
+                <a class="btn" href="https://github.com/settings/tokens" target="_blank" rel="noopener">
+                  Create a token ↗
+                </a>
+              </div>
               <span class="hint">
                 @if (c.gitHubConfig?.hasAccessToken) {
                   A token ending <span class="mono">…{{ c.gitHubConfig?.accessTokenHint }}</span> is stored.
@@ -286,28 +296,38 @@
             <h2>CI callback tokens</h2>
             <p>The evaluator workflow signs its results with one of these. Revoke a token to cut it off.</p>
           </div>
+          @if (c.gitHubOrganization) {
+            <!-- Where the pair below has to be pasted: AHK_APPTOKEN / AHK_APPSECRET as organization secrets. -->
+            <a
+              class="btn"
+              [href]="'https://github.com/organizations/' + c.gitHubOrganization + '/settings/secrets/actions'"
+              target="_blank"
+              rel="noopener"
+            >
+              Organization secrets ↗
+            </a>
+          }
         </header>
 
         @if (issuedToken(); as t) {
           <div class="card-body issued">
             <p class="notice success">
               Token created. Its secret is shown here, and stays available — you can copy it again from the list
-              below at any time.
+              below at any time. Store the pair as GitHub Actions secrets on the organization, under the names
+              the evaluator workflow reads.
             </p>
             <dl class="kv">
               <dt>Token</dt>
               <dd class="mono copy-row">
                 <span>{{ t.token }}</span>
-                <button type="button" class="btn quiet" (click)="copy('issued-token', t.token)">
-                  {{ copied() === 'issued-token' ? 'Copied' : 'Copy token' }}
-                </button>
+                <app-copy-button [value]="t.token" label="the token" />
+                <span class="secret-name mono">→ AHK_APPTOKEN</span>
               </dd>
               <dt>Secret</dt>
               <dd class="mono copy-row">
                 <span>{{ t.secret }}</span>
-                <button type="button" class="btn quiet" (click)="copy('issued-secret', t.secret)">
-                  {{ copied() === 'issued-secret' ? 'Copied' : 'Copy secret' }}
-                </button>
+                <app-copy-button [value]="t.secret" label="the secret" />
+                <span class="secret-name mono">→ AHK_APPSECRET</span>
               </dd>
             </dl>
             <button type="button" class="btn quiet" (click)="dismissIssuedToken()">Done</button>
@@ -345,12 +365,8 @@
                   </td>
                   <td class="actions">
                     <span class="token-actions">
-                      <button type="button" class="btn quiet" (click)="copy('row-' + t.id + '-token', t.token)">
-                        {{ copied() === 'row-' + t.id + '-token' ? 'Copied' : 'Copy token' }}
-                      </button>
-                      <button type="button" class="btn quiet" (click)="copy('row-' + t.id + '-secret', t.secret)">
-                        {{ copied() === 'row-' + t.id + '-secret' ? 'Copied' : 'Copy secret' }}
-                      </button>
+                      <app-copy-button [value]="t.token" label="the token" />
+                      <app-copy-button [value]="t.secret" label="the secret" />
                       <button type="button" class="btn quiet" (click)="toggleReveal(t)">
                         {{ revealed().has(t.id ?? 0) ? 'Hide' : 'Show' }}
                       </button>

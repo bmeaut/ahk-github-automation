@@ -17,6 +17,7 @@ import {
 } from '../../../api/api-client';
 import { AuthService } from '../../../core/auth/auth.service';
 import { copyToClipboard } from '../../../core/clipboard';
+import { CopyButton } from '../../../shared/copy-button/copy-button';
 import { HealthChain } from '../../../shared/health-chain/health-chain';
 
 /**
@@ -33,7 +34,7 @@ import { HealthChain } from '../../../shared/health-chain/health-chain';
  */
 @Component({
   selector: 'app-course-editor',
-  imports: [FormsModule, RouterLink, DatePipe, HealthChain],
+  imports: [FormsModule, RouterLink, DatePipe, HealthChain, CopyButton],
   templateUrl: './course-editor.html',
   styleUrl: './course-editor.scss',
 })
