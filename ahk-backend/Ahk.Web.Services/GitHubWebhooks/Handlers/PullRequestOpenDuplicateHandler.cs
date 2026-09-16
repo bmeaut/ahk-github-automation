@@ -1,3 +1,4 @@
+using Ahk.Web.Services.GitHub;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Octokit;
@@ -31,14 +32,18 @@ public sealed class PullRequestOpenDuplicateHandler : RepositoryEventHandlerBase
         if (!payload.Action.Equals("opened", StringComparison.OrdinalIgnoreCase))
             return EventHandlerResult.EventNotOfInterest(payload.Action);
 
-        var repositoryPrs = await context.GitHubClient.PullRequest.GetAllForRepository(
-            payload.Repository.Id, new PullRequestRequest { State = ItemStateFilter.All });
+        var repositoryPrs = await GitHubCallRetry.IdempotentAsync(
+            "list pull requests",
+            () => context.GitHubClient.PullRequest.GetAllForRepository(
+                payload.Repository.Id, new PullRequestRequest { State = ItemStateFilter.All }),
+            Logger,
+            cancellationToken);
 
         if (repositoryPrs.Count <= 1)
             return EventHandlerResult.NoActionNeeded("pull request open is ok, there are no other PRs");
 
         var (handledOpen, resultOpen) = await HandleAnyOpenPrsAsync(context, payload, repositoryPrs);
-        var (handledClosed, resultClosed) = await HandleAnyClosedPrsAsync(context, payload, repositoryPrs);
+        var (handledClosed, resultClosed) = await HandleAnyClosedPrsAsync(context, payload, repositoryPrs, cancellationToken);
 
         return !handledOpen && !handledClosed
             ? EventHandlerResult.NoActionNeeded($"{resultOpen}; {resultClosed}")
@@ -61,6 +66,7 @@ public sealed class PullRequestOpenDuplicateHandler : RepositoryEventHandlerBase
         if (openPrs.Count <= 1)
             return (false, "pull request open is ok, there are no other open PRs");
 
+        // Not retried: a duplicate warning on every open pull request is worse than a missing one.
         var warningText = GetWarningText(payload.PullRequest.Number, openPrs.Select(pr => pr.Number));
         foreach (var openPullRequest in openPrs)
             await context.GitHubClient.Issue.Comment.Create(payload.Repository.Id, openPullRequest.Number, warningText);
@@ -68,8 +74,8 @@ public sealed class PullRequestOpenDuplicateHandler : RepositoryEventHandlerBase
         return (true, "pull request open handled with multiple open PRs");
     }
 
-    private static async Task<(bool HasProblem, string ResultText)> HandleAnyClosedPrsAsync(
-        GitHubWebhookContext context, PullRequestEventPayload payload, IReadOnlyCollection<PullRequest> repositoryPrs)
+    private async Task<(bool HasProblem, string ResultText)> HandleAnyClosedPrsAsync(
+        GitHubWebhookContext context, PullRequestEventPayload payload, IReadOnlyCollection<PullRequest> repositoryPrs, CancellationToken cancellationToken)
     {
         var closedPrs = repositoryPrs.Where(otherPr => otherPr.State == ItemState.Closed).ToList();
         if (closedPrs.Count == 0)
@@ -78,7 +84,7 @@ public sealed class PullRequestOpenDuplicateHandler : RepositoryEventHandlerBase
         var prsClosedByNotStudent = new List<int>();
         foreach (var otherClosedPr in closedPrs)
         {
-            if (await IsPrClosedByNotStudentAsync(context, payload, otherClosedPr))
+            if (await IsPrClosedByNotStudentAsync(context, payload, otherClosedPr, cancellationToken))
                 prsClosedByNotStudent.Add(otherClosedPr.Number);
         }
 
@@ -91,9 +97,13 @@ public sealed class PullRequestOpenDuplicateHandler : RepositoryEventHandlerBase
         return (true, "pull request open handled with already closed PRs");
     }
 
-    private static async Task<bool> IsPrClosedByNotStudentAsync(GitHubWebhookContext context, PullRequestEventPayload payload, PullRequest pr)
+    private async Task<bool> IsPrClosedByNotStudentAsync(GitHubWebhookContext context, PullRequestEventPayload payload, PullRequest pr, CancellationToken cancellationToken)
     {
-        var issueEvents = await context.GitHubClient.Issue.Events.GetAllForIssue(payload.Repository.Id, pr.Number);
+        var issueEvents = await GitHubCallRetry.IdempotentAsync(
+            "list issue events",
+            () => context.GitHubClient.Issue.Events.GetAllForIssue(payload.Repository.Id, pr.Number),
+            Logger,
+            cancellationToken);
 
         // A PR the student opened and somebody else closed is one a teacher already evaluated.
         return issueEvents.Any(e => e.Event.Value == EventInfoState.Closed && e.Actor?.Id != pr.User.Id);

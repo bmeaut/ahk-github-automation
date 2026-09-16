@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Ahk.Web.Services.GitHub;
 using Microsoft.Extensions.Logging;
 
 namespace Ahk.Web.Services.GitHubWebhooks;
@@ -105,8 +106,13 @@ internal sealed class GitHubWebhookDispatcher : IGitHubWebhookDispatcher
             catch (Exception ex)
 #pragma warning restore CA1031
             {
-                logger.LogError(ex, "{Handler} execution failed", name);
-                outcome = new WebhookHandlerOutcome(name, order, null, ex.ToString(), ElapsedMs(started));
+                // GitHubErrorFormatter rather than ex.ToString(): Octokit's ApiException.Message is a generic
+                // placeholder whenever GitHub answers without a parseable error body, which is precisely what a
+                // gateway 5xx does — so the plain exception recorded the failure without recording its cause.
+                var detail = GitHubErrorFormatter.Describe(ex);
+
+                logger.LogError(ex, "{Handler} execution failed: {GitHubError}", name, detail);
+                outcome = new WebhookHandlerOutcome(name, order, null, GitHubErrorFormatter.Summarize(ex), ElapsedMs(started));
             }
 
             outcomes.Add(outcome);

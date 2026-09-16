@@ -26,8 +26,9 @@ public sealed class WebhookOptions
     /// point — but bounded so one wedged delivery cannot hold the single worker forever.
     ///
     /// <para>⚠️ Soft: the Octokit methods the handlers call take no <see cref="CancellationToken"/>, so this
-    /// cancels <em>between</em> handlers and inside the EF calls, never mid-HTTP-request. A single GitHub call
-    /// is bounded only by the Octokit client's own 15-second request timeout.</para>
+    /// cancels <em>between</em> handlers, between a retried call's attempts, and inside the EF calls, never
+    /// mid-HTTP-request. A single GitHub call is bounded only by the Octokit client's own 30-second request
+    /// timeout (<c>CourseGitHubClientFactory</c>).</para>
     /// </summary>
     public TimeSpan DeliveryTimeout { get; set; } = TimeSpan.FromMinutes(5);
 

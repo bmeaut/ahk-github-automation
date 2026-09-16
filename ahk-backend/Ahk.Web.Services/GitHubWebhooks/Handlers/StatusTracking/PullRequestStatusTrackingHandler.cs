@@ -36,7 +36,7 @@ public sealed class PullRequestStatusTrackingHandler : RepositoryEventHandlerBas
             return EventHandlerResult.EventNotOfInterest(payload.Action);
         }
 
-        var neptun = await GetNeptunAsync(context, payload.Repository.Id, payload.PullRequest.Head.Ref);
+        var neptun = await GetNeptunAsync(context, payload.Repository.Id, payload.PullRequest.Head.Ref, cancellationToken);
 
         var submissionEvent = new PullRequestStatusEvent
         {

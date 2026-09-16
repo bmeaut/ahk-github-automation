@@ -340,7 +340,12 @@ public sealed class GitHubWebhookDeliveryProcessor : IGitHubWebhookDeliveryProce
         }
     }
 
-    private static string Describe(Exception ex) => $"{ex.GetType().Name}: {ex.Message}";
+    /// <summary>
+    /// The headline shown against the delivery. Goes through <see cref="GitHubErrorFormatter"/> so a GitHub
+    /// failure names its status code: <c>ex.Message</c> alone is a generic placeholder for most Octokit
+    /// <c>ApiException</c>s, which made a failed delivery say nothing about why it failed.
+    /// </summary>
+    private static string Describe(Exception ex) => GitHubErrorFormatter.Describe(ex);
 
     /// <summary>
     /// The outcomes carried over from an earlier attempt, plus this attempt's, back in dispatch order. Without

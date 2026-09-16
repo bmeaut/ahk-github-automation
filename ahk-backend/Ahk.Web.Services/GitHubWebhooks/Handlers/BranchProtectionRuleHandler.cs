@@ -1,3 +1,4 @@
+using Ahk.Web.Services.GitHub;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Octokit;
@@ -25,8 +26,16 @@ public sealed class BranchProtectionRuleHandler : RepositoryEventHandlerBase<Cre
         if (!payload.RefType.StringValue.Equals("branch", StringComparison.OrdinalIgnoreCase))
             return EventHandlerResult.NoActionNeeded($"create event for ref {payload.RefType} is not of interest");
 
-        await context.GitHubClient.Repository.Branch.UpdateBranchProtection(
-            payload.Repository.Id, payload.Ref, GetBranchProtectionSettingsUpdate(payload.Ref, payload.Repository.DefaultBranch));
+        // Retried: an idempotent PUT, and the cost of losing it is silent — an unprotected default branch lets
+        // the student merge their own pull request, with nothing but a red row in the delivery log to say so.
+        // GitHub answers this endpoint with a transient 5xx often enough to have cost two repositories already,
+        // both of them freshly created from a template, when the repository was still being provisioned.
+        await GitHubCallRetry.IdempotentAsync(
+            "apply branch protection",
+            () => context.GitHubClient.Repository.Branch.UpdateBranchProtection(
+                payload.Repository.Id, payload.Ref, GetBranchProtectionSettingsUpdate(payload.Ref, payload.Repository.DefaultBranch)),
+            Logger,
+            cancellationToken);
 
         return EventHandlerResult.ActionPerformed("branch protection rule applied");
     }

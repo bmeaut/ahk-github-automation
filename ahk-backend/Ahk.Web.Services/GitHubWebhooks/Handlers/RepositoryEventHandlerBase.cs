@@ -1,3 +1,4 @@
+using Ahk.Web.Services.GitHub;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Octokit;
@@ -46,7 +47,7 @@ public abstract class RepositoryEventHandlerBase<TPayload> : IGitHubWebhookHandl
         if (!TryParsePayload(context.RequestBody, out var payload, out var errorResult))
             return errorResult;
 
-        if (!await IsEnabledForRepositoryAsync(context, payload))
+        if (!await IsEnabledForRepositoryAsync(context, payload, cancellationToken))
         {
             Logger.LogInformation("no ahk-monitor.yml or disabled");
             return EventHandlerResult.Disabled("no ahk-monitor.yml or disabled");
@@ -104,12 +105,12 @@ public abstract class RepositoryEventHandlerBase<TPayload> : IGitHubWebhookHandl
     /// missing — a repository whose owner never filled it in still gets its events recorded, just without a
     /// student attached.
     /// </summary>
-    protected Task<string?> GetNeptunAsync(GitHubWebhookContext context, long repositoryId, string branchName)
+    protected Task<string?> GetNeptunAsync(GitHubWebhookContext context, long repositoryId, string branchName, CancellationToken cancellationToken = default)
         => Cache.GetOrCreateAsync(
             key: $"neptuntxtfile{repositoryId}{branchName}",
             factory: async cacheEntry =>
             {
-                var value = await GetNeptunTxtFileContentAsync(context, repositoryId, branchName);
+                var value = await GetNeptunTxtFileContentAsync(context, repositoryId, branchName, cancellationToken);
                 cacheEntry.SetValue(value);
                 cacheEntry.SetAbsoluteExpiration(NeptunCacheDuration);
                 return value;
@@ -119,22 +120,22 @@ public abstract class RepositoryEventHandlerBase<TPayload> : IGitHubWebhookHandl
     /// Whether a login belongs to the repository's organization — the portal's definition of "is staff, not a
     /// student". Non-organization repositories always answer false.
     /// </summary>
-    protected Task<bool> IsUserOrganizationMemberAsync(GitHubWebhookContext context, TPayload payload, string username)
+    protected Task<bool> IsUserOrganizationMemberAsync(GitHubWebhookContext context, TPayload payload, string username, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(payload);
 
         if (payload.Repository.Owner.Type != AccountType.Organization)
             return Task.FromResult(false);
 
-        return IsOrganizationMemberAsync(context, payload.Repository.Owner.Login, username);
+        return IsOrganizationMemberAsync(context, payload.Repository.Owner.Login, username, cancellationToken);
     }
 
-    protected Task<bool> IsOrganizationMemberAsync(GitHubWebhookContext context, string organization, string username)
+    protected Task<bool> IsOrganizationMemberAsync(GitHubWebhookContext context, string organization, string username, CancellationToken cancellationToken = default)
         => Cache.GetOrCreateAsync(
             key: $"githubisorgmember{organization}{username}",
             factory: async cacheEntry =>
             {
-                var isMember = await CheckOrganizationMemberAsync(context, organization, username);
+                var isMember = await CheckOrganizationMemberAsync(context, organization, username, cancellationToken);
                 cacheEntry.SetValue(isMember);
                 cacheEntry.SetAbsoluteExpiration(OrganizationMemberCacheDuration);
                 return isMember;
@@ -145,23 +146,32 @@ public abstract class RepositoryEventHandlerBase<TPayload> : IGitHubWebhookHandl
     /// <c>.github/ahk-monitor.yml</c> with <c>enabled: true</c> — otherwise every event from it is ignored.
     /// Cached per repository id, which is globally unique, so no course qualifier is needed in the key.
     /// </summary>
-    private Task<bool> IsEnabledForRepositoryAsync(GitHubWebhookContext context, TPayload payload)
+    private Task<bool> IsEnabledForRepositoryAsync(GitHubWebhookContext context, TPayload payload, CancellationToken cancellationToken)
         => Cache.GetOrCreateAsync(
             key: $"ahkmonitorisenabledinrepo{payload.Repository.Id}",
             factory: async cacheEntry =>
             {
-                var isEnabled = await GetConfigIsEnabledInRepositoryAsync(context, payload);
+                var isEnabled = await GetConfigIsEnabledInRepositoryAsync(context, payload, cancellationToken);
                 cacheEntry.SetValue(isEnabled);
                 cacheEntry.SetAbsoluteExpiration(EnabledCacheDuration);
                 return isEnabled;
             });
 
-    private static async Task<bool> GetConfigIsEnabledInRepositoryAsync(GitHubWebhookContext context, TPayload payload)
+    /// <summary>
+    /// ⚠️ Only <see cref="NotFoundException"/> may become <c>false</c> here. A transient failure must be left
+    /// to throw: answering <c>false</c> would cache "this repository is disabled" for twelve hours and
+    /// silently mute a repository that is enabled, which is far worse than one failed delivery.
+    /// </summary>
+    private async Task<bool> GetConfigIsEnabledInRepositoryAsync(GitHubWebhookContext context, TPayload payload, CancellationToken cancellationToken)
     {
         try
         {
-            var contents = await context.GitHubClient.Repository.Content.GetAllContentsByRef(
-                payload.Repository.Id, ".github/ahk-monitor.yml", payload.Repository.DefaultBranch);
+            var contents = await GitHubCallRetry.IdempotentAsync(
+                "read .github/ahk-monitor.yml",
+                () => context.GitHubClient.Repository.Content.GetAllContentsByRef(
+                    payload.Repository.Id, ".github/ahk-monitor.yml", payload.Repository.DefaultBranch),
+                Logger,
+                cancellationToken);
 
             if (contents.Count == 0)
                 return false;
@@ -174,11 +184,16 @@ public abstract class RepositoryEventHandlerBase<TPayload> : IGitHubWebhookHandl
         }
     }
 
-    private static async Task<string?> GetNeptunTxtFileContentAsync(GitHubWebhookContext context, long repositoryId, string branchName)
+    private async Task<string?> GetNeptunTxtFileContentAsync(GitHubWebhookContext context, long repositoryId, string branchName, CancellationToken cancellationToken)
     {
         try
         {
-            var contents = await context.GitHubClient.Repository.Content.GetAllContentsByRef(repositoryId, "neptun.txt", branchName);
+            var contents = await GitHubCallRetry.IdempotentAsync(
+                "read neptun.txt",
+                () => context.GitHubClient.Repository.Content.GetAllContentsByRef(repositoryId, "neptun.txt", branchName),
+                Logger,
+                cancellationToken);
+
             if (contents.Count == 0)
                 return null;
 
@@ -190,11 +205,15 @@ public abstract class RepositoryEventHandlerBase<TPayload> : IGitHubWebhookHandl
         }
     }
 
-    private static async Task<bool> CheckOrganizationMemberAsync(GitHubWebhookContext context, string organization, string username)
+    private async Task<bool> CheckOrganizationMemberAsync(GitHubWebhookContext context, string organization, string username, CancellationToken cancellationToken)
     {
         try
         {
-            return await context.GitHubClient.Organization.Member.CheckMember(organization, username);
+            return await GitHubCallRetry.IdempotentAsync(
+                "check organization membership",
+                () => context.GitHubClient.Organization.Member.CheckMember(organization, username),
+                Logger,
+                cancellationToken);
         }
         catch (NotFoundException)
         {

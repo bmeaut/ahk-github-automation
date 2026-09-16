@@ -133,7 +133,9 @@
       "Bash(node run6.mjs)",
       "Bash(sqlcmd -S \"\\(localdb\\)\\\\MSSQLLocalDB\" -d AhkWeb -Q \"SET QUOTED_IDENTIFIER ON; DELETE FROM CourseWebhookTokens WHERE Description LIKE '%probe%'; SELECT Id, Description FROM CourseWebhookTokens;\")",
       "Bash(powershell -NoProfile -Command 'Get-NetTCPConnection -LocalPort 7443,4200,9222 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; '\\\\''stopped'\\\\''')",
-      "Bash(npx prettier *)"
+      "Bash(npx prettier *)",
+      "PowerShell($p=\"$env:USERPROFILE\\\\.nuget\\\\packages\\\\octokit\\\\14.0.0\\\\lib\\\\netstandard2.0\\\\Octokit.dll\"; $a=[System.Reflection.Assembly]::LoadFrom\\($p\\); foreach\\($n in 'Octokit.NotFoundException','Octokit.ApiValidationException','Octokit.AuthorizationException','Octokit.ForbiddenException','Octokit.RateLimitExceededException'\\){ \"== $n\"; $a.GetType\\($n\\).GetConstructors\\(\\) | ForEach-Object { \"   \\(\" + \\(\\($_.GetParameters\\(\\) | ForEach-Object { $_.ParameterType.Name }\\) -join ', '\\) + \"\\)\" } })",
+      "PowerShell($p=\"$env:USERPROFILE\\\\.nuget\\\\packages\\\\octokit\\\\14.0.0\\\\lib\\\\netstandard2.0\\\\Octokit.dll\"; $a=[System.Reflection.Assembly]::LoadFrom\\($p\\); foreach\\($n in 'Octokit.ApiInfo','Octokit.RateLimit','Octokit.Internal.Response'\\){ \"== $n \\(public=\" + $a.GetType\\($n\\).IsPublic + \"\\)\"; $a.GetType\\($n\\).GetConstructors\\(\\) | ForEach-Object { \"   \\(\" + \\(\\($_.GetParameters\\(\\) | ForEach-Object { $_.ParameterType.Name + ' ' + $_.Name }\\) -join ', '\\) + \"\\)\" } })"
     ],
     "additionalDirectories": [
       "\\tmp",

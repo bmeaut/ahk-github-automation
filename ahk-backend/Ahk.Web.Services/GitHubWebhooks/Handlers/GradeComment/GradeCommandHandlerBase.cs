@@ -1,3 +1,4 @@
+using Ahk.Web.Services.GitHub;
 using Ahk.Web.Services.Grading;
 using Ahk.Web.Services.Grading.Dto;
 using Microsoft.Extensions.Caching.Memory;
@@ -39,10 +40,10 @@ public abstract class GradeCommandHandlerBase<T> : RepositoryEventHandlerBase<T>
             return EventHandlerResult.NoActionNeeded("not recognized as command");
 
         // Only organization members may grade. A student posting "/ahk ok" in their own repository gets told so.
-        if (!await IsAllowedAsync(context, payload))
+        if (!await IsAllowedAsync(context, payload, cancellationToken))
             return await HandleUserNotAllowedAsync(context, payload);
 
-        var pr = await GetPullRequestAsync(context, payload);
+        var pr = await GetPullRequestAsync(context, payload, cancellationToken);
         if (pr is null)
             return await HandleNotPrAsync(context, payload);
 
@@ -53,11 +54,15 @@ public abstract class GradeCommandHandlerBase<T> : RepositoryEventHandlerBase<T>
         return EventHandlerResult.ActionPerformed($"comment operation to grade done; grades: {string.Join(" ", gradeCommand.Grades)}");
     }
 
-    private static async Task<PullRequest?> GetPullRequestAsync(GitHubWebhookContext context, ICommentPayload<T> payload)
+    private async Task<PullRequest?> GetPullRequestAsync(GitHubWebhookContext context, ICommentPayload<T> payload, CancellationToken cancellationToken)
     {
         try
         {
-            return await context.GitHubClient.PullRequest.Get(payload.Repository.Id, payload.PullRequestNumber);
+            return await GitHubCallRetry.IdempotentAsync(
+                "read pull request",
+                () => context.GitHubClient.PullRequest.Get(payload.Repository.Id, payload.PullRequestNumber),
+                Logger,
+                cancellationToken);
         }
         catch (NotFoundException)
         {
@@ -67,7 +72,7 @@ public abstract class GradeCommandHandlerBase<T> : RepositoryEventHandlerBase<T>
 
     private async Task HandleStoreGradeAsync(GitHubWebhookContext context, ICommentPayload<T> payload, GradeCommentParser gradeCommand, PullRequest pr, CancellationToken cancellationToken)
     {
-        var neptun = await GetNeptunAsync(context, payload.Repository.Id, pr.Head.Ref);
+        var neptun = await GetNeptunAsync(context, payload.Repository.Id, pr.Head.Ref, cancellationToken);
         Logger.LogInformation("storing grades for {Neptun}", neptun);
 
         if (gradeCommand.HasGrades)
@@ -103,6 +108,13 @@ public abstract class GradeCommandHandlerBase<T> : RepositoryEventHandlerBase<T>
         }
     }
 
+    /// <summary>
+    /// ⚠️ Neither call here is retried, and neither may become so. A timeout is not proof that GitHub did
+    /// nothing: a 504 on the merge endpoint commonly means the merge was slow, not that it was refused, so a
+    /// second attempt can merge twice or leave a duplicate approving review. When this throws, the delivery is
+    /// recorded as failed and an administrator decides — which is the whole reason handler failures are not
+    /// retried automatically at the delivery level either.
+    /// </summary>
     private async Task HandleApproveAsync(GitHubWebhookContext context, ICommentPayload<T> payload, PullRequest pr)
     {
         if (pr.State.Value == ItemState.Open && pr.Mergeable == true)
@@ -134,8 +146,8 @@ public abstract class GradeCommandHandlerBase<T> : RepositoryEventHandlerBase<T>
         return EventHandlerResult.ActionPerformed("comment operation to grade not allowed for user");
     }
 
-    private Task<bool> IsAllowedAsync(GitHubWebhookContext context, ICommentPayload<T> payload)
+    private Task<bool> IsAllowedAsync(GitHubWebhookContext context, ICommentPayload<T> payload, CancellationToken cancellationToken)
         => payload.Repository.Owner.Type != AccountType.Organization
             ? Task.FromResult(false)
-            : IsOrganizationMemberAsync(context, payload.Repository.Owner.Login, payload.CommentingUser);
+            : IsOrganizationMemberAsync(context, payload.Repository.Owner.Login, payload.CommentingUser, cancellationToken);
 }

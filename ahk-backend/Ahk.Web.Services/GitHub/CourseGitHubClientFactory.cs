@@ -32,11 +32,17 @@ public interface ICourseGitHubClientFactory
 public sealed class CourseGitHubClientFactory : ICourseGitHubClientFactory
 {
     /// <summary>
-    /// Carried over from <c>github-monitor</c>'s client factory. Deliberately shorter than it looks like it
-    /// should be: a webhook delivery that takes longer than GitHub's own delivery timeout is already lost, so
-    /// failing fast beats hanging on to the request.
+    /// How long one GitHub call may take. It was 15 seconds, carried over from <c>github-monitor</c>, where a
+    /// handler ran inside GitHub's ten-second webhook delivery request and anything slower was lost anyway.
+    /// That constraint is gone: the receiver answers 202 before any handler runs, and the worker has
+    /// <c>WebhookOptions.DeliveryTimeout</c> — five minutes — to finish. The old value was simply failing
+    /// deliveries on GitHub's slower endpoints.
+    ///
+    /// <para>Bound on a wrapped call, with <see cref="GitHubCallRetry"/>'s three attempts and its 1s/3s
+    /// backoff: about 94 seconds worst case, and the retry checks the delivery's budget between attempts, so
+    /// it stays inside the five minutes.</para>
     /// </summary>
-    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(30);
 
     private static readonly ProductHeaderValue Product = new("ahk-portal", "1.0");
 
