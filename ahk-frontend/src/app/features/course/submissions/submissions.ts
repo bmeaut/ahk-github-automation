@@ -254,9 +254,51 @@ export class CourseSubmissions {
 
   protected downloadCsv(): void {
     const slug = this.courseContext.activeSlug();
-    if (slug) {
-      window.location.href = `/api/${slug}/grades/csv`;
+    if (!slug) {
+      return;
     }
+
+    const rows = this.rows();
+    const grades = this.grades();
+    const exercises = this.exerciseNames();
+
+    const headers = ['Neptun', 'Repository', 'Assignment', ...exercises];
+    if (exercises.length > 0) {
+      headers.push('Total');
+    }
+
+    const lines = [headers.join(',')];
+    for (const s of rows) {
+      const grade = grades.get(s.repository ?? '');
+      const cells = [
+        this.csvEscape(s.neptun ?? ''),
+        this.csvEscape(s.repository ?? ''),
+        this.csvEscape(s.assignmentName ?? ''),
+        ...exercises.map((ex) => String(grade?.points?.[ex] ?? '')),
+      ];
+      if (exercises.length > 0) {
+        const total = grade?.points ? Object.values(grade.points).reduce((sum, p) => sum + p, 0) : '';
+        cells.push(String(total));
+      }
+      lines.push(cells.join(','));
+    }
+
+    // BOM so Excel opens the file as UTF-8 without a manual import dialog.
+    const csv = '﻿' + lines.join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${slug}-grades.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private csvEscape(value: string): string {
+    if (/[",\n\r]/.test(value)) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
   }
 
   /**
