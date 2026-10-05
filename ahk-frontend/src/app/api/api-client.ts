@@ -4027,6 +4027,7 @@ export interface InviteState {
     repositoryName?: string | undefined;
     repoUrl?: string | undefined;
     gitHubUsername?: string | undefined;
+    gitHubUsernameConfirmed?: boolean;
     invitationUrl?: string | undefined;
     message?: string | undefined;
 }

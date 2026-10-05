@@ -203,6 +203,19 @@ public sealed class GitHubRepositoryService : IGitHubRepositoryService
     }
 
     /// <summary>
+    /// Turns a known GitHub error code into a message the student can act on, rather than the API's terse
+    /// "Validation Failed". Falls back to <see cref="ApiError.Message"/> for everything else.
+    /// </summary>
+    internal static string? TranslateApiError(ApiException ex)
+    {
+        if (ex.ApiError?.Errors?.Any(e =>
+                string.Equals(e.Code, "billing_error", StringComparison.OrdinalIgnoreCase)) == true)
+            return "The organization has no available seats — ask your instructor to add one in the GitHub organization's billing settings.";
+
+        return ex.ApiError?.Message;
+    }
+
+    /// <summary>
     /// Runs a GitHub call and translates Octokit's exceptions into <see cref="GitHubOperationException"/>, which
     /// controllers surface as a 502 carrying GitHub's own explanation. <paramref name="notFound"/> turns a 404
     /// into a value instead, for the calls where "absent" is an answer rather than a failure.
@@ -219,7 +232,7 @@ public sealed class GitHubRepositoryService : IGitHubRepositoryService
         }
         catch (ApiException ex)
         {
-            throw new GitHubOperationException(operation, ex.StatusCode, ex.ApiError?.Message);
+            throw new GitHubOperationException(operation, ex.StatusCode, TranslateApiError(ex));
         }
         catch (OperationCanceledException ex)
         {

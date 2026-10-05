@@ -46,7 +46,7 @@
               It will be shared with your GitHub account,
               <span class="mono">{{ s.gitHubUsername }}</span
               >.&nbsp;
-              @if (!editingUsername()) {
+              @if (!editingUsername() && !s.gitHubUsernameConfirmed) {
                 <button type="button" class="btn quiet" (click)="editGitHubUsername()">
                   Not your account?
                 </button>

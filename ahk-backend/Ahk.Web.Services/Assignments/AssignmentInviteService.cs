@@ -63,6 +63,13 @@ public sealed class InviteState
 
     /// <summary>Human-readable detail for the terminal states; null when there is nothing extra to say.</summary>
     public string? Message { get; set; }
+
+    /// <summary>
+    /// True when the stored GitHub login has been corroborated (someone accepted a repository invitation
+    /// sent to it). A confirmed account cannot be changed by the user, so the invite screen should not
+    /// offer the "Not your account?" correction flow.
+    /// </summary>
+    public bool GitHubUsernameConfirmed { get; set; }
 }
 
 public interface IAssignmentInviteService
@@ -254,6 +261,7 @@ public sealed class AssignmentInviteService : IAssignmentInviteService
             AssignmentDescription = assignment.Description,
             Organization = course.GitHubOrganization,
             GitHubUsername = user.GitHubUsername,
+            GitHubUsernameConfirmed = user.GitHubVerifiedAt is not null,
         };
 
         if (acceptance is not null)
