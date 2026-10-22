@@ -54,6 +54,10 @@ export class AdminUsers implements OnInit {
   protected readonly tokens = signal<UserAccessTokenDto[]>([]);
   protected readonly loadingTokens = signal(false);
 
+  /** The GitHub login typed into the expanded user's "link" field. */
+  protected gitHubLogin = '';
+  protected readonly savingGitHub = signal(false);
+
   protected readonly adding = signal(false);
   protected readonly savingNew = signal(false);
   protected newUserName = '';
@@ -177,6 +181,58 @@ export class AdminUsers implements OnInit {
     });
   }
 
+  // ---- GitHub account ----
+
+  /** Unlinks the account, confirmed or not, so a mix-up can be put right. */
+  protected resetGitHub(user: UserDto): void {
+    this.clearMessages();
+    this.savingGitHub.set(true);
+    this.client.resetGitHub(user.id ?? 0).subscribe({
+      next: (updated) => {
+        this.savingGitHub.set(false);
+        this.replace(updated);
+        this.saved.set(`${updated.userName} is no longer linked to ${user.gitHubUsername}.`);
+      },
+      error: (err: unknown) => {
+        this.savingGitHub.set(false);
+        this.error.set(readApiError(err, 'The GitHub link could not be reset.'));
+      },
+    });
+  }
+
+  /** Links an account to a user who has none; their existing repositories are shared with it. */
+  protected linkGitHub(user: UserDto): void {
+    const login = this.gitHubLogin.trim();
+    if (!login) {
+      return;
+    }
+    this.clearMessages();
+    this.savingGitHub.set(true);
+    this.client.setGitHub(user.id ?? 0, { gitHubUsername: login }).subscribe({
+      next: (res) => {
+        this.savingGitHub.set(false);
+        this.gitHubLogin = '';
+        if (res.user) {
+          this.replace(res.user);
+        }
+        const shared = res.repositoriesShared ?? 0;
+        const failed = res.repositoriesFailed ?? 0;
+        let message = `${res.user?.userName} is now linked to ${res.user?.gitHubUsername}.`;
+        if (shared > 0) {
+          message += ` ${shared} ${shared === 1 ? 'repository was' : 'repositories were'} shared with it.`;
+        }
+        if (failed > 0) {
+          message += ` ${failed} could not be shared; the user can re-send those from their own page.`;
+        }
+        this.saved.set(message);
+      },
+      error: (err: unknown) => {
+        this.savingGitHub.set(false);
+        this.error.set(readApiError(err, 'The GitHub account could not be linked.'));
+      },
+    });
+  }
+
   // ---- Course assignment ----
 
   /**
@@ -214,6 +270,7 @@ export class AdminUsers implements OnInit {
 
   protected toggleExpanded(user: UserDto): void {
     this.expanded.set(this.expanded() === user.id ? null : (user.id ?? null));
+    this.gitHubLogin = '';
     this.loadTokens(user);
   }
 

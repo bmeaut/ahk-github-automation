@@ -124,6 +124,7 @@ public sealed class GitHubIdentityTests : IDisposable
         GitHubKnows("Octocat", 583231);
 
         await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
+        this.studentAssignments.Invocations.Clear();
 
         var result = await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "Octocat" }, default);
 
@@ -174,6 +175,8 @@ public sealed class GitHubIdentityTests : IDisposable
         GitHubKnows("Octocat", 583231);
         await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
 
+        this.studentAssignments.Invocations.Clear();
+
         // As an accepted invitation would have done.
         alice.GitHubVerifiedAt = DateTimeOffset.UtcNow;
         await this.userManager.UpdateAsync(alice);
@@ -203,6 +206,8 @@ public sealed class GitHubIdentityTests : IDisposable
         GitHubKnows("Octocat", 583231);
         await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
 
+        this.studentAssignments.Invocations.Clear();
+
         alice.GitHubVerifiedAt = DateTimeOffset.UtcNow;
         await this.userManager.UpdateAsync(alice);
 
@@ -215,6 +220,26 @@ public sealed class GitHubIdentityTests : IDisposable
         this.studentAssignments.Verify(
             s => s.ShareExistingRepositoriesAsync(alice.Id, It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    /// <summary>
+    /// A first entry re-shares too: after an administrator resets a wrong link, the user's repositories are still
+    /// shared with that wrong account, and typing the right one must bring them over.
+    /// </summary>
+    [Fact]
+    public async Task AFirstEntry_ReSharesWhatAnEarlierLinkWasGiven()
+    {
+        var alice = await CreateUserAsync("alice");
+        SignIn(alice);
+        GitHubKnows("Octocat", 583231);
+        this.studentAssignments
+            .Setup(s => s.ShareExistingRepositoriesAsync(alice.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RepositoryShareResult(3, 0));
+
+        var result = await this.controller.SetGitHubUsername(new SetGitHubUsernameRequest { GitHubUsername = "octocat" }, default);
+
+        var dto = Assert.IsType<GitHubProfileResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal(3, dto.RepositoriesShared);
     }
 
     /// <summary>A login GitHub has never heard of is a typo, and says so.</summary>

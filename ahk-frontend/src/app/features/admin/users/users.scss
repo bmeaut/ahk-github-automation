@@ -103,3 +103,29 @@ h3 {
     white-space: nowrap;
   }
 }
+
+/* One line: the linked login with its badge and Reset, or the field to link one. */
+.github-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  input {
+    flex: 1 1 10rem;
+  }
+
+  .btn {
+    margin-bottom: 0;
+  }
+}
+
+.github-row + .small {
+  margin-bottom: 0.875rem;
+}

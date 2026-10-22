@@ -59,6 +59,26 @@ public sealed class UserListResponse
     public int Total { get; set; }
 }
 
+/// <summary>Links a GitHub account to a user who has none. A login or a pasted profile URL.</summary>
+public sealed class SetUserGitHubRequest
+{
+    [Required]
+    [MaxLength(256)]
+    public string GitHubUsername { get; set; } = string.Empty;
+}
+
+/// <summary>The user as now linked, and how the re-share of their existing repositories to that account went.</summary>
+public sealed class UserGitHubLinkResponse
+{
+    public UserDto User { get; set; } = new();
+
+    /// <summary>Repositories the user accepted under an earlier login that were just shared with this one.</summary>
+    public int RepositoriesShared { get; set; }
+
+    /// <summary>Repositories whose invitation could not be sent; the user can re-send them from their own page.</summary>
+    public int RepositoriesFailed { get; set; }
+}
+
 public sealed class CreateUserRequest
 {
     [Required]

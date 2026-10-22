@@ -2,7 +2,10 @@
 using Ahk.Web.Data;
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Admin.Dto;
+using Ahk.Web.Server.Auth;
 using Ahk.Web.Server.Auth.Dto;
+using Ahk.Web.Services.Assignments;
+using Ahk.Web.Services.GitHub;
 using Ahk.Web.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -29,20 +32,26 @@ public sealed class UsersAdminController : ControllerBase
     private readonly ApplicationDbContext db;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly IPersonalAccessTokenService accessTokens;
+    private readonly IGitHubRepositoryService gitHub;
+    private readonly IStudentAssignmentService studentAssignments;
 
     public UsersAdminController(
         ApplicationDbContext db,
         UserManager<ApplicationUser> userManager,
-        IPersonalAccessTokenService accessTokens)
+        IPersonalAccessTokenService accessTokens,
+        IGitHubRepositoryService gitHub,
+        IStudentAssignmentService studentAssignments)
     {
         this.db = db;
         this.userManager = userManager;
         this.accessTokens = accessTokens;
+        this.gitHub = gitHub;
+        this.studentAssignments = studentAssignments;
     }
 
     /// <summary>
-    /// Lists users, newest account last. <paramref name="search"/> matches user name, display name, e-mail or
-    /// Neptun code; <paramref name="courseId"/> narrows to the members of one course.
+    /// Lists users, newest account last. <paramref name="search"/> matches user name, display name, e-mail,
+    /// Neptun code or GitHub login; <paramref name="courseId"/> narrows to the members of one course.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(UserListResponse), StatusCodes.Status200OK)]
@@ -62,7 +71,8 @@ public sealed class UsersAdminController : ControllerBase
                 (u.UserName != null && u.UserName.Contains(term)) ||
                 (u.DisplayName != null && u.DisplayName.Contains(term)) ||
                 (u.Email != null && u.Email.Contains(term)) ||
-                (u.NeptunCode != null && u.NeptunCode.Contains(term)));
+                (u.NeptunCode != null && u.NeptunCode.Contains(term)) ||
+                (u.GitHubUsername != null && u.GitHubUsername.Contains(term)));
         }
 
         if (courseId is int id)
@@ -252,6 +262,104 @@ public sealed class UsersAdminController : ControllerBase
         }
 
         return Ok(await LoadDtoAsync(user, cancellationToken));
+    }
+
+    // ---- GitHub account ----
+
+    /// <summary>
+    /// Unlinks the user's GitHub account — confirmed or not — so that a mix-up can be put right. The user (or an
+    /// administrator) then links the right one. The acceptance and roster rows keep the old login on purpose: they
+    /// say where the invitations went, and are what the next link re-shares from.
+    /// </summary>
+    [HttpDelete("{id:int}/github")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserDto>> ResetGitHub(int id, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString(CultureInfo.InvariantCulture));
+        if (user is null)
+            return NotFound();
+
+        user.GitHubUsername = null;
+        user.GitHubUserId = null;
+        user.GitHubVerifiedAt = null;
+
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+
+        return Ok(await LoadDtoAsync(user, cancellationToken));
+    }
+
+    /// <summary>
+    /// Links a GitHub account to a user who has none, checked against GitHub exactly as the user's own entry is.
+    /// Refused while a link exists — reset it first — so this never silently re-points one. The link starts
+    /// unconfirmed: an administrator's word is no better evidence than the user's, and only accepting an
+    /// invitation shows someone holds the account. Repositories the user accepted under an earlier login are
+    /// shared with this one straight away.
+    /// </summary>
+    [HttpPut("{id:int}/github")]
+    [ProducesResponseType(typeof(UserGitHubLinkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<UserGitHubLinkResponse>> SetGitHub(int id, [FromBody] SetUserGitHubRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var user = await userManager.FindByIdAsync(id.ToString(CultureInfo.InvariantCulture));
+        if (user is null)
+            return NotFound();
+
+        if (!string.IsNullOrWhiteSpace(user.GitHubUsername))
+            return BadRequest(new { error = $"{user.UserName} is already linked to \"{user.GitHubUsername}\". Reset it first." });
+
+        var login = GitHubLogin.Parse(request.GitHubUsername);
+        if (string.IsNullOrWhiteSpace(login))
+            return BadRequest(new { error = "Enter a GitHub username." });
+
+        // No token: an administrator's handful of lookups fits GitHub's unauthenticated allowance.
+        GitHubUser? account;
+        try
+        {
+            account = await gitHub.GetUserAsync(login, token: null, cancellationToken);
+        }
+        catch (Exception ex) when (ex is GitHubOperationException or HttpRequestException or TaskCanceledException)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = "GitHub could not be reached to check that username. Try again in a few minutes." });
+        }
+
+        if (account is null)
+            return BadRequest(new { error = $"There is no GitHub user called \"{login}\"." });
+
+        if (await GitHubLogin.IsTakenAsync(db, user.Id, account.Login, account.Id, cancellationToken))
+            return BadRequest(new { error = $"The GitHub account \"{account.Login}\" is already linked to another user. Search for it and reset that link first." });
+
+        user.GitHubUsername = account.Login;
+        user.GitHubUserId = account.Id;
+        user.GitHubVerifiedAt = null;
+
+        IdentityResult result;
+        try
+        {
+            result = await userManager.UpdateAsync(user);
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { error = $"The GitHub account \"{account.Login}\" is already linked to another user." });
+        }
+
+        if (!result.Succeeded)
+            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+
+        var share = await studentAssignments.ShareExistingRepositoriesAsync(user.Id, cancellationToken);
+
+        return Ok(new UserGitHubLinkResponse
+        {
+            User = await LoadDtoAsync(user, cancellationToken),
+            RepositoriesShared = share.Shared,
+            RepositoriesFailed = share.Failed,
+        });
     }
 
     // ---- Personal access tokens ----

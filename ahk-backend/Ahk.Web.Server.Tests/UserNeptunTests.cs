@@ -2,6 +2,8 @@
 using Ahk.Web.Data.Entities;
 using Ahk.Web.Server.Admin;
 using Ahk.Web.Server.Admin.Dto;
+using Ahk.Web.Services.Assignments;
+using Ahk.Web.Services.GitHub;
 using Ahk.Web.Services.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -49,7 +51,9 @@ public sealed class UserNeptunTests : IDisposable
         this.controller = new UsersAdminController(
             this.db,
             this.userManager,
-            new Mock<IPersonalAccessTokenService>(MockBehavior.Strict).Object);
+            new Mock<IPersonalAccessTokenService>(MockBehavior.Strict).Object,
+            new Mock<IGitHubRepositoryService>(MockBehavior.Strict).Object,
+            new Mock<IStudentAssignmentService>(MockBehavior.Strict).Object);
     }
 
     [Fact]

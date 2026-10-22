@@ -89,7 +89,7 @@
         name="search"
         [(ngModel)]="search"
         (input)="onSearchChange()"
-        placeholder="Search name, username, email or Neptun code"
+        placeholder="Search name, username, email, Neptun code or GitHub login"
         aria-label="Search users"
         class="search"
       />
@@ -150,6 +150,9 @@
                   }
                   @if (u.neptunCode) {
                     <div class="muted mono">{{ u.neptunCode }}</div>
+                  }
+                  @if (u.gitHubUsername) {
+                    <div class="muted mono" title="GitHub account">{{ u.gitHubUsername }}</div>
                   }
                 </td>
                 <td>
@@ -257,21 +260,45 @@
                         @if (u.affiliation) {
                           <p class="muted">Affiliation: <span class="mono">{{ u.affiliation }}</span></p>
                         }
-                        <p class="muted">
-                          GitHub:
-                          @if (u.gitHubUsername) {
-                            <span class="mono">{{ u.gitHubUsername }}</span
-                            >&nbsp;
+                        <h3>GitHub account</h3>
+                        @if (u.gitHubUsername) {
+                          <div class="github-row">
+                            <span class="mono">{{ u.gitHubUsername }}</span>
                             @if (u.gitHubVerifiedAt) {
                               <span class="badge ok">Confirmed</span>
                             } @else {
-                              <!-- Only the user's own word so far: nothing has been accepted with that account. -->
+                              <!-- Only someone's word so far: nothing has been accepted with that account. -->
                               <span class="badge warn">Unconfirmed</span>
                             }
-                          } @else {
-                            <span>not linked</span>
-                          }
-                        </p>
+                            <span class="spacer"></span>
+                            <button type="button" class="btn danger" [disabled]="savingGitHub()" (click)="resetGitHub(u)">
+                              Reset
+                            </button>
+                          </div>
+                          <p class="muted small">
+                            Resetting unlinks the account. The user can then enter the right one, or you can link it here;
+                            either way their repositories are shared with the new account.
+                          </p>
+                        } @else {
+                          <form class="github-row" (ngSubmit)="linkGitHub(u)">
+                            <input
+                              type="text"
+                              name="gitHubLogin"
+                              class="mono"
+                              [(ngModel)]="gitHubLogin"
+                              placeholder="GitHub username"
+                              [attr.aria-label]="'GitHub username for ' + u.userName"
+                              autocomplete="off"
+                            />
+                            <button type="submit" class="btn" [disabled]="!gitHubLogin.trim() || savingGitHub()">
+                              {{ savingGitHub() ? 'Linking…' : 'Link' }}
+                            </button>
+                          </form>
+                          <p class="muted small">
+                            Not linked. The account is checked on GitHub, and stays unconfirmed until the user accepts a
+                            repository invitation with it.
+                          </p>
+                        }
                         <h3>Access tokens</h3>
                         @if (loadingTokens()) {
                           <p class="muted">Loading…</p>

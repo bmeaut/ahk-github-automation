@@ -3041,6 +3041,8 @@ export interface IUsersAdminClient {
     updateRoles(id: number, request: UpdateUserRolesRequest): Observable<UserDto>;
     upsertCourse(id: number, request: UpsertUserCourseRequest): Observable<UserDto>;
     removeCourse(id: number, courseId: number): Observable<UserDto>;
+    resetGitHub(id: number): Observable<UserDto>;
+    setGitHub(id: number, request: SetUserGitHubRequest): Observable<UserGitHubLinkResponse>;
     listTokens(id: number): Observable<UserAccessTokenDto[]>;
     revokeToken(id: number, tokenId: number): Observable<void>;
     setPassword(id: number, request: SetPasswordRequest): Observable<void>;
@@ -3549,6 +3551,134 @@ export class UsersAdminClient implements IUsersAdminClient {
         return _observableOf(null as any);
     }
 
+    resetGitHub(id: number): Observable<UserDto> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/github";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResetGitHub(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResetGitHub(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDto>;
+        }));
+    }
+
+    protected processResetGitHub(response: HttpResponseBase): Observable<UserDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setGitHub(id: number, request: SetUserGitHubRequest): Observable<UserGitHubLinkResponse> {
+        let url_ = this.baseUrl + "/api/admin/users/{id}/github";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetGitHub(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetGitHub(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserGitHubLinkResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserGitHubLinkResponse>;
+        }));
+    }
+
+    protected processSetGitHub(response: HttpResponseBase): Observable<UserGitHubLinkResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserGitHubLinkResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            }));
+        } else if (status === 502) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     listTokens(id: number): Observable<UserAccessTokenDto[]> {
         let url_ = this.baseUrl + "/api/admin/users/{id}/tokens";
         if (id === undefined || id === null)
@@ -4027,9 +4157,9 @@ export interface InviteState {
     repositoryName?: string | undefined;
     repoUrl?: string | undefined;
     gitHubUsername?: string | undefined;
-    gitHubUsernameConfirmed?: boolean;
     invitationUrl?: string | undefined;
     message?: string | undefined;
+    gitHubUsernameConfirmed?: boolean;
 }
 
 export type InviteStatus = "NotFound" | "Closed" | "NeedsNeptun" | "NeedsGitHubUsername" | "ReadyToAccept" | "Accepted" | "NotConfigured";
@@ -4344,6 +4474,16 @@ export interface UpdateUserRolesRequest {
 export interface UpsertUserCourseRequest {
     courseId: number;
     role?: CourseRole;
+}
+
+export interface UserGitHubLinkResponse {
+    user?: UserDto;
+    repositoriesShared?: number;
+    repositoriesFailed?: number;
+}
+
+export interface SetUserGitHubRequest {
+    gitHubUsername: string;
 }
 
 export interface UserAccessTokenDto {

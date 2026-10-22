@@ -100,12 +100,7 @@ public sealed class ProfileController : ControllerBase
         if (user is null)
             return Unauthorized();
 
-        // A pasted profile URL is the obvious mistake to be forgiving about; everything else must be a login.
-        var login = request.GitHubUsername?.Trim().TrimEnd('/') ?? string.Empty;
-        var lastSlash = login.LastIndexOf('/');
-        if (lastSlash >= 0)
-            login = login[(lastSlash + 1)..];
-
+        var login = GitHubLogin.Parse(request.GitHubUsername);
         if (string.IsNullOrWhiteSpace(login))
             return BadRequest(new { error = "Enter your GitHub username." });
 
@@ -134,24 +129,13 @@ public sealed class ProfileController : ControllerBase
         if (account is null)
             return BadRequest(new { error = $"There is no GitHub user called \"{login}\". Check the spelling — it is the name in your profile URL, github.com/<username>." });
 
-        // One GitHub account belongs to one person, so it may back only one portal account. Matched on the
-        // numeric id as well as the login: the id is what survives a rename, so it catches the case where
-        // someone re-types a login another account claimed before that account was renamed. The filtered
-        // unique indexes are the real guarantee; this check exists to answer with a sentence rather than a 500.
-        var takenBy = await db.Users
-            .AsNoTracking()
-            .Where(u => u.Id != user.Id && (u.GitHubUsername == account.Login || u.GitHubUserId == account.Id))
-            .Select(u => u.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (takenBy != 0)
+        if (await GitHubLogin.IsTakenAsync(db, user.Id, account.Login, account.Id, cancellationToken))
             return BadRequest(new { error = $"The GitHub account \"{account.Login}\" is already linked to another user here. If it is yours, ask an administrator to sort it out." });
 
         // Two different questions. "Is this a different account?" decides whether the confirmed link is being
         // re-pointed — matched on the numeric id as well, so an account renamed on GitHub is still the same one.
         // "Did the stored login change?" decides whether the repositories have to be shared again, which a
         // rename also needs: the acceptance rows address the collaborator by login.
-        var hadLogin = !string.IsNullOrWhiteSpace(user.GitHubUsername);
         var loginChanged = !string.Equals(user.GitHubUsername, account.Login, StringComparison.OrdinalIgnoreCase);
         var sameAccount = !loginChanged || (user.GitHubUserId is not null && user.GitHubUserId == account.Id);
 
@@ -189,8 +173,9 @@ public sealed class ProfileController : ControllerBase
         // The repositories already created for this student were shared with the login they are correcting, so
         // the new account has no access to any of them until it is invited too. Failures are counted rather
         // than thrown: the login is saved either way, and an uninvited repository is recoverable from /my.
-        // A first entry skips it — no login, therefore no repository, therefore nothing to look up.
-        var share = hadLogin && loginChanged
+        // A first entry runs it too: an administrator may have reset a wrong link, leaving repositories that were
+        // shared with it, and a true first entry costs one query that finds nothing.
+        var share = loginChanged
             ? await studentAssignments.ShareExistingRepositoriesAsync(user.Id, cancellationToken)
             : default;
 
