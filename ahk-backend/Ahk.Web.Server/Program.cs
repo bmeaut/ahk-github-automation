@@ -81,6 +81,13 @@ public class Program
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+            // Students sign in on shared lab machines. The eduID session cookie dies with the browser, but lab
+            // browsers stay open between classes (and Chrome restores session cookies on "continue where you left
+            // off"), so the ticket also lapses after two idle hours. Sliding: any request in the second hour
+            // renews it, so someone actually working is never signed out mid-task.
+            options.ExpireTimeSpan = TimeSpan.FromHours(2);
+            options.SlidingExpiration = true;
             options.Events.OnRedirectToLogin = ctx =>
             {
                 ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -198,6 +205,9 @@ public class Program
                     // instead of the browser's origin. In production this is left unset and computed normally.
                     if (!string.IsNullOrWhiteSpace(oidc.RedirectUri))
                         context.ProtocolMessage.RedirectUri = oidc.RedirectUri;
+
+                    if (oidc.ForceLogin)
+                        context.ProtocolMessage.Prompt = "login";
 
                     return Task.CompletedTask;
                 };

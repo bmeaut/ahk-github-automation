@@ -7,7 +7,9 @@
     />
     <span class="spacer"></span>
     @if (user(); as u) {
-      <span class="who mono">{{ u.displayName || u.userName }}</span>
+      <span class="who mono"
+        >{{ u.displayName || u.userName }}{{ u.neptunCode ? ' · ' + u.neptunCode : '' }}</span
+      >
     }
     @if (canManageTokens()) {
       <a class="btn quiet" routerLink="/settings">Access tokens</a>
@@ -54,6 +56,7 @@
                   id="gitHubUsername"
                   name="gitHubUsername"
                   type="text"
+                  autocomplete="off"
                   autocapitalize="off"
                   autocorrect="off"
                   spellcheck="false"

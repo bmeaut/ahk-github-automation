@@ -24,6 +24,25 @@
   font-size: 1rem;
 }
 
+/* Who the portal thinks this is, above the card: on a shared lab machine the previous student's session may
+   still be open, and the GitHub username about to be saved lands on whichever account this names. */
+.whoami {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--parchment-2);
+  font-size: 0.8125rem;
+
+  .grow {
+    flex: 1 1 auto;
+  }
+}
+
 h2 {
   font-size: 1.25rem;
 }

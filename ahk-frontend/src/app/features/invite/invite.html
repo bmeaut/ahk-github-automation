@@ -8,6 +8,18 @@
     <h1 class="product">AHK — Automated homework evaluation</h1>
   </div>
 
+  @if (user(); as u) {
+    <div class="whoami">
+      <span class="grow">
+        Signed in as <strong>{{ u.displayName || u.userName }}</strong>
+        @if (u.neptunCode) {
+          &nbsp;<span class="mono">{{ u.neptunCode }}</span>
+        }
+      </span>
+      <button type="button" class="btn quiet" (click)="signOut()">Not you? Sign out</button>
+    </div>
+  }
+
   @if (loading()) {
     <div class="card">
       <div class="card-body">
@@ -176,6 +188,7 @@
         id="gitHubUsername"
         name="gitHubUsername"
         type="text"
+        autocomplete="off"
         autocapitalize="off"
         autocorrect="off"
         spellcheck="false"

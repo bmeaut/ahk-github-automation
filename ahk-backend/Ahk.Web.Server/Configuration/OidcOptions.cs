@@ -55,6 +55,13 @@ public sealed class OidcOptions
     /// </summary>
     public string? EndSessionEndpoint { get; set; }
 
+    /// <summary>
+    /// On by default: sends <c>prompt=login</c>, so the IdP asks for the password even when it still holds an SSO
+    /// session. Logout here is local-only (no end-session endpoint), so without it the next student at a shared
+    /// lab machine clicking "Login" was signed straight in as whoever used the IdP there last.
+    /// </summary>
+    public bool ForceLogin { get; set; } = true;
+
     /// <summary>Development only: serve an in-app mock OpenID provider at /mock-oidc (see MockOidc/).</summary>
     public bool UseMockProvider { get; set; }
 

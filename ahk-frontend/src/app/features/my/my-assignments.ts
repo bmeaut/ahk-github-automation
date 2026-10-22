@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { MyAssignmentsClient, ProfileClient, StudentRepository } from '../../api/api-client';
 import { readApiError } from '../../core/api-error';
@@ -30,6 +30,7 @@ export class MyAssignments implements OnInit {
   private readonly client = inject(MyAssignmentsClient);
   private readonly profileClient = inject(ProfileClient);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   protected readonly repositories = signal<StudentRepository[]>([]);
   protected readonly loading = signal(true);
@@ -172,6 +173,6 @@ export class MyAssignments implements OnInit {
   }
 
   protected logout(): void {
-    this.auth.logout().subscribe();
+    this.auth.logout().subscribe(() => this.router.navigate(['/login']));
   }
 }

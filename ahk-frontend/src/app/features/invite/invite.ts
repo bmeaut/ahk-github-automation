@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AssignmentInviteClient, InviteState, ProfileClient } from '../../api/api-client';
 import { readApiError } from '../../core/api-error';
@@ -26,6 +26,13 @@ export class Invite implements OnInit, OnDestroy {
   private readonly profileClient = inject(ProfileClient);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /**
+   * Shown above everything else because students share lab machines: someone following an invite link while
+   * the previous student's session is still open would otherwise link their GitHub account to that student.
+   */
+  protected readonly user = this.auth.currentUser;
 
   protected readonly state = signal<InviteState | null>(null);
   protected readonly loading = signal(true);
@@ -111,6 +118,13 @@ export class Invite implements OnInit, OnDestroy {
         this.error.set(readApiError(err, 'That username could not be checked. Try again in a moment.'));
       },
     });
+  }
+
+  /** Back to the login screen, then straight back here — the invite link is what the right person came for. */
+  protected signOut(): void {
+    const returnUrl = this.router.url;
+    this.clearRedirect();
+    this.auth.logout().subscribe(() => this.router.navigate(['/login'], { queryParams: { returnUrl } }));
   }
 
   protected accept(): void {

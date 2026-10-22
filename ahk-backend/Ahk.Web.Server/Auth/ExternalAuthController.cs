@@ -58,7 +58,10 @@ public sealed class ExternalAuthController : ControllerBase
         if (info is null)
             return Redirect(SafeReturnUrl(returnUrl, error: "external_login_failed"));
 
-        var signInResult = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: true, bypassTwoFactor: true);
+        // isPersistent: false — a session cookie, gone when the browser closes. Students sign in on shared lab
+        // machines, and a 14-day cookie surviving them meant the next person at the keyboard opened an invite
+        // link as the previous one and linked their own GitHub account to someone else's portal account.
+        var signInResult = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
         if (signInResult.Succeeded)
         {
             // Known identity: refresh the directory data, which may have changed since the last login.
@@ -107,7 +110,7 @@ public sealed class ExternalAuthController : ControllerBase
         }
 
         await userManager.AddLoginAsync(user, info);
-        await signInManager.SignInAsync(user, isPersistent: true);
+        await signInManager.SignInAsync(user, isPersistent: false);
 
         return Redirect(SafeReturnUrl(returnUrl));
     }
