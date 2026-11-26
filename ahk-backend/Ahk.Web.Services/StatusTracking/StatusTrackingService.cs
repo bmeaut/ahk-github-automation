@@ -56,14 +56,14 @@ public sealed class StatusTrackingService : IStatusTrackingService
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(a => a.CourseId == courseId)
-            .Select(a => new { a.GitHubRepoName, a.AssignmentId, AssignmentName = a.Assignment!.Name })
+            .Select(a => new { a.GitHubRepoName, a.AssignmentId, AssignmentName = a.Assignment!.Name, a.User!.NeptunCode })
             .ToListAsync(cancellationToken);
 
         return acceptances
             .GroupBy(a => a.GitHubRepoName, StringComparer.Ordinal)
             .ToDictionary(
                 g => g.Key,
-                g => new AssignmentRef(g.First().AssignmentId, g.First().AssignmentName),
+                g => new AssignmentRef(g.First().AssignmentId, g.First().AssignmentName, g.First().NeptunCode),
                 StringComparer.Ordinal);
     }
 
@@ -78,6 +78,7 @@ public sealed class StatusTrackingService : IStatusTrackingService
             Repository = submission.GitHubRepoName,
             ArchivedAt = submission.ArchivedAt,
             Neptun = GetNeptun(submission, events),
+            AccountNeptun = string.IsNullOrWhiteSpace(assignment?.AccountNeptun) ? null : assignment.AccountNeptun,
             AssignmentId = assignment?.Id,
             AssignmentName = assignment?.Name,
             Branches = events.OfType<BranchCreatedEvent>().Select(e => e.Branch).Distinct().ToArray(),
@@ -121,6 +122,6 @@ public sealed class StatusTrackingService : IStatusTrackingService
         };
     }
 
-    /// <summary>The assignment a repository belongs to, as the projection needs it.</summary>
-    private sealed record AssignmentRef(int Id, string Name);
+    /// <summary>The assignment a repository belongs to, and the Neptun code of the account that accepted it.</summary>
+    private sealed record AssignmentRef(int Id, string Name, string? AccountNeptun);
 }

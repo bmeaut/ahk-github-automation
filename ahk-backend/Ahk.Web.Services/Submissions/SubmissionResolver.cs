@@ -41,9 +41,11 @@ public sealed class SubmissionResolver : ISubmissionResolver
             return student;
 
         student = new Student { CourseId = courseId, Neptun = normalized };
-        db.Students.Add(student);
-        await db.SaveChangesAsync(cancellationToken);
-        return student;
+        return await InsertOrReadWinnerAsync(
+            student,
+            () => db.Students.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(s => s.CourseId == courseId && s.Neptun == normalized, cancellationToken),
+            cancellationToken);
     }
 
     public async Task<Submission> GetOrCreateAsync(int courseId, string gitHubRepoName, string? neptun = null, CancellationToken cancellationToken = default)
@@ -60,13 +62,16 @@ public sealed class SubmissionResolver : ISubmissionResolver
             // event, and recomputing an existing row's state would undo an admin's own decision.
             var archived = await archive.IsRepositoryArchivedAsync(courseId, repo, cancellationToken);
 
-            submission = new Submission
-            {
-                CourseId = courseId,
-                GitHubRepoName = repo,
-                ArchivedAt = archived ? DateTimeOffset.UtcNow : null,
-            };
-            db.Submissions.Add(submission);
+            submission = await InsertOrReadWinnerAsync(
+                new Submission
+                {
+                    CourseId = courseId,
+                    GitHubRepoName = repo,
+                    ArchivedAt = archived ? DateTimeOffset.UtcNow : null,
+                },
+                () => db.Submissions.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(s => s.CourseId == courseId && s.GitHubRepoName == repo, cancellationToken),
+                cancellationToken);
         }
 
         // The repository usually exists before neptun.txt is pushed, so link the student opportunistically.
@@ -74,9 +79,40 @@ public sealed class SubmissionResolver : ISubmissionResolver
         {
             var student = await GetOrCreateStudentAsync(courseId, neptun, cancellationToken);
             submission.StudentId = student.Id;
+            await db.SaveChangesAsync(cancellationToken);
         }
 
-        await db.SaveChangesAsync(cancellationToken);
         return submission;
+    }
+
+    /// <summary>
+    /// Inserts a row that the caller has just found missing, or — if a concurrent writer inserted the same row
+    /// between that check and this insert — returns the winner instead. The race is real, not theoretical:
+    /// generating a repository from a template makes GitHub fire a <c>repository</c> webhook at once, and the
+    /// delivery worker can create the submission while <c>AssignmentInviteService.AcceptAsync</c> is still busy
+    /// with its own GitHub calls. Losing it used to throw a 500 out of the accept request after the repository
+    /// and the invitation existed but before the acceptance row was saved, leaving the submission with no
+    /// assignment. The unique index on the natural key is what detects the loss.
+    /// </summary>
+    private async Task<T> InsertOrReadWinnerAsync<T>(T entity, Func<Task<T?>> readWinner, CancellationToken cancellationToken)
+        where T : class
+    {
+        db.Add(entity);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return entity;
+        }
+        catch (DbUpdateException)
+        {
+            db.Entry(entity).State = EntityState.Detached;
+
+            // No winner means the failure was something else; let the original exception say what.
+            var winner = await readWinner();
+            if (winner is null)
+                throw;
+
+            return winner;
+        }
     }
 }

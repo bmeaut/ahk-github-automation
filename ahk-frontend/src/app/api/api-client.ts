@@ -4225,6 +4225,7 @@ export interface RepositoryStatus {
     repository?: string;
     archivedAt?: Date | undefined;
     neptun?: string;
+    accountNeptun?: string | undefined;
     assignmentId?: number | undefined;
     assignmentName?: string | undefined;
     branches?: string[];

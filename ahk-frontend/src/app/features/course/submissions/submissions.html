@@ -77,6 +77,7 @@
               <th><button type="button" class="sort" (click)="sortBy('neptun')">Neptun</button></th>
               <th><button type="button" class="sort" (click)="sortBy('repository')">Repository</button></th>
               <th>Assignment</th>
+              <th class="filename"><button type="button" class="sort" (click)="sortBy('neptunTxt')">neptun.txt</button></th>
               <th>Branches</th>
               <th>Pull request</th>
               <th class="num"><button type="button" class="sort" (click)="sortBy('runs')">Runs</button></th>
@@ -94,7 +95,7 @@
           <tbody>
             @for (s of rows(); track s.repository) {
               <tr [class.archived]="s.archivedAt">
-                <td class="mono">{{ s.neptun || '—' }}</td>
+                <td class="mono">{{ s.accountNeptun || '—' }}</td>
                 <td>
                   <a [href]="'https://github.com/' + s.repository" target="_blank" rel="noopener" class="mono">
                     {{ s.repository }}
@@ -110,6 +111,7 @@
                     <span class="muted">—</span>
                   }
                 </td>
+                <td class="mono">{{ s.neptun || '—' }}</td>
                 <td class="mono muted">{{ s.branches?.join(', ') || '—' }}</td>
                 <td>
                   @if (s.pullRequests?.length) {
@@ -168,7 +170,7 @@
               <tr>
                 <td
                   [attr.colspan]="
-                    6 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0) + (canArchive() ? 1 : 0)
+                    7 + exerciseNames().length + (exerciseNames().length > 0 ? 1 : 0) + (canArchive() ? 1 : 0)
                   "
                   class="empty"
                 >

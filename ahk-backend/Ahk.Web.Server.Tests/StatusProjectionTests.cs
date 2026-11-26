@@ -111,10 +111,12 @@ public class StatusProjectionTests
         var accepted = statuses.Single(s => s.Repository == "org/course-hw1-abc123");
         Assert.Equal(assignmentId, accepted.AssignmentId);
         Assert.Equal("Homework 1", accepted.AssignmentName);
+        Assert.Equal("ABC123", accepted.AccountNeptun);
 
         var unassigned = statuses.Single(s => s.Repository == "org/course-legacy-xyz789");
         Assert.Null(unassigned.AssignmentId);
         Assert.Null(unassigned.AssignmentName);
+        Assert.Null(unassigned.AccountNeptun);
     }
 
     /// <summary>An acceptance in another course must not label this course's repository.</summary>
@@ -128,6 +130,7 @@ public class StatusProjectionTests
 
         Assert.Null(status.AssignmentId);
         Assert.Null(status.AssignmentName);
+        Assert.Null(status.AccountNeptun);
     }
 
     /// <summary>Adds an assignment plus one acceptance for <paramref name="acceptedRepo"/>, returning its id.</summary>

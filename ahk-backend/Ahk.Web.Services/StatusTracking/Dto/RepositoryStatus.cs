@@ -15,7 +15,17 @@ public sealed class RepositoryStatus
     /// <summary>When set, the submission is archived. Only present when archived rows were asked for.</summary>
     public DateTimeOffset? ArchivedAt { get; set; }
 
+    /// <summary>
+    /// What the student wrote in the repository's <c>neptun.txt</c> (the latest PR event carrying one), falling
+    /// back to the linked student row. Self-reported, so it may disagree with <see cref="AccountNeptun"/>.
+    /// </summary>
     public string Neptun { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The Neptun code on the account that accepted the assignment this repository was created for, or null when
+    /// no acceptance names the repository or the account has no Neptun code. Additive to the legacy shape.
+    /// </summary>
+    public string? AccountNeptun { get; set; }
 
     /// <summary>
     /// The assignment this repository belongs to, or null when nothing links it to one. Additive to the

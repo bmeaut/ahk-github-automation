@@ -16,7 +16,7 @@ import {
 import { readApiError } from '../../../core/api-error';
 import { CourseContextService } from '../../../core/course/course-context.service';
 
-type SortKey = 'neptun' | 'repository' | 'runs' | 'total';
+type SortKey = 'neptun' | 'neptunTxt' | 'repository' | 'runs' | 'total';
 
 /** All submissions, one assignment's, or the ones no assignment claims. */
 type AssignmentScope = 'all' | 'none' | number;
@@ -87,7 +87,7 @@ export class CourseSubmissions {
       if (typeof scope === 'number' && s.assignmentId !== scope) {
         return false;
       }
-      if (term && !`${s.neptun ?? ''} ${s.repository ?? ''}`.toLowerCase().includes(term)) {
+      if (term && !`${s.accountNeptun ?? ''} ${s.neptun ?? ''} ${s.repository ?? ''}`.toLowerCase().includes(term)) {
         return false;
       }
       if (this.onlyUngraded() && grades.has(s.repository ?? '')) {
@@ -262,7 +262,7 @@ export class CourseSubmissions {
     const grades = this.grades();
     const exercises = this.exerciseNames();
 
-    const headers = ['Neptun', 'Repository', 'Assignment', ...exercises];
+    const headers = ['Neptun', 'Repository', 'Assignment', 'neptun.txt', ...exercises];
     if (exercises.length > 0) {
       headers.push('Total');
     }
@@ -271,9 +271,10 @@ export class CourseSubmissions {
     for (const s of rows) {
       const grade = grades.get(s.repository ?? '');
       const cells = [
-        this.csvEscape(s.neptun ?? ''),
+        this.csvEscape(s.accountNeptun ?? ''),
         this.csvEscape(s.repository ?? ''),
         this.csvEscape(s.assignmentName ?? ''),
+        this.csvEscape(s.neptun ?? ''),
         ...exercises.map((ex) => String(grade?.points?.[ex] ?? '')),
       ];
       if (exercises.length > 0) {
@@ -340,8 +341,10 @@ export class CourseSubmissions {
         return (a.workflowRuns?.count ?? 0) - (b.workflowRuns?.count ?? 0);
       case 'total':
         return (this.totalFor(a.repository) ?? -1) - (this.totalFor(b.repository) ?? -1);
-      default:
+      case 'neptunTxt':
         return (a.neptun ?? '').localeCompare(b.neptun ?? '');
+      default:
+        return (a.accountNeptun ?? '').localeCompare(b.accountNeptun ?? '');
     }
   }
 }
