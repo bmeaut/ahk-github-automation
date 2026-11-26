@@ -53,6 +53,7 @@ export class CourseSubmissions {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly saved = signal<string | null>(null);
+  protected readonly exportingXlsx = signal(false);
 
   /**
    * Archiving is the course admins' to do, and a site admin arrives holding that role on every course — so
@@ -258,7 +259,59 @@ export class CourseSubmissions {
       return;
     }
 
-    const rows = this.rows();
+    const { headers, rows } = this.exportTable();
+    const lines = [headers.map((h) => this.csvEscape(h)).join(',')];
+    for (const row of rows) {
+      lines.push(row.map((cell) => (typeof cell === 'number' ? String(cell) : this.csvEscape(cell ?? ''))).join(','));
+    }
+
+    // BOM so Excel opens the file as UTF-8 without a manual import dialog.
+    const csv = '﻿' + lines.join('\r\n');
+    this.saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `${slug}-grades.csv`);
+  }
+
+  /**
+   * The same table as {@link downloadCsv}, as a real workbook: points and totals are numeric cells, so Excel can
+   * sum and sort them without a text-to-number conversion. The writer is imported on demand — it is the only
+   * thing on this screen that needs it, and most visits never export.
+   */
+  protected async downloadXlsx(): Promise<void> {
+    const slug = this.courseContext.activeSlug();
+    if (!slug || this.exportingXlsx()) {
+      return;
+    }
+
+    this.exportingXlsx.set(true);
+    try {
+      const { default: writeXlsxFile } = await import('write-excel-file/browser');
+      const { headers, rows } = this.exportTable();
+
+      const blob = await writeXlsxFile(
+        [
+          headers.map((h) => ({ value: h, fontWeight: 'bold' as const })),
+          ...rows.map((row) => row.map((cell) => (cell === null || cell === '' ? null : cell))),
+        ],
+        {
+          sheet: 'Submissions',
+          stickyRowsCount: 1,
+          columns: headers.map((_, i) => ({ width: this.columnWidth(headers, rows, i) })),
+        },
+      ).toBlob();
+
+      this.saveBlob(blob, `${slug}-grades.xlsx`);
+    } catch (err) {
+      this.error.set(readApiError(err, 'Could not create the Excel file.'));
+    } finally {
+      this.exportingXlsx.set(false);
+    }
+  }
+
+  /**
+   * The rows on screen — filtered and sorted exactly as shown — as the exports write them. One builder for
+   * both formats so a column added to one cannot go missing from the other. Points are numbers and an empty
+   * cell is null; each format decides how to spell them.
+   */
+  private exportTable(): { headers: string[]; rows: (string | number | null)[][] } {
     const grades = this.grades();
     const exercises = this.exerciseNames();
 
@@ -267,30 +320,35 @@ export class CourseSubmissions {
       headers.push('Total');
     }
 
-    const lines = [headers.join(',')];
-    for (const s of rows) {
+    const rows = this.rows().map((s) => {
       const grade = grades.get(s.repository ?? '');
-      const cells = [
-        this.csvEscape(s.accountNeptun ?? ''),
-        this.csvEscape(s.repository ?? ''),
-        this.csvEscape(s.assignmentName ?? ''),
-        this.csvEscape(s.neptun ?? ''),
-        ...exercises.map((ex) => String(grade?.points?.[ex] ?? '')),
+      const cells: (string | number | null)[] = [
+        s.accountNeptun ?? '',
+        s.repository ?? '',
+        s.assignmentName ?? '',
+        s.neptun ?? '',
+        ...exercises.map((ex) => grade?.points?.[ex] ?? null),
       ];
       if (exercises.length > 0) {
-        const total = grade?.points ? Object.values(grade.points).reduce((sum, p) => sum + p, 0) : '';
-        cells.push(String(total));
+        cells.push(grade?.points ? Object.values(grade.points).reduce((sum, p) => sum + p, 0) : null);
       }
-      lines.push(cells.join(','));
-    }
+      return cells;
+    });
 
-    // BOM so Excel opens the file as UTF-8 without a manual import dialog.
-    const csv = '﻿' + lines.join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    return { headers, rows };
+  }
+
+  /** Fits a column to its longest value, in characters — Excel has no "autofit on open" to lean on. */
+  private columnWidth(headers: string[], rows: (string | number | null)[][], index: number): number {
+    const longest = Math.max(headers[index].length, ...rows.map((r) => String(r[index] ?? '').length));
+    return Math.min(Math.max(longest, 6), 60) + 2;
+  }
+
+  private saveBlob(blob: Blob, fileName: string): void {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slug}-grades.csv`;
+    link.download = fileName;
     link.click();
     URL.revokeObjectURL(url);
   }

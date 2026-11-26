@@ -10,6 +10,9 @@
         {{ loading() ? 'Refreshing…' : 'Refresh' }}
       </button>
       <button type="button" class="btn primary" (click)="downloadCsv()">Export CSV</button>
+      <button type="button" class="btn primary" (click)="downloadXlsx()" [disabled]="exportingXlsx()">
+        {{ exportingXlsx() ? 'Exporting…' : 'Export XLSX' }}
+      </button>
     </div>
   </div>
 
